@@ -42,7 +42,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, macos-14, oracle-aarch64]
-        uv-version: ['latest','0.2.0','0.3.0']
+        uv-version: ['latest','0.3.0','0.3.2']
     steps:
       - uses: actions/checkout@v4
       - name: Install version ${{ matrix.uv-version }}
