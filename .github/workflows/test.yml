@@ -1,0 +1,90 @@
+name: 'test'
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, macos-14, oracle-aarch64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: |
+          npm install
+      - run: |
+          npm run all
+  test-default-version:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, macos-14, oracle-aarch64]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install default version
+        uses: ./
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - run: uv sync
+        working-directory: __tests__/fixtures/uv-project
+  test-specific-version:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, macos-14, oracle-aarch64]
+        uv-version: ['latest','0.2.0','0.3.0']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install version ${{ matrix.uv-version }}
+        uses: ./
+        with:
+          version: ${{ matrix.uv-version }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - run: uv sync
+        working-directory: __tests__/fixtures/uv-project
+  test-checksum:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, oracle-aarch64]
+        checksum: ['4d9279ad5ca596b1e2d703901d508430eb07564dc4d8837de9e2fca9c90f8ecd']
+        exclude:
+          - os: oracle-aarch64
+            checksum: '4d9279ad5ca596b1e2d703901d508430eb07564dc4d8837de9e2fca9c90f8ecd'
+        include:
+          - os: oracle-aarch64
+            checksum: 'e11b01402ab645392c7ad6044db63d37e4fd1e745e015306993b07695ea5f9f8'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checksum matches expected
+        uses: ./
+        with:
+          version: '0.3.2'
+          checksum: ${{ matrix.checksum }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+  test-without-github-token:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install default version
+        uses: ./
+      - run: uv sync
+        working-directory: __tests__/fixtures/uv-project
+
+  test-uvx:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install default version
+        uses: ./
+      - run: uvx ruff --version

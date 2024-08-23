@@ -1,0 +1,49 @@
+name: 'test-cache-windows'
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-setup-cache:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup with cache
+        uses: ./
+        with:
+          enable-cache: true
+          cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}
+      - run: uv sync
+        working-directory: __tests__\fixtures\uv-project
+  test-restore-cache:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest]
+    needs: test-setup-cache
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore with cache
+        id: restore
+        uses: ./
+        with:
+            enable-cache: true
+            cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Cache was hit
+        run: |
+          if ($env:CACHE_HIT -ne "true") {
+            exit 1
+          }
+        env:
+          CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
+      - run: uv sync
+        working-directory: __tests__\fixtures\uv-project
