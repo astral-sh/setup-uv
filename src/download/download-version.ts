@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
 import * as tc from '@actions/tool-cache'
-import {OWNER, REPO, TOOL_CACHE_NAME} from '../utils/utils'
 import path from 'path'
+import {OWNER, REPO, TOOL_CACHE_NAME} from '../utils/utils'
 import {Architecture, Platform} from '../utils/platforms'
 import {validateChecksum} from './checksum/checksum'
 
@@ -31,18 +31,18 @@ export async function downloadVersion(
   }
   core.info(`Downloading uv from "${downloadUrl}" ...`)
 
-  const downloadDir = `${process.cwd()}${path.sep}uv`
   const downloadPath = await tc.downloadTool(
     downloadUrl,
-    downloadDir,
+    undefined,
     githubToken
   )
   await validateChecksum(checkSum, downloadPath, arch, platform, version)
 
+  let extractedDir: string
   if (platform === 'pc-windows-msvc') {
-    await tc.extractZip(downloadPath)
+    extractedDir = await tc.extractZip(downloadPath)
   } else {
-    tc.extractTar(downloadPath)
+    extractedDir = await tc.extractTar(downloadPath)
   }
-  return await tc.cacheDir(downloadPath, TOOL_CACHE_NAME, version, arch)
+  return await tc.cacheDir(extractedDir, TOOL_CACHE_NAME, version, arch)
 }

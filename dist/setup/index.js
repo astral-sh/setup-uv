@@ -85394,8 +85394,9 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.downloadLatest = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const tc = __importStar(__nccwpck_require__(7784));
-const path = __importStar(__nccwpck_require__(1017));
 const exec = __importStar(__nccwpck_require__(1514));
+const io = __importStar(__nccwpck_require__(7436));
+const path = __importStar(__nccwpck_require__(1017));
 const checksum_1 = __nccwpck_require__(4622);
 const utils_1 = __nccwpck_require__(239);
 function downloadLatest(platform, arch, checkSum, githubToken) {
@@ -85409,7 +85410,8 @@ function downloadLatest(platform, arch, checkSum, githubToken) {
             downloadUrl += '.tar.gz';
         }
         core.info(`Downloading uv from "${downloadUrl}" ...`);
-        const downloadDir = `${process.cwd()}${path.sep}uv`;
+        const downloadDir = path.join(process.env['RUNNER_TEMP'] || '', 'uv-download');
+        yield io.mkdirP(downloadDir);
         const downloadPath = yield tc.downloadTool(downloadUrl, downloadDir, githubToken);
         let uvExecutablePath;
         let extracted;
@@ -85422,7 +85424,7 @@ function downloadLatest(platform, arch, checkSum, githubToken) {
             uvExecutablePath = path.join(extracted, 'uv');
         }
         const version = yield getVersion(uvExecutablePath);
-        yield (0, checksum_1.validateChecksum)(checkSum, downloadPath, arch, platform, version);
+        yield (0, checksum_1.validateChecksum)(checkSum, extracted, arch, platform, version);
         const cachedToolDir = yield tc.cacheDir(downloadPath, utils_1.TOOL_CACHE_NAME, version, arch);
         return { cachedToolDir, version };
     });
@@ -85496,8 +85498,9 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.downloadVersion = exports.tryGetFromToolCache = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const tc = __importStar(__nccwpck_require__(7784));
-const utils_1 = __nccwpck_require__(239);
+const io = __importStar(__nccwpck_require__(7436));
 const path_1 = __importDefault(__nccwpck_require__(1017));
+const utils_1 = __nccwpck_require__(239);
 const checksum_1 = __nccwpck_require__(4622);
 function tryGetFromToolCache(arch, version) {
     core.debug(`Trying to get uv from tool cache for ${version}...`);
@@ -85517,16 +85520,18 @@ function downloadVersion(platform, arch, version, checkSum, githubToken) {
             downloadUrl += '.tar.gz';
         }
         core.info(`Downloading uv from "${downloadUrl}" ...`);
-        const downloadDir = `${process.cwd()}${path_1.default.sep}uv`;
+        const downloadDir = path_1.default.join(process.env['RUNNER_TEMP'] || '', 'uv-download');
+        yield io.mkdirP(downloadDir);
         const downloadPath = yield tc.downloadTool(downloadUrl, downloadDir, githubToken);
         yield (0, checksum_1.validateChecksum)(checkSum, downloadPath, arch, platform, version);
+        let extractedDir;
         if (platform === 'pc-windows-msvc') {
-            yield tc.extractZip(downloadPath);
+            extractedDir = yield tc.extractZip(downloadPath);
         }
         else {
-            tc.extractTar(downloadPath);
+            extractedDir = yield tc.extractTar(downloadPath);
         }
-        return yield tc.cacheDir(downloadPath, utils_1.TOOL_CACHE_NAME, version, arch);
+        return yield tc.cacheDir(extractedDir, utils_1.TOOL_CACHE_NAME, version, arch);
     });
 }
 exports.downloadVersion = downloadVersion;

@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
 import * as tc from '@actions/tool-cache'
-import * as path from 'path'
 import * as exec from '@actions/exec'
+import * as path from 'path'
 import {Architecture, Platform} from '../utils/platforms'
 import {validateChecksum} from './checksum/checksum'
 import {OWNER, REPO, TOOL_CACHE_NAME} from '../utils/utils'
@@ -21,10 +21,9 @@ export async function downloadLatest(
   }
   core.info(`Downloading uv from "${downloadUrl}" ...`)
 
-  const downloadDir = `${process.cwd()}${path.sep}uv`
   const downloadPath = await tc.downloadTool(
     downloadUrl,
-    downloadDir,
+    undefined,
     githubToken
   )
   let uvExecutablePath: string
@@ -37,7 +36,7 @@ export async function downloadLatest(
     uvExecutablePath = path.join(extracted, 'uv')
   }
   const version = await getVersion(uvExecutablePath)
-  await validateChecksum(checkSum, downloadPath, arch, platform, version)
+  await validateChecksum(checkSum, extracted, arch, platform, version)
   const cachedToolDir = await tc.cacheDir(
     downloadPath,
     TOOL_CACHE_NAME,
