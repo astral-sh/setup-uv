@@ -12,8 +12,8 @@ export async function downloadLatest(
   checkSum: string | undefined,
   githubToken: string | undefined
 ): Promise<{cachedToolDir: string; version: string}> {
-  const binary = `uv-${arch}-${platform}`
-  let downloadUrl = `https://github.com/${OWNER}/${REPO}/releases/latest/download/${binary}`
+  const artifact = `uv-${arch}-${platform}`
+  let downloadUrl = `https://github.com/${OWNER}/${REPO}/releases/latest/download/${artifact}`
   if (platform === 'pc-windows-msvc') {
     downloadUrl += '.zip'
   } else {
@@ -27,22 +27,19 @@ export async function downloadLatest(
     githubToken
   )
   let uvExecutablePath: string
-  let extractedDir: string
+  let uvDir: string
   if (platform === 'pc-windows-msvc') {
-    extractedDir = await tc.extractZip(downloadPath)
-    uvExecutablePath = path.join(extractedDir, 'uv.exe')
+    const extractedDir = await tc.extractZip(downloadPath)
+    uvDir = path.join(extractedDir, artifact)
+    uvExecutablePath = path.join(uvDir, 'uv.exe')
   } else {
-    extractedDir = await tc.extractTar(downloadPath)
+    const extractedDir = await tc.extractTar(downloadPath)
+    uvDir = path.join(extractedDir, artifact)
     uvExecutablePath = path.join(extractedDir, 'uv')
   }
   const version = await getVersion(uvExecutablePath)
   await validateChecksum(checkSum, downloadPath, arch, platform, version)
-  const cachedToolDir = await tc.cacheDir(
-    extractedDir,
-    TOOL_CACHE_NAME,
-    version,
-    arch
-  )
+  const cachedToolDir = await tc.cacheDir(uvDir, TOOL_CACHE_NAME, version, arch)
 
   return {cachedToolDir, version}
 }

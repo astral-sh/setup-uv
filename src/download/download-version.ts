@@ -1,13 +1,9 @@
 import * as core from '@actions/core'
 import * as tc from '@actions/tool-cache'
+import * as path from 'path'
 import {OWNER, REPO, TOOL_CACHE_NAME} from '../utils/utils'
 import {Architecture, Platform} from '../utils/platforms'
 import {validateChecksum} from './checksum/checksum'
-
-import * as fs from 'fs'
-import * as util from 'util'
-
-const readdir = util.promisify(fs.readdir)
 
 export function tryGetFromToolCache(
   arch: Architecture,
@@ -26,8 +22,8 @@ export async function downloadVersion(
   checkSum: string | undefined,
   githubToken: string | undefined
 ): Promise<string> {
-  const binary = `uv-${arch}-${platform}`
-  let downloadUrl = `https://github.com/${OWNER}/${REPO}/releases/download/${version}/${binary}`
+  const artifact = `uv-${arch}-${platform}`
+  let downloadUrl = `https://github.com/${OWNER}/${REPO}/releases/download/${version}/${artifact}`
   if (platform === 'pc-windows-msvc') {
     downloadUrl += '.zip'
   } else {
@@ -48,10 +44,11 @@ export async function downloadVersion(
   } else {
     extractedDir = await tc.extractTar(downloadPath)
   }
-  core.info(`Extracted uv to "${extractedDir}"`)
-  // list the contents of extracted dir
-  const files = await readdir(extractedDir)
-  core.info(`Contents of extracted directory: ${files.join(', ')}`)
 
-  return await tc.cacheDir(extractedDir, TOOL_CACHE_NAME, version, arch)
+  return await tc.cacheDir(
+    path.join(extractedDir, artifact),
+    TOOL_CACHE_NAME,
+    version,
+    arch
+  )
 }
