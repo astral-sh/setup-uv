@@ -1,6 +1,5 @@
 import * as core from '@actions/core'
 import * as tc from '@actions/tool-cache'
-import path from 'path'
 import {OWNER, REPO, TOOL_CACHE_NAME} from '../utils/utils'
 import {Architecture, Platform} from '../utils/platforms'
 import {validateChecksum} from './checksum/checksum'
