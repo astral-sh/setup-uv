@@ -85423,7 +85423,8 @@ function downloadLatest(platform, arch, checkSum, githubToken) {
         }
         const version = yield getVersion(uvExecutablePath);
         yield (0, checksum_1.validateChecksum)(checkSum, downloadPath, arch, platform, version);
-        return { downloadDir, version };
+        const cachedToolDir = yield tc.cacheDir(downloadPath, utils_1.TOOL_CACHE_NAME, version, arch);
+        return { cachedToolDir, version };
     });
 }
 exports.downloadLatest = downloadLatest;
@@ -85525,7 +85526,7 @@ function downloadVersion(platform, arch, version, checkSum, githubToken) {
         else {
             tc.extractTar(downloadPath);
         }
-        return downloadPath;
+        return yield tc.cacheDir(downloadPath, utils_1.TOOL_CACHE_NAME, version, arch);
     });
 }
 exports.downloadVersion = downloadVersion;
@@ -85589,11 +85590,14 @@ function run() {
             if (arch === undefined) {
                 throw new Error(`Unsupported architecture: ${process.arch}`);
             }
-            const installedVersion = yield setupUv(platform, arch, inputs_1.version, inputs_1.checkSum, inputs_1.githubToken);
+            const setupResult = yield setupUv(platform, arch, inputs_1.version, inputs_1.checkSum, inputs_1.githubToken);
+            addUvToPath(setupResult.uvDir);
+            core.setOutput('uv-version', inputs_1.version);
+            core.info(`Successfully installed uv version ${inputs_1.version}`);
             addMatchers();
             setCacheDir(inputs_1.cacheLocalPath);
             if (inputs_1.enableCache) {
-                yield (0, restore_cache_1.restoreCache)(installedVersion);
+                yield (0, restore_cache_1.restoreCache)(setupResult.version);
             }
         }
         catch (err) {
@@ -85605,26 +85609,23 @@ function run() {
 function setupUv(platform, arch, versionInput, checkSum, githubToken) {
     return __awaiter(this, void 0, void 0, function* () {
         let installedPath;
-        let downloadDir;
+        let cachedToolDir;
         let version;
         if (versionInput === 'latest') {
             const result = yield (0, download_latest_1.downloadLatest)(platform, arch, checkSum, githubToken);
             version = result.version;
-            downloadDir = result.downloadDir;
+            cachedToolDir = result.cachedToolDir;
         }
         else {
             version = versionInput;
             installedPath = (0, download_version_1.tryGetFromToolCache)(arch, versionInput);
             if (installedPath) {
                 core.info(`Found uv in tool-cache for ${versionInput}`);
-                return version;
+                return { uvDir: installedPath, version };
             }
-            downloadDir = yield (0, download_version_1.downloadVersion)(platform, arch, versionInput, checkSum, githubToken);
+            cachedToolDir = yield (0, download_version_1.downloadVersion)(platform, arch, versionInput, checkSum, githubToken);
         }
-        addUvToPath(downloadDir);
-        core.setOutput('uv-version', version);
-        core.info(`Successfully installed uv version ${version}`);
-        return version;
+        return { uvDir: cachedToolDir, version };
     });
 }
 function addUvToPath(cachedPath) {

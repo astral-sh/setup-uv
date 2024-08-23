@@ -4,14 +4,14 @@ import * as path from 'path'
 import * as exec from '@actions/exec'
 import {Architecture, Platform} from '../utils/platforms'
 import {validateChecksum} from './checksum/checksum'
-import {OWNER, REPO} from '../utils/utils'
+import {OWNER, REPO, TOOL_CACHE_NAME} from '../utils/utils'
 
 export async function downloadLatest(
   platform: Platform,
   arch: Architecture,
   checkSum: string | undefined,
   githubToken: string | undefined
-): Promise<{downloadDir: string; version: string}> {
+): Promise<{cachedToolDir: string; version: string}> {
   const binary = `uv-${arch}-${platform}`
   let downloadUrl = `https://github.com/${OWNER}/${REPO}/releases/latest/download/${binary}`
   if (platform === 'pc-windows-msvc') {
@@ -38,8 +38,14 @@ export async function downloadLatest(
   }
   const version = await getVersion(uvExecutablePath)
   await validateChecksum(checkSum, downloadPath, arch, platform, version)
+  const cachedToolDir = await tc.cacheDir(
+    downloadPath,
+    TOOL_CACHE_NAME,
+    version,
+    arch
+  )
 
-  return {downloadDir, version}
+  return {cachedToolDir, version}
 }
 
 async function getVersion(uvExecutablePath: string): Promise<string> {

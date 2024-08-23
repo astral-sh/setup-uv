@@ -44,5 +44,5 @@ export async function downloadVersion(
   } else {
     tc.extractTar(downloadPath)
   }
-  return downloadPath
+  return await tc.cacheDir(downloadPath, TOOL_CACHE_NAME, version, arch)
 }

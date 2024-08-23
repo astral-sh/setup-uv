@@ -24,7 +24,7 @@ async function run(): Promise<void> {
     if (arch === undefined) {
       throw new Error(`Unsupported architecture: ${process.arch}`)
     }
-    const installedVersion = await setupUv(
+    const setupResult = await setupUv(
       platform,
       arch,
       version,
@@ -32,11 +32,15 @@ async function run(): Promise<void> {
       githubToken
     )
 
+    addUvToPath(setupResult.uvDir)
+    core.setOutput('uv-version', version)
+    core.info(`Successfully installed uv version ${version}`)
+
     addMatchers()
     setCacheDir(cacheLocalPath)
 
     if (enableCache) {
-      await restoreCache(installedVersion)
+      await restoreCache(setupResult.version)
     }
   } catch (err) {
     core.setFailed((err as Error).message)
@@ -50,22 +54,22 @@ async function setupUv(
   versionInput: string,
   checkSum: string | undefined,
   githubToken: string | undefined
-): Promise<string> {
+): Promise<{uvDir: string; version: string}> {
   let installedPath: string | undefined
-  let downloadDir: string
+  let cachedToolDir: string
   let version: string
   if (versionInput === 'latest') {
     const result = await downloadLatest(platform, arch, checkSum, githubToken)
     version = result.version
-    downloadDir = result.downloadDir
+    cachedToolDir = result.cachedToolDir
   } else {
     version = versionInput
     installedPath = tryGetFromToolCache(arch, versionInput)
     if (installedPath) {
       core.info(`Found uv in tool-cache for ${versionInput}`)
-      return version
+      return {uvDir: installedPath, version}
     }
-    downloadDir = await downloadVersion(
+    cachedToolDir = await downloadVersion(
       platform,
       arch,
       versionInput,
@@ -74,10 +78,7 @@ async function setupUv(
     )
   }
 
-  addUvToPath(downloadDir)
-  core.setOutput('uv-version', version)
-  core.info(`Successfully installed uv version ${version}`)
-  return version
+  return {uvDir: cachedToolDir, version}
 }
 
 function addUvToPath(cachedPath: string): void {
