@@ -85411,18 +85411,18 @@ function downloadLatest(platform, arch, checkSum, githubToken) {
         core.info(`Downloading uv from "${downloadUrl}" ...`);
         const downloadPath = yield tc.downloadTool(downloadUrl, undefined, githubToken);
         let uvExecutablePath;
-        let extracted;
+        let extractedDir;
         if (platform === 'pc-windows-msvc') {
-            extracted = yield tc.extractZip(downloadPath);
-            uvExecutablePath = path.join(extracted, 'uv.exe');
+            extractedDir = yield tc.extractZip(downloadPath);
+            uvExecutablePath = path.join(extractedDir, 'uv.exe');
         }
         else {
-            extracted = yield tc.extractTar(downloadPath);
-            uvExecutablePath = path.join(extracted, 'uv');
+            extractedDir = yield tc.extractTar(downloadPath);
+            uvExecutablePath = path.join(extractedDir, 'uv');
         }
         const version = yield getVersion(uvExecutablePath);
-        yield (0, checksum_1.validateChecksum)(checkSum, extracted, arch, platform, version);
-        const cachedToolDir = yield tc.cacheDir(downloadPath, utils_1.TOOL_CACHE_NAME, version, arch);
+        yield (0, checksum_1.validateChecksum)(checkSum, downloadPath, arch, platform, version);
+        const cachedToolDir = yield tc.cacheDir(extractedDir, utils_1.TOOL_CACHE_NAME, version, arch);
         return { cachedToolDir, version };
     });
 }
@@ -85494,6 +85494,9 @@ const core = __importStar(__nccwpck_require__(2186));
 const tc = __importStar(__nccwpck_require__(7784));
 const utils_1 = __nccwpck_require__(239);
 const checksum_1 = __nccwpck_require__(4622);
+const fs = __importStar(__nccwpck_require__(7147));
+const util = __importStar(__nccwpck_require__(3837));
+const readdir = util.promisify(fs.readdir);
 function tryGetFromToolCache(arch, version) {
     core.debug(`Trying to get uv from tool cache for ${version}...`);
     const cachedVersions = tc.findAllVersions(utils_1.TOOL_CACHE_NAME, arch);
@@ -85521,6 +85524,10 @@ function downloadVersion(platform, arch, version, checkSum, githubToken) {
         else {
             extractedDir = yield tc.extractTar(downloadPath);
         }
+        core.info(`Extracted uv to "${extractedDir}"`);
+        // list the contents of extracted dir
+        const files = yield readdir(extractedDir);
+        core.info(`Contents of extracted directory: ${files.join(', ')}`);
         return yield tc.cacheDir(extractedDir, utils_1.TOOL_CACHE_NAME, version, arch);
     });
 }

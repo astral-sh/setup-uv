@@ -4,6 +4,11 @@ import {OWNER, REPO, TOOL_CACHE_NAME} from '../utils/utils'
 import {Architecture, Platform} from '../utils/platforms'
 import {validateChecksum} from './checksum/checksum'
 
+import * as fs from 'fs'
+import * as util from 'util'
+
+const readdir = util.promisify(fs.readdir)
+
 export function tryGetFromToolCache(
   arch: Architecture,
   version: string
@@ -43,5 +48,10 @@ export async function downloadVersion(
   } else {
     extractedDir = await tc.extractTar(downloadPath)
   }
+  core.info(`Extracted uv to "${extractedDir}"`)
+  // list the contents of extracted dir
+  const files = await readdir(extractedDir)
+  core.info(`Contents of extracted directory: ${files.join(', ')}`)
+
   return await tc.cacheDir(extractedDir, TOOL_CACHE_NAME, version, arch)
 }

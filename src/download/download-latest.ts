@@ -27,18 +27,18 @@ export async function downloadLatest(
     githubToken
   )
   let uvExecutablePath: string
-  let extracted: string
+  let extractedDir: string
   if (platform === 'pc-windows-msvc') {
-    extracted = await tc.extractZip(downloadPath)
-    uvExecutablePath = path.join(extracted, 'uv.exe')
+    extractedDir = await tc.extractZip(downloadPath)
+    uvExecutablePath = path.join(extractedDir, 'uv.exe')
   } else {
-    extracted = await tc.extractTar(downloadPath)
-    uvExecutablePath = path.join(extracted, 'uv')
+    extractedDir = await tc.extractTar(downloadPath)
+    uvExecutablePath = path.join(extractedDir, 'uv')
   }
   const version = await getVersion(uvExecutablePath)
-  await validateChecksum(checkSum, extracted, arch, platform, version)
+  await validateChecksum(checkSum, downloadPath, arch, platform, version)
   const cachedToolDir = await tc.cacheDir(
-    downloadPath,
+    extractedDir,
     TOOL_CACHE_NAME,
     version,
     arch
