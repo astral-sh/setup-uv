@@ -35,6 +35,7 @@ jobs:
         uses: ./
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+      - run: ls /opt/hostedtoolcache/uv/0.3.2/x86_64
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
   test-specific-version:
