@@ -82889,6 +82889,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = void 0;
 const cache = __importStar(__nccwpck_require__(7799));
 const core = __importStar(__nccwpck_require__(2186));
+const exec = __importStar(__nccwpck_require__(1514));
 const restore_cache_1 = __nccwpck_require__(1898);
 const inputs_1 = __nccwpck_require__(9378);
 function run() {
@@ -82915,13 +82916,23 @@ function saveCache() {
             return;
         }
         else if (matchedKey === cacheKey) {
-            // no change in target directories
             core.info(`Cache hit occurred on key ${cacheKey}, not saving cache.`);
             return;
         }
+        yield pruneCache();
         core.info(`Saving cache path: ${inputs_1.cacheLocalPath}`);
         yield cache.saveCache([inputs_1.cacheLocalPath], cacheKey);
         core.info(`cache saved with the key: ${cacheKey}`);
+    });
+}
+function pruneCache() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const options = {
+            silent: !core.isDebug()
+        };
+        const execArgs = ['cache', 'prune', '--ci'];
+        core.info('Pruning cache...');
+        yield exec.exec('uv', execArgs, options);
     });
 }
 run();

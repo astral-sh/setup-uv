@@ -1,5 +1,6 @@
 import * as cache from '@actions/cache'
 import * as core from '@actions/core'
+import * as exec from '@actions/exec'
 import {STATE_CACHE_MATCHED_KEY, STATE_CACHE_KEY} from './cache/restore-cache'
 import {cacheLocalPath, enableCache} from './utils/inputs'
 
@@ -23,14 +24,26 @@ async function saveCache(): Promise<void> {
     core.warning('Error retrieving cache key from state.')
     return
   } else if (matchedKey === cacheKey) {
-    // no change in target directories
     core.info(`Cache hit occurred on key ${cacheKey}, not saving cache.`)
     return
   }
+
+  await pruneCache()
+
   core.info(`Saving cache path: ${cacheLocalPath}`)
   await cache.saveCache([cacheLocalPath], cacheKey)
 
   core.info(`cache saved with the key: ${cacheKey}`)
+}
+
+async function pruneCache(): Promise<void> {
+  const options: exec.ExecOptions = {
+    silent: !core.isDebug()
+  }
+  const execArgs = ['cache', 'prune', '--ci']
+
+  core.info('Pruning cache...')
+  await exec.exec('uv', execArgs, options)
 }
 
 run()
