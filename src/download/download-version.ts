@@ -5,6 +5,11 @@ import {OWNER, REPO, TOOL_CACHE_NAME} from '../utils/utils'
 import {Architecture, Platform} from '../utils/platforms'
 import {validateChecksum} from './checksum/checksum'
 
+import * as fs from 'fs'
+import * as util from 'util'
+
+const readdir = util.promisify(fs.readdir)
+
 export function tryGetFromToolCache(
   arch: Architecture,
   version: string
@@ -41,6 +46,13 @@ export async function downloadVersion(
   let extractedDir: string
   if (platform === 'pc-windows-msvc') {
     extractedDir = await tc.extractZip(downloadPath)
+    const files = await readdir(extractedDir)
+    core.info(
+      `Contents of extracted directory ${extractedDir}: ${files.join(', ')}`
+    )
+    const uvDir = path.join(extractedDir, artifact)
+    const uvfiles = await readdir(uvDir)
+    core.info(`Contents of directory ${uvDir}: ${uvfiles.join(', ')}`)
   } else {
     extractedDir = await tc.extractTar(downloadPath)
   }

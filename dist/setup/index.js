@@ -85497,6 +85497,9 @@ const tc = __importStar(__nccwpck_require__(7784));
 const path = __importStar(__nccwpck_require__(1017));
 const utils_1 = __nccwpck_require__(239);
 const checksum_1 = __nccwpck_require__(4622);
+const fs = __importStar(__nccwpck_require__(7147));
+const util = __importStar(__nccwpck_require__(3837));
+const readdir = util.promisify(fs.readdir);
 function tryGetFromToolCache(arch, version) {
     core.debug(`Trying to get uv from tool cache for ${version}...`);
     const cachedVersions = tc.findAllVersions(utils_1.TOOL_CACHE_NAME, arch);
@@ -85520,6 +85523,11 @@ function downloadVersion(platform, arch, version, checkSum, githubToken) {
         let extractedDir;
         if (platform === 'pc-windows-msvc') {
             extractedDir = yield tc.extractZip(downloadPath);
+            const files = yield readdir(extractedDir);
+            core.info(`Contents of extracted directory ${extractedDir}: ${files.join(', ')}`);
+            const uvDir = path.join(extractedDir, artifact);
+            const uvfiles = yield readdir(uvDir);
+            core.info(`Contents of directory ${uvDir}: ${uvfiles.join(', ')}`);
         }
         else {
             extractedDir = yield tc.extractTar(downloadPath);
