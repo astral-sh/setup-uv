@@ -85420,7 +85420,7 @@ function downloadLatest(platform, arch, checkSum, githubToken) {
         else {
             const extractedDir = yield tc.extractTar(downloadPath);
             uvDir = path.join(extractedDir, artifact);
-            uvExecutablePath = path.join(extractedDir, 'uv');
+            uvExecutablePath = path.join(uvDir, 'uv');
         }
         const version = yield getVersion(uvExecutablePath);
         yield (0, checksum_1.validateChecksum)(checkSum, downloadPath, arch, platform, version);

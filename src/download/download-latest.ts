@@ -35,7 +35,7 @@ export async function downloadLatest(
   } else {
     const extractedDir = await tc.extractTar(downloadPath)
     uvDir = path.join(extractedDir, artifact)
-    uvExecutablePath = path.join(extractedDir, 'uv')
+    uvExecutablePath = path.join(uvDir, 'uv')
   }
   const version = await getVersion(uvExecutablePath)
   await validateChecksum(checkSum, downloadPath, arch, platform, version)
