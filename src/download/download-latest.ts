@@ -29,8 +29,8 @@ export async function downloadLatest(
   let uvExecutablePath: string
   let uvDir: string
   if (platform === 'pc-windows-msvc') {
-    const extractedDir = await tc.extractZip(downloadPath)
-    uvDir = path.join(extractedDir, artifact)
+    uvDir = await tc.extractZip(downloadPath)
+    // On windows extracting the zip does not create an intermediate directory
     uvExecutablePath = path.join(uvDir, 'uv.exe')
   } else {
     const extractedDir = await tc.extractTar(downloadPath)

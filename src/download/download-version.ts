@@ -5,11 +5,6 @@ import {OWNER, REPO, TOOL_CACHE_NAME} from '../utils/utils'
 import {Architecture, Platform} from '../utils/platforms'
 import {validateChecksum} from './checksum/checksum'
 
-import * as fs from 'fs'
-import * as util from 'util'
-
-const readdir = util.promisify(fs.readdir)
-
 export function tryGetFromToolCache(
   arch: Architecture,
   version: string
@@ -43,24 +38,14 @@ export async function downloadVersion(
   )
   await validateChecksum(checkSum, downloadPath, arch, platform, version)
 
-  let extractedDir: string
+  let uvDir: string
   if (platform === 'pc-windows-msvc') {
-    extractedDir = await tc.extractZip(downloadPath)
-    const files = await readdir(extractedDir)
-    core.info(
-      `Contents of extracted directory ${extractedDir}: ${files.join(', ')}`
-    )
-    const uvDir = path.join(extractedDir, artifact)
-    const uvfiles = await readdir(uvDir)
-    core.info(`Contents of directory ${uvDir}: ${uvfiles.join(', ')}`)
+    uvDir = await tc.extractZip(downloadPath)
+    // On windows extracting the zip does not create an intermediate directory
   } else {
-    extractedDir = await tc.extractTar(downloadPath)
+    const extractedDir = await tc.extractTar(downloadPath)
+    uvDir = path.join(extractedDir, artifact)
   }
 
-  return await tc.cacheDir(
-    path.join(extractedDir, artifact),
-    TOOL_CACHE_NAME,
-    version,
-    arch
-  )
+  return await tc.cacheDir(uvDir, TOOL_CACHE_NAME, version, arch)
 }

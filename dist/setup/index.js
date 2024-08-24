@@ -85413,8 +85413,8 @@ function downloadLatest(platform, arch, checkSum, githubToken) {
         let uvExecutablePath;
         let uvDir;
         if (platform === 'pc-windows-msvc') {
-            const extractedDir = yield tc.extractZip(downloadPath);
-            uvDir = path.join(extractedDir, artifact);
+            uvDir = yield tc.extractZip(downloadPath);
+            // On windows extracting the zip does not create an intermediate directory
             uvExecutablePath = path.join(uvDir, 'uv.exe');
         }
         else {
@@ -85497,9 +85497,6 @@ const tc = __importStar(__nccwpck_require__(7784));
 const path = __importStar(__nccwpck_require__(1017));
 const utils_1 = __nccwpck_require__(239);
 const checksum_1 = __nccwpck_require__(4622);
-const fs = __importStar(__nccwpck_require__(7147));
-const util = __importStar(__nccwpck_require__(3837));
-const readdir = util.promisify(fs.readdir);
 function tryGetFromToolCache(arch, version) {
     core.debug(`Trying to get uv from tool cache for ${version}...`);
     const cachedVersions = tc.findAllVersions(utils_1.TOOL_CACHE_NAME, arch);
@@ -85520,19 +85517,16 @@ function downloadVersion(platform, arch, version, checkSum, githubToken) {
         core.info(`Downloading uv from "${downloadUrl}" ...`);
         const downloadPath = yield tc.downloadTool(downloadUrl, undefined, githubToken);
         yield (0, checksum_1.validateChecksum)(checkSum, downloadPath, arch, platform, version);
-        let extractedDir;
+        let uvDir;
         if (platform === 'pc-windows-msvc') {
-            extractedDir = yield tc.extractZip(downloadPath);
-            const files = yield readdir(extractedDir);
-            core.info(`Contents of extracted directory ${extractedDir}: ${files.join(', ')}`);
-            const uvDir = path.join(extractedDir, artifact);
-            const uvfiles = yield readdir(uvDir);
-            core.info(`Contents of directory ${uvDir}: ${uvfiles.join(', ')}`);
+            uvDir = yield tc.extractZip(downloadPath);
+            // On windows extracting the zip does not create an intermediate directory
         }
         else {
-            extractedDir = yield tc.extractTar(downloadPath);
+            const extractedDir = yield tc.extractTar(downloadPath);
+            uvDir = path.join(extractedDir, artifact);
         }
-        return yield tc.cacheDir(path.join(extractedDir, artifact), utils_1.TOOL_CACHE_NAME, version, arch);
+        return yield tc.cacheDir(uvDir, utils_1.TOOL_CACHE_NAME, version, arch);
     });
 }
 exports.downloadVersion = downloadVersion;
