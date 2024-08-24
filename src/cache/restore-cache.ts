@@ -8,7 +8,6 @@ import {getArch, getPlatform} from '../utils/platforms'
 export const STATE_CACHE_KEY = 'cache-key'
 export const STATE_CACHE_MATCHED_KEY = 'cache-matched-key'
 const CACHE_VERSION = '1'
-const fullCacheDependencyGlob = `${process.env['GITHUB_WORKSPACE']}${path.sep}${cacheDependencyGlob}`
 
 export async function restoreCache(version: string): Promise<void> {
   const cacheKey = await computeKeys(version)
@@ -33,7 +32,8 @@ export async function restoreCache(version: string): Promise<void> {
 
 async function computeKeys(version: string): Promise<string> {
   let cacheDependencyPathHash = '-'
-  if (fullCacheDependencyGlob !== '') {
+  if (cacheDependencyGlob !== '') {
+    const fullCacheDependencyGlob = `${process.env['GITHUB_WORKSPACE']}${path.sep}${cacheDependencyGlob}`
     cacheDependencyPathHash += await glob.hashFiles(fullCacheDependencyGlob)
     if (cacheDependencyPathHash === '-') {
       throw new Error(

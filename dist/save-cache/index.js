@@ -82798,7 +82798,6 @@ const platforms_1 = __nccwpck_require__(6005);
 exports.STATE_CACHE_KEY = 'cache-key';
 exports.STATE_CACHE_MATCHED_KEY = 'cache-matched-key';
 const CACHE_VERSION = '1';
-const fullCacheDependencyGlob = `${process.env['GITHUB_WORKSPACE']}${path_1.default.sep}${inputs_1.cacheDependencyGlob}`;
 function restoreCache(version) {
     return __awaiter(this, void 0, void 0, function* () {
         const cacheKey = yield computeKeys(version);
@@ -82821,7 +82820,8 @@ exports.restoreCache = restoreCache;
 function computeKeys(version) {
     return __awaiter(this, void 0, void 0, function* () {
         let cacheDependencyPathHash = '-';
-        if (fullCacheDependencyGlob !== '') {
+        if (inputs_1.cacheDependencyGlob !== '') {
+            const fullCacheDependencyGlob = `${process.env['GITHUB_WORKSPACE']}${path_1.default.sep}${inputs_1.cacheDependencyGlob}`;
             cacheDependencyPathHash += yield glob.hashFiles(fullCacheDependencyGlob);
             if (cacheDependencyPathHash === '-') {
                 throw new Error(`No file in ${process.cwd()} matched to [${inputs_1.cacheDependencyGlob}], make sure you have checked out the target repository`);
