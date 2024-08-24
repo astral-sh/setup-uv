@@ -82827,6 +82827,9 @@ function computeKeys(version) {
                 throw new Error(`No file in ${process.cwd()} matched to [${inputs_1.cacheDependencyGlob}], make sure you have checked out the target repository`);
             }
         }
+        else {
+            cacheDependencyPathHash += 'no-dependency-glob';
+        }
         const suffix = inputs_1.cacheSuffix ? `-${inputs_1.cacheSuffix}` : '';
         return `setup-uv-${CACHE_VERSION}-${(0, platforms_1.getArch)()}-${(0, platforms_1.getPlatform)()}-${version}${cacheDependencyPathHash}${suffix}`;
     });

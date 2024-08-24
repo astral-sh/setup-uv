@@ -40,6 +40,8 @@ async function computeKeys(version: string): Promise<string> {
         `No file in ${process.cwd()} matched to [${cacheDependencyGlob}], make sure you have checked out the target repository`
       )
     }
+  } else {
+    cacheDependencyPathHash += 'no-dependency-glob'
   }
   const suffix = cacheSuffix ? `-${cacheSuffix}` : ''
   return `setup-uv-${CACHE_VERSION}-${getArch()}-${getPlatform()}-${version}${cacheDependencyPathHash}${suffix}`
