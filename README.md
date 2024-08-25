@@ -23,7 +23,7 @@ Set up your GitHub Actions workflow with a specific version of [uv](https://docs
 
 ## Usage
 
-Example workflow will be added later
+Example workflow in a real world project can be found [here](https://github.com/eifinger/hass-weenect/blob/main/.github/workflows/ci.yml)
 
 ### Install specific version
 
@@ -115,7 +115,7 @@ The cache will be invalidated if any file matching the glob pattern changes.
 The glob matches files relative to the repository root.
 
 ```yaml
-- name: Define a custom cache dependency glob
+- name: Define a cache dependency glob
   uses: eifinger/setup-uv@v1
   with:
     enable-cache: true
@@ -123,7 +123,7 @@ The glob matches files relative to the repository root.
 ```
 
 ```yaml
-- name: Define a custom cache dependency glob
+- name: Define a cache dependency glob
   uses: eifinger/setup-uv@v1
   with:
     enable-cache: true
@@ -162,10 +162,8 @@ A simple example workflow could look like this:
   uses: eifinger/setup-uv@v1
   with:
     enable-cache: true
-- name: Sync dependencies
-  run: uv sync
 - name: Test
-  run: uv run pytest
+  run: uv run --frozen pytest
 ```
 
 ### What is the default version?
@@ -177,7 +175,7 @@ If you have to know the version installed for other steps of your workflow you c
 
 ```yaml
 - name: Checkout the repository
-  uses: actions/checkout@latest
+  uses: actions/checkout@main
 - name: Install the default version of uv
   id: setup-uv
   uses: eifinger/setup-uv@v1
