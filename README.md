@@ -166,6 +166,17 @@ A simple example workflow could look like this:
   run: uv run --frozen pytest
 ```
 
+If you want to have a specific python version installed you can use the command [`uv python install`](https://docs.astral.sh/uv/guides/install-python/):
+
+```yaml
+- name: Install the latest version of uv
+  uses: eifinger/setup-uv@v1
+  with:
+    enable-cache: true
+- name: Install Python 3.12
+  run: uv python install 3.12
+```
+
 ### What is the default version?
 
 By default this action installs the version defined as `default` in `action.yml`.
