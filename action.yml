@@ -4,7 +4,7 @@ author: 'eifinger'
 inputs:
   version: 
     description: 'The version of uv to install'
-    default: '0.3.5'
+    default: '0.4.0'
   checksum:
     description: 'The checksum of the uv version to install'
     required: false
