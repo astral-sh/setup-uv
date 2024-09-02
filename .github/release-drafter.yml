@@ -19,6 +19,7 @@ categories:
     labels:
       - "maintenance"
       - "ci"
+      - "default-version-update"
   - title: "📚 Documentation"
     labels:
       - "documentation"
@@ -41,6 +42,7 @@ version-resolver:
     labels:
       - 'patch'
       - 'bugfix'
+      - "default-version-update"
   default: patch
 template: |
   ## Changes

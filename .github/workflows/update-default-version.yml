@@ -21,6 +21,6 @@ jobs:
             title: "chore: update default version to ${{ steps.update-default-version.outputs.latest-version }}"
             body: "chore: update default version to ${{ steps.update-default-version.outputs.latest-version }}"
             base: main
-            labels: "automated-pr,bugfix"
+            labels: "automated-pr,default-version-update"
             branch: update-default-version-pr
             delete-branch: true
