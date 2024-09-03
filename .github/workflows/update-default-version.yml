@@ -15,7 +15,7 @@ jobs:
         run: node dist/update-default-version/index.js src/download/checksum/known-checksums.ts action.yml ${{ secrets.GITHUB_TOKEN }}
       - run: npm install && npm run all
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c  # v6.1.0
+        uses: peter-evans/create-pull-request@4320041ed380b20e97d388d56a7fb4f9b8c20e79  # v7.0.0
         with:
             commit-message: "chore: update checksums"
             title: "chore: update default version to ${{ steps.update-default-version.outputs.latest-version }}"
