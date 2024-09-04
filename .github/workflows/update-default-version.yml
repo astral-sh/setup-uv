@@ -12,15 +12,22 @@ jobs:
           node-version: '20'
       - name: Update default version and checksums
         id: update-default-version
-        run: node dist/update-default-version/index.js src/download/checksum/known-checksums.ts action.yml ${{ secrets.GITHUB_TOKEN }}
+        run:
+          node dist/update-default-version/index.js
+          src/download/checksum/known-checksums.ts action.yml ${{
+          secrets.GITHUB_TOKEN }}
       - run: npm install && npm run all
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@4320041ed380b20e97d388d56a7fb4f9b8c20e79  # v7.0.0
+        uses: peter-evans/create-pull-request@4320041ed380b20e97d388d56a7fb4f9b8c20e79 # v7.0.0
         with:
-            commit-message: "chore: update checksums"
-            title: "chore: update default version to ${{ steps.update-default-version.outputs.latest-version }}"
-            body: "chore: update default version to ${{ steps.update-default-version.outputs.latest-version }}"
-            base: main
-            labels: "automated-pr,default-version-update"
-            branch: update-default-version-pr
-            delete-branch: true
+          commit-message: 'chore: update checksums'
+          title:
+            'chore: update default version to ${{
+            steps.update-default-version.outputs.latest-version }}'
+          body:
+            'chore: update default version to ${{
+            steps.update-default-version.outputs.latest-version }}'
+          base: main
+          labels: 'automated-pr,default-version-update'
+          branch: update-default-version-pr
+          delete-branch: true

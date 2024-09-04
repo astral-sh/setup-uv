@@ -2,24 +2,24 @@
 
 Set up your GitHub Actions workflow with a specific version of [uv](https://docs.astral.sh/uv/).
 
-* Install a version of uv and add it to the path
-* Cache the installed version of uv to speed up consecutive runs on self-hosted runners
-* Register problem matchers for error output
-* Optional: Cache the uv cache
-* Optional: Verify the checksum of the downloaded uv executable
+- Install a version of uv and add it to the path
+- Cache the installed version of uv to speed up consecutive runs on self-hosted runners
+- Register problem matchers for error output
+- Optional: Cache the uv cache
+- Optional: Verify the checksum of the downloaded uv executable
 
 ## Contents
 
-* [Usage](#usage)
-  * [Install specific version](#install-specific-version)
-  * [Install latest version](#install-latest-version)
-  * [Validate checksum](#validate-checksum)
-  * [Enable Caching](#enable-caching)
-    * [Local cache path](#local-cache-path)
-    * [Cache dependency glob](#cache-dependency-glob)
-  * [API rate limit](#api-rate-limit)
-* [How it works](#how-it-works)
-* [FAQ](#faq)
+- [Usage](#usage)
+  - [Install specific version](#install-specific-version)
+  - [Install latest version](#install-latest-version)
+  - [Validate checksum](#validate-checksum)
+  - [Enable Caching](#enable-caching)
+    - [Local cache path](#local-cache-path)
+    - [Cache dependency glob](#cache-dependency-glob)
+  - [API rate limit](#api-rate-limit)
+- [How it works](#how-it-works)
+- [FAQ](#faq)
 
 ## Usage
 
