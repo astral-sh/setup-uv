@@ -17,7 +17,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/eifinger/setup-uv.git"
+    "url": "git+https://github.com/astral-sh/setup-uv.git"
   },
   "keywords": [
     "actions",

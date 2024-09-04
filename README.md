@@ -31,9 +31,9 @@ You can also specify a specific version of uv
 
 ```yaml
 - name: Install a specific version
-  uses: eifinger/setup-uv@v1
+  uses: astral-sh/setup-uv@v1
   with:
-    version: '0.3.0'
+    version: '0.4.4'
 ```
 
 ### Install latest version
@@ -49,7 +49,7 @@ If you don't want to wait for a new release of this action you can use use `vers
 
 ```yaml
 - name: Install a specific version
-  uses: eifinger/setup-uv@v1
+  uses: astral-sh/setup-uv@v1
   with:
     version: 'latest'
 ```
@@ -63,7 +63,7 @@ of the uv repo.
 
 ```yaml
 - name: Install a specific version and validate the checksum
-  uses: eifinger/setup-uv@v1
+  uses: astral-sh/setup-uv@v1
   with:
     version: '0.3.1'
     checksum: 'e11b01402ab645392c7ad6044db63d37e4fd1e745e015306993b07695ea5f9f8'
@@ -80,7 +80,7 @@ You can optionally define a custom cache key suffix.
 ```yaml
 - name: Enable caching and define a custom cache key suffix
   id: setup-uv
-  uses: eifinger/setup-uv@v1
+  uses: astral-sh/setup-uv@v1
   with:
     enable-cache: true
     cache-suffix: 'optional-suffix'
@@ -102,7 +102,7 @@ you can specify the path with the `cache-local-path` input.
 
 ```yaml
 - name: Define a custom uv cache path
-  uses: eifinger/setup-uv@v1
+  uses: astral-sh/setup-uv@v1
   with:
     enable-cache: true
     cache-local-path: '/path/to/cache'
@@ -116,7 +116,7 @@ The glob matches files relative to the repository root.
 
 ```yaml
 - name: Define a cache dependency glob
-  uses: eifinger/setup-uv@v1
+  uses: astral-sh/setup-uv@v1
   with:
     enable-cache: true
     cache-dependency-glob: 'uv.lock'
@@ -124,7 +124,7 @@ The glob matches files relative to the repository root.
 
 ```yaml
 - name: Define a cache dependency glob
-  uses: eifinger/setup-uv@v1
+  uses: astral-sh/setup-uv@v1
   with:
     enable-cache: true
     cache-dependency-glob: '**requirements*.txt'
@@ -136,7 +136,7 @@ To avoid hitting the error `API rate limit exceeded` you can supply a GitHub tok
 
 ```yaml
 - name: Install uv and supply a GitHub token
-  uses: eifinger/setup-uv@v1
+  uses: astral-sh/setup-uv@v1
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -159,7 +159,7 @@ A simple example workflow could look like this:
 - name: Checkout the repository
   uses: actions/checkout@main
 - name: Install the latest version of uv
-  uses: eifinger/setup-uv@v1
+  uses: astral-sh/setup-uv@v1
   with:
     enable-cache: true
 - name: Test
@@ -170,7 +170,7 @@ If you want to have a specific python version installed you can use the command 
 
 ```yaml
 - name: Install the latest version of uv
-  uses: eifinger/setup-uv@v1
+  uses: astral-sh/setup-uv@v1
   with:
     enable-cache: true
 - name: Install Python 3.12
@@ -189,12 +189,12 @@ If you have to know the version installed for other steps of your workflow you c
   uses: actions/checkout@main
 - name: Install the default version of uv
   id: setup-uv
-  uses: eifinger/setup-uv@v1
+  uses: astral-sh/setup-uv@v1
 - name: Print the installed version
   run: echo "Installed uv version is ${{ steps.setup-uv.outputs.uv-version }}"
 ```
 
 ---
 
-[<img src="https://raw.githubusercontent.com/eifinger/setup-uv/main/docs/images/bmc-button.svg" width=150 height=40 style="margin: 5px"/>](https://www.buymeacoffee.com/eifinger)
-[<img src="https://raw.githubusercontent.com/eifinger/setup-uv/main/docs/images/paypal-button.svg" width=150 height=40 style="margin: 5px"/>](https://paypal.me/kevinstillhammer)
+[<img src="https://raw.githubusercontent.com/astral-sh/setup-uv/main/docs/images/bmc-button.svg" width=150 height=40 style="margin: 5px"/>](https://www.buymeacoffee.com/eifinger)
+[<img src="https://raw.githubusercontent.com/astral-sh/setup-uv/main/docs/images/paypal-button.svg" width=150 height=40 style="margin: 5px"/>](https://paypal.me/kevinstillhammer)
