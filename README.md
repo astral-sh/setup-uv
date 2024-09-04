@@ -40,7 +40,7 @@ You can also specify a specific version of uv
 
 By default this action installs the version defined as `default` in `action.yml`.
 This gets automatically updated in a new release of this action when a new version of uv is released.
-If you don't want to wait for a new release of this action you can use use `version: latest`.
+If you don't want to wait for a new release of this action you can use `version: latest`.
 
 > [!WARNING]  
 > Using the `latest` version means that the uv executable gets downloaded every single time instead of loaded from the tools cache.
@@ -179,7 +179,7 @@ If you want to have a specific python version installed you can use the command 
 
 ### What is the default version?
 
-By default this action installs the version defined as `default` in `action.yml`.
+By default, this action installs the version defined as `default` in `action.yml`.
 When a new release of uv is published this triggers an automatic release of this action with the new version as `default`.
 
 If you have to know the version installed for other steps of your workflow you can use the `uv-version` output:
@@ -194,7 +194,18 @@ If you have to know the version installed for other steps of your workflow you c
   run: echo "Installed uv version is ${{ steps.setup-uv.outputs.uv-version }}"
 ```
 
----
+## Acknowledgements
 
-[<img src="https://raw.githubusercontent.com/astral-sh/setup-uv/main/docs/images/bmc-button.svg" width=150 height=40 style="margin: 5px"/>](https://www.buymeacoffee.com/eifinger)
-[<img src="https://raw.githubusercontent.com/astral-sh/setup-uv/main/docs/images/paypal-button.svg" width=150 height=40 style="margin: 5px"/>](https://paypal.me/kevinstillhammer)
+`setup-uv` was initially written and published by [Kevin Stillhammer](https://github.com/eifinger)
+before moving under the official [Astral](https://github.com/astral-sh) GitHub organization. You
+can support Kevin's work in open source on [Buy me a coffee](https://www.buymeacoffee.com/eifinger) or [PayPal](https://paypal.me/kevinstillhammer).
+
+## License
+
+MIT
+
+<div align="center">
+  <a target="_blank" href="https://astral.sh" style="background:none">
+    <img src="https://raw.githubusercontent.com/astral-sh/uv/main/assets/svg/Astral.svg" alt="Made by Astral">
+  </a>
+</div>
