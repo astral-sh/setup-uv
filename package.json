@@ -6,8 +6,8 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "format": "prettier --write '**/*.ts'",
-    "format-check": "prettier --check '**/*.ts'",
+    "format": "prettier --write .",
+    "format-check": "prettier --check .",
     "lint": "eslint src/**/*.ts --fix",
     "package": "ncc build -o dist/setup src/setup-uv.ts && ncc build -o dist/save-cache src/save-cache.ts && ncc build -o dist/update-default-version src/update-default-version.ts",
     "test": "jest",

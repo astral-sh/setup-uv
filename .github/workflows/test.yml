@@ -42,7 +42,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, macos-14, oracle-aarch64]
-        uv-version: ['latest','0.3.0','0.3.2']
+        uv-version: ['latest', '0.3.0', '0.3.2']
     steps:
       - uses: actions/checkout@v4
       - name: Install version ${{ matrix.uv-version }}
@@ -57,7 +57,8 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, oracle-aarch64]
-        checksum: ['4d9279ad5ca596b1e2d703901d508430eb07564dc4d8837de9e2fca9c90f8ecd']
+        checksum:
+          ['4d9279ad5ca596b1e2d703901d508430eb07564dc4d8837de9e2fca9c90f8ecd']
         exclude:
           - os: oracle-aarch64
             checksum: '4d9279ad5ca596b1e2d703901d508430eb07564dc4d8837de9e2fca9c90f8ecd'

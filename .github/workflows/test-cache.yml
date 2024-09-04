@@ -36,8 +36,8 @@ jobs:
         id: restore
         uses: ./
         with:
-            enable-cache: true
-            cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}
+          enable-cache: true
+          cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}
       - name: Cache was hit
         run: |
           if [ "$CACHE_HIT" != "true" ]; then
@@ -69,9 +69,9 @@ jobs:
         id: restore
         uses: ./
         with:
-            enable-cache: true
-            cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}
-            cache-local-path: /tmp/uv-cache
+          enable-cache: true
+          cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}
+          cache-local-path: /tmp/uv-cache
       - name: Cache was hit
         run: |
           if [ "$CACHE_HIT" != "true" ]; then

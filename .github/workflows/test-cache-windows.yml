@@ -36,8 +36,8 @@ jobs:
         id: restore
         uses: ./
         with:
-            enable-cache: true
-            cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}
+          enable-cache: true
+          cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}
       - name: Cache was hit
         run: |
           if ($env:CACHE_HIT -ne "true") {
