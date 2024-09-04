@@ -1,4 +1,4 @@
-name: 'Update default version and checksums'
+name: "Update default version and checksums"
 on:
   workflow_dispatch:
 
@@ -9,7 +9,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
       - name: Update default version and checksums
         id: update-default-version
         run:
@@ -20,14 +20,14 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@4320041ed380b20e97d388d56a7fb4f9b8c20e79 # v7.0.0
         with:
-          commit-message: 'chore: update checksums'
+          commit-message: "chore: update checksums"
           title:
-            'chore: update default version to ${{
-            steps.update-default-version.outputs.latest-version }}'
+            "chore: update default version to ${{
+            steps.update-default-version.outputs.latest-version }}"
           body:
-            'chore: update default version to ${{
-            steps.update-default-version.outputs.latest-version }}'
+            "chore: update default version to ${{
+            steps.update-default-version.outputs.latest-version }}"
           base: main
-          labels: 'automated-pr,default-version-update'
+          labels: "automated-pr,default-version-update"
           branch: update-default-version-pr
           delete-branch: true

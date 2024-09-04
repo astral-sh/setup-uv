@@ -1,4 +1,4 @@
-name: 'test-cache'
+name: "test-cache"
 on:
   pull_request:
   push:
