@@ -1,4 +1,4 @@
-name: 'test-windows'
+name: "test-windows"
 on:
   pull_request:
   push:

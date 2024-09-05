@@ -82795,9 +82795,9 @@ const core = __importStar(__nccwpck_require__(2186));
 const path_1 = __importDefault(__nccwpck_require__(1017));
 const inputs_1 = __nccwpck_require__(9378);
 const platforms_1 = __nccwpck_require__(6005);
-exports.STATE_CACHE_KEY = 'cache-key';
-exports.STATE_CACHE_MATCHED_KEY = 'cache-matched-key';
-const CACHE_VERSION = '1';
+exports.STATE_CACHE_KEY = "cache-key";
+exports.STATE_CACHE_MATCHED_KEY = "cache-matched-key";
+const CACHE_VERSION = "1";
 function restoreCache(version) {
     return __awaiter(this, void 0, void 0, function* () {
         const cacheKey = yield computeKeys(version);
@@ -82809,7 +82809,7 @@ function restoreCache(version) {
         catch (err) {
             const message = err.message;
             core.warning(message);
-            core.setOutput('cache-hit', false);
+            core.setOutput("cache-hit", false);
             return;
         }
         core.saveState(exports.STATE_CACHE_KEY, cacheKey);
@@ -82819,30 +82819,30 @@ function restoreCache(version) {
 exports.restoreCache = restoreCache;
 function computeKeys(version) {
     return __awaiter(this, void 0, void 0, function* () {
-        let cacheDependencyPathHash = '-';
-        if (inputs_1.cacheDependencyGlob !== '') {
-            const fullCacheDependencyGlob = `${process.env['GITHUB_WORKSPACE']}${path_1.default.sep}${inputs_1.cacheDependencyGlob}`;
+        let cacheDependencyPathHash = "-";
+        if (inputs_1.cacheDependencyGlob !== "") {
+            const fullCacheDependencyGlob = `${process.env["GITHUB_WORKSPACE"]}${path_1.default.sep}${inputs_1.cacheDependencyGlob}`;
             cacheDependencyPathHash += yield glob.hashFiles(fullCacheDependencyGlob);
-            if (cacheDependencyPathHash === '-') {
+            if (cacheDependencyPathHash === "-") {
                 throw new Error(`No file in ${process.cwd()} matched to [${inputs_1.cacheDependencyGlob}], make sure you have checked out the target repository`);
             }
         }
         else {
-            cacheDependencyPathHash += 'no-dependency-glob';
+            cacheDependencyPathHash += "no-dependency-glob";
         }
-        const suffix = inputs_1.cacheSuffix ? `-${inputs_1.cacheSuffix}` : '';
+        const suffix = inputs_1.cacheSuffix ? `-${inputs_1.cacheSuffix}` : "";
         return `setup-uv-${CACHE_VERSION}-${(0, platforms_1.getArch)()}-${(0, platforms_1.getPlatform)()}-${version}${cacheDependencyPathHash}${suffix}`;
     });
 }
 function handleMatchResult(matchedKey, primaryKey) {
     if (!matchedKey) {
         core.info(`No GitHub Actions cache found for key: ${primaryKey}`);
-        core.setOutput('cache-hit', false);
+        core.setOutput("cache-hit", false);
         return;
     }
     core.saveState(exports.STATE_CACHE_MATCHED_KEY, matchedKey);
     core.info(`uv cache restored from GitHub Actions cache with key: ${matchedKey}`);
-    core.setOutput('cache-hit', true);
+    core.setOutput("cache-hit", true);
 }
 
 
@@ -82912,7 +82912,7 @@ function saveCache() {
         const cacheKey = core.getState(restore_cache_1.STATE_CACHE_KEY);
         const matchedKey = core.getState(restore_cache_1.STATE_CACHE_MATCHED_KEY);
         if (!cacheKey) {
-            core.warning('Error retrieving cache key from state.');
+            core.warning("Error retrieving cache key from state.");
             return;
         }
         else if (matchedKey === cacheKey) {
@@ -82928,11 +82928,11 @@ function saveCache() {
 function pruneCache() {
     return __awaiter(this, void 0, void 0, function* () {
         const options = {
-            silent: !core.isDebug()
+            silent: !core.isDebug(),
         };
-        const execArgs = ['cache', 'prune', '--ci'];
-        core.info('Pruning cache...');
-        yield exec.exec('uv', execArgs, options);
+        const execArgs = ["cache", "prune", "--ci"];
+        core.info("Pruning cache...");
+        yield exec.exec("uv", execArgs, options);
     });
 }
 run();
@@ -82971,13 +82971,13 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.cacheDependencyGlob = exports.githubToken = exports.cacheLocalPath = exports.cacheSuffix = exports.enableCache = exports.checkSum = exports.version = void 0;
 const core = __importStar(__nccwpck_require__(2186));
-exports.version = core.getInput('version');
-exports.checkSum = core.getInput('checksum');
-exports.enableCache = core.getInput('enable-cache') === 'true';
-exports.cacheSuffix = core.getInput('cache-suffix') || '';
-exports.cacheLocalPath = core.getInput('cache-local-path');
-exports.githubToken = core.getInput('github-token');
-exports.cacheDependencyGlob = core.getInput('cache-dependency-glob');
+exports.version = core.getInput("version");
+exports.checkSum = core.getInput("checksum");
+exports.enableCache = core.getInput("enable-cache") === "true";
+exports.cacheSuffix = core.getInput("cache-suffix") || "";
+exports.cacheLocalPath = core.getInput("cache-local-path");
+exports.githubToken = core.getInput("github-token");
+exports.cacheDependencyGlob = core.getInput("cache-dependency-glob");
 
 
 /***/ }),
@@ -82992,9 +82992,9 @@ exports.getPlatform = exports.getArch = void 0;
 function getArch() {
     const arch = process.arch;
     const archMapping = {
-        ia32: 'i686',
-        x64: 'x86_64',
-        arm64: 'aarch64'
+        ia32: "i686",
+        x64: "x86_64",
+        arm64: "aarch64",
     };
     if (arch in archMapping) {
         return archMapping[arch];
@@ -83004,9 +83004,9 @@ exports.getArch = getArch;
 function getPlatform() {
     const platform = process.platform;
     const platformMapping = {
-        linux: 'unknown-linux-gnu',
-        darwin: 'apple-darwin',
-        win32: 'pc-windows-msvc'
+        linux: "unknown-linux-gnu",
+        darwin: "apple-darwin",
+        win32: "pc-windows-msvc",
     };
     if (platform in platformMapping) {
         return platformMapping[platform];
