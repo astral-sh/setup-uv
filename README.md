@@ -153,7 +153,7 @@ by name (`uv`).
 
 No. This action is modelled as a drop-in replacement for `actions/setup-python` when using uv. With
 `setup-uv`, you can install a specific version of Python using `uv python install` rather than
-relaying on `actions/setup-python`.
+relying on `actions/setup-python`.
 
 For example:
 
