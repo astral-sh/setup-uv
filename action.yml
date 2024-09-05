@@ -1,38 +1,42 @@
-name: 'Python setup uv'
-description: 'Set up your GitHub Actions workflow with a specific version of uv'
-author: 'eifinger'
+name: "Python setup uv"
+description: "Set up your GitHub Actions workflow with a specific version of uv"
+author: "eifinger"
 inputs:
-  version: 
-    description: 'The version of uv to install'
-    default: '0.3.3'
+  version:
+    description: "The version of uv to install"
+    default: "latest"
   checksum:
-    description: 'The checksum of the uv version to install'
+    description: "The checksum of the uv version to install"
     required: false
   github-token:
-    description: 'Used to increase the rate limit when retrieving versions and downloading uv.'
+    description:
+      "Used to increase the rate limit when retrieving versions and downloading
+      uv."
     required: false
   enable-cache:
-    description: 'Enable caching of the uv cache'
-    default: 'false'
+    description: "Enable caching of the uv cache"
+    default: "false"
   cache-dependency-glob:
-    description: 'Glob pattern to match files relative to the repository root to control the cache. e.g. "uv.lock"'
+    description:
+      'Glob pattern to match files relative to the repository root to control
+      the cache. e.g. "uv.lock"'
     required: false
   cache-suffix:
-    description: 'Suffix for the cache key'
+    description: "Suffix for the cache key"
     required: false
   cache-local-path:
-    description: 'Local path to store the cache.'
-    default: '/tmp/setup-uv-cache'
+    description: "Local path to store the cache."
+    default: "/tmp/setup-uv-cache"
 outputs:
   uv-version:
     description: "The installed uv version. Useful when using latest."
   cache-hit:
     description: "A boolean value to indicate a cache entry was found"
 runs:
-  using: 'node20'
-  main: 'dist/setup/index.js'
-  post: 'dist/save-cache/index.js'
+  using: "node20"
+  main: "dist/setup/index.js"
+  post: "dist/save-cache/index.js"
   post-if: success()
 branding:
-  icon: 'package'
-  color: 'blue'
+  icon: "package"
+  color: "blue"
