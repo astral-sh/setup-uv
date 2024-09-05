@@ -48,6 +48,46 @@ jobs:
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
 
+  test-setup-cache-dependency-glob:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup with cache
+        uses: ./
+        with:
+          enable-cache: true
+          cache-dependency-glob: |
+            __tests__/fixtures/uv-project/uv.lock
+            **/pyproject.toml
+          cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}
+      - run: uv sync
+        working-directory: __tests__/fixtures/uv-project
+  test-restore-cache-dependency-glob:
+    runs-on: ubuntu-latest
+    needs: test-setup-cache-dependency-glob
+    steps:
+      - uses: actions/checkout@v4
+      - name: Change pyproject.toml
+        run: |
+          echo '[tool.uv]' >> __tests__/fixtures/uv-project/pyproject.toml
+          echo 'dev-dependencies = []' >> __tests__/fixtures/uv-project/pyproject.toml
+      - name: Restore with cache
+        id: restore
+        uses: ./
+        with:
+          enable-cache: true
+          cache-dependency-glob: |
+            __tests__/fixtures/uv-project/uv.lock
+            **/pyproject.toml
+          cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Cache was not hit
+        run: |
+          if [ "$CACHE_HIT" == "true" ]; then
+            exit 1
+          fi
+        env:
+          CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
+
   test-setup-cache-local:
     runs-on: oracle-aarch64
     steps:
