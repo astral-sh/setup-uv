@@ -32707,7 +32707,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.updateChecksums = void 0;
+exports.updateChecksums = updateChecksums;
 const fs_1 = __nccwpck_require__(7147);
 const tc = __importStar(__nccwpck_require__(7784));
 function updateChecksums(filePath, downloadUrls) {
@@ -32728,7 +32728,6 @@ function updateChecksums(filePath, downloadUrls) {
         yield fs_1.promises.appendFile(filePath, "}\n");
     });
 }
-exports.updateChecksums = updateChecksums;
 function getKey(downloadUrl) {
     // https://github.com/astral-sh/uv/releases/download/0.3.2/uv-aarch64-apple-darwin.tar.gz.sha256
     const parts = downloadUrl.split("/");

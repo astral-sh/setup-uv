@@ -82788,7 +82788,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.restoreCache = exports.STATE_CACHE_MATCHED_KEY = exports.STATE_CACHE_KEY = void 0;
+exports.STATE_CACHE_MATCHED_KEY = exports.STATE_CACHE_KEY = void 0;
+exports.restoreCache = restoreCache;
 const cache = __importStar(__nccwpck_require__(7799));
 const glob = __importStar(__nccwpck_require__(8090));
 const core = __importStar(__nccwpck_require__(2186));
@@ -82816,7 +82817,6 @@ function restoreCache(version) {
         handleMatchResult(matchedKey, cacheKey);
     });
 }
-exports.restoreCache = restoreCache;
 function computeKeys(version) {
     return __awaiter(this, void 0, void 0, function* () {
         let cacheDependencyPathHash = "-";
@@ -82886,7 +82886,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.run = void 0;
+exports.run = run;
 const cache = __importStar(__nccwpck_require__(7799));
 const core = __importStar(__nccwpck_require__(2186));
 const exec = __importStar(__nccwpck_require__(1514));
@@ -82906,7 +82906,6 @@ function run() {
         process.exit(0);
     });
 }
-exports.run = run;
 function saveCache() {
     return __awaiter(this, void 0, void 0, function* () {
         const cacheKey = core.getState(restore_cache_1.STATE_CACHE_KEY);
@@ -82988,7 +82987,8 @@ exports.cacheDependencyGlob = core.getInput("cache-dependency-glob");
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getPlatform = exports.getArch = void 0;
+exports.getArch = getArch;
+exports.getPlatform = getPlatform;
 function getArch() {
     const arch = process.arch;
     const archMapping = {
@@ -83000,7 +83000,6 @@ function getArch() {
         return archMapping[arch];
     }
 }
-exports.getArch = getArch;
 function getPlatform() {
     const platform = process.platform;
     const platformMapping = {
@@ -83012,7 +83011,6 @@ function getPlatform() {
         return platformMapping[platform];
     }
 }
-exports.getPlatform = getPlatform;
 
 
 /***/ }),
