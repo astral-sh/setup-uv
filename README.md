@@ -23,9 +23,6 @@ Set up your GitHub Actions workflow with a specific version of [uv](https://docs
 
 ## Usage
 
-Example workflow in a real world project can be found
-[here](https://github.com/eifinger/hass-weenect/blob/main/.github/workflows/ci.yml)
-
 ### Install the latest version (default)
 
 ```yaml
@@ -35,9 +32,14 @@ Example workflow in a real world project can be found
     version: "latest"
 ```
 
-> [!TIP] Using `latest` requires that uv download the executable on every run, which incurs a cost
-> (especially on self-hosted runners). As an alternative, consider pinning the version to a specific
-> release.
+For an example workflow, see
+[here](https://github.com/charliermarsh/autobot/blob/e42c66659bf97b90ca9ff305a19cc99952d0d43f/.github/workflows/ci.yaml).
+
+> [!TIP]
+>
+> Using `latest` requires that uv download the executable on every run, which incurs a cost
+> (especially on self-hosted runners). As a best practice, consider pinning the version to a
+> specific release.
 
 ### Install a specific version
 
@@ -125,7 +127,7 @@ changes. The glob matches files relative to the repository root.
 
 ### API rate limit
 
-To avoid hitting the error `API rate limit exceeded`, supply a GitHub token with the `github-token`
+To avoid hitting the `API rate limit exceeded` error, supply a GitHub token via the `github-token`
 input.
 
 ```yaml
@@ -147,9 +149,11 @@ by name (`uv`).
 
 ## FAQ
 
-### Do I still need actions/setup-python when using this action?
+### Do I still need `actions/setup-python` alongside `setup-uv`?
 
-No! This action was modelled as a drop-in replacement for `actions/setup-python` when using uv.
+No. This action is modelled as a drop-in replacement for `actions/setup-python` when using uv. With
+`setup-uv`, you can install a specific version of Python using `uv python install` rather than
+relaying on `actions/setup-python`.
 
 For example:
 
