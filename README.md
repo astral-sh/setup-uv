@@ -142,7 +142,7 @@ This action downloads uv from the uv repo's official
 [GitHub Actions Toolkit](https://github.com/actions/toolkit) to cache it as a tool to speed up
 consecutive runs on self-hosted runners.
 
-The installed version of uv is then added to the runner path, enabling subsequent steps to invoke it
+The installed version of uv is then added to the runner PATH, enabling subsequent steps to invoke it
 by name (`uv`).
 
 ## FAQ
