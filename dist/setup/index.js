@@ -83685,7 +83685,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.restoreCache = exports.STATE_CACHE_MATCHED_KEY = exports.STATE_CACHE_KEY = void 0;
+exports.STATE_CACHE_MATCHED_KEY = exports.STATE_CACHE_KEY = void 0;
+exports.restoreCache = restoreCache;
 const cache = __importStar(__nccwpck_require__(7799));
 const glob = __importStar(__nccwpck_require__(8090));
 const core = __importStar(__nccwpck_require__(2186));
@@ -83713,7 +83714,6 @@ function restoreCache(version) {
         handleMatchResult(matchedKey, cacheKey);
     });
 }
-exports.restoreCache = restoreCache;
 function computeKeys(version) {
     return __awaiter(this, void 0, void 0, function* () {
         let cacheDependencyPathHash = "-";
@@ -83783,7 +83783,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.isknownVersion = exports.validateChecksum = void 0;
+exports.validateChecksum = validateChecksum;
+exports.isknownVersion = isknownVersion;
 const fs = __importStar(__nccwpck_require__(7147));
 const crypto = __importStar(__nccwpck_require__(6113));
 const core = __importStar(__nccwpck_require__(2186));
@@ -83812,7 +83813,6 @@ function validateChecksum(checkSum, downloadPath, arch, platform, version) {
         core.debug(`Checksum for ${downloadPath} is valid.`);
     });
 }
-exports.validateChecksum = validateChecksum;
 function validateFileCheckSum(filePath, expected) {
     return __awaiter(this, void 0, void 0, function* () {
         return new Promise((resolve, reject) => {
@@ -83831,7 +83831,6 @@ function isknownVersion(version) {
     const pattern = new RegExp(`^.*-.*-${version}$`);
     return Object.keys(known_checksums_1.KNOWN_CHECKSUMS).some((key) => pattern.test(key));
 }
-exports.isknownVersion = isknownVersion;
 
 
 /***/ }),
@@ -85538,7 +85537,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.downloadLatest = void 0;
+exports.downloadLatest = downloadLatest;
 const core = __importStar(__nccwpck_require__(2186));
 const tc = __importStar(__nccwpck_require__(7784));
 const exec = __importStar(__nccwpck_require__(1514));
@@ -85575,7 +85574,6 @@ function downloadLatest(platform, arch, checkSum, githubToken) {
         return { cachedToolDir, version };
     });
 }
-exports.downloadLatest = downloadLatest;
 function getVersion(uvExecutablePath) {
     return __awaiter(this, void 0, void 0, function* () {
         // Parse the output of `uv --version` to get the version
@@ -85638,7 +85636,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.downloadVersion = exports.tryGetFromToolCache = void 0;
+exports.tryGetFromToolCache = tryGetFromToolCache;
+exports.downloadVersion = downloadVersion;
 const core = __importStar(__nccwpck_require__(2186));
 const tc = __importStar(__nccwpck_require__(7784));
 const path = __importStar(__nccwpck_require__(1017));
@@ -85650,7 +85649,6 @@ function tryGetFromToolCache(arch, version) {
     core.debug(`Cached versions: ${cachedVersions}`);
     return tc.find(utils_1.TOOL_CACHE_NAME, version, arch);
 }
-exports.tryGetFromToolCache = tryGetFromToolCache;
 function downloadVersion(platform, arch, version, checkSum, githubToken) {
     return __awaiter(this, void 0, void 0, function* () {
         const artifact = `uv-${arch}-${platform}`;
@@ -85676,7 +85674,6 @@ function downloadVersion(platform, arch, version, checkSum, githubToken) {
         return yield tc.cacheDir(uvDir, utils_1.TOOL_CACHE_NAME, version, arch);
     });
 }
-exports.downloadVersion = downloadVersion;
 
 
 /***/ }),
@@ -85840,7 +85837,8 @@ exports.cacheDependencyGlob = core.getInput("cache-dependency-glob");
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getPlatform = exports.getArch = void 0;
+exports.getArch = getArch;
+exports.getPlatform = getPlatform;
 function getArch() {
     const arch = process.arch;
     const archMapping = {
@@ -85852,7 +85850,6 @@ function getArch() {
         return archMapping[arch];
     }
 }
-exports.getArch = getArch;
 function getPlatform() {
     const platform = process.platform;
     const platformMapping = {
@@ -85864,7 +85861,6 @@ function getPlatform() {
         return platformMapping[platform];
     }
 }
-exports.getPlatform = getPlatform;
 
 
 /***/ }),
