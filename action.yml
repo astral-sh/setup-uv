@@ -1,6 +1,6 @@
-name: "Python setup uv"
-description: "Set up your GitHub Actions workflow with a specific version of uv"
-author: "eifinger"
+name: "Setup uv"
+description: "Set up your GitHub Actions workflow with a specific version of uv."
+author: "astral-sh"
 inputs:
   version:
     description: "The version of uv to install"
@@ -39,4 +39,4 @@ runs:
   post-if: success()
 branding:
   icon: "package"
-  color: "blue"
+  color: "black"
