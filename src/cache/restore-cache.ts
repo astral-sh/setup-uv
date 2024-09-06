@@ -1,7 +1,6 @@
 import * as cache from "@actions/cache";
 import * as glob from "@actions/glob";
 import * as core from "@actions/core";
-import path from "path";
 import {
   cacheDependencyGlob,
   cacheLocalPath,
@@ -37,11 +36,18 @@ export async function restoreCache(version: string): Promise<void> {
 async function computeKeys(version: string): Promise<string> {
   let cacheDependencyPathHash = "-";
   if (cacheDependencyGlob !== "") {
-    const fullCacheDependencyGlob = `${process.env["GITHUB_WORKSPACE"]}${path.sep}${cacheDependencyGlob}`;
-    cacheDependencyPathHash += await glob.hashFiles(fullCacheDependencyGlob);
+    core.info(
+      `Searching files using cache dependency glob: ${cacheDependencyGlob.split("\n").join(",")}`,
+    );
+    cacheDependencyPathHash += await glob.hashFiles(
+      cacheDependencyGlob,
+      undefined,
+      undefined,
+      true,
+    );
     if (cacheDependencyPathHash === "-") {
       throw new Error(
-        `No file in ${process.cwd()} matched to [${cacheDependencyGlob}], make sure you have checked out the target repository`,
+        `No file in ${process.cwd()} matched to [${cacheDependencyGlob.split("\n").join(",")}], make sure you have checked out the target repository`,
       );
     }
   } else {

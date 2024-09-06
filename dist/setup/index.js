@@ -83722,16 +83722,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.STATE_CACHE_MATCHED_KEY = exports.STATE_CACHE_KEY = void 0;
 exports.restoreCache = restoreCache;
 const cache = __importStar(__nccwpck_require__(7799));
 const glob = __importStar(__nccwpck_require__(8090));
 const core = __importStar(__nccwpck_require__(2186));
-const path_1 = __importDefault(__nccwpck_require__(1017));
 const inputs_1 = __nccwpck_require__(9378);
 const platforms_1 = __nccwpck_require__(6005);
 exports.STATE_CACHE_KEY = "cache-key";
@@ -83759,10 +83755,10 @@ function computeKeys(version) {
     return __awaiter(this, void 0, void 0, function* () {
         let cacheDependencyPathHash = "-";
         if (inputs_1.cacheDependencyGlob !== "") {
-            const fullCacheDependencyGlob = `${process.env["GITHUB_WORKSPACE"]}${path_1.default.sep}${inputs_1.cacheDependencyGlob}`;
-            cacheDependencyPathHash += yield glob.hashFiles(fullCacheDependencyGlob);
+            core.info(`Searching files using cache dependency glob: ${inputs_1.cacheDependencyGlob.split("\n").join(",")}`);
+            cacheDependencyPathHash += yield glob.hashFiles(inputs_1.cacheDependencyGlob, undefined, undefined, true);
             if (cacheDependencyPathHash === "-") {
-                throw new Error(`No file in ${process.cwd()} matched to [${inputs_1.cacheDependencyGlob}], make sure you have checked out the target repository`);
+                throw new Error(`No file in ${process.cwd()} matched to [${inputs_1.cacheDependencyGlob.split("\n").join(",")}], make sure you have checked out the target repository`);
             }
         }
         else {

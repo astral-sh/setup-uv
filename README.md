@@ -125,6 +125,16 @@ changes. The glob matches files relative to the repository root.
     cache-dependency-glob: "**requirements*.txt"
 ```
 
+```yaml
+- name: Define a list of cache dependency globs
+  uses: astral-sh/setup-uv@v1
+  with:
+    enable-cache: true
+    cache-dependency-glob: |
+      '**requirements*.txt'
+      '**pyproject.toml'
+```
+
 ### API rate limit
 
 To avoid hitting the `API rate limit exceeded` error, supply a GitHub token via the `github-token`
