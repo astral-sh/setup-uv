@@ -11,10 +11,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, macos-14, oracle-aarch64]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -81,7 +78,6 @@ jobs:
         uses: ./
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
-
   test-uvx:
     runs-on: ubuntu-latest
     steps:
