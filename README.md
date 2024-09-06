@@ -27,7 +27,7 @@ Set up your GitHub Actions workflow with a specific version of [uv](https://docs
 
 ```yaml
 - name: Install the latest version of uv
-  uses: astral-sh/setup-uv@v1
+  uses: astral-sh/setup-uv@v2
   with:
     version: "latest"
 ```
@@ -45,7 +45,7 @@ For an example workflow, see
 
 ```yaml
 - name: Install a specific version of uv
-  uses: astral-sh/setup-uv@v1
+  uses: astral-sh/setup-uv@v2
   with:
     version: "0.4.4"
 ```
@@ -58,7 +58,7 @@ are automatically verified by this action. The sha265 hashes can be found on the
 
 ```yaml
 - name: Install a specific version and validate the checksum
-  uses: astral-sh/setup-uv@v1
+  uses: astral-sh/setup-uv@v2
   with:
     version: "0.3.1"
     checksum: "e11b01402ab645392c7ad6044db63d37e4fd1e745e015306993b07695ea5f9f8"
@@ -75,7 +75,7 @@ You can optionally define a custom cache key suffix.
 ```yaml
 - name: Enable caching and define a custom cache key suffix
   id: setup-uv
-  uses: astral-sh/setup-uv@v1
+  uses: astral-sh/setup-uv@v2
   with:
     enable-cache: true
     cache-suffix: "optional-suffix"
@@ -97,7 +97,7 @@ specify the path with the `cache-local-path` input.
 
 ```yaml
 - name: Define a custom uv cache path
-  uses: astral-sh/setup-uv@v1
+  uses: astral-sh/setup-uv@v2
   with:
     enable-cache: true
     cache-local-path: "/path/to/cache"
@@ -111,7 +111,7 @@ changes. The glob matches files relative to the repository root.
 
 ```yaml
 - name: Define a cache dependency glob
-  uses: astral-sh/setup-uv@v1
+  uses: astral-sh/setup-uv@v2
   with:
     enable-cache: true
     cache-dependency-glob: "uv.lock"
@@ -119,7 +119,7 @@ changes. The glob matches files relative to the repository root.
 
 ```yaml
 - name: Define a cache dependency glob
-  uses: astral-sh/setup-uv@v1
+  uses: astral-sh/setup-uv@v2
   with:
     enable-cache: true
     cache-dependency-glob: "**requirements*.txt"
@@ -132,7 +132,7 @@ input.
 
 ```yaml
 - name: Install uv and supply a GitHub token
-  uses: astral-sh/setup-uv@v1
+  uses: astral-sh/setup-uv@v2
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -161,7 +161,7 @@ For example:
 - name: Checkout the repository
   uses: actions/checkout@main
 - name: Install the latest version of uv
-  uses: astral-sh/setup-uv@v1
+  uses: astral-sh/setup-uv@v2
   with:
     enable-cache: true
 - name: Test
@@ -173,7 +173,7 @@ To install a specific version of Python, use
 
 ```yaml
 - name: Install the latest version of uv
-  uses: astral-sh/setup-uv@v1
+  uses: astral-sh/setup-uv@v2
   with:
     enable-cache: true
 - name: Install Python 3.12
@@ -192,7 +192,7 @@ output:
   uses: actions/checkout@main
 - name: Install the default version of uv
   id: setup-uv
-  uses: astral-sh/setup-uv@v1
+  uses: astral-sh/setup-uv@v2
 - name: Print the installed version
   run: echo "Installed uv version is ${{ steps.setup-uv.outputs.uv-version }}"
 ```
