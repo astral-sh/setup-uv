@@ -85908,16 +85908,33 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.cacheDependencyGlob = exports.githubToken = exports.cacheLocalPath = exports.cacheSuffix = exports.enableCache = exports.checkSum = exports.version = void 0;
 const core = __importStar(__nccwpck_require__(2186));
+const path_1 = __importDefault(__nccwpck_require__(1017));
 exports.version = core.getInput("version");
 exports.checkSum = core.getInput("checksum");
 exports.enableCache = core.getInput("enable-cache") === "true";
 exports.cacheSuffix = core.getInput("cache-suffix") || "";
-exports.cacheLocalPath = core.getInput("cache-local-path");
+exports.cacheLocalPath = getCacheLocalPath();
 exports.githubToken = core.getInput("github-token");
 exports.cacheDependencyGlob = core.getInput("cache-dependency-glob");
+function getCacheLocalPath() {
+    const cacheLocalPathInput = core.getInput("cache-local-path");
+    if (cacheLocalPathInput !== "") {
+        return cacheLocalPathInput;
+    }
+    if (process.env.RUNNER_TEMP !== undefined) {
+        return `${process.env.RUNNER_TEMP}${path_1.default.sep}setup-uv-cache`;
+    }
+    if (process.platform === "win32") {
+        return "D:\\a\\_temp\\setup-uv-cache";
+    }
+    return "/tmp/setup-uv-cache";
+}
 
 
 /***/ }),

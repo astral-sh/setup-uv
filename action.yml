@@ -26,7 +26,7 @@ inputs:
     required: false
   cache-local-path:
     description: "Local path to store the cache."
-    default: "/tmp/setup-uv-cache"
+    default: ""
 outputs:
   uv-version:
     description: "The installed uv version. Useful when using latest."
