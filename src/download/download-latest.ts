@@ -4,7 +4,7 @@ import * as exec from "@actions/exec";
 import * as path from "path";
 import { Architecture, Platform } from "../utils/platforms";
 import { validateChecksum } from "./checksum/checksum";
-import { OWNER, REPO, TOOL_CACHE_NAME } from "../utils/utils";
+import { OWNER, REPO, TOOL_CACHE_NAME } from "../utils/constants";
 
 export async function downloadLatest(
   platform: Platform,

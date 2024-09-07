@@ -1,7 +1,7 @@
 import * as github from "@actions/github";
 import * as core from "@actions/core";
 
-import { OWNER, REPO } from "./utils/utils";
+import { OWNER, REPO } from "./utils/constants";
 import * as semver from "semver";
 
 import { updateChecksums } from "./download/checksum/update-known-checksums";
