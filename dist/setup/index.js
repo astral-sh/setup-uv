@@ -85634,11 +85634,11 @@ const tc = __importStar(__nccwpck_require__(7784));
 const exec = __importStar(__nccwpck_require__(1514));
 const path = __importStar(__nccwpck_require__(1017));
 const checksum_1 = __nccwpck_require__(4622);
-const utils_1 = __nccwpck_require__(239);
+const constants_1 = __nccwpck_require__(8593);
 function downloadLatest(platform, arch, checkSum, githubToken) {
     return __awaiter(this, void 0, void 0, function* () {
         const artifact = `uv-${arch}-${platform}`;
-        let downloadUrl = `https://github.com/${utils_1.OWNER}/${utils_1.REPO}/releases/latest/download/${artifact}`;
+        let downloadUrl = `https://github.com/${constants_1.OWNER}/${constants_1.REPO}/releases/latest/download/${artifact}`;
         if (platform === "pc-windows-msvc") {
             downloadUrl += ".zip";
         }
@@ -85661,7 +85661,7 @@ function downloadLatest(platform, arch, checkSum, githubToken) {
         }
         const version = yield getVersion(uvExecutablePath);
         yield (0, checksum_1.validateChecksum)(checkSum, downloadPath, arch, platform, version);
-        const cachedToolDir = yield tc.cacheDir(uvDir, utils_1.TOOL_CACHE_NAME, version, arch);
+        const cachedToolDir = yield tc.cacheDir(uvDir, constants_1.TOOL_CACHE_NAME, version, arch);
         return { cachedToolDir, version };
     });
 }
@@ -85732,18 +85732,18 @@ exports.downloadVersion = downloadVersion;
 const core = __importStar(__nccwpck_require__(2186));
 const tc = __importStar(__nccwpck_require__(7784));
 const path = __importStar(__nccwpck_require__(1017));
-const utils_1 = __nccwpck_require__(239);
+const constants_1 = __nccwpck_require__(8593);
 const checksum_1 = __nccwpck_require__(4622);
 function tryGetFromToolCache(arch, version) {
     core.debug(`Trying to get uv from tool cache for ${version}...`);
-    const cachedVersions = tc.findAllVersions(utils_1.TOOL_CACHE_NAME, arch);
+    const cachedVersions = tc.findAllVersions(constants_1.TOOL_CACHE_NAME, arch);
     core.debug(`Cached versions: ${cachedVersions}`);
-    return tc.find(utils_1.TOOL_CACHE_NAME, version, arch);
+    return tc.find(constants_1.TOOL_CACHE_NAME, version, arch);
 }
 function downloadVersion(platform, arch, version, checkSum, githubToken) {
     return __awaiter(this, void 0, void 0, function* () {
         const artifact = `uv-${arch}-${platform}`;
-        let downloadUrl = `https://github.com/${utils_1.OWNER}/${utils_1.REPO}/releases/download/${version}/${artifact}`;
+        let downloadUrl = `https://github.com/${constants_1.OWNER}/${constants_1.REPO}/releases/download/${version}/${artifact}`;
         if (platform === "pc-windows-msvc") {
             downloadUrl += ".zip";
         }
@@ -85762,7 +85762,7 @@ function downloadVersion(platform, arch, version, checkSum, githubToken) {
             const extractedDir = yield tc.extractTar(downloadPath);
             uvDir = path.join(extractedDir, artifact);
         }
-        return yield tc.cacheDir(uvDir, utils_1.TOOL_CACHE_NAME, version, arch);
+        return yield tc.cacheDir(uvDir, constants_1.TOOL_CACHE_NAME, version, arch);
     });
 }
 
@@ -85880,6 +85880,20 @@ run();
 
 /***/ }),
 
+/***/ 8593:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.TOOL_CACHE_NAME = exports.OWNER = exports.REPO = void 0;
+exports.REPO = "uv";
+exports.OWNER = "astral-sh";
+exports.TOOL_CACHE_NAME = "uv";
+
+
+/***/ }),
+
 /***/ 9378:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -85969,20 +85983,6 @@ function getPlatform() {
         return platformMapping[platform];
     }
 }
-
-
-/***/ }),
-
-/***/ 239:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.TOOL_CACHE_NAME = exports.OWNER = exports.REPO = void 0;
-exports.REPO = "uv";
-exports.OWNER = "astral-sh";
-exports.TOOL_CACHE_NAME = "uv";
 
 
 /***/ }),

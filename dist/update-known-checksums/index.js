@@ -32787,7 +32787,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const github = __importStar(__nccwpck_require__(5438));
 const core = __importStar(__nccwpck_require__(2186));
-const utils_1 = __nccwpck_require__(239);
+const constants_1 = __nccwpck_require__(8593);
 const semver = __importStar(__nccwpck_require__(5911));
 const update_known_checksums_1 = __nccwpck_require__(7554);
 function run() {
@@ -32796,8 +32796,8 @@ function run() {
         const github_token = process.argv.slice(2)[1];
         const octokit = github.getOctokit(github_token);
         const response = yield octokit.paginate(octokit.rest.repos.listReleases, {
-            owner: utils_1.OWNER,
-            repo: utils_1.REPO,
+            owner: constants_1.OWNER,
+            repo: constants_1.REPO,
         });
         const downloadUrls = response.flatMap((release) => release.assets
             .filter((asset) => asset.name.endsWith(".sha256"))
@@ -32814,7 +32814,7 @@ run();
 
 /***/ }),
 
-/***/ 239:
+/***/ 8593:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";

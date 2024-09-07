@@ -1,7 +1,7 @@
 import * as core from "@actions/core";
 import * as tc from "@actions/tool-cache";
 import * as path from "path";
-import { OWNER, REPO, TOOL_CACHE_NAME } from "../utils/utils";
+import { OWNER, REPO, TOOL_CACHE_NAME } from "../utils/constants";
 import { Architecture, Platform } from "../utils/platforms";
 import { validateChecksum } from "./checksum/checksum";
 
