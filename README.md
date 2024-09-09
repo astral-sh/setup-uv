@@ -17,7 +17,6 @@ Set up your GitHub Actions workflow with a specific version of [uv](https://docs
   - [Enable Caching](#enable-caching)
     - [Local cache path](#local-cache-path)
     - [Cache dependency glob](#cache-dependency-glob)
-  - [API rate limit](#api-rate-limit)
 - [How it works](#how-it-works)
 - [FAQ](#faq)
 
@@ -133,18 +132,6 @@ changes. The glob matches files relative to the repository root.
     cache-dependency-glob: |
       '**requirements*.txt'
       '**pyproject.toml'
-```
-
-### API rate limit
-
-To avoid hitting the `API rate limit exceeded` error, supply a GitHub token via the `github-token`
-input.
-
-```yaml
-- name: Install uv and supply a GitHub token
-  uses: astral-sh/setup-uv@v2
-  with:
-    github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 ## How it works
