@@ -66,6 +66,16 @@ jobs:
         with:
           version: "0.3.2"
           checksum: ${{ matrix.checksum }}
+  test-with-explicit-token:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install default version
+        uses: ./
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - run: uv sync
+        working-directory: __tests__/fixtures/uv-project
   test-uvx:
     runs-on: ubuntu-latest
     steps:
