@@ -127,7 +127,7 @@ changes. The glob matches files relative to the repository root.
 
 ```yaml
 - name: Define a list of cache dependency globs
-  uses: astral-sh/setup-uv@v1
+  uses: astral-sh/setup-uv@v2
   with:
     enable-cache: true
     cache-dependency-glob: |
