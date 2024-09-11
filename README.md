@@ -17,7 +17,7 @@ Set up your GitHub Actions workflow with a specific version of [uv](https://docs
   - [Enable Caching](#enable-caching)
     - [Local cache path](#local-cache-path)
     - [Cache dependency glob](#cache-dependency-glob)
-  - [API rate limit](#api-rate-limit)
+  - [GitHub authentication token](#github-authentication-token)
 - [How it works](#how-it-works)
 - [FAQ](#faq)
 
@@ -127,7 +127,7 @@ changes. The glob matches files relative to the repository root.
 
 ```yaml
 - name: Define a list of cache dependency globs
-  uses: astral-sh/setup-uv@v1
+  uses: astral-sh/setup-uv@v2
   with:
     enable-cache: true
     cache-dependency-glob: |
@@ -135,16 +135,21 @@ changes. The glob matches files relative to the repository root.
       '**pyproject.toml'
 ```
 
-### API rate limit
+### GitHub authentication token
 
-To avoid hitting the `API rate limit exceeded` error, supply a GitHub token via the `github-token`
-input.
+This action uses the GitHub API to fetch the `uv` release artifacts. To avoid hitting the GitHub API
+rate limit too quickly, an authentication token can be provided via the `github-token` input. By
+default, the `GITHUB_TOKEN` secret is used, which is automatically provided by GitHub Actions.
+
+If the default
+[permissions for the GitHub token](https://docs.github.com/en/actions/security-for-github-actions/security-guides/automatic-token-authentication#permissions-for-the-github_token)
+are not sufficient, you can provide a custom GitHub token with the necessary permissions.
 
 ```yaml
-- name: Install uv and supply a GitHub token
+- name: Install the latest version of uv with a custom GitHub token
   uses: astral-sh/setup-uv@v2
   with:
-    github-token: ${{ secrets.GITHUB_TOKEN }}
+    github-token: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
 ```
 
 ## How it works

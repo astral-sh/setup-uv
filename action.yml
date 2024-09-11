@@ -13,6 +13,7 @@ inputs:
       "Used to increase the rate limit when retrieving versions and downloading
       uv."
     required: false
+    default: ${{ github.token }}
   enable-cache:
     description: "Enable caching of the uv cache"
     default: "false"

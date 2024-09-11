@@ -23,7 +23,5 @@ jobs:
           }
       - name: Setup uv
         uses: ./
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
       - run: uv sync
         working-directory: __tests__\fixtures\uv-project
