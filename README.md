@@ -131,8 +131,8 @@ changes. The glob matches files relative to the repository root.
   with:
     enable-cache: true
     cache-dependency-glob: |
-      '**requirements*.txt'
-      '**pyproject.toml'
+      **requirements*.txt
+      **pyproject.toml
 ```
 
 ### GitHub authentication token
