@@ -57,8 +57,8 @@ jobs:
         with:
           enable-cache: true
           cache-dependency-glob: |
-            __tests__/fixtures/uv-project/uv.lock
-            **/pyproject.toml
+            "__tests__/fixtures/uv-project/uv.lock"
+            "**/pyproject.toml"
           cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
