@@ -11,8 +11,8 @@ Set up your GitHub Actions workflow with a specific version of [uv](https://docs
 ## Contents
 
 - [Usage](#usage)
-  - [Install specific version](#install-specific-version)
-  - [Install latest version](#install-latest-version)
+  - [Install the latest version (default)](#install-the-latest-version-default)
+  - [Install a specific version](#install-a-specific-version)
   - [Validate checksum](#validate-checksum)
   - [Enable Caching](#enable-caching)
     - [Local cache path](#local-cache-path)
