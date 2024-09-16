@@ -109,7 +109,7 @@ changes. The glob matches files relative to the repository root.
   uses: astral-sh/setup-uv@v2
   with:
     enable-cache: true
-    cache-dependency-glob: "**requirements*.txt"
+    cache-dependency-glob: "**/requirements*.txt"
 ```
 
 ```yaml
@@ -118,8 +118,8 @@ changes. The glob matches files relative to the repository root.
   with:
     enable-cache: true
     cache-dependency-glob: |
-      **requirements*.txt
-      **pyproject.toml
+      **/requirements*.txt
+      **/pyproject.toml
 ```
 
 ```yaml
