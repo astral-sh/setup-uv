@@ -19,8 +19,8 @@ inputs:
     default: "false"
   cache-dependency-glob:
     description:
-      'Glob pattern to match files relative to the repository root to control
-      the cache.'
+      "Glob pattern to match files relative to the repository root to control
+      the cache."
     default: "**/uv.lock"
   cache-suffix:
     description: "Suffix for the cache key"
