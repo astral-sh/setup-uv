@@ -21,6 +21,9 @@ jobs:
           npm install
       - run: |
           npm run all
+      - name: Make sure no changes from linters are detected
+        run: |
+          git diff --exit-code
   test-default-version:
     runs-on: ${{ matrix.os }}
     strategy:
