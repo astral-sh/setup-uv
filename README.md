@@ -101,13 +101,8 @@ If you want to control when the cache is invalidated, specify a glob pattern wit
 `cache-dependency-glob` input. The cache will be invalidated if any file matching the glob pattern
 changes. The glob matches files relative to the repository root.
 
-```yaml
-- name: Define a cache dependency glob
-  uses: astral-sh/setup-uv@v2
-  with:
-    enable-cache: true
-    cache-dependency-glob: "uv.lock"
-```
+> [!NOTE]
+> The default is `**/uv.lock`.
 
 ```yaml
 - name: Define a cache dependency glob
@@ -125,6 +120,14 @@ changes. The glob matches files relative to the repository root.
     cache-dependency-glob: |
       **requirements*.txt
       **pyproject.toml
+```
+
+```yaml
+- name: Never invalidate the cache
+  uses: astral-sh/setup-uv@v2
+  with:
+    enable-cache: true
+    cache-dependency-glob: ""
 ```
 
 ### Local cache path
