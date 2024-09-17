@@ -40,7 +40,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, macos-14, oracle-aarch64]
-        uv-version: ["latest", "0.3.0", "0.3.2"]
+        uv-version: ["latest", "0.3.0", "0.3.2", "0.3", "0.3.x", ">=0.3.0"]
     steps:
       - uses: actions/checkout@v4
       - name: Install version ${{ matrix.uv-version }}
@@ -49,6 +49,25 @@ jobs:
           version: ${{ matrix.uv-version }}
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
+  test-semver-range:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, oracle-aarch64]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install version 0.3
+        id: setup-uv
+        uses: ./
+        with:
+          version: "0.3"
+      - name: Correct version gets installed
+        run: |
+          if [ "$UV_VERSION" != "0.3.5" ]; then
+            exit 1
+          fi
+        env:
+          UV_VERSION: ${{ steps.setup-uv.outputs.uv-version }}
   test-checksum:
     runs-on: ${{ matrix.os }}
     strategy:
