@@ -100,7 +100,8 @@ If you want to control when the cache is invalidated, specify a glob pattern wit
 `cache-dependency-glob` input. The cache will be invalidated if any file matching the glob pattern
 changes. The glob matches files relative to the repository root.
 
-> [!NOTE] The default is `**/uv.lock`.
+> [!NOTE]
+> The default is `**/uv.lock`.
 
 ```yaml
 - name: Define a cache dependency glob
