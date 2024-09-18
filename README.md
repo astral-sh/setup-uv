@@ -50,6 +50,25 @@ For an example workflow, see
     version: "0.4.4"
 ```
 
+### Install a version by supplying a semver range
+
+You can also specify a [semver range](https://github.com/npm/node-semver?tab=readme-ov-file#ranges)
+to install the latest version that satisfies the range.
+
+```yaml
+- name: Install a semver range of uv
+  uses: astral-sh/setup-uv@v2
+  with:
+    version: ">=0.3.0"
+```
+
+```yaml
+- name: Pinning a minor version of uv
+  uses: astral-sh/setup-uv@v2
+  with:
+    version: "0.3.x"
+```
+
 ### Validate checksum
 
 You can also specify a checksum to validate the downloaded file. Checksums up to the default version

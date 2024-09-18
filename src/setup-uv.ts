@@ -41,8 +41,8 @@ async function run(): Promise<void> {
     );
 
     addUvToPath(setupResult.uvDir);
-    core.setOutput("uv-version", version);
-    core.info(`Successfully installed uv version ${version}`);
+    core.setOutput("uv-version", setupResult.version);
+    core.info(`Successfully installed uv version ${setupResult.version}`);
 
     addMatchers();
     setCacheDir(cacheLocalPath);
@@ -50,10 +50,10 @@ async function run(): Promise<void> {
     if (enableCache) {
       await restoreCache(setupResult.version);
     }
+    process.exit(0);
   } catch (err) {
     core.setFailed((err as Error).message);
   }
-  process.exit(0);
 }
 
 async function setupUv(
@@ -61,29 +61,37 @@ async function setupUv(
   arch: Architecture,
   versionInput: string,
   checkSum: string | undefined,
-  githubToken: string | undefined,
+  githubToken: string,
 ): Promise<{ uvDir: string; version: string }> {
   let installedPath: string | undefined;
   let cachedToolDir: string;
   let version: string;
   if (versionInput === "latest") {
-    const result = await downloadLatest(platform, arch, checkSum, githubToken);
-    version = result.version;
-    cachedToolDir = result.cachedToolDir;
+    const latestResult = await downloadLatest(
+      platform,
+      arch,
+      checkSum,
+      githubToken,
+    );
+    version = latestResult.version;
+    cachedToolDir = latestResult.cachedToolDir;
   } else {
-    version = versionInput;
-    installedPath = tryGetFromToolCache(arch, versionInput);
+    const toolCacheResult = tryGetFromToolCache(arch, versionInput);
+    version = toolCacheResult.version;
+    installedPath = toolCacheResult.installedPath;
     if (installedPath) {
       core.info(`Found uv in tool-cache for ${versionInput}`);
       return { uvDir: installedPath, version };
     }
-    cachedToolDir = await downloadVersion(
+    const versionResult = await downloadVersion(
       platform,
       arch,
       versionInput,
       checkSum,
       githubToken,
     );
+    cachedToolDir = versionResult.cachedToolDir;
+    version = versionResult.version;
   }
 
   return { uvDir: cachedToolDir, version };
