@@ -4,7 +4,7 @@ import * as exec from "@actions/exec";
 import * as path from "path";
 import { Architecture, Platform } from "../utils/platforms";
 import { validateChecksum } from "./checksum/checksum";
-import { OWNER, REPO, TOOL_CACHE_NAME } from "../utils/constants";
+import { OWNER, REPO } from "../utils/constants";
 
 export async function downloadLatest(
   platform: Platform,
@@ -39,14 +39,8 @@ export async function downloadLatest(
   }
   const version = await getVersion(uvExecutablePath);
   await validateChecksum(checkSum, downloadPath, arch, platform, version);
-  const cachedToolDir = await tc.cacheDir(
-    uvDir,
-    TOOL_CACHE_NAME,
-    version,
-    arch,
-  );
 
-  return { cachedToolDir, version };
+  return { cachedToolDir: uvDir, version };
 }
 
 async function getVersion(uvExecutablePath: string): Promise<string> {

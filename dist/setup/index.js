@@ -89835,8 +89835,7 @@ function downloadLatest(platform, arch, checkSum, githubToken) {
         }
         const version = yield getVersion(uvExecutablePath);
         yield (0, checksum_1.validateChecksum)(checkSum, downloadPath, arch, platform, version);
-        const cachedToolDir = yield tc.cacheDir(uvDir, constants_1.TOOL_CACHE_NAME, version, arch);
-        return { cachedToolDir, version };
+        return { cachedToolDir: uvDir, version };
     });
 }
 function getVersion(uvExecutablePath) {
