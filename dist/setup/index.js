@@ -90033,6 +90033,7 @@ function run() {
             }
             const setupResult = yield setupUv(platform, arch, inputs_1.version, inputs_1.checkSum, inputs_1.githubToken);
             addUvToPath(setupResult.uvDir);
+            addToolBinToPath();
             core.setOutput("uv-version", setupResult.version);
             core.info(`Successfully installed uv version ${setupResult.version}`);
             addMatchers();
@@ -90075,6 +90076,14 @@ function setupUv(platform, arch, versionInput, checkSum, githubToken) {
 function addUvToPath(cachedPath) {
     core.addPath(cachedPath);
     core.info(`Added ${cachedPath} to the path`);
+}
+function addToolBinToPath() {
+    if (inputs_1.toolBinDir !== undefined) {
+        core.exportVariable("UV_TOOL_BIN_DIR", inputs_1.toolBinDir);
+        core.info(`Set UV_TOOL_BIN_DIR to ${inputs_1.toolBinDir}`);
+        core.addPath(inputs_1.toolBinDir);
+        core.info(`Added ${inputs_1.toolBinDir} to the path`);
+    }
 }
 function setCacheDir(cacheLocalPath) {
     core.exportVariable("UV_CACHE_DIR", cacheLocalPath);
@@ -90135,7 +90144,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.cacheDependencyGlob = exports.githubToken = exports.cacheLocalPath = exports.cacheSuffix = exports.enableCache = exports.checkSum = exports.version = void 0;
+exports.githubToken = exports.toolBinDir = exports.cacheDependencyGlob = exports.cacheLocalPath = exports.cacheSuffix = exports.enableCache = exports.checkSum = exports.version = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const path_1 = __importDefault(__nccwpck_require__(1017));
 exports.version = core.getInput("version");
@@ -90143,8 +90152,19 @@ exports.checkSum = core.getInput("checksum");
 exports.enableCache = core.getInput("enable-cache") === "true";
 exports.cacheSuffix = core.getInput("cache-suffix") || "";
 exports.cacheLocalPath = getCacheLocalPath();
-exports.githubToken = core.getInput("github-token");
 exports.cacheDependencyGlob = core.getInput("cache-dependency-glob");
+exports.toolBinDir = getToolBinDir();
+exports.githubToken = core.getInput("github-token");
+function getToolBinDir() {
+    const toolBinDirInput = core.getInput("tool-bin-dir");
+    if (toolBinDirInput !== "") {
+        return toolBinDirInput;
+    }
+    if (process.platform === "win32") {
+        return "D:\\a\\_temp\\uv-tool-bin-dir";
+    }
+    return undefined;
+}
 function getCacheLocalPath() {
     const cacheLocalPathInput = core.getInput("cache-local-path");
     if (cacheLocalPathInput !== "") {

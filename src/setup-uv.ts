@@ -18,6 +18,7 @@ import {
   checkSum,
   enableCache,
   githubToken,
+  toolBinDir,
   version,
 } from "./utils/inputs";
 
@@ -41,6 +42,7 @@ async function run(): Promise<void> {
     );
 
     addUvToPath(setupResult.uvDir);
+    addToolBinToPath();
     core.setOutput("uv-version", setupResult.version);
     core.info(`Successfully installed uv version ${setupResult.version}`);
 
@@ -100,6 +102,15 @@ async function setupUv(
 function addUvToPath(cachedPath: string): void {
   core.addPath(cachedPath);
   core.info(`Added ${cachedPath} to the path`);
+}
+
+function addToolBinToPath(): void {
+  if (toolBinDir !== undefined) {
+    core.exportVariable("UV_TOOL_BIN_DIR", toolBinDir);
+    core.info(`Set UV_TOOL_BIN_DIR to ${toolBinDir}`);
+    core.addPath(toolBinDir);
+    core.info(`Added ${toolBinDir} to the path`);
+  }
 }
 
 function setCacheDir(cacheLocalPath: string): void {

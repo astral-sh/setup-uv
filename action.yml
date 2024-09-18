@@ -29,6 +29,9 @@ inputs:
   cache-local-path:
     description: "Local path to store the cache."
     default: ""
+  tool-bin-dir:
+    description: "Custom path to set UV_TOOL_BIN_DIR to."
+    required: false
 outputs:
   uv-version:
     description: "The installed uv version. Useful when using latest."
