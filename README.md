@@ -27,7 +27,7 @@ Set up your GitHub Actions workflow with a specific version of [uv](https://docs
 
 ```yaml
 - name: Install the latest version of uv
-  uses: astral-sh/setup-uv@v2
+  uses: astral-sh/setup-uv@v3
   with:
     version: "latest"
 ```
@@ -45,7 +45,7 @@ For an example workflow, see
 
 ```yaml
 - name: Install a specific version of uv
-  uses: astral-sh/setup-uv@v2
+  uses: astral-sh/setup-uv@v3
   with:
     version: "0.4.4"
 ```
@@ -57,14 +57,14 @@ to install the latest version that satisfies the range.
 
 ```yaml
 - name: Install a semver range of uv
-  uses: astral-sh/setup-uv@v2
+  uses: astral-sh/setup-uv@v3
   with:
     version: ">=0.3.0"
 ```
 
 ```yaml
 - name: Pinning a minor version of uv
-  uses: astral-sh/setup-uv@v2
+  uses: astral-sh/setup-uv@v3
   with:
     version: "0.3.x"
 ```
@@ -77,7 +77,7 @@ are automatically verified by this action. The sha265 hashes can be found on the
 
 ```yaml
 - name: Install a specific version and validate the checksum
-  uses: astral-sh/setup-uv@v2
+  uses: astral-sh/setup-uv@v3
   with:
     version: "0.3.1"
     checksum: "e11b01402ab645392c7ad6044db63d37e4fd1e745e015306993b07695ea5f9f8"
@@ -98,7 +98,7 @@ You can optionally define a custom cache key suffix.
 ```yaml
 - name: Enable caching and define a custom cache key suffix
   id: setup-uv
-  uses: astral-sh/setup-uv@v2
+  uses: astral-sh/setup-uv@v3
   with:
     enable-cache: true
     cache-suffix: "optional-suffix"
@@ -125,7 +125,7 @@ changes. The glob matches files relative to the repository root.
 
 ```yaml
 - name: Define a cache dependency glob
-  uses: astral-sh/setup-uv@v2
+  uses: astral-sh/setup-uv@v3
   with:
     enable-cache: true
     cache-dependency-glob: "**/requirements*.txt"
@@ -133,7 +133,7 @@ changes. The glob matches files relative to the repository root.
 
 ```yaml
 - name: Define a list of cache dependency globs
-  uses: astral-sh/setup-uv@v2
+  uses: astral-sh/setup-uv@v3
   with:
     enable-cache: true
     cache-dependency-glob: |
@@ -143,7 +143,7 @@ changes. The glob matches files relative to the repository root.
 
 ```yaml
 - name: Never invalidate the cache
-  uses: astral-sh/setup-uv@v2
+  uses: astral-sh/setup-uv@v3
   with:
     enable-cache: true
     cache-dependency-glob: ""
@@ -156,7 +156,7 @@ default (`/tmp/setup-uv-cache`) by specifying the path with the `cache-local-pat
 
 ```yaml
 - name: Define a custom uv cache path
-  uses: astral-sh/setup-uv@v2
+  uses: astral-sh/setup-uv@v3
   with:
     cache-local-path: "/path/to/cache"
 ```
@@ -173,7 +173,7 @@ are not sufficient, you can provide a custom GitHub token with the necessary per
 
 ```yaml
 - name: Install the latest version of uv with a custom GitHub token
-  uses: astral-sh/setup-uv@v2
+  uses: astral-sh/setup-uv@v3
   with:
     github-token: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
 ```
@@ -202,7 +202,7 @@ For example:
 - name: Checkout the repository
   uses: actions/checkout@main
 - name: Install the latest version of uv
-  uses: astral-sh/setup-uv@v2
+  uses: astral-sh/setup-uv@v3
   with:
     enable-cache: true
 - name: Test
@@ -214,7 +214,7 @@ To install a specific version of Python, use
 
 ```yaml
 - name: Install the latest version of uv
-  uses: astral-sh/setup-uv@v2
+  uses: astral-sh/setup-uv@v3
   with:
     enable-cache: true
 - name: Install Python 3.12
@@ -233,7 +233,7 @@ output:
   uses: actions/checkout@main
 - name: Install the default version of uv
   id: setup-uv
-  uses: astral-sh/setup-uv@v2
+  uses: astral-sh/setup-uv@v3
 - name: Print the installed version
   run: echo "Installed uv version is ${{ steps.setup-uv.outputs.uv-version }}"
 ```
