@@ -13,11 +13,14 @@ Set up your GitHub Actions workflow with a specific version of [uv](https://docs
 - [Usage](#usage)
   - [Install the latest version (default)](#install-the-latest-version-default)
   - [Install a specific version](#install-a-specific-version)
+  - [Install a version by supplying a semver range](#install-a-version-by-supplying-a-semver-range)
   - [Validate checksum](#validate-checksum)
   - [Enable Caching](#enable-caching)
     - [Cache dependency glob](#cache-dependency-glob)
   - [Local cache path](#local-cache-path)
   - [GitHub authentication token](#github-authentication-token)
+  - [UV_TOOL_DIR](#uv_tool_dir)
+  - [UV_TOOL_BIN_DIR](#uv_tool_bin_dir)
 - [How it works](#how-it-works)
 - [FAQ](#faq)
 
@@ -176,6 +179,43 @@ are not sufficient, you can provide a custom GitHub token with the necessary per
   uses: astral-sh/setup-uv@v3
   with:
     github-token: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
+```
+
+### UV_TOOL_DIR
+
+On Windows `UV_TOOL_DIR` is set to `uv-tool-dir` in the `TMP` dir (e.g. `D:\a\_temp\uv-tool-dir`).
+On GitHub hosted runners this is on the much faster `D:` drive.
+
+On all other platforms the tool environments are placed in the
+[default location](https://docs.astral.sh/uv/concepts/tools/#tools-directory).
+
+If you want to change this behaviour (especially on self-hosted runners) you can use the `tool-dir`
+input:
+
+```yaml
+- name: Install the latest version of uv with a custom tool dir
+  uses: astral-sh/setup-uv@v3
+  with:
+    tool-dir: "/path/to/tool/dir"
+```
+
+### UV_TOOL_BIN_DIR
+
+On Windows `UV_TOOL_BIN_DIR` is set to `uv-tool-bin-dir` in the `TMP` dir (e.g.
+`D:\a\_temp\uv-tool-bin-dir`). On GitHub hosted runners this is on the much faster `D:` drive. This
+path is also automatically added to the PATH.
+
+On all other platforms the tool binaries get installed to the
+[default location](https://docs.astral.sh/uv/concepts/tools/#the-bin-directory).
+
+If you want to change this behaviour (especially on self-hosted runners) you can use the
+`tool-bin-dir` input:
+
+```yaml
+- name: Install the latest version of uv with a custom tool bin dir
+  uses: astral-sh/setup-uv@v3
+  with:
+    tool-bin-dir: "/path/to/tool-bin/dir"
 ```
 
 ## How it works

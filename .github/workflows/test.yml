@@ -105,3 +105,21 @@ jobs:
       - name: Install default version
         uses: ./
       - run: uvx ruff --version
+  test-tool-install:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          [
+            ubuntu-latest,
+            macos-latest,
+            macos-14,
+            windows-latest,
+            oracle-aarch64,
+          ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install default version
+        uses: ./
+      - run: uv tool install ruff
+      - run: ruff --version
