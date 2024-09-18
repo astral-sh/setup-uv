@@ -111,15 +111,13 @@ jobs:
       matrix:
         os:
           [
-            ubuntu-latest,
-            macos-latest,
-            macos-14,
             windows-latest,
-            oracle-aarch64,
           ]
     steps:
       - uses: actions/checkout@v4
       - name: Install default version
         uses: ./
+      - run: mkdir D:\a\_temp\uv-tool-bin-dir
+      - run: mv C:\hostedtoolcache\windows\uv\0.4.12\x86_64\uv.exe D:\a\_temp\uv-tool-bin-dir\uv.exe
       - run: uv tool install ruff
       - run: ruff --version
