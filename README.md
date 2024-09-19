@@ -72,7 +72,7 @@ to install the latest version that satisfies the range.
 ### Validate checksum
 
 You can also specify a checksum to validate the downloaded file. Checksums up to the default version
-are automatically verified by this action. The sha265 hashes can be found on the
+are automatically verified by this action. The sha256 hashes can be found on the
 [releases page](https://github.com/astral-sh/uv/releases) of the uv repo.
 
 ```yaml
