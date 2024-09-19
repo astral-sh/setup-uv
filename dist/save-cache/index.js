@@ -83026,7 +83026,10 @@ function getToolBinDir() {
         return toolBinDirInput;
     }
     if (process.platform === "win32") {
-        return "D:\\a\\_temp\\uv-tool-bin-dir";
+        if (process.env.RUNNER_TEMP !== undefined) {
+            return `${process.env.RUNNER_TEMP}${path_1.default.sep}uv-tool-bin-dir`;
+        }
+        throw Error("Could not determine UV_TOOL_BIN_DIR. Please make sure RUNNER_TEMP is set or provide the tool-bin-dir input");
     }
     return undefined;
 }
@@ -83036,7 +83039,10 @@ function getToolDir() {
         return toolDirInput;
     }
     if (process.platform === "win32") {
-        return "D:\\a\\_temp\\uv-tool-dir";
+        if (process.env.RUNNER_TEMP !== undefined) {
+            return `${process.env.RUNNER_TEMP}${path_1.default.sep}uv-tool-dir`;
+        }
+        throw Error("Could not determine UV_TOOL_DIR. Please make sure RUNNER_TEMP is set or provide the tool-dir input");
     }
     return undefined;
 }
@@ -83048,10 +83054,7 @@ function getCacheLocalPath() {
     if (process.env.RUNNER_TEMP !== undefined) {
         return `${process.env.RUNNER_TEMP}${path_1.default.sep}setup-uv-cache`;
     }
-    if (process.platform === "win32") {
-        return "D:\\a\\_temp\\setup-uv-cache";
-    }
-    return "/tmp/setup-uv-cache";
+    throw Error("Could not determine UV_CACHE_DIR. Please make sure RUNNER_TEMP is set or provide the cache-local-path input");
 }
 
 
