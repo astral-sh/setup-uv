@@ -154,8 +154,10 @@ changes. The glob matches files relative to the repository root.
 
 ### Local cache path
 
-This action controls where uv stores its cache on the runner's filesystem. You can change the
-default (`/tmp/setup-uv-cache`) by specifying the path with the `cache-local-path` input.
+This action controls where uv stores its cache on the runner's filesystem by setting `UV_CACHE_DIR`.
+It defaults to `setup-uv-cache` in the `TMP` dir, `D:\a\_temp\uv-tool-dir` on Windows and
+`/tmp/setup-uv-cache` on Linux/macOS. You can change the default by specifying the path with the
+`cache-local-path` input.
 
 ```yaml
 - name: Define a custom uv cache path
