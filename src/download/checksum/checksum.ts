@@ -12,7 +12,7 @@ export async function validateChecksum(
   platform: Platform,
   version: string,
 ): Promise<void> {
-  let isValid = true;
+  let isValid: boolean | undefined = undefined;
   if (checkSum !== undefined && checkSum !== "") {
     isValid = await validateFileCheckSum(downloadPath, checkSum);
   } else {
@@ -27,10 +27,12 @@ export async function validateChecksum(
     }
   }
 
-  if (!isValid) {
+  if (isValid === false) {
     throw new Error(`Checksum for ${downloadPath} did not match ${checkSum}.`);
   }
-  core.debug(`Checksum for ${downloadPath} is valid.`);
+  if (isValid === true) {
+    core.debug(`Checksum for ${downloadPath} is valid.`);
+  }
 }
 
 async function validateFileCheckSum(

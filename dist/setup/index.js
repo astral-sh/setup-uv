@@ -87930,7 +87930,7 @@ const core = __importStar(__nccwpck_require__(2186));
 const known_checksums_1 = __nccwpck_require__(4379);
 function validateChecksum(checkSum, downloadPath, arch, platform, version) {
     return __awaiter(this, void 0, void 0, function* () {
-        let isValid = true;
+        let isValid = undefined;
         if (checkSum !== undefined && checkSum !== "") {
             isValid = yield validateFileCheckSum(downloadPath, checkSum);
         }
@@ -87946,10 +87946,12 @@ function validateChecksum(checkSum, downloadPath, arch, platform, version) {
                 core.debug(`No known checksum found for ${key}.`);
             }
         }
-        if (!isValid) {
+        if (isValid === false) {
             throw new Error(`Checksum for ${downloadPath} did not match ${checkSum}.`);
         }
-        core.debug(`Checksum for ${downloadPath} is valid.`);
+        if (isValid === true) {
+            core.debug(`Checksum for ${downloadPath} is valid.`);
+        }
     });
 }
 function validateFileCheckSum(filePath, expected) {
