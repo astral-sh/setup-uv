@@ -28,7 +28,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, macos-14, oracle-aarch64]
+        os: [ubuntu-latest, macos-latest, macos-14, selfhosted-ubuntu-arm64]
     steps:
       - uses: actions/checkout@v4
       - name: Install default version
@@ -39,7 +39,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, macos-14, oracle-aarch64]
+        os: [ubuntu-latest, macos-latest, macos-14, selfhosted-ubuntu-arm64]
         uv-version: ["latest", "0.3.0", "0.3.2", "0.3", "0.3.x", ">=0.3.0"]
     steps:
       - uses: actions/checkout@v4
@@ -53,7 +53,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, oracle-aarch64]
+        os: [ubuntu-latest, selfhosted-ubuntu-arm64]
     steps:
       - uses: actions/checkout@v4
       - name: Install version 0.3
@@ -72,14 +72,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, oracle-aarch64]
+        os: [ubuntu-latest, selfhosted-ubuntu-arm64]
         checksum:
           ["4d9279ad5ca596b1e2d703901d508430eb07564dc4d8837de9e2fca9c90f8ecd"]
         exclude:
-          - os: oracle-aarch64
+          - os: selfhosted-ubuntu-arm64
             checksum: "4d9279ad5ca596b1e2d703901d508430eb07564dc4d8837de9e2fca9c90f8ecd"
         include:
-          - os: oracle-aarch64
+          - os: selfhosted-ubuntu-arm64
             checksum: "e11b01402ab645392c7ad6044db63d37e4fd1e745e015306993b07695ea5f9f8"
     steps:
       - uses: actions/checkout@v4
@@ -115,7 +115,7 @@ jobs:
             macos-latest,
             macos-14,
             windows-latest,
-            oracle-aarch64,
+            selfhosted-ubuntu-arm64,
           ]
     steps:
       - uses: actions/checkout@v4
