@@ -89,7 +89,7 @@ jobs:
           CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
 
   test-setup-cache-local:
-    runs-on: oracle-aarch64
+    runs-on: selfhosted-ubuntu-arm64
     steps:
       - uses: actions/checkout@v4
       - name: Setup with cache
@@ -101,7 +101,7 @@ jobs:
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
   test-restore-cache-local:
-    runs-on: oracle-aarch64
+    runs-on: selfhosted-ubuntu-arm64
     needs: test-setup-cache-local
     steps:
       - uses: actions/checkout@v4
