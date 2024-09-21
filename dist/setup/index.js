@@ -90087,6 +90087,8 @@ function run() {
             }
             const setupResult = yield setupUv(platform, arch, inputs_1.version, inputs_1.checkSum, inputs_1.githubToken);
             addUvToPath(setupResult.uvDir);
+            addToolBinToPath();
+            setToolDir();
             core.setOutput("uv-version", setupResult.version);
             core.info(`Successfully installed uv version ${setupResult.version}`);
             addMatchers();
@@ -90129,6 +90131,34 @@ function setupUv(platform, arch, versionInput, checkSum, githubToken) {
 function addUvToPath(cachedPath) {
     core.addPath(cachedPath);
     core.info(`Added ${cachedPath} to the path`);
+}
+function addToolBinToPath() {
+    if (inputs_1.toolBinDir !== undefined) {
+        core.exportVariable("UV_TOOL_BIN_DIR", inputs_1.toolBinDir);
+        core.info(`Set UV_TOOL_BIN_DIR to ${inputs_1.toolBinDir}`);
+        core.addPath(inputs_1.toolBinDir);
+        core.info(`Added ${inputs_1.toolBinDir} to the path`);
+    }
+    else {
+        if (process.env.XDG_BIN_HOME !== undefined) {
+            core.addPath(process.env.XDG_BIN_HOME);
+            core.info(`Added ${process.env.XDG_BIN_HOME} to the path`);
+        }
+        else if (process.env.XDG_DATA_HOME !== undefined) {
+            core.addPath(`${process.env.XDG_DATA_HOME}/../bin`);
+            core.info(`Added ${process.env.XDG_DATA_HOME}/../bin to the path`);
+        }
+        else {
+            core.addPath(`${process.env.HOME}/.local/bin`);
+            core.info(`Added ${process.env.HOME}/.local/bin to the path`);
+        }
+    }
+}
+function setToolDir() {
+    if (inputs_1.toolDir !== undefined) {
+        core.exportVariable("UV_TOOL_DIR", inputs_1.toolDir);
+        core.info(`Set UV_TOOL_DIR to ${inputs_1.toolDir}`);
+    }
 }
 function setCacheDir(cacheLocalPath) {
     core.exportVariable("UV_CACHE_DIR", cacheLocalPath);
@@ -90189,7 +90219,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.cacheDependencyGlob = exports.githubToken = exports.cacheLocalPath = exports.cacheSuffix = exports.enableCache = exports.checkSum = exports.version = void 0;
+exports.githubToken = exports.toolDir = exports.toolBinDir = exports.cacheDependencyGlob = exports.cacheLocalPath = exports.cacheSuffix = exports.enableCache = exports.checkSum = exports.version = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const path_1 = __importDefault(__nccwpck_require__(1017));
 exports.version = core.getInput("version");
@@ -90197,8 +90227,36 @@ exports.checkSum = core.getInput("checksum");
 exports.enableCache = core.getInput("enable-cache") === "true";
 exports.cacheSuffix = core.getInput("cache-suffix") || "";
 exports.cacheLocalPath = getCacheLocalPath();
-exports.githubToken = core.getInput("github-token");
 exports.cacheDependencyGlob = core.getInput("cache-dependency-glob");
+exports.toolBinDir = getToolBinDir();
+exports.toolDir = getToolDir();
+exports.githubToken = core.getInput("github-token");
+function getToolBinDir() {
+    const toolBinDirInput = core.getInput("tool-bin-dir");
+    if (toolBinDirInput !== "") {
+        return toolBinDirInput;
+    }
+    if (process.platform === "win32") {
+        if (process.env.RUNNER_TEMP !== undefined) {
+            return `${process.env.RUNNER_TEMP}${path_1.default.sep}uv-tool-bin-dir`;
+        }
+        throw Error("Could not determine UV_TOOL_BIN_DIR. Please make sure RUNNER_TEMP is set or provide the tool-bin-dir input");
+    }
+    return undefined;
+}
+function getToolDir() {
+    const toolDirInput = core.getInput("tool-dir");
+    if (toolDirInput !== "") {
+        return toolDirInput;
+    }
+    if (process.platform === "win32") {
+        if (process.env.RUNNER_TEMP !== undefined) {
+            return `${process.env.RUNNER_TEMP}${path_1.default.sep}uv-tool-dir`;
+        }
+        throw Error("Could not determine UV_TOOL_DIR. Please make sure RUNNER_TEMP is set or provide the tool-dir input");
+    }
+    return undefined;
+}
 function getCacheLocalPath() {
     const cacheLocalPathInput = core.getInput("cache-local-path");
     if (cacheLocalPathInput !== "") {
@@ -90207,10 +90265,7 @@ function getCacheLocalPath() {
     if (process.env.RUNNER_TEMP !== undefined) {
         return `${process.env.RUNNER_TEMP}${path_1.default.sep}setup-uv-cache`;
     }
-    if (process.platform === "win32") {
-        return "D:\\a\\_temp\\setup-uv-cache";
-    }
-    return "/tmp/setup-uv-cache";
+    throw Error("Could not determine UV_CACHE_DIR. Please make sure RUNNER_TEMP is set or provide the cache-local-path input");
 }
 
 

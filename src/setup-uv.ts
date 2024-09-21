@@ -18,6 +18,8 @@ import {
   checkSum,
   enableCache,
   githubToken,
+  toolBinDir,
+  toolDir,
   version,
 } from "./utils/inputs";
 
@@ -41,6 +43,8 @@ async function run(): Promise<void> {
     );
 
     addUvToPath(setupResult.uvDir);
+    addToolBinToPath();
+    setToolDir();
     core.setOutput("uv-version", setupResult.version);
     core.info(`Successfully installed uv version ${setupResult.version}`);
 
@@ -100,6 +104,33 @@ async function setupUv(
 function addUvToPath(cachedPath: string): void {
   core.addPath(cachedPath);
   core.info(`Added ${cachedPath} to the path`);
+}
+
+function addToolBinToPath(): void {
+  if (toolBinDir !== undefined) {
+    core.exportVariable("UV_TOOL_BIN_DIR", toolBinDir);
+    core.info(`Set UV_TOOL_BIN_DIR to ${toolBinDir}`);
+    core.addPath(toolBinDir);
+    core.info(`Added ${toolBinDir} to the path`);
+  } else {
+    if (process.env.XDG_BIN_HOME !== undefined) {
+      core.addPath(process.env.XDG_BIN_HOME);
+      core.info(`Added ${process.env.XDG_BIN_HOME} to the path`);
+    } else if (process.env.XDG_DATA_HOME !== undefined) {
+      core.addPath(`${process.env.XDG_DATA_HOME}/../bin`);
+      core.info(`Added ${process.env.XDG_DATA_HOME}/../bin to the path`);
+    } else {
+      core.addPath(`${process.env.HOME}/.local/bin`);
+      core.info(`Added ${process.env.HOME}/.local/bin to the path`);
+    }
+  }
+}
+
+function setToolDir(): void {
+  if (toolDir !== undefined) {
+    core.exportVariable("UV_TOOL_DIR", toolDir);
+    core.info(`Set UV_TOOL_DIR to ${toolDir}`);
+  }
 }
 
 function setCacheDir(cacheLocalPath: string): void {
