@@ -82951,7 +82951,7 @@ function saveCache() {
             core.warning("Error retrieving cache key from state.");
             return;
         }
-        else if (matchedKey === cacheKey) {
+        if (matchedKey === cacheKey) {
             core.info(`Cache hit occurred on key ${cacheKey}, not saving cache.`);
             return;
         }
@@ -83010,7 +83010,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.githubToken = exports.toolDir = exports.toolBinDir = exports.cacheDependencyGlob = exports.cacheLocalPath = exports.cacheSuffix = exports.enableCache = exports.checkSum = exports.version = void 0;
 const core = __importStar(__nccwpck_require__(2186));
-const path_1 = __importDefault(__nccwpck_require__(1017));
+const node_path_1 = __importDefault(__nccwpck_require__(9411));
 exports.version = core.getInput("version");
 exports.checkSum = core.getInput("checksum");
 exports.enableCache = core.getInput("enable-cache") === "true";
@@ -83027,7 +83027,7 @@ function getToolBinDir() {
     }
     if (process.platform === "win32") {
         if (process.env.RUNNER_TEMP !== undefined) {
-            return `${process.env.RUNNER_TEMP}${path_1.default.sep}uv-tool-bin-dir`;
+            return `${process.env.RUNNER_TEMP}${node_path_1.default.sep}uv-tool-bin-dir`;
         }
         throw Error("Could not determine UV_TOOL_BIN_DIR. Please make sure RUNNER_TEMP is set or provide the tool-bin-dir input");
     }
@@ -83040,7 +83040,7 @@ function getToolDir() {
     }
     if (process.platform === "win32") {
         if (process.env.RUNNER_TEMP !== undefined) {
-            return `${process.env.RUNNER_TEMP}${path_1.default.sep}uv-tool-dir`;
+            return `${process.env.RUNNER_TEMP}${node_path_1.default.sep}uv-tool-dir`;
         }
         throw Error("Could not determine UV_TOOL_DIR. Please make sure RUNNER_TEMP is set or provide the tool-dir input");
     }
@@ -83052,7 +83052,7 @@ function getCacheLocalPath() {
         return cacheLocalPathInput;
     }
     if (process.env.RUNNER_TEMP !== undefined) {
-        return `${process.env.RUNNER_TEMP}${path_1.default.sep}setup-uv-cache`;
+        return `${process.env.RUNNER_TEMP}${node_path_1.default.sep}setup-uv-cache`;
     }
     throw Error("Could not determine UV_CACHE_DIR. Please make sure RUNNER_TEMP is set or provide the cache-local-path input");
 }
@@ -83211,6 +83211,14 @@ module.exports = require("net");
 
 "use strict";
 module.exports = require("node:events");
+
+/***/ }),
+
+/***/ 9411:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:path");
 
 /***/ }),
 

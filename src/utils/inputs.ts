@@ -1,5 +1,5 @@
 import * as core from "@actions/core";
-import path from "path";
+import path from "node:path";
 
 export const version = core.getInput("version");
 export const checkSum = core.getInput("checksum");

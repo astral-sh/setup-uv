@@ -1,8 +1,8 @@
 import * as core from "@actions/core";
 import * as tc from "@actions/tool-cache";
 import * as exec from "@actions/exec";
-import * as path from "path";
-import { Architecture, Platform } from "../utils/platforms";
+import * as path from "node:path";
+import type { Architecture, Platform } from "../utils/platforms";
 import { validateChecksum } from "./checksum/checksum";
 import { OWNER, REPO, TOOL_CACHE_NAME } from "../utils/constants";
 
