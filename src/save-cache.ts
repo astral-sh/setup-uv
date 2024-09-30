@@ -26,7 +26,8 @@ async function saveCache(): Promise<void> {
   if (!cacheKey) {
     core.warning("Error retrieving cache key from state.");
     return;
-  } else if (matchedKey === cacheKey) {
+  }
+  if (matchedKey === cacheKey) {
     core.info(`Cache hit occurred on key ${cacheKey}, not saving cache.`);
     return;
   }

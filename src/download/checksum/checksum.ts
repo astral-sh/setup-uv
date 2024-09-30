@@ -1,9 +1,9 @@
-import * as fs from "fs";
-import * as crypto from "crypto";
+import * as fs from "node:fs";
+import * as crypto from "node:crypto";
 
 import * as core from "@actions/core";
 import { KNOWN_CHECKSUMS } from "./known-checksums";
-import { Architecture, Platform } from "../../utils/platforms";
+import type { Architecture, Platform } from "../../utils/platforms";
 
 export async function validateChecksum(
   checkSum: string | undefined,
@@ -16,7 +16,7 @@ export async function validateChecksum(
   if (checkSum !== undefined && checkSum !== "") {
     isValid = await validateFileCheckSum(downloadPath, checkSum);
   } else {
-    core.debug(`Checksum not provided. Checking known checksums.`);
+    core.debug("Checksum not provided. Checking known checksums.");
     const key = `${arch}-${platform}-${version}`;
     if (key in KNOWN_CHECKSUMS) {
       const knownChecksum = KNOWN_CHECKSUMS[`${arch}-${platform}-${version}`];

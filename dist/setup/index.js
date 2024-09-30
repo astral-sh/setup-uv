@@ -87831,7 +87831,7 @@ const cache = __importStar(__nccwpck_require__(7799));
 const glob = __importStar(__nccwpck_require__(8090));
 const core = __importStar(__nccwpck_require__(2186));
 const inputs_1 = __nccwpck_require__(9378);
-const platforms_1 = __nccwpck_require__(6005);
+const platforms_1 = __nccwpck_require__(9945);
 exports.STATE_CACHE_KEY = "cache-key";
 exports.STATE_CACHE_MATCHED_KEY = "cache-matched-key";
 const CACHE_VERSION = "1";
@@ -87924,8 +87924,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.validateChecksum = validateChecksum;
 exports.isknownVersion = isknownVersion;
-const fs = __importStar(__nccwpck_require__(7147));
-const crypto = __importStar(__nccwpck_require__(6113));
+const fs = __importStar(__nccwpck_require__(7561));
+const crypto = __importStar(__nccwpck_require__(6005));
 const core = __importStar(__nccwpck_require__(2186));
 const known_checksums_1 = __nccwpck_require__(4379);
 function validateChecksum(checkSum, downloadPath, arch, platform, version) {
@@ -87935,7 +87935,7 @@ function validateChecksum(checkSum, downloadPath, arch, platform, version) {
             isValid = yield validateFileCheckSum(downloadPath, checkSum);
         }
         else {
-            core.debug(`Checksum not provided. Checking known checksums.`);
+            core.debug("Checksum not provided. Checking known checksums.");
             const key = `${arch}-${platform}-${version}`;
             if (key in known_checksums_1.KNOWN_CHECKSUMS) {
                 const knownChecksum = known_checksums_1.KNOWN_CHECKSUMS[`${arch}-${platform}-${version}`];
@@ -89916,7 +89916,7 @@ exports.downloadLatest = downloadLatest;
 const core = __importStar(__nccwpck_require__(2186));
 const tc = __importStar(__nccwpck_require__(7784));
 const exec = __importStar(__nccwpck_require__(1514));
-const path = __importStar(__nccwpck_require__(1017));
+const path = __importStar(__nccwpck_require__(9411));
 const checksum_1 = __nccwpck_require__(4622);
 const constants_1 = __nccwpck_require__(8593);
 function downloadLatest(platform, arch, checkSum, githubToken) {
@@ -90015,7 +90015,7 @@ exports.tryGetFromToolCache = tryGetFromToolCache;
 exports.downloadVersion = downloadVersion;
 const core = __importStar(__nccwpck_require__(2186));
 const tc = __importStar(__nccwpck_require__(7784));
-const path = __importStar(__nccwpck_require__(1017));
+const path = __importStar(__nccwpck_require__(9411));
 const constants_1 = __nccwpck_require__(8593);
 const checksum_1 = __nccwpck_require__(4622);
 const github = __importStar(__nccwpck_require__(5438));
@@ -90124,11 +90124,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
-const path = __importStar(__nccwpck_require__(1017));
+const path = __importStar(__nccwpck_require__(9411));
 const download_version_1 = __nccwpck_require__(8841);
 const restore_cache_1 = __nccwpck_require__(1898);
 const download_latest_1 = __nccwpck_require__(5871);
-const platforms_1 = __nccwpck_require__(6005);
+const platforms_1 = __nccwpck_require__(9945);
 const inputs_1 = __nccwpck_require__(9378);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -90277,7 +90277,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.githubToken = exports.toolDir = exports.toolBinDir = exports.cacheDependencyGlob = exports.cacheLocalPath = exports.cacheSuffix = exports.enableCache = exports.checkSum = exports.version = void 0;
 const core = __importStar(__nccwpck_require__(2186));
-const path_1 = __importDefault(__nccwpck_require__(1017));
+const node_path_1 = __importDefault(__nccwpck_require__(9411));
 exports.version = core.getInput("version");
 exports.checkSum = core.getInput("checksum");
 exports.enableCache = core.getInput("enable-cache") === "true";
@@ -90294,7 +90294,7 @@ function getToolBinDir() {
     }
     if (process.platform === "win32") {
         if (process.env.RUNNER_TEMP !== undefined) {
-            return `${process.env.RUNNER_TEMP}${path_1.default.sep}uv-tool-bin-dir`;
+            return `${process.env.RUNNER_TEMP}${node_path_1.default.sep}uv-tool-bin-dir`;
         }
         throw Error("Could not determine UV_TOOL_BIN_DIR. Please make sure RUNNER_TEMP is set or provide the tool-bin-dir input");
     }
@@ -90307,7 +90307,7 @@ function getToolDir() {
     }
     if (process.platform === "win32") {
         if (process.env.RUNNER_TEMP !== undefined) {
-            return `${process.env.RUNNER_TEMP}${path_1.default.sep}uv-tool-dir`;
+            return `${process.env.RUNNER_TEMP}${node_path_1.default.sep}uv-tool-dir`;
         }
         throw Error("Could not determine UV_TOOL_DIR. Please make sure RUNNER_TEMP is set or provide the tool-dir input");
     }
@@ -90319,7 +90319,7 @@ function getCacheLocalPath() {
         return cacheLocalPathInput;
     }
     if (process.env.RUNNER_TEMP !== undefined) {
-        return `${process.env.RUNNER_TEMP}${path_1.default.sep}setup-uv-cache`;
+        return `${process.env.RUNNER_TEMP}${node_path_1.default.sep}setup-uv-cache`;
     }
     throw Error("Could not determine UV_CACHE_DIR. Please make sure RUNNER_TEMP is set or provide the cache-local-path input");
 }
@@ -90327,7 +90327,7 @@ function getCacheLocalPath() {
 
 /***/ }),
 
-/***/ 6005:
+/***/ 9945:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -90473,11 +90473,35 @@ module.exports = require("net");
 
 /***/ }),
 
+/***/ 6005:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:crypto");
+
+/***/ }),
+
 /***/ 5673:
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("node:events");
+
+/***/ }),
+
+/***/ 7561:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:fs");
+
+/***/ }),
+
+/***/ 9411:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:path");
 
 /***/ }),
 

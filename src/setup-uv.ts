@@ -1,5 +1,5 @@
 import * as core from "@actions/core";
-import * as path from "path";
+import * as path from "node:path";
 import {
   downloadVersion,
   tryGetFromToolCache,
@@ -8,10 +8,10 @@ import { restoreCache } from "./cache/restore-cache";
 
 import { downloadLatest } from "./download/download-latest";
 import {
-  Architecture,
+  type Architecture,
   getArch,
   getPlatform,
-  Platform,
+  type Platform,
 } from "./utils/platforms";
 import {
   cacheLocalPath,

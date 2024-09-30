@@ -6,9 +6,9 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "format": "prettier --write .",
-    "format-check": "prettier --check .",
-    "lint": "eslint src/**/*.ts --fix",
+    "format": "biome format --fix",
+    "format-check": "biome format",
+    "lint": "biome lint --fix",
     "package": "ncc build -o dist/setup src/setup-uv.ts && ncc build -o dist/save-cache src/save-cache.ts && ncc build -o dist/update-known-checksums src/update-known-checksums.ts",
     "test": "jest",
     "act": "act pull_request -W .github/workflows/test.yml --container-architecture linux/amd64 -s GITHUB_TOKEN=\"$(gh auth token)\"",
@@ -19,12 +19,7 @@
     "type": "git",
     "url": "git+https://github.com/astral-sh/setup-uv.git"
   },
-  "keywords": [
-    "actions",
-    "python",
-    "setup",
-    "uv"
-  ],
+  "keywords": ["actions", "python", "setup", "uv"],
   "author": "@eifinger",
   "license": "MIT",
   "dependencies": {
@@ -38,19 +33,12 @@
     "@octokit/rest": "^21.0.2"
   },
   "devDependencies": {
+    "@biomejs/biome": "1.9.2",
     "@types/node": "^22.7.3",
     "@types/semver": "^7.5.8",
-    "@typescript-eslint/eslint-plugin": "^7.15.0",
-    "@typescript-eslint/parser": "^7.18.0",
     "@vercel/ncc": "^0.38.1",
-    "eslint": "^8.57.1",
-    "eslint-plugin-github": "^5.0.2",
-    "eslint-plugin-import": "^2.30.0",
-    "eslint-plugin-jest": "^28.8.3",
-    "eslint-plugin-prettier": "^5.2.1",
     "jest": "^29.7.0",
     "js-yaml": "^4.1.0",
-    "prettier": "^3.3.3",
     "ts-jest": "^29.2.5",
     "typescript": "^5.6.2"
   }
