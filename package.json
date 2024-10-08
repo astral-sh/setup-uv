@@ -36,7 +36,7 @@
     "@biomejs/biome": "1.9.3",
     "@types/node": "^22.7.5",
     "@types/semver": "^7.5.8",
-    "@vercel/ncc": "^0.38.1",
+    "@vercel/ncc": "^0.38.2",
     "jest": "^29.7.0",
     "js-yaml": "^4.1.0",
     "ts-jest": "^29.2.5",
