@@ -90020,7 +90020,7 @@ function getVersion(uvExecutablePath) {
         };
         yield exec.exec(uvExecutablePath, execArgs, options);
         const parts = output.split(" ");
-        return parts[1];
+        return parts[1].trim();
     });
 }
 
