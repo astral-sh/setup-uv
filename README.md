@@ -62,14 +62,14 @@ to install the latest version that satisfies the range.
 - name: Install a semver range of uv
   uses: astral-sh/setup-uv@v3
   with:
-    version: ">=0.3.0"
+    version: ">=0.4.0"
 ```
 
 ```yaml
 - name: Pinning a minor version of uv
   uses: astral-sh/setup-uv@v3
   with:
-    version: "0.3.x"
+    version: "0.4.x"
 ```
 
 ### Validate checksum
