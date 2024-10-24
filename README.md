@@ -168,14 +168,11 @@ It defaults to `setup-uv-cache` in the `TMP` dir, `D:\a\_temp\uv-tool-dir` on Wi
 
 ### Disable cache pruning
 
-By default, the cache is pruned after a run, which means that all pre-built wheels are removed from
-the cache
-([documentation](https://docs.astral.sh/uv/concepts/cache/#caching-in-continuous-integration)). By
-default, the uv cache is pruned after every run, removing pre-built wheels, but retaining any wheels
-that were built from source. On GitHub-hosted runners, it's typically faster to omit those pre-built
-wheels from the cache (and instead re-download them from the registry on each run). However, on
-self-hosted or local runners, preserving the cache may be more efficient. See the
-([documentation](https://docs.astral.sh/uv/concepts/cache/#caching-in-continuous-integration)) for
+By default, the uv cache is pruned after every run, removing pre-built wheels, but retaining any
+wheels that were built from source. On GitHub-hosted runners, it's typically faster to omit those
+pre-built wheels from the cache (and instead re-download them from the registry on each run).
+However, on self-hosted or local runners, preserving the cache may be more efficient. See
+the[documentation](https://docs.astral.sh/uv/concepts/cache/#caching-in-continuous-integration) for
 more.
 
 If you want to persist the entire cache across runs, disable cache pruning with the `prune-cache`
