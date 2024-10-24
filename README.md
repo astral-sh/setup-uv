@@ -166,6 +166,20 @@ It defaults to `setup-uv-cache` in the `TMP` dir, `D:\a\_temp\uv-tool-dir` on Wi
     cache-local-path: "/path/to/cache"
 ```
 
+### Disable cache pruning
+
+By default, the cache is pruned after a run, which means that all pre-built wheels are removed from
+the cache ([documentation](https://docs.astral.sh/uv/concepts/cache/#caching-in-continuous-integration)).
+If you want to keep the cache after a run, you can disable cache pruning with the `prune-cache` input.
+
+```yaml
+- name: Don't prune the cache before saving it
+  uses: astral-sh/setup-uv@v3
+  with:
+    enable-cache: true
+    prune-cache: false
+```
+
 ### GitHub authentication token
 
 This action uses the GitHub API to fetch the uv release artifacts. To avoid hitting the GitHub API

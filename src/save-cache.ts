@@ -5,7 +5,7 @@ import {
   STATE_CACHE_MATCHED_KEY,
   STATE_CACHE_KEY,
 } from "./cache/restore-cache";
-import { cacheLocalPath, enableCache } from "./utils/inputs";
+import { cacheLocalPath, enableCache, pruneCache as pruneCacheOption } from "./utils/inputs";
 
 export async function run(): Promise<void> {
   try {
@@ -32,7 +32,9 @@ async function saveCache(): Promise<void> {
     return;
   }
 
-  await pruneCache();
+  if (pruneCacheOption) {
+    await pruneCache();
+  }
 
   core.info(`Saving cache path: ${cacheLocalPath}`);
   await cache.saveCache([cacheLocalPath], cacheKey);

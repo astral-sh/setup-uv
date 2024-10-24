@@ -7,6 +7,7 @@ export const enableCache = core.getInput("enable-cache") === "true";
 export const cacheSuffix = core.getInput("cache-suffix") || "";
 export const cacheLocalPath = getCacheLocalPath();
 export const cacheDependencyGlob = core.getInput("cache-dependency-glob");
+export const pruneCache = (core.getInput("prune-cache") || "true") === "true";
 export const toolBinDir = getToolBinDir();
 export const toolDir = getToolDir();
 export const githubToken = core.getInput("github-token");
