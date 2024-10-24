@@ -5,7 +5,11 @@ import {
   STATE_CACHE_MATCHED_KEY,
   STATE_CACHE_KEY,
 } from "./cache/restore-cache";
-import { cacheLocalPath, enableCache, pruneCache as shouldPruneCache } from "./utils/inputs";
+import {
+  cacheLocalPath,
+  enableCache,
+  pruneCache as shouldPruneCache,
+} from "./utils/inputs";
 
 export async function run(): Promise<void> {
   try {
