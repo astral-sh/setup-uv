@@ -57,5 +57,5 @@ jobs:
       - run: uv --version
       - run: sudo echo $PATH
       - run: sudo chmod -R 755 /opt/hostedtoolcache/uv/0.4.26/x86_64
-      - run: sudo ls /opt/hostedtoolcache/uv/0.4.26/x86_64
+      - run: sudo ls -la /opt/hostedtoolcache/uv/0.4.26/x86_64
       - run: sudo uv pip install --system black
