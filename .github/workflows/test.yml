@@ -123,3 +123,10 @@ jobs:
         uses: ./
       - run: uv tool install ruff
       - run: ruff --version
+
+  test-system-install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./
+      - run: uv pip install --system black
