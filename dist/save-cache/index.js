@@ -82645,7 +82645,9 @@ function saveCache() {
             core.info(`Cache hit occurred on key ${cacheKey}, not saving cache.`);
             return;
         }
-        yield pruneCache();
+        if (inputs_1.pruneCache) {
+            yield pruneCache();
+        }
         core.info(`Saving cache path: ${inputs_1.cacheLocalPath}`);
         yield cache.saveCache([inputs_1.cacheLocalPath], cacheKey);
         core.info(`cache saved with the key: ${cacheKey}`);
@@ -82698,7 +82700,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.githubToken = exports.toolDir = exports.toolBinDir = exports.cacheDependencyGlob = exports.cacheLocalPath = exports.cacheSuffix = exports.enableCache = exports.checkSum = exports.version = void 0;
+exports.githubToken = exports.toolDir = exports.toolBinDir = exports.pruneCache = exports.cacheDependencyGlob = exports.cacheLocalPath = exports.cacheSuffix = exports.enableCache = exports.checkSum = exports.version = void 0;
 const core = __importStar(__nccwpck_require__(7484));
 const node_path_1 = __importDefault(__nccwpck_require__(6760));
 exports.version = core.getInput("version");
@@ -82707,6 +82709,7 @@ exports.enableCache = core.getInput("enable-cache") === "true";
 exports.cacheSuffix = core.getInput("cache-suffix") || "";
 exports.cacheLocalPath = getCacheLocalPath();
 exports.cacheDependencyGlob = core.getInput("cache-dependency-glob");
+exports.pruneCache = core.getInput("prune-cache") === "true";
 exports.toolBinDir = getToolBinDir();
 exports.toolDir = getToolDir();
 exports.githubToken = core.getInput("github-token");
