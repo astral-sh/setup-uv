@@ -53,10 +53,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./
-      - run: echo $PATH
-      - run: uv --version
-      - run: sudo echo $PATH
-      - run: sudo env | grep ^PATH
-      - run: sudo chmod -R 755 /opt/hostedtoolcache/uv/0.4.26/x86_64
-      - run: sudo ls -la /opt/hostedtoolcache/uv/0.4.26/x86_64
-      - run: sudo uv pip install --system black
+      - run: sudo -E env "PATH=$PATH" uv pip install --system black
