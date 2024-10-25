@@ -47,3 +47,10 @@ jobs:
         with:
           name: dist
           path: dist/
+
+  test-system-install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./
+      - run: uv pip install --system black
