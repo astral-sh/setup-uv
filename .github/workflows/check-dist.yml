@@ -53,5 +53,5 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./
-      - run: sudo -E env "PATH=$PATH" uv pip install --system black
-      - run: black --version
+      - run: sudo -E env "PATH=$PATH" uv pip install --python=3.13t -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
+      - run: cython --version
