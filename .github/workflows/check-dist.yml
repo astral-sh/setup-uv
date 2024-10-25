@@ -53,11 +53,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./
+      - run: echo $PATH
+      - run: sudo echo $PATH
       - run: sudo /opt/hostedtoolcache/uv/0.4.26/x86_64/uv pip install --system black
-
-  test-system-install:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./
-      - run: uv pip install --user black
