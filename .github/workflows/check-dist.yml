@@ -54,3 +54,4 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./
       - run: sudo -E env "PATH=$PATH" uv pip install --system black
+      - run: black --version
