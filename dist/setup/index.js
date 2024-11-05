@@ -89846,15 +89846,13 @@ const constants_1 = __nccwpck_require__(6156);
 function downloadLatest(platform, arch, checkSum, githubToken) {
     return __awaiter(this, void 0, void 0, function* () {
         const artifact = `uv-${arch}-${platform}`;
-        let downloadUrl = `https://github.com/${constants_1.OWNER}/${constants_1.REPO}/releases/latest/download/${artifact}`;
+        let extension = ".tar.gz";
         if (platform === "pc-windows-msvc") {
-            downloadUrl += ".zip";
+            extension = ".zip";
         }
-        else {
-            downloadUrl += ".tar.gz";
-        }
+        const downloadUrl = `https://github.com/${constants_1.OWNER}/${constants_1.REPO}/releases/latest/download/${artifact}${extension}`;
         core.info(`Downloading uv from "${downloadUrl}" ...`);
-        const downloadPath = yield tc.downloadTool(downloadUrl, undefined, githubToken);
+        const downloadPath = yield tc.downloadTool(downloadUrl, `${artifact}${extension}`, githubToken);
         let uvExecutablePath;
         let uvDir;
         if (platform === "pc-windows-msvc") {
@@ -89958,15 +89956,13 @@ function downloadVersion(platform, arch, version, checkSum, githubToken) {
     return __awaiter(this, void 0, void 0, function* () {
         const resolvedVersion = yield resolveVersion(version, githubToken);
         const artifact = `uv-${arch}-${platform}`;
-        let downloadUrl = `https://github.com/${constants_1.OWNER}/${constants_1.REPO}/releases/download/${resolvedVersion}/${artifact}`;
+        let extension = ".tar.gz";
         if (platform === "pc-windows-msvc") {
-            downloadUrl += ".zip";
+            extension = ".zip";
         }
-        else {
-            downloadUrl += ".tar.gz";
-        }
+        const downloadUrl = `https://github.com/${constants_1.OWNER}/${constants_1.REPO}/releases/download/${resolvedVersion}/${artifact}${extension}`;
         core.info(`Downloading uv from "${downloadUrl}" ...`);
-        const downloadPath = yield tc.downloadTool(downloadUrl, undefined, githubToken);
+        const downloadPath = yield tc.downloadTool(downloadUrl, `${artifact}${extension}`, githubToken);
         yield (0, checksum_1.validateChecksum)(checkSum, downloadPath, arch, platform, resolvedVersion);
         let uvDir;
         if (platform === "pc-windows-msvc") {

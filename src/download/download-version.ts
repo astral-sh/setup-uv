@@ -1,6 +1,7 @@
 import * as core from "@actions/core";
 import * as tc from "@actions/tool-cache";
 import * as path from "node:path";
+import { promises as fs } from "node:fs";
 import { OWNER, REPO, TOOL_CACHE_NAME } from "../utils/constants";
 import type { Architecture, Platform } from "../utils/platforms";
 import { validateChecksum } from "./checksum/checksum";
@@ -30,17 +31,16 @@ export async function downloadVersion(
 ): Promise<{ version: string; cachedToolDir: string }> {
   const resolvedVersion = await resolveVersion(version, githubToken);
   const artifact = `uv-${arch}-${platform}`;
-  let downloadUrl = `https://github.com/${OWNER}/${REPO}/releases/download/${resolvedVersion}/${artifact}`;
+  let extension = ".tar.gz";
   if (platform === "pc-windows-msvc") {
-    downloadUrl += ".zip";
-  } else {
-    downloadUrl += ".tar.gz";
+    extension = ".zip";
   }
+  const downloadUrl = `https://github.com/${OWNER}/${REPO}/releases/download/${resolvedVersion}/${artifact}${extension}`;
   core.info(`Downloading uv from "${downloadUrl}" ...`);
 
   const downloadPath = await tc.downloadTool(
     downloadUrl,
-    undefined,
+    `${artifact}${extension}`,
     githubToken,
   );
   await validateChecksum(
