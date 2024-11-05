@@ -2,6 +2,7 @@ import * as core from "@actions/core";
 import * as tc from "@actions/tool-cache";
 import * as exec from "@actions/exec";
 import * as path from "node:path";
+import { promises as fs } from "node:fs";
 import type { Architecture, Platform } from "../utils/platforms";
 import { validateChecksum } from "./checksum/checksum";
 import { OWNER, REPO, TOOL_CACHE_NAME } from "../utils/constants";
@@ -13,17 +14,16 @@ export async function downloadLatest(
   githubToken: string | undefined,
 ): Promise<{ cachedToolDir: string; version: string }> {
   const artifact = `uv-${arch}-${platform}`;
-  let downloadUrl = `https://github.com/${OWNER}/${REPO}/releases/latest/download/${artifact}`;
+  let extension = ".tar.gz";
   if (platform === "pc-windows-msvc") {
-    downloadUrl += ".zip";
-  } else {
-    downloadUrl += ".tar.gz";
+    extension = ".zip";
   }
+  const downloadUrl = `https://github.com/${OWNER}/${REPO}/releases/latest/download/${artifact}${extension}`;
   core.info(`Downloading uv from "${downloadUrl}" ...`);
 
   const downloadPath = await tc.downloadTool(
     downloadUrl,
-    undefined,
+    `${artifact}${extension}`,
     githubToken,
   );
   let uvExecutablePath: string;
