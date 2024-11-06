@@ -23,13 +23,15 @@ export async function downloadLatest(
 
   const downloadPath = await tc.downloadTool(
     downloadUrl,
-    `${artifact}${extension}`,
+    undefined,
     githubToken,
   );
   let uvExecutablePath: string;
   let uvDir: string;
   if (platform === "pc-windows-msvc") {
-    uvDir = await tc.extractZip(downloadPath);
+    const fullPathWithExtension = `${downloadPath}${extension}`;
+    await fs.copyFile(downloadPath, fullPathWithExtension);
+    uvDir = await tc.extractZip(fullPathWithExtension);
     // On windows extracting the zip does not create an intermediate directory
     uvExecutablePath = path.join(uvDir, "uv.exe");
   } else {

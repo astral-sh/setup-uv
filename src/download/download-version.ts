@@ -40,7 +40,7 @@ export async function downloadVersion(
 
   const downloadPath = await tc.downloadTool(
     downloadUrl,
-    `${artifact}${extension}`,
+    undefined,
     githubToken,
   );
   await validateChecksum(
@@ -53,7 +53,9 @@ export async function downloadVersion(
 
   let uvDir: string;
   if (platform === "pc-windows-msvc") {
-    uvDir = await tc.extractZip(downloadPath);
+    const fullPathWithExtension = `${downloadPath}${extension}`;
+    await fs.copyFile(downloadPath, fullPathWithExtension);
+    uvDir = await tc.extractZip(fullPathWithExtension);
     // On windows extracting the zip does not create an intermediate directory
   } else {
     const extractedDir = await tc.extractTar(downloadPath);

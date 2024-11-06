@@ -89710,6 +89710,7 @@ const core = __importStar(__nccwpck_require__(7484));
 const tc = __importStar(__nccwpck_require__(3472));
 const exec = __importStar(__nccwpck_require__(5236));
 const path = __importStar(__nccwpck_require__(6760));
+const node_fs_1 = __nccwpck_require__(3024);
 const checksum_1 = __nccwpck_require__(5391);
 const constants_1 = __nccwpck_require__(6156);
 function downloadLatest(platform, arch, checkSum, githubToken) {
@@ -89721,11 +89722,13 @@ function downloadLatest(platform, arch, checkSum, githubToken) {
         }
         const downloadUrl = `https://github.com/${constants_1.OWNER}/${constants_1.REPO}/releases/latest/download/${artifact}${extension}`;
         core.info(`Downloading uv from "${downloadUrl}" ...`);
-        const downloadPath = yield tc.downloadTool(downloadUrl, `${artifact}${extension}`, githubToken);
+        const downloadPath = yield tc.downloadTool(downloadUrl, undefined, githubToken);
         let uvExecutablePath;
         let uvDir;
         if (platform === "pc-windows-msvc") {
-            uvDir = yield tc.extractZip(downloadPath);
+            const fullPathWithExtension = `${downloadPath}${extension}`;
+            yield node_fs_1.promises.copyFile(downloadPath, fullPathWithExtension);
+            uvDir = yield tc.extractZip(fullPathWithExtension);
             // On windows extracting the zip does not create an intermediate directory
             uvExecutablePath = path.join(uvDir, "uv.exe");
         }
@@ -89807,6 +89810,7 @@ exports.downloadVersion = downloadVersion;
 const core = __importStar(__nccwpck_require__(7484));
 const tc = __importStar(__nccwpck_require__(3472));
 const path = __importStar(__nccwpck_require__(6760));
+const node_fs_1 = __nccwpck_require__(3024);
 const constants_1 = __nccwpck_require__(6156);
 const checksum_1 = __nccwpck_require__(5391);
 const github = __importStar(__nccwpck_require__(3228));
@@ -89831,11 +89835,13 @@ function downloadVersion(platform, arch, version, checkSum, githubToken) {
         }
         const downloadUrl = `https://github.com/${constants_1.OWNER}/${constants_1.REPO}/releases/download/${resolvedVersion}/${artifact}${extension}`;
         core.info(`Downloading uv from "${downloadUrl}" ...`);
-        const downloadPath = yield tc.downloadTool(downloadUrl, `${artifact}${extension}`, githubToken);
+        const downloadPath = yield tc.downloadTool(downloadUrl, undefined, githubToken);
         yield (0, checksum_1.validateChecksum)(checkSum, downloadPath, arch, platform, resolvedVersion);
         let uvDir;
         if (platform === "pc-windows-msvc") {
-            uvDir = yield tc.extractZip(downloadPath);
+            const fullPathWithExtension = `${downloadPath}${extension}`;
+            yield node_fs_1.promises.copyFile(downloadPath, fullPathWithExtension);
+            uvDir = yield tc.extractZip(fullPathWithExtension);
             // On windows extracting the zip does not create an intermediate directory
         }
         else {
