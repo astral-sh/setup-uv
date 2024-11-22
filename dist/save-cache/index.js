@@ -82304,10 +82304,10 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.STATE_CACHE_MATCHED_KEY = exports.STATE_CACHE_KEY = void 0;
 exports.restoreCache = restoreCache;
 const cache = __importStar(__nccwpck_require__(5116));
-const glob = __importStar(__nccwpck_require__(7206));
 const core = __importStar(__nccwpck_require__(7484));
 const inputs_1 = __nccwpck_require__(9612);
 const platforms_1 = __nccwpck_require__(8361);
+const hash_files_1 = __nccwpck_require__(9660);
 exports.STATE_CACHE_KEY = "cache-key";
 exports.STATE_CACHE_MATCHED_KEY = "cache-matched-key";
 const CACHE_VERSION = "1";
@@ -82334,7 +82334,7 @@ function computeKeys(version) {
         let cacheDependencyPathHash = "-";
         if (inputs_1.cacheDependencyGlob !== "") {
             core.info(`Searching files using cache dependency glob: ${inputs_1.cacheDependencyGlob.split("\n").join(",")}`);
-            cacheDependencyPathHash += yield glob.hashFiles(inputs_1.cacheDependencyGlob, undefined, undefined, true);
+            cacheDependencyPathHash += yield (0, hash_files_1.hashFiles)(inputs_1.cacheDependencyGlob, true);
             if (cacheDependencyPathHash === "-") {
                 throw new Error(`No file in ${process.cwd()} matched to [${inputs_1.cacheDependencyGlob.split("\n").join(",")}], make sure you have checked out the target repository`);
             }
@@ -82355,6 +82355,114 @@ function handleMatchResult(matchedKey, primaryKey) {
     core.saveState(exports.STATE_CACHE_MATCHED_KEY, matchedKey);
     core.info(`uv cache restored from GitHub Actions cache with key: ${matchedKey}`);
     core.setOutput("cache-hit", true);
+}
+
+
+/***/ }),
+
+/***/ 9660:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __asyncValues = (this && this.__asyncValues) || function (o) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var m = o[Symbol.asyncIterator], i;
+    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
+    function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
+    function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.hashFiles = hashFiles;
+const crypto = __importStar(__nccwpck_require__(7598));
+const core = __importStar(__nccwpck_require__(7484));
+const fs = __importStar(__nccwpck_require__(3024));
+const stream = __importStar(__nccwpck_require__(7075));
+const util = __importStar(__nccwpck_require__(7975));
+const glob_1 = __nccwpck_require__(7206);
+/**
+ * Hashes files matching the given glob pattern.
+ *
+ * Copied from https://github.com/actions/toolkit/blob/20ed2908f19538e9dfb66d8083f1171c0a50a87c/packages/glob/src/internal-hash-files.ts#L9-L49
+ * But supports hashing files outside the GITHUB_WORKSPACE.
+ * @param pattern The glob pattern to match files.
+ * @param verbose Whether to log the files being hashed.
+ */
+function hashFiles(pattern_1) {
+    return __awaiter(this, arguments, void 0, function* (pattern, verbose = false) {
+        var _a, e_1, _b, _c;
+        const globber = yield (0, glob_1.create)(pattern);
+        let hasMatch = false;
+        const writeDelegate = verbose ? core.info : core.debug;
+        const result = crypto.createHash("sha256");
+        let count = 0;
+        try {
+            for (var _d = true, _e = __asyncValues(globber.globGenerator()), _f; _f = yield _e.next(), _a = _f.done, !_a; _d = true) {
+                _c = _f.value;
+                _d = false;
+                const file = _c;
+                writeDelegate(file);
+                if (fs.statSync(file).isDirectory()) {
+                    writeDelegate(`Skip directory '${file}'.`);
+                    continue;
+                }
+                const hash = crypto.createHash("sha256");
+                const pipeline = util.promisify(stream.pipeline);
+                yield pipeline(fs.createReadStream(file), hash);
+                result.write(hash.digest());
+                count++;
+                if (!hasMatch) {
+                    hasMatch = true;
+                }
+            }
+        }
+        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        finally {
+            try {
+                if (!_d && !_a && (_b = _e.return)) yield _b.call(_e);
+            }
+            finally { if (e_1) throw e_1.error; }
+        }
+        result.end();
+        if (hasMatch) {
+            writeDelegate(`Found ${count} files to hash.`);
+            return result.digest("hex");
+        }
+        writeDelegate("No matches found for glob");
+        return "";
+    });
 }
 
 
@@ -82501,7 +82609,7 @@ exports.githubToken = core.getInput("github-token");
 function getToolBinDir() {
     const toolBinDirInput = core.getInput("tool-bin-dir");
     if (toolBinDirInput !== "") {
-        return toolBinDirInput;
+        return expandTilde(toolBinDirInput);
     }
     if (process.platform === "win32") {
         if (process.env.RUNNER_TEMP !== undefined) {
@@ -82514,7 +82622,7 @@ function getToolBinDir() {
 function getToolDir() {
     const toolDirInput = core.getInput("tool-dir");
     if (toolDirInput !== "") {
-        return toolDirInput;
+        return expandTilde(toolDirInput);
     }
     if (process.platform === "win32") {
         if (process.env.RUNNER_TEMP !== undefined) {
@@ -82527,12 +82635,18 @@ function getToolDir() {
 function getCacheLocalPath() {
     const cacheLocalPathInput = core.getInput("cache-local-path");
     if (cacheLocalPathInput !== "") {
-        return cacheLocalPathInput;
+        return expandTilde(cacheLocalPathInput);
     }
     if (process.env.RUNNER_TEMP !== undefined) {
         return `${process.env.RUNNER_TEMP}${node_path_1.default.sep}setup-uv-cache`;
     }
     throw Error("Could not determine UV_CACHE_DIR. Please make sure RUNNER_TEMP is set or provide the cache-local-path input");
+}
+function expandTilde(input) {
+    if (input.startsWith("~")) {
+        return `${process.env.HOME}${input.substring(1)}`;
+    }
+    return input;
 }
 
 
@@ -82684,11 +82798,27 @@ module.exports = require("net");
 
 /***/ }),
 
+/***/ 7598:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:crypto");
+
+/***/ }),
+
 /***/ 8474:
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("node:events");
+
+/***/ }),
+
+/***/ 3024:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:fs");
 
 /***/ }),
 

@@ -123,3 +123,24 @@ jobs:
         uses: ./
       - run: uv tool install ruff
       - run: ruff --version
+
+  test-tilde-expansion-tool-dirs:
+    runs-on: selfhosted-ubuntu-arm64
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup with cache
+        uses: ./
+        with:
+          tool-bin-dir: "~/tool-bin-dir"
+          tool-dir: "~/tool-dir"
+      - name: "Check if tool dirs are expanded"
+        run: |
+          if ! echo "$PATH" | grep -q "/home/ubuntu/tool-bin-dir"; then
+              echo "PATH does not contain /home/ubuntu/tool-bin-dir: $PATH"
+              exit 1
+          fi
+          if [ "$UV_TOOL_DIR" != "/home/ubuntu/tool-dir" ]; then
+              echo "UV_TOOL_DIR does not contain /home/ubuntu/tool-dir: $UV_TOOL_DIR"
+              exit 1
+          fi
+
