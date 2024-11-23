@@ -82510,6 +82510,7 @@ exports.run = run;
 const cache = __importStar(__nccwpck_require__(5116));
 const core = __importStar(__nccwpck_require__(7484));
 const exec = __importStar(__nccwpck_require__(5236));
+const fs = __importStar(__nccwpck_require__(3024));
 const restore_cache_1 = __nccwpck_require__(5391);
 const inputs_1 = __nccwpck_require__(9612);
 function run() {
@@ -82517,18 +82518,18 @@ function run() {
         try {
             if (inputs_1.enableCache) {
                 yield saveCache();
+                // node will stay alive if any promises are not resolved,
+                // which is a possibility if HTTP requests are dangling
+                // due to retries or timeouts. We know that if we got here
+                // that all promises that we care about have successfully
+                // resolved, so simply exit with success.
+                process.exit(0);
             }
         }
         catch (error) {
             const err = error;
             core.setFailed(err.message);
         }
-        // node will stay alive if any promises are not resolved,
-        // which is a possibility if HTTP requests are dangling
-        // due to retries or timeouts. We know that if we got here
-        // that all promises that we care about have successfully
-        // resolved, so simply exit with success.
-        process.exit(0);
     });
 }
 function saveCache() {
@@ -82547,8 +82548,23 @@ function saveCache() {
             yield pruneCache();
         }
         core.info(`Saving cache path: ${inputs_1.cacheLocalPath}`);
-        yield cache.saveCache([inputs_1.cacheLocalPath], cacheKey);
-        core.info(`cache saved with the key: ${cacheKey}`);
+        if (!fs.existsSync(inputs_1.cacheLocalPath) && !inputs_1.ignoreNothingToCache) {
+            throw new Error(`Cache path ${inputs_1.cacheLocalPath} does not exist on disk. This likely indicates that there are no dependencies to cache. Consider disabling the cache input if it is not needed.`);
+        }
+        try {
+            yield cache.saveCache([inputs_1.cacheLocalPath], cacheKey);
+            core.info(`cache saved with the key: ${cacheKey}`);
+        }
+        catch (e) {
+            if (e instanceof Error &&
+                e.message ===
+                    "Path Validation Error: Path(s) specified in the action for caching do(es) not exist, hence no cache is being saved.") {
+                core.info("No cacheable paths were found. Ignoring because ignore-nothing-to-save is enabled.");
+            }
+            else {
+                throw e;
+            }
+        }
     });
 }
 function pruneCache() {
@@ -82598,7 +82614,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.githubToken = exports.toolDir = exports.toolBinDir = exports.pruneCache = exports.cacheDependencyGlob = exports.cacheLocalPath = exports.cacheSuffix = exports.enableCache = exports.checkSum = exports.version = void 0;
+exports.githubToken = exports.toolDir = exports.toolBinDir = exports.ignoreNothingToCache = exports.pruneCache = exports.cacheDependencyGlob = exports.cacheLocalPath = exports.cacheSuffix = exports.enableCache = exports.checkSum = exports.version = void 0;
 const core = __importStar(__nccwpck_require__(7484));
 const node_path_1 = __importDefault(__nccwpck_require__(6760));
 exports.version = core.getInput("version");
@@ -82608,6 +82624,7 @@ exports.cacheSuffix = core.getInput("cache-suffix") || "";
 exports.cacheLocalPath = getCacheLocalPath();
 exports.cacheDependencyGlob = core.getInput("cache-dependency-glob");
 exports.pruneCache = core.getInput("prune-cache") === "true";
+exports.ignoreNothingToCache = core.getInput("ignore-nothing-to-cache") === "true";
 exports.toolBinDir = getToolBinDir();
 exports.toolDir = getToolDir();
 exports.githubToken = core.getInput("github-token");

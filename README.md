@@ -18,6 +18,8 @@ Set up your GitHub Actions workflow with a specific version of [uv](https://docs
   - [Enable Caching](#enable-caching)
     - [Cache dependency glob](#cache-dependency-glob)
   - [Local cache path](#local-cache-path)
+  - [Disable cache pruning](#disable-cache-pruning)
+  - [Ignore nothing to cache](#ignore-nothing-to-cache)
   - [GitHub authentication token](#github-authentication-token)
   - [UV_TOOL_DIR](#uv_tool_dir)
   - [UV_TOOL_BIN_DIR](#uv_tool_bin_dir)
@@ -193,6 +195,19 @@ input.
   with:
     enable-cache: true
     prune-cache: false
+```
+
+### Ignore nothing to cache
+
+By default, the action will fail if there is nothing to cache. If you want to ignore this, set the
+`ignore-nothing-to-cache` input to `true`.
+
+```yaml
+- name: Ignore nothing to cache
+  uses: astral-sh/setup-uv@v3
+  with:
+    enable-cache: true
+    ignore-nothing-to-cache: true
 ```
 
 ### GitHub authentication token

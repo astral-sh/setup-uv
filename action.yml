@@ -31,7 +31,10 @@ inputs:
     default: ""
   prune-cache:
     description: "Prune cache before saving."
-    default: true
+    default: "true"
+  ignore-nothing-to-cache:
+    description: "Ignore when nothing is found to cache."
+    default: "false"
   tool-dir:
     description: "Custom path to set UV_TOOL_DIR to."
     required: false
