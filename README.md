@@ -199,7 +199,7 @@ input.
 
 ### Ignore nothing to cache
 
-By default, the action will fail if there is nothing to cache (the uv cache directory does not exist).
+By default, the action will fail if caching is enabled but there is nothing to upload (the uv cache directory does not exist).
 If you want to ignore this, set the `ignore-nothing-to-cache` input to `true`.
 
 ```yaml
