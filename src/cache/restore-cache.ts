@@ -42,7 +42,7 @@ async function computeKeys(version: string): Promise<string> {
     cacheDependencyPathHash += await hashFiles(cacheDependencyGlob, true);
     if (cacheDependencyPathHash === "-") {
       throw new Error(
-        `No file in ${process.cwd()} matched to [${cacheDependencyGlob.split("\n").join(",")}], make sure you have checked out the target repository`,
+        `No file matched to [${cacheDependencyGlob.split("\n").join(",")}], make sure you have checked out the target repository`,
       );
     }
   } else {

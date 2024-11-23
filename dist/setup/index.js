@@ -87419,7 +87419,7 @@ function computeKeys(version) {
             core.info(`Searching files using cache dependency glob: ${inputs_1.cacheDependencyGlob.split("\n").join(",")}`);
             cacheDependencyPathHash += yield (0, hash_files_1.hashFiles)(inputs_1.cacheDependencyGlob, true);
             if (cacheDependencyPathHash === "-") {
-                throw new Error(`No file in ${process.cwd()} matched to [${inputs_1.cacheDependencyGlob.split("\n").join(",")}], make sure you have checked out the target repository`);
+                throw new Error(`No file matched to [${inputs_1.cacheDependencyGlob.split("\n").join(",")}], make sure you have checked out the target repository`);
             }
         }
         else {
