@@ -8,6 +8,8 @@ export const cacheSuffix = core.getInput("cache-suffix") || "";
 export const cacheLocalPath = getCacheLocalPath();
 export const cacheDependencyGlob = core.getInput("cache-dependency-glob");
 export const pruneCache = core.getInput("prune-cache") === "true";
+export const ignoreNothingToCache =
+  core.getInput("ignore-nothing-to-cache") === "true";
 export const toolBinDir = getToolBinDir();
 export const toolDir = getToolDir();
 export const githubToken = core.getInput("github-token");
