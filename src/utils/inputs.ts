@@ -15,7 +15,7 @@ export const githubToken = core.getInput("github-token");
 function getToolBinDir(): string | undefined {
   const toolBinDirInput = core.getInput("tool-bin-dir");
   if (toolBinDirInput !== "") {
-    return toolBinDirInput;
+    return expandTilde(toolBinDirInput);
   }
   if (process.platform === "win32") {
     if (process.env.RUNNER_TEMP !== undefined) {
@@ -31,7 +31,7 @@ function getToolBinDir(): string | undefined {
 function getToolDir(): string | undefined {
   const toolDirInput = core.getInput("tool-dir");
   if (toolDirInput !== "") {
-    return toolDirInput;
+    return expandTilde(toolDirInput);
   }
   if (process.platform === "win32") {
     if (process.env.RUNNER_TEMP !== undefined) {
@@ -47,7 +47,7 @@ function getToolDir(): string | undefined {
 function getCacheLocalPath(): string {
   const cacheLocalPathInput = core.getInput("cache-local-path");
   if (cacheLocalPathInput !== "") {
-    return cacheLocalPathInput;
+    return expandTilde(cacheLocalPathInput);
   }
   if (process.env.RUNNER_TEMP !== undefined) {
     return `${process.env.RUNNER_TEMP}${path.sep}setup-uv-cache`;
@@ -55,4 +55,11 @@ function getCacheLocalPath(): string {
   throw Error(
     "Could not determine UV_CACHE_DIR. Please make sure RUNNER_TEMP is set or provide the cache-local-path input",
   );
+}
+
+function expandTilde(input: string): string {
+  if (input.startsWith("~")) {
+    return `${process.env.HOME}${input.substring(1)}`;
+  }
+  return input;
 }

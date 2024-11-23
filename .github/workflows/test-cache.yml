@@ -121,3 +121,49 @@ jobs:
           CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
+
+  prepare-tilde-expansion-tests:
+    runs-on: selfhosted-ubuntu-arm64
+    steps:
+      - name: Create cache directory
+        run: mkdir -p ~/uv-cache
+        shell: bash
+      - name: Create cache dependency glob file
+        run: touch ~/uv-cache.glob
+        shell: bash
+
+  test-tilde-expansion-cache-local-path:
+    needs: prepare-tilde-expansion-tests
+    runs-on: selfhosted-ubuntu-arm64
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup with cache
+        uses: ./
+        with:
+          enable-cache: true
+          cache-local-path: ~/uv-cache/cache-local-path
+
+  test-tilde-expansion-cache-dependency-glob:
+    needs: prepare-tilde-expansion-tests
+    runs-on: selfhosted-ubuntu-arm64
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup with cache
+        uses: ./
+        with:
+          enable-cache: true
+          cache-local-path: ~/uv-cache/cache-dependency-glob
+          cache-dependency-glob: "~/uv-cache.glob"
+
+  cleanup-tilde-expansion-tests:
+    needs:
+      - test-tilde-expansion-cache-local-path
+      - test-tilde-expansion-cache-dependency-glob
+    runs-on: selfhosted-ubuntu-arm64
+    steps:
+      - name: Remove cache directory
+        run: rm -rf ~/uv-cache
+        shell: bash
+      - name: Remove cache dependency glob file
+        run: rm -f ~/uv-cache.glob
+        shell: bash

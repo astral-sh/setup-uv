@@ -1,5 +1,4 @@
 import * as cache from "@actions/cache";
-import * as glob from "@actions/glob";
 import * as core from "@actions/core";
 import {
   cacheDependencyGlob,
@@ -7,6 +6,7 @@ import {
   cacheSuffix,
 } from "../utils/inputs";
 import { getArch, getPlatform } from "../utils/platforms";
+import { hashFiles } from "../hash/hash-files";
 
 export const STATE_CACHE_KEY = "cache-key";
 export const STATE_CACHE_MATCHED_KEY = "cache-matched-key";
@@ -39,12 +39,7 @@ async function computeKeys(version: string): Promise<string> {
     core.info(
       `Searching files using cache dependency glob: ${cacheDependencyGlob.split("\n").join(",")}`,
     );
-    cacheDependencyPathHash += await glob.hashFiles(
-      cacheDependencyGlob,
-      undefined,
-      undefined,
-      true,
-    );
+    cacheDependencyPathHash += await hashFiles(cacheDependencyGlob, true);
     if (cacheDependencyPathHash === "-") {
       throw new Error(
         `No file in ${process.cwd()} matched to [${cacheDependencyGlob.split("\n").join(",")}], make sure you have checked out the target repository`,

@@ -21,6 +21,7 @@ Set up your GitHub Actions workflow with a specific version of [uv](https://docs
   - [GitHub authentication token](#github-authentication-token)
   - [UV_TOOL_DIR](#uv_tool_dir)
   - [UV_TOOL_BIN_DIR](#uv_tool_bin_dir)
+  - [Tilde Expansion](#tilde-expansion)
 - [How it works](#how-it-works)
 - [FAQ](#faq)
 
@@ -120,7 +121,7 @@ use it in subsequent steps. For example, to use the cache in the above case:
 
 If you want to control when the cache is invalidated, specify a glob pattern with the
 `cache-dependency-glob` input. The cache will be invalidated if any file matching the glob pattern
-changes. The glob matches files relative to the repository root.
+changes. If you use relative paths, the glob matches files relative to the repository root.
 
 > [!NOTE]
 >
@@ -142,6 +143,14 @@ changes. The glob matches files relative to the repository root.
     cache-dependency-glob: |
       **/requirements*.txt
       **/pyproject.toml
+```
+
+```yaml
+- name: Define an absolute cache dependency glob
+  uses: astral-sh/setup-uv@v3
+  with:
+    enable-cache: true
+    cache-dependency-glob: "/tmp/my-folder/requirements*.txt"
 ```
 
 ```yaml
@@ -238,6 +247,25 @@ If you want to change this behaviour (especially on self-hosted runners) you can
   uses: astral-sh/setup-uv@v3
   with:
     tool-bin-dir: "/path/to/tool-bin/dir"
+```
+
+### Tilde Expansion
+
+This action supports expanding the `~` character to the user's home directory for the following inputs:
+
+- `cache-local-path`
+- `tool-dir`
+- `tool-bin-dir`
+- `cache-dependency-glob`
+
+```yaml
+- name: Expand the tilde character
+  uses: astral-sh/setup-uv@v3
+  with:
+    cache-local-path: "~/path/to/cache"
+    tool-dir: "~/path/to/tool/dir"
+    tool-bin-dir: "~/path/to/tool-bin/dir"
+    cache-dependency-glob: "~/my-cache-buster"
 ```
 
 ## How it works
