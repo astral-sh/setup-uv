@@ -43,7 +43,7 @@ For an example workflow, see
 
 > [!TIP]
 >
-> Using `latest` requires that uv download the executable on every run, which incurs a cost
+> Using `latest` requires to download the uv executable on every run, which incurs a cost
 > (especially on self-hosted runners). As a best practice, consider pinning the version to a
 > specific release.
 
@@ -58,7 +58,7 @@ For an example workflow, see
 
 ### Install a version by supplying a semver range
 
-You can also specify a [semver range](https://github.com/npm/node-semver?tab=readme-ov-file#ranges)
+You can specify a [semver range](https://github.com/npm/node-semver?tab=readme-ov-file#ranges)
 to install the latest version that satisfies the range.
 
 ```yaml
@@ -77,7 +77,7 @@ to install the latest version that satisfies the range.
 
 ### Validate checksum
 
-You can also specify a checksum to validate the downloaded file. Checksums up to the default version
+You can specify a checksum to validate the downloaded executable. Checksums up to the default version
 are automatically verified by this action. The sha256 hashes can be found on the
 [releases page](https://github.com/astral-sh/uv/releases) of the uv repo.
 
@@ -91,8 +91,8 @@ are automatically verified by this action. The sha256 hashes can be found on the
 
 ### Enable caching
 
-If you enable caching, the [uv cache](https://docs.astral.sh/uv/concepts/cache/) will be cached to
-the GitHub Actions Cache. This can speed up runs that reuse the cache by several minutes.
+If you enable caching, the [uv cache](https://docs.astral.sh/uv/concepts/cache/) will be uploaded to
+the GitHub Actions cache. This can speed up runs that reuse the cache by several minutes.
 
 > [!TIP]
 >
@@ -121,9 +121,9 @@ use it in subsequent steps. For example, to use the cache in the above case:
 
 #### Cache dependency glob
 
-If you want to control when the cache is invalidated, specify a glob pattern with the
-`cache-dependency-glob` input. The cache will be invalidated if any file matching the glob pattern
-changes. If you use relative paths, the glob matches files relative to the repository root.
+If you want to control when the GitHub Actions cache is invalidated, specify a glob pattern with the
+`cache-dependency-glob` input. The GitHub Actions cache will be invalidated if any file matching the glob pattern
+changes. If you use relative paths, they are relative to the repository root.
 
 > [!NOTE]
 >
@@ -183,8 +183,8 @@ By default, the uv cache is pruned after every run, removing pre-built wheels, b
 wheels that were built from source. On GitHub-hosted runners, it's typically faster to omit those
 pre-built wheels from the cache (and instead re-download them from the registry on each run).
 However, on self-hosted or local runners, preserving the cache may be more efficient. See
-the[documentation](https://docs.astral.sh/uv/concepts/cache/#caching-in-continuous-integration) for
-more.
+the [documentation](https://docs.astral.sh/uv/concepts/cache/#caching-in-continuous-integration) for
+more information.
 
 If you want to persist the entire cache across runs, disable cache pruning with the `prune-cache`
 input.
@@ -199,8 +199,8 @@ input.
 
 ### Ignore nothing to cache
 
-By default, the action will fail if there is nothing to cache. If you want to ignore this, set the
-`ignore-nothing-to-cache` input to `true`.
+By default, the action will fail if there is nothing to cache (the uv cache directory does not exist).
+If you want to ignore this, set the `ignore-nothing-to-cache` input to `true`.
 
 ```yaml
 - name: Ignore nothing to cache
