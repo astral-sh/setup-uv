@@ -2,6 +2,7 @@ import * as core from "@actions/core";
 import path from "node:path";
 
 export const version = core.getInput("version");
+export const pythonVersion = core.getInput("python-version");
 export const checkSum = core.getInput("checksum");
 export const enableCache = core.getInput("enable-cache") === "true";
 export const cacheSuffix = core.getInput("cache-suffix") || "";
