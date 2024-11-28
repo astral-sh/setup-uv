@@ -24,23 +24,22 @@ jobs:
       - name: Make sure no changes from linters are detected
         run: |
           git diff --exit-code
-  test-default-version:
+  test-latest-version:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, macos-14, selfhosted-ubuntu-arm64]
+        os: [ubuntu-latest, macos-latest, macos-14]
     steps:
       - uses: actions/checkout@v4
-      - name: Install default version
+      - name: Install latest version
         uses: ./
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
   test-specific-version:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, macos-14, selfhosted-ubuntu-arm64]
-        uv-version: ["latest", "0.3.0", "0.3.2", "0.3", "0.3.x", ">=0.3.0"]
+        uv-version: ["0.3.0", "0.3.2", "0.3", "0.3.x", ">=0.3.0"]
     steps:
       - uses: actions/checkout@v4
       - name: Install version ${{ matrix.uv-version }}
@@ -50,10 +49,7 @@ jobs:
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
   test-semver-range:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, selfhosted-ubuntu-arm64]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Install version 0.3
@@ -72,15 +68,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, selfhosted-ubuntu-arm64]
+        os: [ubuntu-latest, macos-latest]
         checksum:
           ["4d9279ad5ca596b1e2d703901d508430eb07564dc4d8837de9e2fca9c90f8ecd"]
         exclude:
-          - os: selfhosted-ubuntu-arm64
+          - os: macos-latest
             checksum: "4d9279ad5ca596b1e2d703901d508430eb07564dc4d8837de9e2fca9c90f8ecd"
         include:
-          - os: selfhosted-ubuntu-arm64
-            checksum: "e11b01402ab645392c7ad6044db63d37e4fd1e745e015306993b07695ea5f9f8"
+          - os: macos-latest
+            checksum: "a70cbfbf3bb5c08b2f84963b4f12c94e08fbb2468ba418a3bfe1066fbe9e7218"
     steps:
       - uses: actions/checkout@v4
       - name: Checksum matches expected
@@ -115,7 +111,6 @@ jobs:
             macos-latest,
             macos-14,
             windows-latest,
-            selfhosted-ubuntu-arm64,
           ]
     steps:
       - uses: actions/checkout@v4

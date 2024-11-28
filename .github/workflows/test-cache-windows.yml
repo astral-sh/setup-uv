@@ -11,10 +11,7 @@ concurrency:
 
 jobs:
   test-setup-cache:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest]
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
       - name: Setup with cache
@@ -25,10 +22,7 @@ jobs:
       - run: uv sync
         working-directory: __tests__\fixtures\uv-project
   test-restore-cache:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest]
+    runs-on: windows-latest
     needs: test-setup-cache
     steps:
       - uses: actions/checkout@v4
