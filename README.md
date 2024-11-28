@@ -89,6 +89,25 @@ This will override any python version specifications in `pyproject.toml` and `.p
     python-version: "3.12"
 ```
 
+You can combine this with a matrix to test multiple python versions:
+
+```yaml
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the latest version of uv and set the python version
+        uses: astral-sh/setup-uv@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Test with python ${{ matrix.python-version }}
+        run: uv run --frozen pytest
+```
+
 ### Validate checksum
 
 You can specify a checksum to validate the downloaded executable. Checksums up to the default version
