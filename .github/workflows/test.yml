@@ -24,7 +24,7 @@ jobs:
       - name: Make sure no changes from linters are detected
         run: |
           git diff --exit-code
-  test-latest-version:
+  test-default-version:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:

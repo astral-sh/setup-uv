@@ -14,6 +14,7 @@ Set up your GitHub Actions workflow with a specific version of [uv](https://docs
   - [Install the latest version (default)](#install-the-latest-version-default)
   - [Install a specific version](#install-a-specific-version)
   - [Install a version by supplying a semver range](#install-a-version-by-supplying-a-semver-range)
+  - [Python version](#python-version)
   - [Validate checksum](#validate-checksum)
   - [Enable Caching](#enable-caching)
     - [Cache dependency glob](#cache-dependency-glob)
@@ -73,6 +74,19 @@ to install the latest version that satisfies the range.
   uses: astral-sh/setup-uv@v3
   with:
     version: "0.4.x"
+```
+
+### Python version
+
+You can use the input `python-version` to set the environment variable `UV_PYTHON` for the rest
+of your workflow.
+This will override any python version specifications in `pyproject.toml` and `.python-version`
+
+```yaml
+- name: Install the latest version of uv and set the python version to 3.12
+  uses: astral-sh/setup-uv@v3
+  with:
+    python-version: "3.12"
 ```
 
 ### Validate checksum

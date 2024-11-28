@@ -6,6 +6,9 @@ inputs:
   version:
     description: "The version of uv to install"
     default: "latest"
+  python-version:
+    description: "The version of Python to set UV_PYTHON to"
+    required: false
   checksum:
     description: "The checksum of the uv version to install"
     required: false

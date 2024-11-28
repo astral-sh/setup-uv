@@ -90028,10 +90028,11 @@ function run() {
             addUvToPath(setupResult.uvDir);
             addToolBinToPath();
             setToolDir();
-            core.setOutput("uv-version", setupResult.version);
-            core.info(`Successfully installed uv version ${setupResult.version}`);
+            setupPython();
             addMatchers();
             setCacheDir(inputs_1.cacheLocalPath);
+            core.setOutput("uv-version", setupResult.version);
+            core.info(`Successfully installed uv version ${setupResult.version}`);
             if (inputs_1.enableCache) {
                 yield (0, restore_cache_1.restoreCache)(setupResult.version);
             }
@@ -90099,6 +90100,12 @@ function setToolDir() {
         core.info(`Set UV_TOOL_DIR to ${inputs_1.toolDir}`);
     }
 }
+function setupPython() {
+    if (inputs_1.pythonVersion !== "") {
+        core.exportVariable("UV_PYTHON", inputs_1.pythonVersion);
+        core.info(`Set UV_PYTHON to ${inputs_1.pythonVersion}`);
+    }
+}
 function setCacheDir(cacheLocalPath) {
     core.exportVariable("UV_CACHE_DIR", cacheLocalPath);
     core.info(`Set UV_CACHE_DIR to ${cacheLocalPath}`);
@@ -90158,10 +90165,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.githubToken = exports.toolDir = exports.toolBinDir = exports.ignoreNothingToCache = exports.pruneCache = exports.cacheDependencyGlob = exports.cacheLocalPath = exports.cacheSuffix = exports.enableCache = exports.checkSum = exports.version = void 0;
+exports.githubToken = exports.toolDir = exports.toolBinDir = exports.ignoreNothingToCache = exports.pruneCache = exports.cacheDependencyGlob = exports.cacheLocalPath = exports.cacheSuffix = exports.enableCache = exports.checkSum = exports.pythonVersion = exports.version = void 0;
 const core = __importStar(__nccwpck_require__(7484));
 const node_path_1 = __importDefault(__nccwpck_require__(6760));
 exports.version = core.getInput("version");
+exports.pythonVersion = core.getInput("python-version");
 exports.checkSum = core.getInput("checksum");
 exports.enableCache = core.getInput("enable-cache") === "true";
 exports.cacheSuffix = core.getInput("cache-suffix") || "";
