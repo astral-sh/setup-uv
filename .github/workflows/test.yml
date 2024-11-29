@@ -118,7 +118,6 @@ jobs:
         uses: ./
       - run: uv tool install ruff
       - run: ruff --version
-
   test-tilde-expansion-tool-dirs:
     runs-on: selfhosted-ubuntu-arm64
     steps:
@@ -138,4 +137,21 @@ jobs:
               echo "UV_TOOL_DIR does not contain /home/ubuntu/tool-dir: $UV_TOOL_DIR"
               exit 1
           fi
-
+  test-python-version:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13t"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install latest version
+        uses: ./
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Verify UV_PYTHON is set to correct version
+        run: |
+          if [ "$UV_PYTHON" != "${{ matrix.python-version }}" ]; then
+            exit 1
+          fi
+      - run: uv sync
+        working-directory: __tests__/fixtures/uv-project
