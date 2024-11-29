@@ -80,8 +80,10 @@ async function setupUv(
   const toolCacheResult = tryGetFromToolCache(arch, resolvedVersion);
   if (toolCacheResult.installedPath) {
     core.info(`Found uv in tool-cache for ${resolvedVersion}`);
+    core.setOutput("uv-cache-hit", true);
     return { uvDir: toolCacheResult.installedPath, version: resolvedVersion };
   }
+  core.setOutput("uv-cache-hit", false);
 
   const versionResult = await downloadVersion(
     platform,

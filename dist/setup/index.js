@@ -90010,8 +90010,10 @@ function setupUv(platform, arch, versionInput, checkSum, githubToken) {
         const toolCacheResult = (0, download_version_1.tryGetFromToolCache)(arch, resolvedVersion);
         if (toolCacheResult.installedPath) {
             core.info(`Found uv in tool-cache for ${resolvedVersion}`);
+            core.setOutput("uv-cache-hit", true);
             return { uvDir: toolCacheResult.installedPath, version: resolvedVersion };
         }
+        core.setOutput("uv-cache-hit", false);
         const versionResult = yield (0, download_version_1.downloadVersion)(platform, arch, resolvedVersion, checkSum, githubToken);
         return { uvDir: versionResult.cachedToolDir, version: versionResult.version };
     });

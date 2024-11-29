@@ -47,6 +47,8 @@ inputs:
 outputs:
   uv-version:
     description: "The installed uv version. Useful when using latest."
+  uv-cache-hit:
+    description: "A boolean value to indicate a cache entry for uv was found"
   cache-hit:
     description: "A boolean value to indicate a cache entry was found"
 runs:
