@@ -44,7 +44,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install latest version
         uses: ./
-      - name: Verify cache hit
+      - name: Re-run setup-uv
         id: re-setup-uv
         uses: ./
       - name: Verify uv cache hit
