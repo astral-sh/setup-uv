@@ -42,12 +42,6 @@ Set up your GitHub Actions workflow with a specific version of [uv](https://docs
 For an example workflow, see
 [here](https://github.com/charliermarsh/autobot/blob/e42c66659bf97b90ca9ff305a19cc99952d0d43f/.github/workflows/ci.yaml).
 
-> [!TIP]
->
-> Using `latest` requires to download the uv executable on every run, which incurs a cost
-> (especially on self-hosted runners). As a best practice, consider pinning the version to a
-> specific release.
-
 ### Install a specific version
 
 ```yaml
