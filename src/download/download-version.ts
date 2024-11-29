@@ -70,7 +70,7 @@ export async function downloadVersion(
   return { version: resolvedVersion, cachedToolDir };
 }
 
-async function resolveVersion(
+export async function resolveVersion(
   version: string,
   githubToken: string,
 ): Promise<string> {

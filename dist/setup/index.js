@@ -89685,62 +89685,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.downloadLatest = downloadLatest;
-const core = __importStar(__nccwpck_require__(7484));
-const tc = __importStar(__nccwpck_require__(3472));
-const exec = __importStar(__nccwpck_require__(5236));
-const path = __importStar(__nccwpck_require__(6760));
-const node_fs_1 = __nccwpck_require__(3024);
-const checksum_1 = __nccwpck_require__(5391);
+exports.getLatestReleaseVersion = getLatestReleaseVersion;
 const constants_1 = __nccwpck_require__(6156);
-function downloadLatest(platform, arch, checkSum, githubToken) {
+const github = __importStar(__nccwpck_require__(3228));
+function getLatestReleaseVersion(githubToken) {
     return __awaiter(this, void 0, void 0, function* () {
-        const artifact = `uv-${arch}-${platform}`;
-        let extension = ".tar.gz";
-        if (platform === "pc-windows-msvc") {
-            extension = ".zip";
+        const octokit = github.getOctokit(githubToken);
+        const { data: latestRelease } = yield octokit.rest.repos.getLatestRelease({
+            owner: constants_1.OWNER,
+            repo: constants_1.REPO,
+        });
+        if (latestRelease) {
+            return latestRelease.tag_name;
         }
-        const downloadUrl = `https://github.com/${constants_1.OWNER}/${constants_1.REPO}/releases/latest/download/${artifact}${extension}`;
-        core.info(`Downloading uv from "${downloadUrl}" ...`);
-        const downloadPath = yield tc.downloadTool(downloadUrl, undefined, githubToken);
-        let uvExecutablePath;
-        let uvDir;
-        if (platform === "pc-windows-msvc") {
-            const fullPathWithExtension = `${downloadPath}${extension}`;
-            yield node_fs_1.promises.copyFile(downloadPath, fullPathWithExtension);
-            uvDir = yield tc.extractZip(fullPathWithExtension);
-            // On windows extracting the zip does not create an intermediate directory
-            uvExecutablePath = path.join(uvDir, "uv.exe");
-        }
-        else {
-            const extractedDir = yield tc.extractTar(downloadPath);
-            uvDir = path.join(extractedDir, artifact);
-            uvExecutablePath = path.join(uvDir, "uv");
-        }
-        const version = yield getVersion(uvExecutablePath);
-        yield (0, checksum_1.validateChecksum)(checkSum, downloadPath, arch, platform, version);
-        const cachedToolDir = yield tc.cacheDir(uvDir, constants_1.TOOL_CACHE_NAME, version, arch);
-        return { cachedToolDir, version };
-    });
-}
-function getVersion(uvExecutablePath) {
-    return __awaiter(this, void 0, void 0, function* () {
-        // Parse the output of `uv --version` to get the version
-        // The output looks like
-        // uv 0.3.1 (be17d132a 2024-08-21)
-        const options = {
-            silent: !core.isDebug(),
-        };
-        const execArgs = ["--version"];
-        let output = "";
-        options.listeners = {
-            stdout: (data) => {
-                output += data.toString();
-            },
-        };
-        yield exec.exec(uvExecutablePath, execArgs, options);
-        const parts = output.split(" ");
-        return parts[1].trim();
+        throw new Error("No releases found for this repository.");
     });
 }
 
@@ -89787,6 +89745,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.tryGetFromToolCache = tryGetFromToolCache;
 exports.downloadVersion = downloadVersion;
+exports.resolveVersion = resolveVersion;
 const core = __importStar(__nccwpck_require__(7484));
 const tc = __importStar(__nccwpck_require__(3472));
 const path = __importStar(__nccwpck_require__(6760));
@@ -90045,27 +90004,16 @@ function run() {
 }
 function setupUv(platform, arch, versionInput, checkSum, githubToken) {
     return __awaiter(this, void 0, void 0, function* () {
-        let installedPath;
-        let cachedToolDir;
-        let version;
-        if (versionInput === "latest") {
-            const latestResult = yield (0, download_latest_1.downloadLatest)(platform, arch, checkSum, githubToken);
-            version = latestResult.version;
-            cachedToolDir = latestResult.cachedToolDir;
+        const resolvedVersion = yield (0, download_version_1.resolveVersion)(versionInput === "latest"
+            ? yield (0, download_latest_1.getLatestReleaseVersion)(githubToken)
+            : versionInput, githubToken);
+        const toolCacheResult = (0, download_version_1.tryGetFromToolCache)(arch, resolvedVersion);
+        if (toolCacheResult.installedPath) {
+            core.info(`Found uv in tool-cache for ${resolvedVersion}`);
+            return { uvDir: toolCacheResult.installedPath, version: resolvedVersion };
         }
-        else {
-            const toolCacheResult = (0, download_version_1.tryGetFromToolCache)(arch, versionInput);
-            version = toolCacheResult.version;
-            installedPath = toolCacheResult.installedPath;
-            if (installedPath) {
-                core.info(`Found uv in tool-cache for ${versionInput}`);
-                return { uvDir: installedPath, version };
-            }
-            const versionResult = yield (0, download_version_1.downloadVersion)(platform, arch, versionInput, checkSum, githubToken);
-            cachedToolDir = versionResult.cachedToolDir;
-            version = versionResult.version;
-        }
-        return { uvDir: cachedToolDir, version };
+        const versionResult = yield (0, download_version_1.downloadVersion)(platform, arch, resolvedVersion, checkSum, githubToken);
+        return { uvDir: versionResult.cachedToolDir, version: versionResult.version };
     });
 }
 function addUvToPath(cachedPath) {

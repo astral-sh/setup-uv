@@ -3,10 +3,11 @@ import * as path from "node:path";
 import {
   downloadVersion,
   tryGetFromToolCache,
+  resolveVersion,
 } from "./download/download-version";
 import { restoreCache } from "./cache/restore-cache";
 
-import { downloadLatest } from "./download/download-latest";
+import { getLatestReleaseVersion } from "./download/download-latest";
 import {
   type Architecture,
   getArch,
@@ -69,38 +70,28 @@ async function setupUv(
   checkSum: string | undefined,
   githubToken: string,
 ): Promise<{ uvDir: string; version: string }> {
-  let installedPath: string | undefined;
-  let cachedToolDir: string;
-  let version: string;
-  if (versionInput === "latest") {
-    const latestResult = await downloadLatest(
-      platform,
-      arch,
-      checkSum,
-      githubToken,
-    );
-    version = latestResult.version;
-    cachedToolDir = latestResult.cachedToolDir;
-  } else {
-    const toolCacheResult = tryGetFromToolCache(arch, versionInput);
-    version = toolCacheResult.version;
-    installedPath = toolCacheResult.installedPath;
-    if (installedPath) {
-      core.info(`Found uv in tool-cache for ${versionInput}`);
-      return { uvDir: installedPath, version };
-    }
-    const versionResult = await downloadVersion(
-      platform,
-      arch,
-      versionInput,
-      checkSum,
-      githubToken,
-    );
-    cachedToolDir = versionResult.cachedToolDir;
-    version = versionResult.version;
+  const resolvedVersion = await resolveVersion(
+    versionInput === "latest"
+      ? await getLatestReleaseVersion(githubToken)
+      : versionInput,
+    githubToken,
+  );
+
+  const toolCacheResult = tryGetFromToolCache(arch, resolvedVersion);
+  if (toolCacheResult.installedPath) {
+    core.info(`Found uv in tool-cache for ${resolvedVersion}`);
+    return { uvDir: toolCacheResult.installedPath, version: resolvedVersion };
   }
 
-  return { uvDir: cachedToolDir, version };
+  const versionResult = await downloadVersion(
+    platform,
+    arch,
+    resolvedVersion,
+    checkSum,
+    githubToken,
+  );
+
+  return { uvDir: versionResult.cachedToolDir, version: versionResult.version };
 }
 
 function addUvToPath(cachedPath: string): void {
