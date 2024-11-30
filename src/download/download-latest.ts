@@ -9,8 +9,8 @@ export async function getLatestVersion(githubToken: string) {
     repo: REPO,
   });
 
-  if (latestRelease) {
-    return latestRelease.tag_name;
+  if (!latestRelease) {
+    throw new Error("Could not determine latest release.");
   }
-  throw new Error("Could not determine latest release.");
+  return latestRelease.tag_name;
 }
