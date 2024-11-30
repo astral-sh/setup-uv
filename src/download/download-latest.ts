@@ -1,7 +1,7 @@
 import { OWNER, REPO } from "../utils/constants";
 import * as github from "@actions/github";
 
-export async function getLatestReleaseVersion(githubToken: string) {
+export async function getLatestVersion(githubToken: string) {
   const octokit = github.getOctokit(githubToken);
 
   const { data: latestRelease } = await octokit.rest.repos.getLatestRelease({
