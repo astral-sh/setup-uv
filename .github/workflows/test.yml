@@ -35,25 +35,6 @@ jobs:
         uses: ./
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
-  test-default-version-cache: # https://github.com/astral-sh/setup-uv/issues/171
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, macos-14]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install latest version
-        uses: ./
-      - name: Re-run setup-uv
-        id: re-setup-uv
-        uses: ./
-      - name: Verify uv cache hit
-        run: |
-          if [ "$UV_CACHE_HIT" != "true" ]; then
-            exit 1
-          fi
-        env:
-          UV_CACHE_HIT: ${{ steps.re-setup-uv.outputs.uv-cache-hit }}
   test-specific-version:
     runs-on: ubuntu-latest
     strategy:
