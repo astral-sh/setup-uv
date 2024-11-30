@@ -85,7 +85,7 @@ async function setupUv(
   }
   core.setOutput("uv-cache-hit", false);
 
-  const versionResult = await downloadVersion(
+  const downloadVersionResult = await downloadVersion(
     platform,
     arch,
     resolvedVersion,
