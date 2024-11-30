@@ -12,5 +12,5 @@ export async function getLatestReleaseVersion(githubToken: string) {
   if (latestRelease) {
     return latestRelease.tag_name;
   }
-  throw new Error("No releases found for this repository.");
+  throw new Error("Could not determine latest release.");
 }
