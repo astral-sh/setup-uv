@@ -7,7 +7,6 @@ import {
 } from "./download/download-version";
 import { restoreCache } from "./cache/restore-cache";
 
-import { getLatestReleaseVersion } from "./download/download-latest";
 import {
   type Architecture,
   getArch,
@@ -70,20 +69,15 @@ async function setupUv(
   checkSum: string | undefined,
   githubToken: string,
 ): Promise<{ uvDir: string; version: string }> {
-  const resolvedVersion = await resolveVersion(
-    versionInput === "latest"
-      ? await getLatestReleaseVersion(githubToken)
-      : versionInput,
-    githubToken,
-  );
-
+  const resolvedVersion = await resolveVersion(versionInput, githubToken);
   const toolCacheResult = tryGetFromToolCache(arch, resolvedVersion);
   if (toolCacheResult.installedPath) {
-    core.info(`Found uv in tool-cache for ${resolvedVersion}`);
-    core.setOutput("uv-cache-hit", true);
-    return { uvDir: toolCacheResult.installedPath, version: resolvedVersion };
+    core.info(`Found uv in tool-cache for ${toolCacheResult.version}`);
+    return {
+      uvDir: toolCacheResult.installedPath,
+      version: toolCacheResult.version,
+    };
   }
-  core.setOutput("uv-cache-hit", false);
 
   const downloadVersionResult = await downloadVersion(
     platform,
@@ -93,7 +87,10 @@ async function setupUv(
     githubToken,
   );
 
-  return { uvDir: versionResult.cachedToolDir, version: versionResult.version };
+  return {
+    uvDir: downloadVersionResult.cachedToolDir,
+    version: downloadVersionResult.version,
+  };
 }
 
 function addUvToPath(cachedPath: string): void {

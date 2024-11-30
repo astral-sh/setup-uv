@@ -89647,64 +89647,6 @@ exports.KNOWN_CHECKSUMS = {
 
 /***/ }),
 
-/***/ 5608:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getLatestReleaseVersion = getLatestReleaseVersion;
-const constants_1 = __nccwpck_require__(6156);
-const github = __importStar(__nccwpck_require__(3228));
-function getLatestReleaseVersion(githubToken) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const octokit = github.getOctokit(githubToken);
-        const { data: latestRelease } = yield octokit.rest.repos.getLatestRelease({
-            owner: constants_1.OWNER,
-            repo: constants_1.REPO,
-        });
-        if (latestRelease) {
-            return latestRelease.tag_name;
-        }
-        throw new Error("No releases found for this repository.");
-    });
-}
-
-
-/***/ }),
-
 /***/ 8255:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -89791,8 +89733,11 @@ function downloadVersion(platform, arch, version, checkSum, githubToken) {
         return { version: resolvedVersion, cachedToolDir };
     });
 }
-function resolveVersion(version, githubToken) {
+function resolveVersion(versionInput, githubToken) {
     return __awaiter(this, void 0, void 0, function* () {
+        const version = versionInput === "latest"
+            ? yield getLatestVersion(githubToken)
+            : versionInput;
         if (tc.isExplicitVersion(version)) {
             core.debug(`Version ${version} is an explicit version.`);
             return version;
@@ -89813,6 +89758,19 @@ function getAvailableVersions(githubToken) {
             repo: constants_1.REPO,
         });
         return response.map((release) => release.tag_name);
+    });
+}
+function getLatestVersion(githubToken) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const octokit = github.getOctokit(githubToken);
+        const { data: latestRelease } = yield octokit.rest.repos.getLatestRelease({
+            owner: constants_1.OWNER,
+            repo: constants_1.REPO,
+        });
+        if (!latestRelease) {
+            throw new Error("Could not determine latest release.");
+        }
+        return latestRelease.tag_name;
     });
 }
 
@@ -89969,7 +89927,6 @@ const core = __importStar(__nccwpck_require__(7484));
 const path = __importStar(__nccwpck_require__(6760));
 const download_version_1 = __nccwpck_require__(8255);
 const restore_cache_1 = __nccwpck_require__(7772);
-const download_latest_1 = __nccwpck_require__(5608);
 const platforms_1 = __nccwpck_require__(8361);
 const inputs_1 = __nccwpck_require__(9612);
 function run() {
@@ -90004,18 +89961,20 @@ function run() {
 }
 function setupUv(platform, arch, versionInput, checkSum, githubToken) {
     return __awaiter(this, void 0, void 0, function* () {
-        const resolvedVersion = yield (0, download_version_1.resolveVersion)(versionInput === "latest"
-            ? yield (0, download_latest_1.getLatestReleaseVersion)(githubToken)
-            : versionInput, githubToken);
+        const resolvedVersion = yield (0, download_version_1.resolveVersion)(versionInput, githubToken);
         const toolCacheResult = (0, download_version_1.tryGetFromToolCache)(arch, resolvedVersion);
         if (toolCacheResult.installedPath) {
-            core.info(`Found uv in tool-cache for ${resolvedVersion}`);
-            core.setOutput("uv-cache-hit", true);
-            return { uvDir: toolCacheResult.installedPath, version: resolvedVersion };
+            core.info(`Found uv in tool-cache for ${toolCacheResult.version}`);
+            return {
+                uvDir: toolCacheResult.installedPath,
+                version: toolCacheResult.version,
+            };
         }
-        core.setOutput("uv-cache-hit", false);
-        const versionResult = yield (0, download_version_1.downloadVersion)(platform, arch, resolvedVersion, checkSum, githubToken);
-        return { uvDir: versionResult.cachedToolDir, version: versionResult.version };
+        const downloadVersionResult = yield (0, download_version_1.downloadVersion)(platform, arch, resolvedVersion, checkSum, githubToken);
+        return {
+            uvDir: downloadVersionResult.cachedToolDir,
+            version: downloadVersionResult.version,
+        };
     });
 }
 function addUvToPath(cachedPath) {
