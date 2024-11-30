@@ -89647,106 +89647,6 @@ exports.KNOWN_CHECKSUMS = {
 
 /***/ }),
 
-/***/ 5608:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.downloadLatest = downloadLatest;
-const core = __importStar(__nccwpck_require__(7484));
-const tc = __importStar(__nccwpck_require__(3472));
-const exec = __importStar(__nccwpck_require__(5236));
-const path = __importStar(__nccwpck_require__(6760));
-const node_fs_1 = __nccwpck_require__(3024);
-const checksum_1 = __nccwpck_require__(5391);
-const constants_1 = __nccwpck_require__(6156);
-function downloadLatest(platform, arch, checkSum, githubToken) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const artifact = `uv-${arch}-${platform}`;
-        let extension = ".tar.gz";
-        if (platform === "pc-windows-msvc") {
-            extension = ".zip";
-        }
-        const downloadUrl = `https://github.com/${constants_1.OWNER}/${constants_1.REPO}/releases/latest/download/${artifact}${extension}`;
-        core.info(`Downloading uv from "${downloadUrl}" ...`);
-        const downloadPath = yield tc.downloadTool(downloadUrl, undefined, githubToken);
-        let uvExecutablePath;
-        let uvDir;
-        if (platform === "pc-windows-msvc") {
-            const fullPathWithExtension = `${downloadPath}${extension}`;
-            yield node_fs_1.promises.copyFile(downloadPath, fullPathWithExtension);
-            uvDir = yield tc.extractZip(fullPathWithExtension);
-            // On windows extracting the zip does not create an intermediate directory
-            uvExecutablePath = path.join(uvDir, "uv.exe");
-        }
-        else {
-            const extractedDir = yield tc.extractTar(downloadPath);
-            uvDir = path.join(extractedDir, artifact);
-            uvExecutablePath = path.join(uvDir, "uv");
-        }
-        const version = yield getVersion(uvExecutablePath);
-        yield (0, checksum_1.validateChecksum)(checkSum, downloadPath, arch, platform, version);
-        const cachedToolDir = yield tc.cacheDir(uvDir, constants_1.TOOL_CACHE_NAME, version, arch);
-        return { cachedToolDir, version };
-    });
-}
-function getVersion(uvExecutablePath) {
-    return __awaiter(this, void 0, void 0, function* () {
-        // Parse the output of `uv --version` to get the version
-        // The output looks like
-        // uv 0.3.1 (be17d132a 2024-08-21)
-        const options = {
-            silent: !core.isDebug(),
-        };
-        const execArgs = ["--version"];
-        let output = "";
-        options.listeners = {
-            stdout: (data) => {
-                output += data.toString();
-            },
-        };
-        yield exec.exec(uvExecutablePath, execArgs, options);
-        const parts = output.split(" ");
-        return parts[1].trim();
-    });
-}
-
-
-/***/ }),
-
 /***/ 8255:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -89787,6 +89687,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.tryGetFromToolCache = tryGetFromToolCache;
 exports.downloadVersion = downloadVersion;
+exports.resolveVersion = resolveVersion;
 const core = __importStar(__nccwpck_require__(7484));
 const tc = __importStar(__nccwpck_require__(3472));
 const path = __importStar(__nccwpck_require__(6760));
@@ -89832,8 +89733,11 @@ function downloadVersion(platform, arch, version, checkSum, githubToken) {
         return { version: resolvedVersion, cachedToolDir };
     });
 }
-function resolveVersion(version, githubToken) {
+function resolveVersion(versionInput, githubToken) {
     return __awaiter(this, void 0, void 0, function* () {
+        const version = versionInput === "latest"
+            ? yield getLatestVersion(githubToken)
+            : versionInput;
         if (tc.isExplicitVersion(version)) {
             core.debug(`Version ${version} is an explicit version.`);
             return version;
@@ -89854,6 +89758,19 @@ function getAvailableVersions(githubToken) {
             repo: constants_1.REPO,
         });
         return response.map((release) => release.tag_name);
+    });
+}
+function getLatestVersion(githubToken) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const octokit = github.getOctokit(githubToken);
+        const { data: latestRelease } = yield octokit.rest.repos.getLatestRelease({
+            owner: constants_1.OWNER,
+            repo: constants_1.REPO,
+        });
+        if (!latestRelease) {
+            throw new Error("Could not determine latest release.");
+        }
+        return latestRelease.tag_name;
     });
 }
 
@@ -90010,7 +89927,6 @@ const core = __importStar(__nccwpck_require__(7484));
 const path = __importStar(__nccwpck_require__(6760));
 const download_version_1 = __nccwpck_require__(8255);
 const restore_cache_1 = __nccwpck_require__(7772);
-const download_latest_1 = __nccwpck_require__(5608);
 const platforms_1 = __nccwpck_require__(8361);
 const inputs_1 = __nccwpck_require__(9612);
 function run() {
@@ -90045,27 +89961,20 @@ function run() {
 }
 function setupUv(platform, arch, versionInput, checkSum, githubToken) {
     return __awaiter(this, void 0, void 0, function* () {
-        let installedPath;
-        let cachedToolDir;
-        let version;
-        if (versionInput === "latest") {
-            const latestResult = yield (0, download_latest_1.downloadLatest)(platform, arch, checkSum, githubToken);
-            version = latestResult.version;
-            cachedToolDir = latestResult.cachedToolDir;
+        const resolvedVersion = yield (0, download_version_1.resolveVersion)(versionInput, githubToken);
+        const toolCacheResult = (0, download_version_1.tryGetFromToolCache)(arch, resolvedVersion);
+        if (toolCacheResult.installedPath) {
+            core.info(`Found uv in tool-cache for ${toolCacheResult.version}`);
+            return {
+                uvDir: toolCacheResult.installedPath,
+                version: toolCacheResult.version,
+            };
         }
-        else {
-            const toolCacheResult = (0, download_version_1.tryGetFromToolCache)(arch, versionInput);
-            version = toolCacheResult.version;
-            installedPath = toolCacheResult.installedPath;
-            if (installedPath) {
-                core.info(`Found uv in tool-cache for ${versionInput}`);
-                return { uvDir: installedPath, version };
-            }
-            const versionResult = yield (0, download_version_1.downloadVersion)(platform, arch, versionInput, checkSum, githubToken);
-            cachedToolDir = versionResult.cachedToolDir;
-            version = versionResult.version;
-        }
-        return { uvDir: cachedToolDir, version };
+        const downloadVersionResult = yield (0, download_version_1.downloadVersion)(platform, arch, resolvedVersion, checkSum, githubToken);
+        return {
+            uvDir: downloadVersionResult.cachedToolDir,
+            version: downloadVersionResult.version,
+        };
     });
 }
 function addUvToPath(cachedPath) {

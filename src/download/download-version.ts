@@ -70,10 +70,14 @@ export async function downloadVersion(
   return { version: resolvedVersion, cachedToolDir };
 }
 
-async function resolveVersion(
-  version: string,
+export async function resolveVersion(
+  versionInput: string,
   githubToken: string,
 ): Promise<string> {
+  const version =
+    versionInput === "latest"
+      ? await getLatestVersion(githubToken)
+      : versionInput;
   if (tc.isExplicitVersion(version)) {
     core.debug(`Version ${version} is an explicit version.`);
     return version;
@@ -94,4 +98,18 @@ async function getAvailableVersions(githubToken: string): Promise<string[]> {
     repo: REPO,
   });
   return response.map((release) => release.tag_name);
+}
+
+async function getLatestVersion(githubToken: string) {
+  const octokit = github.getOctokit(githubToken);
+
+  const { data: latestRelease } = await octokit.rest.repos.getLatestRelease({
+    owner: OWNER,
+    repo: REPO,
+  });
+
+  if (!latestRelease) {
+    throw new Error("Could not determine latest release.");
+  }
+  return latestRelease.tag_name;
 }
