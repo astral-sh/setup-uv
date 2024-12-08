@@ -163,5 +163,7 @@ jobs:
         uses: ./
         with:
           python-version: "3.8"
-      - run: uv python find
+      - run: |
+          uv sync
+          uv python find
         working-directory: __tests__/fixtures/uv-project
