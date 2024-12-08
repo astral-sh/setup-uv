@@ -41,6 +41,41 @@ jobs:
           CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
+  test-setup-cache-requirements-txt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup with cache
+        uses: ./
+        with:
+          enable-cache: true
+          cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-requirements-txt
+      - run: |
+          uv venv
+          uv pip install -r requirements.txt
+        working-directory: __tests__/fixtures/requirements-txt-project
+  test-restore-cache-requirements-txt:
+    runs-on: ubuntu-latest
+    needs: test-setup-cache
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore with cache
+        id: restore
+        uses: ./
+        with:
+          enable-cache: true
+          cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-requirements-txt
+      - name: Cache was hit
+        run: |
+          if [ "$CACHE_HIT" != "true" ]; then
+            exit 1
+          fi
+        env:
+          CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
+      - run: |
+          uv venv
+          uv pip install -r requirements.txt
+        working-directory: __tests__/fixtures/requirements-txt-project
 
   test-setup-cache-dependency-glob:
     runs-on: ubuntu-latest

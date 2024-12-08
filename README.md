@@ -154,14 +154,19 @@ changes. If you use relative paths, they are relative to the repository root.
 
 > [!NOTE]
 >
-> The default is `**/uv.lock`.
+> The default is
+> ```yaml
+> cache-dependency-glob: |
+>   **/requirements*.txt
+>   **/uv.lock
+> ```
 
 ```yaml
 - name: Define a cache dependency glob
   uses: astral-sh/setup-uv@v4
   with:
     enable-cache: true
-    cache-dependency-glob: "**/requirements*.txt"
+    cache-dependency-glob: "**/pyproject.toml"
 ```
 
 ```yaml
