@@ -25,7 +25,9 @@ inputs:
     description:
       "Glob pattern to match files relative to the repository root to control
       the cache."
-    default: "**/uv.lock"
+    default: |
+      **/uv.lock
+      **/requirements*.txt
   cache-suffix:
     description: "Suffix for the cache key"
     required: false
