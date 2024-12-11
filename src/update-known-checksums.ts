@@ -1,7 +1,7 @@
 import * as github from "@actions/github";
 import * as core from "@actions/core";
 
-import { OWNER, REPO } from "./utils/constants";
+import { GITHUB_COM_API, OWNER, REPO } from "./utils/constants";
 import * as semver from "semver";
 
 import { updateChecksums } from "./download/checksum/update-known-checksums";
@@ -10,7 +10,7 @@ async function run(): Promise<void> {
   const checksumFilePath = process.argv.slice(2)[0];
   const github_token = process.argv.slice(2)[1];
 
-  const octokit = github.getOctokit(github_token);
+  const octokit = github.getOctokit(github_token, { baseUrl: GITHUB_COM_API });
 
   const response = await octokit.paginate(octokit.rest.repos.listReleases, {
     owner: OWNER,

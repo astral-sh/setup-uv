@@ -2,7 +2,12 @@ import * as core from "@actions/core";
 import * as tc from "@actions/tool-cache";
 import * as path from "node:path";
 import { promises as fs } from "node:fs";
-import { OWNER, REPO, TOOL_CACHE_NAME } from "../utils/constants";
+import {
+  GITHUB_COM_API,
+  OWNER,
+  REPO,
+  TOOL_CACHE_NAME,
+} from "../utils/constants";
 import type { Architecture, Platform } from "../utils/platforms";
 import { validateChecksum } from "./checksum/checksum";
 import * as github from "@actions/github";
@@ -91,7 +96,7 @@ export async function resolveVersion(
 }
 
 async function getAvailableVersions(githubToken: string): Promise<string[]> {
-  const octokit = github.getOctokit(githubToken);
+  const octokit = github.getOctokit(githubToken, { baseUrl: GITHUB_COM_API });
 
   const response = await octokit.paginate(octokit.rest.repos.listReleases, {
     owner: OWNER,
@@ -101,7 +106,7 @@ async function getAvailableVersions(githubToken: string): Promise<string[]> {
 }
 
 async function getLatestVersion(githubToken: string) {
-  const octokit = github.getOctokit(githubToken);
+  const octokit = github.getOctokit(githubToken, { baseUrl: GITHUB_COM_API });
 
   const { data: latestRelease } = await octokit.rest.repos.getLatestRelease({
     owner: OWNER,
