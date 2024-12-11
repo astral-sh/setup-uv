@@ -98975,7 +98975,7 @@ function resolveVersion(versionInput, githubToken) {
 }
 function getAvailableVersions(githubToken) {
     return __awaiter(this, void 0, void 0, function* () {
-        const octokit = github.getOctokit(githubToken);
+        const octokit = github.getOctokit(githubToken, { baseUrl: constants_1.GITHUB_COM_API });
         const response = yield octokit.paginate(octokit.rest.repos.listReleases, {
             owner: constants_1.OWNER,
             repo: constants_1.REPO,
@@ -98985,7 +98985,7 @@ function getAvailableVersions(githubToken) {
 }
 function getLatestVersion(githubToken) {
     return __awaiter(this, void 0, void 0, function* () {
-        const octokit = github.getOctokit(githubToken);
+        const octokit = github.getOctokit(githubToken, { baseUrl: constants_1.GITHUB_COM_API });
         const { data: latestRelease } = yield octokit.rest.repos.getLatestRelease({
             owner: constants_1.OWNER,
             repo: constants_1.REPO,
@@ -99277,10 +99277,11 @@ run();
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.TOOL_CACHE_NAME = exports.OWNER = exports.REPO = void 0;
+exports.GITHUB_COM_API = exports.TOOL_CACHE_NAME = exports.OWNER = exports.REPO = void 0;
 exports.REPO = "uv";
 exports.OWNER = "astral-sh";
 exports.TOOL_CACHE_NAME = "uv";
+exports.GITHUB_COM_API = "https://api.github.com";
 
 
 /***/ }),

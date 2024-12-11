@@ -34685,7 +34685,7 @@ function run() {
     return __awaiter(this, void 0, void 0, function* () {
         const checksumFilePath = process.argv.slice(2)[0];
         const github_token = process.argv.slice(2)[1];
-        const octokit = github.getOctokit(github_token);
+        const octokit = github.getOctokit(github_token, { baseUrl: constants_1.GITHUB_COM_API });
         const response = yield octokit.paginate(octokit.rest.repos.listReleases, {
             owner: constants_1.OWNER,
             repo: constants_1.REPO,
@@ -34711,10 +34711,11 @@ run();
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.TOOL_CACHE_NAME = exports.OWNER = exports.REPO = void 0;
+exports.GITHUB_COM_API = exports.TOOL_CACHE_NAME = exports.OWNER = exports.REPO = void 0;
 exports.REPO = "uv";
 exports.OWNER = "astral-sh";
 exports.TOOL_CACHE_NAME = "uv";
+exports.GITHUB_COM_API = "https://api.github.com";
 
 
 /***/ }),
