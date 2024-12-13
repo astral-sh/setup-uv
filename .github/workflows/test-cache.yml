@@ -214,3 +214,16 @@ jobs:
       - name: Remove cache dependency glob file
         run: rm -f ~/uv-cache.glob
         shell: bash
+
+  test-no-python-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fake pyproject.toml at root
+        run: cp __tests__/fixtures/old-python-constraint-project/pyproject.toml pyproject.toml
+      - name: Setup with cache
+        uses: ./
+        with:
+          enable-cache: true
+      - run: uv sync
+        working-directory: __tests__/fixtures/old-python-constraint-project

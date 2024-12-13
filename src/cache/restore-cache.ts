@@ -4,9 +4,11 @@ import {
   cacheDependencyGlob,
   cacheLocalPath,
   cacheSuffix,
+  pythonVersion as pythonVersionInput,
 } from "../utils/inputs";
 import { getArch, getPlatform } from "../utils/platforms";
 import { hashFiles } from "../hash/hash-files";
+import * as exec from "@actions/exec";
 
 export const STATE_CACHE_KEY = "cache-key";
 export const STATE_CACHE_MATCHED_KEY = "cache-matched-key";
@@ -49,7 +51,39 @@ async function computeKeys(version: string): Promise<string> {
     cacheDependencyPathHash += "no-dependency-glob";
   }
   const suffix = cacheSuffix ? `-${cacheSuffix}` : "";
-  return `setup-uv-${CACHE_VERSION}-${getArch()}-${getPlatform()}-${version}${cacheDependencyPathHash}${suffix}`;
+  const pythonVersion = await getPythonVersion();
+  return `setup-uv-${CACHE_VERSION}-${getArch()}-${getPlatform()}-${version}-${pythonVersion}${cacheDependencyPathHash}${suffix}`;
+}
+
+async function getPythonVersion(): Promise<string> {
+  if (pythonVersionInput !== "") {
+    return pythonVersionInput;
+  }
+
+  let output = "";
+  const options: exec.ExecOptions = {
+    silent: !core.isDebug(),
+    listeners: {
+      stdout: (data: Buffer) => {
+        output += data.toString();
+      },
+    },
+  };
+
+  try {
+    const execArgs = ["python", "find"];
+    await exec.exec("uv", execArgs, options);
+    const pythonPath = output.trim();
+
+    output = "";
+    await exec.exec(pythonPath, ["--version"], options);
+    // output is like "Python 3.8.10"
+    return output.split(" ")[1].trim();
+  } catch (error) {
+    const err = error as Error;
+    core.debug(`Failed to get python version from uv. Error: ${err.message}`);
+    return "unknown";
+  }
 }
 
 function handleMatchResult(
