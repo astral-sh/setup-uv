@@ -72,15 +72,20 @@ to install the latest version that satisfies the range.
 
 ### Python version
 
-You can use the input `python-version` to set the environment variable `UV_PYTHON` for the rest
-of your workflow.
+You can use the input `python-version` to
+
+- set the environment variable `UV_PYTHON` for the rest of your workflow
+- create a new virtual environment with the specified python version
+- activate the virtual environment for the rest of your workflow
+
 This will override any python version specifications in `pyproject.toml` and `.python-version`
 
 ```yaml
-- name: Install the latest version of uv and set the python version to 3.12
+- name: Install the latest version of uv and set the python version to 3.13t
   uses: astral-sh/setup-uv@v4
   with:
-    python-version: "3.12"
+    python-version: 3.13t
+- run: uv pip install --python=3.13t pip
 ```
 
 You can combine this with a matrix to test multiple python versions:
