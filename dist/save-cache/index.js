@@ -91461,6 +91461,7 @@ const core = __importStar(__nccwpck_require__(7484));
 const inputs_1 = __nccwpck_require__(9612);
 const platforms_1 = __nccwpck_require__(8361);
 const hash_files_1 = __nccwpck_require__(9660);
+const exec = __importStar(__nccwpck_require__(5236));
 exports.STATE_CACHE_KEY = "cache-key";
 exports.STATE_CACHE_MATCHED_KEY = "cache-matched-key";
 const CACHE_VERSION = "1";
@@ -91496,7 +91497,38 @@ function computeKeys(version) {
             cacheDependencyPathHash += "no-dependency-glob";
         }
         const suffix = inputs_1.cacheSuffix ? `-${inputs_1.cacheSuffix}` : "";
-        return `setup-uv-${CACHE_VERSION}-${(0, platforms_1.getArch)()}-${(0, platforms_1.getPlatform)()}-${version}${cacheDependencyPathHash}${suffix}`;
+        const pythonVersion = yield getPythonVersion();
+        return `setup-uv-${CACHE_VERSION}-${(0, platforms_1.getArch)()}-${(0, platforms_1.getPlatform)()}-${version}-${pythonVersion}${cacheDependencyPathHash}${suffix}`;
+    });
+}
+function getPythonVersion() {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (inputs_1.pythonVersion !== "") {
+            return inputs_1.pythonVersion;
+        }
+        let output = "";
+        const options = {
+            silent: !core.isDebug(),
+            listeners: {
+                stdout: (data) => {
+                    output += data.toString();
+                },
+            },
+        };
+        try {
+            const execArgs = ["python", "find"];
+            yield exec.exec("uv", execArgs, options);
+            const pythonPath = output.trim();
+            output = "";
+            yield exec.exec(pythonPath, ["--version"], options);
+            // output is like "Python 3.8.10"
+            return output.split(" ")[1].trim();
+        }
+        catch (error) {
+            const err = error;
+            core.debug(`Failed to get python version from uv. Error: ${err.message}`);
+            return "unknown";
+        }
     });
 }
 function handleMatchResult(matchedKey, primaryKey) {
