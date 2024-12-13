@@ -11,18 +11,26 @@ concurrency:
 
 jobs:
   test-setup-cache:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        enable-cache: [ "true", "false", "auto" ]
+        os: ["ubuntu-latest", "selfhosted-ubuntu-arm64"]
     steps:
       - uses: actions/checkout@v4
       - name: Setup with cache
         uses: ./
         with:
-          enable-cache: true
-          cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache
+          enable-cache: ${{ matrix.enable-cache }}
+          cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-${{ matrix.os }}-${{ matrix.enable-cache }}
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
   test-restore-cache:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        enable-cache: [ "true", "false", "auto" ]
+        os: [ "ubuntu-latest", "selfhosted-ubuntu-arm64" ]
     needs: test-setup-cache
     steps:
       - uses: actions/checkout@v4
@@ -30,11 +38,20 @@ jobs:
         id: restore
         uses: ./
         with:
-          enable-cache: true
-          cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache
+          enable-cache: ${{ matrix.enable-cache }}
+          cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-${{ matrix.os }}-${{ matrix.enable-cache }}
       - name: Cache was hit
+        if: ${{ matrix.enable-cache == 'true' || (matrix.enable-cache == 'auto' && matrix.os == 'ubuntu-latest') }}
         run: |
           if [ "$CACHE_HIT" != "true" ]; then
+            exit 1
+          fi
+        env:
+          CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
+      - name: Cache was not hit
+        if: ${{ matrix.enable-cache == 'false' || (matrix.enable-cache == 'auto' && matrix.os == 'selfhosted-ubuntu-arm64') }}
+        run: |
+          if [ "$CACHE_HIT" == "true" ]; then
             exit 1
           fi
         env:

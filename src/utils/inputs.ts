@@ -4,7 +4,7 @@ import path from "node:path";
 export const version = core.getInput("version");
 export const pythonVersion = core.getInput("python-version");
 export const checkSum = core.getInput("checksum");
-export const enableCache = core.getInput("enable-cache") === "true";
+export const enableCache = getEnableCache();
 export const cacheSuffix = core.getInput("cache-suffix") || "";
 export const cacheLocalPath = getCacheLocalPath();
 export const cacheDependencyGlob = core.getInput("cache-dependency-glob");
@@ -14,6 +14,14 @@ export const ignoreNothingToCache =
 export const toolBinDir = getToolBinDir();
 export const toolDir = getToolDir();
 export const githubToken = core.getInput("github-token");
+
+function getEnableCache(): boolean {
+  const enableCacheInput = core.getInput("enable-cache");
+  if (enableCacheInput === "auto") {
+    return process.env.RUNNER_ENVIRONMENT === "github-hosted";
+  }
+  return enableCacheInput === "true";
+}
 
 function getToolBinDir(): string | undefined {
   const toolBinDirInput = core.getInput("tool-bin-dir");

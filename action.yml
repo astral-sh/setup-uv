@@ -20,7 +20,7 @@ inputs:
     default: ${{ github.token }}
   enable-cache:
     description: "Enable caching of the uv cache"
-    default: "false"
+    default: "auto"
   cache-dependency-glob:
     description:
       "Glob pattern to match files relative to the repository root to control
