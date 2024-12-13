@@ -84,6 +84,8 @@ jobs:
         with:
           version: "0.3.2"
           checksum: ${{ matrix.checksum }}
+      - run: uv sync
+        working-directory: __tests__/fixtures/uv-project
   test-with-explicit-token:
     runs-on: ubuntu-latest
     steps:

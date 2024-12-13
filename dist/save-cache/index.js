@@ -91803,7 +91803,7 @@ const node_path_1 = __importDefault(__nccwpck_require__(6760));
 exports.version = core.getInput("version");
 exports.pythonVersion = core.getInput("python-version");
 exports.checkSum = core.getInput("checksum");
-exports.enableCache = core.getInput("enable-cache") === "true";
+exports.enableCache = getEnableCache();
 exports.cacheSuffix = core.getInput("cache-suffix") || "";
 exports.cacheLocalPath = getCacheLocalPath();
 exports.cacheDependencyGlob = core.getInput("cache-dependency-glob");
@@ -91812,6 +91812,13 @@ exports.ignoreNothingToCache = core.getInput("ignore-nothing-to-cache") === "tru
 exports.toolBinDir = getToolBinDir();
 exports.toolDir = getToolDir();
 exports.githubToken = core.getInput("github-token");
+function getEnableCache() {
+    const enableCacheInput = core.getInput("enable-cache");
+    if (enableCacheInput === "auto") {
+        return process.env.RUNNER_ENVIRONMENT === "github-hosted";
+    }
+    return enableCacheInput === "true";
+}
 function getToolBinDir() {
     const toolBinDirInput = core.getInput("tool-bin-dir");
     if (toolBinDirInput !== "") {
