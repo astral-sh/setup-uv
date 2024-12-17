@@ -143,17 +143,27 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.12", "3.13t"]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v4
       - name: Install latest version
         uses: ./
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: 3.13.1t
       - name: Verify UV_PYTHON is set to correct version
         run: |
-          if [ "$UV_PYTHON" != "${{ matrix.python-version }}" ]; then
+          echo "$UV_PYTHON"
+          if [ "$UV_PYTHON" != "3.13.1t" ]; then
             exit 1
           fi
-      - run: uv sync
-        working-directory: __tests__/fixtures/uv-project
+        shell: bash
+      - name: Verify packages can be installed
+        run: uv pip install --python=3.13.1t pip
+        shell: bash
+      - name: Verify python version is correct
+        run: |
+          python --version
+          if [ "$(python --version)" != "Python 3.13.1" ]; then
+            exit 1
+          fi
+        shell: bash
