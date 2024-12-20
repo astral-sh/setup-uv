@@ -47,6 +47,8 @@ async function computeKeys(version: string): Promise<string> {
         `No file matched to [${cacheDependencyGlob.split("\n").join(",")}]. The cache will never get invalidated. Make sure you have checked out the target repository and configured the cache-dependency-glob input correctly.`,
       );
     }
+  }
+  if (cacheDependencyPathHash === "-") {
     cacheDependencyPathHash = "-no-dependency-glob";
   }
   const suffix = cacheSuffix ? `-${cacheSuffix}` : "";
