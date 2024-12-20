@@ -91492,6 +91492,8 @@ function computeKeys(version) {
             if (cacheDependencyPathHash === "-") {
                 core.warning(`No file matched to [${inputs_1.cacheDependencyGlob.split("\n").join(",")}]. The cache will never get invalidated. Make sure you have checked out the target repository and configured the cache-dependency-glob input correctly.`);
             }
+        }
+        if (cacheDependencyPathHash === "-") {
             cacheDependencyPathHash = "-no-dependency-glob";
         }
         const suffix = inputs_1.cacheSuffix ? `-${inputs_1.cacheSuffix}` : "";
