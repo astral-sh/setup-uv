@@ -43,12 +43,11 @@ async function computeKeys(version: string): Promise<string> {
     );
     cacheDependencyPathHash += await hashFiles(cacheDependencyGlob, true);
     if (cacheDependencyPathHash === "-") {
-      throw new Error(
-        `No file matched to [${cacheDependencyGlob.split("\n").join(",")}], make sure you have checked out the target repository and configured the cache-dependency-glob input correctly.`,
+      core.warning(
+        `No file matched to [${cacheDependencyGlob.split("\n").join(",")}]. The cache will never get invalidated. Make sure you have checked out the target repository and configured the cache-dependency-glob input correctly.`,
       );
     }
-  } else {
-    cacheDependencyPathHash += "no-dependency-glob";
+    cacheDependencyPathHash = "-no-dependency-glob";
   }
   const suffix = cacheSuffix ? `-${cacheSuffix}` : "";
   const pythonVersion = await getPythonVersion();
