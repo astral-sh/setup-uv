@@ -14,8 +14,7 @@ inputs:
     required: false
   github-token:
     description:
-      "Used to increase the rate limit when retrieving versions and downloading
-      uv."
+      "Used to increase the rate limit when retrieving versions and downloading uv."
     required: false
     default: ${{ github.token }}
   enable-cache:

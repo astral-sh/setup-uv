@@ -99236,6 +99236,7 @@ const download_version_1 = __nccwpck_require__(8255);
 const restore_cache_1 = __nccwpck_require__(7772);
 const platforms_1 = __nccwpck_require__(8361);
 const inputs_1 = __nccwpck_require__(9612);
+const exec = __importStar(__nccwpck_require__(5236));
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         const platform = (0, platforms_1.getPlatform)();
@@ -99251,7 +99252,7 @@ function run() {
             addUvToPath(setupResult.uvDir);
             addToolBinToPath();
             setToolDir();
-            setupPython();
+            yield setupPython();
             addMatchers();
             setCacheDir(inputs_1.cacheLocalPath);
             core.setOutput("uv-version", setupResult.version);
@@ -99317,10 +99318,24 @@ function setToolDir() {
     }
 }
 function setupPython() {
-    if (inputs_1.pythonVersion !== "") {
-        core.exportVariable("UV_PYTHON", inputs_1.pythonVersion);
-        core.info(`Set UV_PYTHON to ${inputs_1.pythonVersion}`);
-    }
+    return __awaiter(this, void 0, void 0, function* () {
+        if (inputs_1.pythonVersion !== "") {
+            core.exportVariable("UV_PYTHON", inputs_1.pythonVersion);
+            core.info(`Set UV_PYTHON to ${inputs_1.pythonVersion}`);
+            const options = {
+                silent: !core.isDebug(),
+            };
+            const execArgs = ["venv", "--python", inputs_1.pythonVersion];
+            core.info("Activating python venv...");
+            yield exec.exec("uv", execArgs, options);
+            let venvBinPath = ".venv/bin";
+            if (process.platform === "win32") {
+                venvBinPath = ".venv/Scripts";
+            }
+            core.addPath(venvBinPath);
+            core.exportVariable("VIRTUAL_ENV", venvBinPath);
+        }
+    });
 }
 function setCacheDir(cacheLocalPath) {
     core.exportVariable("UV_CACHE_DIR", cacheLocalPath);

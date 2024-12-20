@@ -23,6 +23,7 @@ import {
   toolDir,
   version,
 } from "./utils/inputs";
+import * as exec from "@actions/exec";
 
 async function run(): Promise<void> {
   const platform = getPlatform();
@@ -46,7 +47,7 @@ async function run(): Promise<void> {
     addUvToPath(setupResult.uvDir);
     addToolBinToPath();
     setToolDir();
-    setupPython();
+    await setupPython();
     addMatchers();
     setCacheDir(cacheLocalPath);
 
@@ -125,10 +126,24 @@ function setToolDir(): void {
   }
 }
 
-function setupPython(): void {
+async function setupPython(): Promise<void> {
   if (pythonVersion !== "") {
     core.exportVariable("UV_PYTHON", pythonVersion);
     core.info(`Set UV_PYTHON to ${pythonVersion}`);
+    const options: exec.ExecOptions = {
+      silent: !core.isDebug(),
+    };
+    const execArgs = ["venv", "--python", pythonVersion];
+
+    core.info("Activating python venv...");
+    await exec.exec("uv", execArgs, options);
+
+    let venvBinPath = ".venv/bin";
+    if (process.platform === "win32") {
+      venvBinPath = ".venv/Scripts";
+    }
+    core.addPath(venvBinPath);
+    core.exportVariable("VIRTUAL_ENV", venvBinPath);
   }
 }
 
