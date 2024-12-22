@@ -55,7 +55,7 @@ async function run(): Promise<void> {
     core.info(`Successfully installed uv version ${setupResult.version}`);
 
     if (enableCache) {
-      await restoreCache(setupResult.version);
+      await restoreCache();
     }
     process.exit(0);
   } catch (err) {
