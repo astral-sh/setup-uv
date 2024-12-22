@@ -96548,9 +96548,9 @@ const exec = __importStar(__nccwpck_require__(5236));
 exports.STATE_CACHE_KEY = "cache-key";
 exports.STATE_CACHE_MATCHED_KEY = "cache-matched-key";
 const CACHE_VERSION = "1";
-function restoreCache(version) {
+function restoreCache() {
     return __awaiter(this, void 0, void 0, function* () {
-        const cacheKey = yield computeKeys(version);
+        const cacheKey = yield computeKeys();
         let matchedKey;
         core.info(`Trying to restore uv cache from GitHub Actions cache with key: ${cacheKey}`);
         try {
@@ -96566,7 +96566,7 @@ function restoreCache(version) {
         handleMatchResult(matchedKey, cacheKey);
     });
 }
-function computeKeys(version) {
+function computeKeys() {
     return __awaiter(this, void 0, void 0, function* () {
         let cacheDependencyPathHash = "-";
         if (inputs_1.cacheDependencyGlob !== "") {
@@ -96581,7 +96581,7 @@ function computeKeys(version) {
         }
         const suffix = inputs_1.cacheSuffix ? `-${inputs_1.cacheSuffix}` : "";
         const pythonVersion = yield getPythonVersion();
-        return `setup-uv-${CACHE_VERSION}-${(0, platforms_1.getArch)()}-${(0, platforms_1.getPlatform)()}-${version}-${pythonVersion}${cacheDependencyPathHash}${suffix}`;
+        return `setup-uv-${CACHE_VERSION}-${(0, platforms_1.getArch)()}-${(0, platforms_1.getPlatform)()}-${pythonVersion}${cacheDependencyPathHash}${suffix}`;
     });
 }
 function getPythonVersion() {
@@ -99274,7 +99274,7 @@ function run() {
             core.setOutput("uv-version", setupResult.version);
             core.info(`Successfully installed uv version ${setupResult.version}`);
             if (inputs_1.enableCache) {
-                yield (0, restore_cache_1.restoreCache)(setupResult.version);
+                yield (0, restore_cache_1.restoreCache)();
             }
             process.exit(0);
         }

@@ -14,8 +14,8 @@ export const STATE_CACHE_KEY = "cache-key";
 export const STATE_CACHE_MATCHED_KEY = "cache-matched-key";
 const CACHE_VERSION = "1";
 
-export async function restoreCache(version: string): Promise<void> {
-  const cacheKey = await computeKeys(version);
+export async function restoreCache(): Promise<void> {
+  const cacheKey = await computeKeys();
 
   let matchedKey: string | undefined;
   core.info(
@@ -35,7 +35,7 @@ export async function restoreCache(version: string): Promise<void> {
   handleMatchResult(matchedKey, cacheKey);
 }
 
-async function computeKeys(version: string): Promise<string> {
+async function computeKeys(): Promise<string> {
   let cacheDependencyPathHash = "-";
   if (cacheDependencyGlob !== "") {
     core.info(
@@ -53,7 +53,7 @@ async function computeKeys(version: string): Promise<string> {
   }
   const suffix = cacheSuffix ? `-${cacheSuffix}` : "";
   const pythonVersion = await getPythonVersion();
-  return `setup-uv-${CACHE_VERSION}-${getArch()}-${getPlatform()}-${version}-${pythonVersion}${cacheDependencyPathHash}${suffix}`;
+  return `setup-uv-${CACHE_VERSION}-${getArch()}-${getPlatform()}-${pythonVersion}${cacheDependencyPathHash}${suffix}`;
 }
 
 async function getPythonVersion(): Promise<string> {
