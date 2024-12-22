@@ -334,9 +334,10 @@ by name (`uv`).
 
 ### Do I still need `actions/setup-python` alongside `setup-uv`?
 
-No. This action is modelled as a drop-in replacement for `actions/setup-python` when using uv. With
-`setup-uv`, you can install a specific version of Python using `uv python install` rather than
+With `setup-uv`, you can install a specific version of Python using `uv python install` rather than
 relying on `actions/setup-python`.
+
+Using `actions/setup-python` can be faster, because GitHub caches the Python versions alongside the runner.
 
 For example:
 
@@ -348,7 +349,7 @@ For example:
   with:
     enable-cache: true
 - name: Test
-  run: uv run --frozen pytest
+  run: uv run --frozen pytest  # Uses the Python version automatically installed by uv
 ```
 
 To install a specific version of Python, use
