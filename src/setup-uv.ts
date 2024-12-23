@@ -143,7 +143,7 @@ async function setupPython(): Promise<void> {
       venvBinPath = ".venv/Scripts";
     }
     core.addPath(venvBinPath);
-    core.exportVariable("VIRTUAL_ENV", venvBinPath);
+    core.exportVariable("VIRTUAL_ENV", ".venv");
   }
 }
 
