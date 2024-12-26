@@ -167,3 +167,17 @@ jobs:
             exit 1
           fi
         shell: bash
+  test-macos-python-version:
+    runs-on: macos-latest
+    steps:
+      - run: |
+          /Applications/Xcode_15.4.app/Contents/Developer/usr/bin/python3 --version
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: 3.9
+      - run: |
+          echo "$UV_PYTHON"
+          python --version
+          uv python list
+        shell: bash
