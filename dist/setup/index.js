@@ -99397,7 +99397,7 @@ function setupPython() {
                 venvBinPath = ".venv/Scripts";
             }
             core.addPath(venvBinPath);
-            core.exportVariable("VIRTUAL_ENV", ".venv");
+            core.exportVariable("VIRTUAL_ENV", path.resolve(".venv"));
         }
     });
 }
