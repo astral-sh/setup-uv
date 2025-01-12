@@ -4,8 +4,14 @@ description:
 author: "astral-sh"
 inputs:
   version:
-    description: "The version of uv to install"
-    default: "latest"
+    description: "The version of uv to install e.g., `0.5.0` Defaults to the version in pyproject.toml or 'latest'."
+    default: ""
+  pyproject-file:
+    description: "Path to a pyproject.toml"
+    default: ""
+  uv-file:
+    description: "Path to a uv.toml"
+    default: ""
   python-version:
     description: "The version of Python to set UV_PYTHON to"
     required: false
@@ -18,7 +24,7 @@ inputs:
     required: false
     default: ${{ github.token }}
   enable-cache:
-    description: "Enable caching of the uv cache"
+    description: "Enable uploading of the uv cache"
     default: "auto"
   cache-dependency-glob:
     description:

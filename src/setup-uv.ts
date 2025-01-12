@@ -18,12 +18,16 @@ import {
   checkSum,
   enableCache,
   githubToken,
+  pyProjectFile,
   pythonVersion,
   toolBinDir,
   toolDir,
-  version,
+  uvFile,
+  version as versionInput,
 } from "./utils/inputs";
 import * as exec from "@actions/exec";
+import fs from "node:fs";
+import { getUvVersionFromConfigFile } from "./utils/pyproject";
 
 async function run(): Promise<void> {
   const platform = getPlatform();
@@ -36,13 +40,7 @@ async function run(): Promise<void> {
     if (arch === undefined) {
       throw new Error(`Unsupported architecture: ${process.arch}`);
     }
-    const setupResult = await setupUv(
-      platform,
-      arch,
-      version,
-      checkSum,
-      githubToken,
-    );
+    const setupResult = await setupUv(platform, arch, checkSum, githubToken);
 
     addUvToPath(setupResult.uvDir);
     addToolBinToPath();
@@ -66,11 +64,10 @@ async function run(): Promise<void> {
 async function setupUv(
   platform: Platform,
   arch: Architecture,
-  versionInput: string,
   checkSum: string | undefined,
   githubToken: string,
 ): Promise<{ uvDir: string; version: string }> {
-  const resolvedVersion = await resolveVersion(versionInput, githubToken);
+  const resolvedVersion = await determineVersion();
   const toolCacheResult = tryGetFromToolCache(arch, resolvedVersion);
   if (toolCacheResult.installedPath) {
     core.info(`Found uv in tool-cache for ${toolCacheResult.version}`);
@@ -92,6 +89,28 @@ async function setupUv(
     uvDir: downloadVersionResult.cachedToolDir,
     version: downloadVersionResult.version,
   };
+}
+
+async function determineVersion(): Promise<string> {
+  if (versionInput !== "") {
+    return await resolveVersion(versionInput, githubToken);
+  }
+  const configFile = uvFile !== "" ? uvFile : pyProjectFile;
+  if (configFile !== "") {
+    const versionFromConfigFile = getUvVersionFromConfigFile(configFile);
+    if (versionFromConfigFile === undefined) {
+      core.warning(
+        `Could not find required-version under [tool.uv] in ${configFile}. Falling back to latest`,
+      );
+    }
+    return await resolveVersion(versionFromConfigFile || "latest", githubToken);
+  }
+  if (!fs.existsSync("uv.toml") && !fs.existsSync("pyproject.toml")) {
+    return await resolveVersion("latest", githubToken);
+  }
+  const versionFile = fs.existsSync("uv.toml") ? "uv.toml" : "pyproject.toml";
+  const versionFromConfigFile = getUvVersionFromConfigFile(versionFile);
+  return await resolveVersion(versionFromConfigFile || "latest", githubToken);
 }
 
 function addUvToPath(cachedPath: string): void {
