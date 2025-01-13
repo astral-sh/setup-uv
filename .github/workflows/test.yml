@@ -64,6 +64,39 @@ jobs:
           fi
         env:
           UV_VERSION: ${{ steps.setup-uv.outputs.uv-version }}
+  test-pyproject-file-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install version 0.5.14
+        id: setup-uv
+        uses: ./
+        with:
+          pyproject-file: "__tests__/fixtures/pyproject-toml-project/pyproject.toml"
+      - name: Correct version gets installed
+        run: |
+          if [ "$UV_VERSION" != "0.5.14" ]; then
+            exit 1
+          fi
+        env:
+          UV_VERSION: ${{ steps.setup-uv.outputs.uv-version }}
+  test-uv-file-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install version 0.5.15
+        id: setup-uv
+        uses: ./
+        with:
+          pyproject-file: "__tests__/fixtures/uv-toml-project/pyproject.toml"
+          uv-file: "__tests__/fixtures/uv-toml-project/uv.toml"
+      - name: Correct version gets installed
+        run: |
+          if [ "$UV_VERSION" != "0.5.15" ]; then
+            exit 1
+          fi
+        env:
+          UV_VERSION: ${{ steps.setup-uv.outputs.uv-version }}
   test-checksum:
     runs-on: ${{ matrix.os }}
     strategy:
