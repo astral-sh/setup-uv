@@ -30,7 +30,20 @@ Set up your GitHub Actions workflow with a specific version of [uv](https://docs
 
 ## Usage
 
-### Install the latest version (default)
+### Install a required-version or latest (default)
+
+```yaml
+- name: Install the latest version of uv
+  uses: astral-sh/setup-uv@v5
+```
+
+If you do not specify a version, this action will look for a [required-version](https://docs.astral.sh/uv/reference/settings/#required-version)
+in a `uv.toml` or `pyproject.toml` file in the repository root. If none is found, the latest version will be installed.
+
+For an example workflow, see
+[here](https://github.com/charliermarsh/autobot/blob/e42c66659bf97b90ca9ff305a19cc99952d0d43f/.github/workflows/ci.yaml).
+
+### Install the latest version
 
 ```yaml
 - name: Install the latest version of uv
@@ -38,9 +51,6 @@ Set up your GitHub Actions workflow with a specific version of [uv](https://docs
   with:
     version: "latest"
 ```
-
-For an example workflow, see
-[here](https://github.com/charliermarsh/autobot/blob/e42c66659bf97b90ca9ff305a19cc99952d0d43f/.github/workflows/ci.yaml).
 
 ### Install a specific version
 
@@ -68,6 +78,25 @@ to install the latest version that satisfies the range.
   uses: astral-sh/setup-uv@v5
   with:
     version: "0.4.x"
+```
+
+### Install a required-version
+
+You can specify a [required-version](https://docs.astral.sh/uv/reference/settings/#required-version)
+in either a `uv.toml` or `pyproject.toml` file:
+
+```yaml
+- name: Install required-version defined in uv.toml
+  uses: astral-sh/setup-uv@v5
+  with:
+    uv-file: "path/to/uv.toml"
+```
+
+```yaml
+- name: Install required-version defined in pyproject.toml
+  uses: astral-sh/setup-uv@v5
+  with:
+    pyproject-file: "path/to/pyproject.toml"
 ```
 
 ### Python version
