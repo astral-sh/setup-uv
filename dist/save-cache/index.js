@@ -91444,15 +91444,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.STATE_CACHE_MATCHED_KEY = exports.STATE_CACHE_KEY = void 0;
 exports.restoreCache = restoreCache;
@@ -91465,71 +91456,65 @@ const exec = __importStar(__nccwpck_require__(5236));
 exports.STATE_CACHE_KEY = "cache-key";
 exports.STATE_CACHE_MATCHED_KEY = "cache-matched-key";
 const CACHE_VERSION = "1";
-function restoreCache() {
-    return __awaiter(this, void 0, void 0, function* () {
-        const cacheKey = yield computeKeys();
-        let matchedKey;
-        core.info(`Trying to restore uv cache from GitHub Actions cache with key: ${cacheKey}`);
-        try {
-            matchedKey = yield cache.restoreCache([inputs_1.cacheLocalPath], cacheKey);
-        }
-        catch (err) {
-            const message = err.message;
-            core.warning(message);
-            core.setOutput("cache-hit", false);
-            return;
-        }
-        core.saveState(exports.STATE_CACHE_KEY, cacheKey);
-        handleMatchResult(matchedKey, cacheKey);
-    });
+async function restoreCache() {
+    const cacheKey = await computeKeys();
+    let matchedKey;
+    core.info(`Trying to restore uv cache from GitHub Actions cache with key: ${cacheKey}`);
+    try {
+        matchedKey = await cache.restoreCache([inputs_1.cacheLocalPath], cacheKey);
+    }
+    catch (err) {
+        const message = err.message;
+        core.warning(message);
+        core.setOutput("cache-hit", false);
+        return;
+    }
+    core.saveState(exports.STATE_CACHE_KEY, cacheKey);
+    handleMatchResult(matchedKey, cacheKey);
 }
-function computeKeys() {
-    return __awaiter(this, void 0, void 0, function* () {
-        let cacheDependencyPathHash = "-";
-        if (inputs_1.cacheDependencyGlob !== "") {
-            core.info(`Searching files using cache dependency glob: ${inputs_1.cacheDependencyGlob.split("\n").join(",")}`);
-            cacheDependencyPathHash += yield (0, hash_files_1.hashFiles)(inputs_1.cacheDependencyGlob, true);
-            if (cacheDependencyPathHash === "-") {
-                core.warning(`No file matched to [${inputs_1.cacheDependencyGlob.split("\n").join(",")}]. The cache will never get invalidated. Make sure you have checked out the target repository and configured the cache-dependency-glob input correctly.`);
-            }
-        }
+async function computeKeys() {
+    let cacheDependencyPathHash = "-";
+    if (inputs_1.cacheDependencyGlob !== "") {
+        core.info(`Searching files using cache dependency glob: ${inputs_1.cacheDependencyGlob.split("\n").join(",")}`);
+        cacheDependencyPathHash += await (0, hash_files_1.hashFiles)(inputs_1.cacheDependencyGlob, true);
         if (cacheDependencyPathHash === "-") {
-            cacheDependencyPathHash = "-no-dependency-glob";
+            core.warning(`No file matched to [${inputs_1.cacheDependencyGlob.split("\n").join(",")}]. The cache will never get invalidated. Make sure you have checked out the target repository and configured the cache-dependency-glob input correctly.`);
         }
-        const suffix = inputs_1.cacheSuffix ? `-${inputs_1.cacheSuffix}` : "";
-        const pythonVersion = yield getPythonVersion();
-        return `setup-uv-${CACHE_VERSION}-${(0, platforms_1.getArch)()}-${(0, platforms_1.getPlatform)()}-${pythonVersion}${cacheDependencyPathHash}${suffix}`;
-    });
+    }
+    if (cacheDependencyPathHash === "-") {
+        cacheDependencyPathHash = "-no-dependency-glob";
+    }
+    const suffix = inputs_1.cacheSuffix ? `-${inputs_1.cacheSuffix}` : "";
+    const pythonVersion = await getPythonVersion();
+    return `setup-uv-${CACHE_VERSION}-${(0, platforms_1.getArch)()}-${(0, platforms_1.getPlatform)()}-${pythonVersion}${cacheDependencyPathHash}${suffix}`;
 }
-function getPythonVersion() {
-    return __awaiter(this, void 0, void 0, function* () {
-        if (inputs_1.pythonVersion !== "") {
-            return inputs_1.pythonVersion;
-        }
-        let output = "";
-        const options = {
-            silent: !core.isDebug(),
-            listeners: {
-                stdout: (data) => {
-                    output += data.toString();
-                },
+async function getPythonVersion() {
+    if (inputs_1.pythonVersion !== "") {
+        return inputs_1.pythonVersion;
+    }
+    let output = "";
+    const options = {
+        silent: !core.isDebug(),
+        listeners: {
+            stdout: (data) => {
+                output += data.toString();
             },
-        };
-        try {
-            const execArgs = ["python", "find"];
-            yield exec.exec("uv", execArgs, options);
-            const pythonPath = output.trim();
-            output = "";
-            yield exec.exec(pythonPath, ["--version"], options);
-            // output is like "Python 3.8.10"
-            return output.split(" ")[1].trim();
-        }
-        catch (error) {
-            const err = error;
-            core.debug(`Failed to get python version from uv. Error: ${err.message}`);
-            return "unknown";
-        }
-    });
+        },
+    };
+    try {
+        const execArgs = ["python", "find"];
+        await exec.exec("uv", execArgs, options);
+        const pythonPath = output.trim();
+        output = "";
+        await exec.exec(pythonPath, ["--version"], options);
+        // output is like "Python 3.8.10"
+        return output.split(" ")[1].trim();
+    }
+    catch (error) {
+        const err = error;
+        core.debug(`Failed to get python version from uv. Error: ${err.message}`);
+        return "unknown";
+    }
 }
 function handleMatchResult(matchedKey, primaryKey) {
     if (!matchedKey) {
@@ -91583,22 +91568,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __asyncValues = (this && this.__asyncValues) || function (o) {
-    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-    var m = o[Symbol.asyncIterator], i;
-    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
-    function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
-    function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.hashFiles = hashFiles;
 const crypto = __importStar(__nccwpck_require__(7598));
@@ -91615,49 +91584,34 @@ const glob_1 = __nccwpck_require__(7206);
  * @param pattern The glob pattern to match files.
  * @param verbose Whether to log the files being hashed.
  */
-function hashFiles(pattern_1) {
-    return __awaiter(this, arguments, void 0, function* (pattern, verbose = false) {
-        var _a, e_1, _b, _c;
-        const globber = yield (0, glob_1.create)(pattern);
-        let hasMatch = false;
-        const writeDelegate = verbose ? core.info : core.debug;
-        const result = crypto.createHash("sha256");
-        let count = 0;
-        try {
-            for (var _d = true, _e = __asyncValues(globber.globGenerator()), _f; _f = yield _e.next(), _a = _f.done, !_a; _d = true) {
-                _c = _f.value;
-                _d = false;
-                const file = _c;
-                writeDelegate(file);
-                if (fs.statSync(file).isDirectory()) {
-                    writeDelegate(`Skip directory '${file}'.`);
-                    continue;
-                }
-                const hash = crypto.createHash("sha256");
-                const pipeline = util.promisify(stream.pipeline);
-                yield pipeline(fs.createReadStream(file), hash);
-                result.write(hash.digest());
-                count++;
-                if (!hasMatch) {
-                    hasMatch = true;
-                }
-            }
+async function hashFiles(pattern, verbose = false) {
+    const globber = await (0, glob_1.create)(pattern);
+    let hasMatch = false;
+    const writeDelegate = verbose ? core.info : core.debug;
+    const result = crypto.createHash("sha256");
+    let count = 0;
+    for await (const file of globber.globGenerator()) {
+        writeDelegate(file);
+        if (fs.statSync(file).isDirectory()) {
+            writeDelegate(`Skip directory '${file}'.`);
+            continue;
         }
-        catch (e_1_1) { e_1 = { error: e_1_1 }; }
-        finally {
-            try {
-                if (!_d && !_a && (_b = _e.return)) yield _b.call(_e);
-            }
-            finally { if (e_1) throw e_1.error; }
+        const hash = crypto.createHash("sha256");
+        const pipeline = util.promisify(stream.pipeline);
+        await pipeline(fs.createReadStream(file), hash);
+        result.write(hash.digest());
+        count++;
+        if (!hasMatch) {
+            hasMatch = true;
         }
-        result.end();
-        if (hasMatch) {
-            writeDelegate(`Found ${count} files to hash.`);
-            return result.digest("hex");
-        }
-        writeDelegate("No matches found for glob");
-        return "";
-    });
+    }
+    result.end();
+    if (hasMatch) {
+        writeDelegate(`Found ${count} files to hash.`);
+        return result.digest("hex");
+    }
+    writeDelegate("No matches found for glob");
+    return "";
 }
 
 
@@ -91701,15 +91655,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = run;
 const cache = __importStar(__nccwpck_require__(5116));
@@ -91718,69 +91663,63 @@ const exec = __importStar(__nccwpck_require__(5236));
 const fs = __importStar(__nccwpck_require__(3024));
 const restore_cache_1 = __nccwpck_require__(5391);
 const inputs_1 = __nccwpck_require__(9612);
-function run() {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            if (inputs_1.enableCache) {
-                yield saveCache();
-                // node will stay alive if any promises are not resolved,
-                // which is a possibility if HTTP requests are dangling
-                // due to retries or timeouts. We know that if we got here
-                // that all promises that we care about have successfully
-                // resolved, so simply exit with success.
-                process.exit(0);
-            }
+async function run() {
+    try {
+        if (inputs_1.enableCache) {
+            await saveCache();
+            // node will stay alive if any promises are not resolved,
+            // which is a possibility if HTTP requests are dangling
+            // due to retries or timeouts. We know that if we got here
+            // that all promises that we care about have successfully
+            // resolved, so simply exit with success.
+            process.exit(0);
         }
-        catch (error) {
-            const err = error;
-            core.setFailed(err.message);
-        }
-    });
+    }
+    catch (error) {
+        const err = error;
+        core.setFailed(err.message);
+    }
 }
-function saveCache() {
-    return __awaiter(this, void 0, void 0, function* () {
-        const cacheKey = core.getState(restore_cache_1.STATE_CACHE_KEY);
-        const matchedKey = core.getState(restore_cache_1.STATE_CACHE_MATCHED_KEY);
-        if (!cacheKey) {
-            core.warning("Error retrieving cache key from state.");
-            return;
+async function saveCache() {
+    const cacheKey = core.getState(restore_cache_1.STATE_CACHE_KEY);
+    const matchedKey = core.getState(restore_cache_1.STATE_CACHE_MATCHED_KEY);
+    if (!cacheKey) {
+        core.warning("Error retrieving cache key from state.");
+        return;
+    }
+    if (matchedKey === cacheKey) {
+        core.info(`Cache hit occurred on key ${cacheKey}, not saving cache.`);
+        return;
+    }
+    if (inputs_1.pruneCache) {
+        await pruneCache();
+    }
+    core.info(`Saving cache path: ${inputs_1.cacheLocalPath}`);
+    if (!fs.existsSync(inputs_1.cacheLocalPath) && !inputs_1.ignoreNothingToCache) {
+        throw new Error(`Cache path ${inputs_1.cacheLocalPath} does not exist on disk. This likely indicates that there are no dependencies to cache. Consider disabling the cache input if it is not needed.`);
+    }
+    try {
+        await cache.saveCache([inputs_1.cacheLocalPath], cacheKey);
+        core.info(`cache saved with the key: ${cacheKey}`);
+    }
+    catch (e) {
+        if (e instanceof Error &&
+            e.message ===
+                "Path Validation Error: Path(s) specified in the action for caching do(es) not exist, hence no cache is being saved.") {
+            core.info("No cacheable paths were found. Ignoring because ignore-nothing-to-save is enabled.");
         }
-        if (matchedKey === cacheKey) {
-            core.info(`Cache hit occurred on key ${cacheKey}, not saving cache.`);
-            return;
+        else {
+            throw e;
         }
-        if (inputs_1.pruneCache) {
-            yield pruneCache();
-        }
-        core.info(`Saving cache path: ${inputs_1.cacheLocalPath}`);
-        if (!fs.existsSync(inputs_1.cacheLocalPath) && !inputs_1.ignoreNothingToCache) {
-            throw new Error(`Cache path ${inputs_1.cacheLocalPath} does not exist on disk. This likely indicates that there are no dependencies to cache. Consider disabling the cache input if it is not needed.`);
-        }
-        try {
-            yield cache.saveCache([inputs_1.cacheLocalPath], cacheKey);
-            core.info(`cache saved with the key: ${cacheKey}`);
-        }
-        catch (e) {
-            if (e instanceof Error &&
-                e.message ===
-                    "Path Validation Error: Path(s) specified in the action for caching do(es) not exist, hence no cache is being saved.") {
-                core.info("No cacheable paths were found. Ignoring because ignore-nothing-to-save is enabled.");
-            }
-            else {
-                throw e;
-            }
-        }
-    });
+    }
 }
-function pruneCache() {
-    return __awaiter(this, void 0, void 0, function* () {
-        const options = {
-            silent: !core.isDebug(),
-        };
-        const execArgs = ["cache", "prune", "--ci"];
-        core.info("Pruning cache...");
-        yield exec.exec("uv", execArgs, options);
-    });
+async function pruneCache() {
+    const options = {
+        silent: !core.isDebug(),
+    };
+    const execArgs = ["cache", "prune", "--ci"];
+    core.info("Pruning cache...");
+    await exec.exec("uv", execArgs, options);
 }
 run();
 
