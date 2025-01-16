@@ -9,7 +9,14 @@ export function getUvVersionFromConfigFile(
     core.warning(`Could not find file: ${filePath}`);
     return undefined;
   }
-  let requiredVersion = getRequiredVersion(filePath);
+  let requiredVersion: string | undefined;
+  try {
+    requiredVersion = getRequiredVersion(filePath);
+  } catch (err) {
+    const message = (err as Error).message;
+    core.warning(`Error while parsing ${filePath}: ${message}`);
+    return undefined;
+  }
 
   if (requiredVersion?.startsWith("==")) {
     requiredVersion = requiredVersion.slice(2);
