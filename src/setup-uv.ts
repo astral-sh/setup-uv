@@ -161,7 +161,7 @@ async function setupPython(): Promise<void> {
     if (process.platform === "win32") {
       venvBinPath = ".venv/Scripts";
     }
-    core.addPath(venvBinPath);
+    core.addPath(path.resolve(venvBinPath));
     core.exportVariable("VIRTUAL_ENV", path.resolve(".venv"));
   }
 }
