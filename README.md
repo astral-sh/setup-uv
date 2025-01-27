@@ -11,9 +11,11 @@ Set up your GitHub Actions workflow with a specific version of [uv](https://docs
 ## Contents
 
 - [Usage](#usage)
-  - [Install the latest version (default)](#install-the-latest-version-default)
+  - [Install a required-version or latest (default)](#install-a-required-version-or-latest-default)
+  - [Install the latest version](#install-the-latest-version)
   - [Install a specific version](#install-a-specific-version)
   - [Install a version by supplying a semver range](#install-a-version-by-supplying-a-semver-range)
+  - [Install a required-version](#install-a-required-version)
   - [Python version](#python-version)
   - [Validate checksum](#validate-checksum)
   - [Enable Caching](#enable-caching)
