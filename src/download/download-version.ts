@@ -2,15 +2,14 @@ import * as core from "@actions/core";
 import * as tc from "@actions/tool-cache";
 import * as path from "node:path";
 import { promises as fs } from "node:fs";
-import {
-  GITHUB_COM_API,
-  OWNER,
-  REPO,
-  TOOL_CACHE_NAME,
-} from "../utils/constants";
+import { OWNER, REPO, TOOL_CACHE_NAME } from "../utils/constants";
 import type { Architecture, Platform } from "../utils/platforms";
 import { validateChecksum } from "./checksum/checksum";
-import * as github from "@actions/github";
+import { Octokit } from "@octokit/core";
+import { paginateRest } from "@octokit/plugin-paginate-rest";
+import { restEndpointMethods } from "@octokit/plugin-rest-endpoint-methods";
+
+const PaginatingOctokit = Octokit.plugin(paginateRest, restEndpointMethods);
 
 export function tryGetFromToolCache(
   arch: Architecture,
@@ -96,8 +95,26 @@ export async function resolveVersion(
 }
 
 async function getAvailableVersions(githubToken: string): Promise<string[]> {
-  const octokit = github.getOctokit(githubToken, { baseUrl: GITHUB_COM_API });
+  try {
+    const octokit = new PaginatingOctokit({
+      auth: githubToken,
+    });
+    return await getReleaseTagNames(octokit);
+  } catch (err) {
+    if ((err as Error).message.includes("Bad credentials")) {
+      core.info(
+        "No (valid) GitHub token provided. Falling back to anonymous. Requests might be rate limited.",
+      );
+      const octokit = new PaginatingOctokit();
+      return await getReleaseTagNames(octokit);
+    }
+    throw err;
+  }
+}
 
+async function getReleaseTagNames(
+  octokit: InstanceType<typeof PaginatingOctokit>,
+): Promise<string[]> {
   const response = await octokit.paginate(octokit.rest.repos.listReleases, {
     owner: OWNER,
     repo: REPO,
@@ -106,15 +123,37 @@ async function getAvailableVersions(githubToken: string): Promise<string[]> {
 }
 
 async function getLatestVersion(githubToken: string) {
-  const octokit = github.getOctokit(githubToken, { baseUrl: GITHUB_COM_API });
-
-  const { data: latestRelease } = await octokit.rest.repos.getLatestRelease({
-    owner: OWNER,
-    repo: REPO,
+  const octokit = new PaginatingOctokit({
+    auth: githubToken,
   });
+
+  let latestRelease: { tag_name: string } | undefined;
+  try {
+    latestRelease = await getLatestRelease(octokit);
+  } catch (err) {
+    if ((err as Error).message.includes("Bad credentials")) {
+      core.info(
+        "No (valid) GitHub token provided. Falling back to anonymous. Requests might be rate limited.",
+      );
+      const octokit = new PaginatingOctokit();
+      latestRelease = await getLatestRelease(octokit);
+    } else {
+      throw err;
+    }
+  }
 
   if (!latestRelease) {
     throw new Error("Could not determine latest release.");
   }
   return latestRelease.tag_name;
+}
+
+async function getLatestRelease(
+  octokit: InstanceType<typeof PaginatingOctokit>,
+) {
+  const { data: latestRelease } = await octokit.rest.repos.getLatestRelease({
+    owner: OWNER,
+    repo: REPO,
+  });
+  return latestRelease;
 }
