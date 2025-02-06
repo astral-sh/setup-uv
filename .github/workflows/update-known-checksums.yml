@@ -1,6 +1,8 @@
 name: "Update known checksums"
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "0 4 * * *" # Run every day at 4am UTC
 
 jobs:
   build:
