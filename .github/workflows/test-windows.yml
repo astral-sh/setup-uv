@@ -12,8 +12,6 @@ concurrency:
 jobs:
   test-default-version:
     runs-on: windows-latest
-    env:
-      UV_SYSTEM_PYTHON: 1
     steps:
       - uses: actions/checkout@v4
       - name: Should not be on path
@@ -25,5 +23,7 @@ jobs:
           }
       - name: Setup uv
         uses: ./
+        with:
+          python-version: "3.13"
       - run: ls
       - run: uv pip install -r __tests__/fixtures/requirements-txt-project/requirements.txt
