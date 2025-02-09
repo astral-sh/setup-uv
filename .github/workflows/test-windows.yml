@@ -23,5 +23,5 @@ jobs:
           }
       - name: Setup uv
         uses: ./
-      - run: uv sync
-        working-directory: __tests__\fixtures\uv-project
+      - run: ls
+      - run: uv pip install -r __tests__/fixtures/requirements-txt-project/requirements.txt
