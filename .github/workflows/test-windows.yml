@@ -12,6 +12,8 @@ concurrency:
 jobs:
   test-default-version:
     runs-on: windows-latest
+    env:
+      UV_SYSTEM_PYTHON: 1
     steps:
       - uses: actions/checkout@v4
       - name: Should not be on path
