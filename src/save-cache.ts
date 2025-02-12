@@ -12,6 +12,7 @@ import {
   ignoreNothingToCache,
   pruneCache as shouldPruneCache,
 } from "./utils/inputs";
+import { STATE_CACHED_UV_DIR } from "./utils/constants";
 
 export async function run(): Promise<void> {
   try {
@@ -72,8 +73,10 @@ async function saveCache(): Promise<void> {
 }
 
 async function pruneCache(): Promise<void> {
+  const uvDir = core.getState(STATE_CACHED_UV_DIR);
   const options: exec.ExecOptions = {
-    silent: !core.isDebug(),
+    silent: false,
+    env: { PATH: uvDir },
   };
   const execArgs = ["cache", "prune", "--ci"];
 

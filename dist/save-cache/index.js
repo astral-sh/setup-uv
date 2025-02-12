@@ -91671,6 +91671,7 @@ const exec = __importStar(__nccwpck_require__(5236));
 const fs = __importStar(__nccwpck_require__(3024));
 const restore_cache_1 = __nccwpck_require__(5391);
 const inputs_1 = __nccwpck_require__(9612);
+const constants_1 = __nccwpck_require__(6156);
 async function run() {
     try {
         if (inputs_1.enableCache) {
@@ -91722,14 +91723,31 @@ async function saveCache() {
     }
 }
 async function pruneCache() {
+    const uvDir = core.getState(constants_1.STATE_CACHED_UV_DIR);
     const options = {
-        silent: !core.isDebug(),
+        silent: false,
+        env: { PATH: uvDir },
     };
     const execArgs = ["cache", "prune", "--ci"];
     core.info("Pruning cache...");
     await exec.exec("uv", execArgs, options);
 }
 run();
+
+
+/***/ }),
+
+/***/ 6156:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.STATE_CACHED_UV_DIR = exports.TOOL_CACHE_NAME = exports.OWNER = exports.REPO = void 0;
+exports.REPO = "uv";
+exports.OWNER = "astral-sh";
+exports.TOOL_CACHE_NAME = "uv";
+exports.STATE_CACHED_UV_DIR = "cached-uv-dir";
 
 
 /***/ }),

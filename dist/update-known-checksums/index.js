@@ -30859,10 +30859,11 @@ run();
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.TOOL_CACHE_NAME = exports.OWNER = exports.REPO = void 0;
+exports.STATE_CACHED_UV_DIR = exports.TOOL_CACHE_NAME = exports.OWNER = exports.REPO = void 0;
 exports.REPO = "uv";
 exports.OWNER = "astral-sh";
 exports.TOOL_CACHE_NAME = "uv";
+exports.STATE_CACHED_UV_DIR = "cached-uv-dir";
 
 
 /***/ }),

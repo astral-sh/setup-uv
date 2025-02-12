@@ -28,6 +28,7 @@ import {
 import * as exec from "@actions/exec";
 import fs from "node:fs";
 import { getUvVersionFromConfigFile } from "./utils/pyproject";
+import { STATE_CACHED_UV_DIR } from "./utils/constants";
 
 async function run(): Promise<void> {
   const platform = getPlatform();
@@ -42,6 +43,7 @@ async function run(): Promise<void> {
     }
     const setupResult = await setupUv(platform, arch, checkSum, githubToken);
 
+    core.saveState(STATE_CACHED_UV_DIR, setupResult.uvDir);
     addUvToPath(setupResult.uvDir);
     addToolBinToPath();
     setToolDir();
