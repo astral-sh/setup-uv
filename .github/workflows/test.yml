@@ -200,7 +200,6 @@ jobs:
             exit 1
           fi
         shell: bash
-
   test-malformed-pyproject-file-fallback:
     runs-on: ubuntu-latest
     steps:
@@ -210,5 +209,15 @@ jobs:
         uses: ./
         with:
           pyproject-file: "__tests__/fixtures/malformed-pyproject-toml-project/pyproject.toml"
+      - run: uv sync
+        working-directory: __tests__/fixtures/uv-project
+  test-musl:
+    runs-on: ubuntu-latest
+    container: alpine
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install latest version
+        uses: ./
+      - run: apk add python3
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
