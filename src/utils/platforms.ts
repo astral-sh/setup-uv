@@ -1,3 +1,5 @@
+import * as exec from "@actions/exec";
+import * as core from "@actions/core";
 export type Platform =
   | "unknown-linux-gnu"
   | "unknown-linux-musl"
@@ -19,15 +21,49 @@ export function getArch(): Architecture | undefined {
   }
 }
 
-export function getPlatform(): Platform | undefined {
-  const platform = process.platform;
+export async function getPlatform(): Promise<Platform | undefined> {
+  const processPlatform = process.platform;
   const platformMapping: { [key: string]: Platform } = {
     linux: "unknown-linux-gnu",
     darwin: "apple-darwin",
     win32: "pc-windows-msvc",
   };
 
-  if (platform in platformMapping) {
-    return platformMapping[platform];
+  if (processPlatform in platformMapping) {
+    const platform = platformMapping[processPlatform];
+    if (platform === "unknown-linux-gnu") {
+      const isMusl = await isMuslOs();
+      return isMusl ? "unknown-linux-musl" : platform;
+    }
+    return platform;
+  }
+}
+
+async function isMuslOs(): Promise<boolean> {
+  let stdOutput = "";
+  let errOutput = "";
+  const options: exec.ExecOptions = {
+    silent: !core.isDebug(),
+    listeners: {
+      stdout: (data: Buffer) => {
+        stdOutput += data.toString();
+      },
+      stderr: (data: Buffer) => {
+        errOutput += data.toString();
+      },
+    },
+    ignoreReturnCode: true,
+  };
+
+  try {
+    const execArgs = ["--version"];
+    await exec.exec("ldd", execArgs, options);
+    return stdOutput.includes("musl") || errOutput.includes("musl");
+  } catch (error) {
+    const err = error as Error;
+    core.warning(
+      `Failed to determine glibc or musl. Falling back to glibc. Error: ${err.message}`,
+    );
+    return false;
   }
 }
