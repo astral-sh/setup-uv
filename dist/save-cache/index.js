@@ -91860,6 +91860,8 @@ function getArch() {
         ia32: "i686",
         x64: "x86_64",
         arm64: "aarch64",
+        s390x: "s390x",
+        ppc64: "powerpc64le",
     };
     if (arch in archMapping) {
         return archMapping[arch];
