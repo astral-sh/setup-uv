@@ -4,7 +4,12 @@ export type Platform =
   | "unknown-linux-musleabihf"
   | "apple-darwin"
   | "pc-windows-msvc";
-export type Architecture = "i686" | "x86_64" | "aarch64";
+export type Architecture =
+  | "i686"
+  | "x86_64"
+  | "aarch64"
+  | "s390x"
+  | "powerpc64le";
 
 export function getArch(): Architecture | undefined {
   const arch = process.arch;
@@ -12,6 +17,8 @@ export function getArch(): Architecture | undefined {
     ia32: "i686",
     x64: "x86_64",
     arm64: "aarch64",
+    s390x: "s390x",
+    ppc64: "powerpc64le",
   };
 
   if (arch in archMapping) {
