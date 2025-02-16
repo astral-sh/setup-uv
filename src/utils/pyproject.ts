@@ -43,3 +43,31 @@ function getRequiredVersion(filePath: string): string | undefined {
   };
   return tomlContent["required-version"];
 }
+
+export function getPythonVersionFromPyProject(
+  filePath: string,
+): string | undefined {
+  if (!fs.existsSync(filePath)) {
+    core.warning(`Could not find pyproject.toml file: ${filePath}`);
+    return undefined;
+  }
+
+  let pythonVersionConstraint: string | undefined;
+  try {
+    const fileContent = fs.readFileSync(filePath, "utf-8");
+    const tomlContent = toml.parse(fileContent) as {
+      tool?: { uv?: { "requires-python"?: string } };
+    };
+
+    pythonVersionConstraint = tomlContent?.tool?.uv?.["requires-python"];
+
+    if (pythonVersionConstraint) {
+      core.info(`Extracted Python version constraint from ${filePath}: ${pythonVersionConstraint}`);
+    }
+  } catch (err) {
+    const message = (err as Error).message;
+    core.warning(`Error while parsing ${filePath} for Python version: ${message}`);
+  }
+
+  return pythonVersionConstraint;
+}
