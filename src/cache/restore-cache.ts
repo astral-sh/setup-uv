@@ -53,7 +53,8 @@ async function computeKeys(): Promise<string> {
   }
   const suffix = cacheSuffix ? `-${cacheSuffix}` : "";
   const pythonVersion = await getPythonVersion();
-  return `setup-uv-${CACHE_VERSION}-${getArch()}-${getPlatform()}-${pythonVersion}${cacheDependencyPathHash}${suffix}`;
+  const platform = await getPlatform();
+  return `setup-uv-${CACHE_VERSION}-${getArch()}-${platform}-${pythonVersion}${cacheDependencyPathHash}${suffix}`;
 }
 
 async function getPythonVersion(): Promise<string> {

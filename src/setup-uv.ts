@@ -30,7 +30,7 @@ import fs from "node:fs";
 import { getUvVersionFromConfigFile } from "./utils/pyproject";
 
 async function run(): Promise<void> {
-  const platform = getPlatform();
+  const platform = await getPlatform();
   const arch = getArch();
 
   try {
