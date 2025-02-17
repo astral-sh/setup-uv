@@ -27,7 +27,7 @@ import {
 } from "./utils/inputs";
 import * as exec from "@actions/exec";
 import fs from "node:fs";
-import { getUvVersionFromConfigFile } from "./utils/pyproject";
+import { getUvVersionFromConfigFile, getPythonVersionFromPyProject } from "./utils/pyproject";
 
 async function run(): Promise<void> {
   const platform = getPlatform();
@@ -146,15 +146,42 @@ function setToolDir(): void {
 }
 
 async function setupPython(): Promise<void> {
-  if (pythonVersion !== "") {
-    core.exportVariable("UV_PYTHON", pythonVersion);
-    core.info(`Set UV_PYTHON to ${pythonVersion}`);
+  let pythonVersionToUse = undefined; // Python version to use for setup
+
+  // Case (1): No Python version and no pyproject.toml file
+  if (pythonVersion === "" && pyProjectFile === "") {
+    return;
+  }
+
+  // Case (2): Python version is provided and no pyproject.toml file
+  else if (pythonVersion !== "" && pyProjectFile === "") {
+    pythonVersionToUse = pythonVersion;
+  }
+
+  // Case (3): No Python version and pyproject.toml file
+  else if (pythonVersion === "" && pyProjectFile !== "") {
+    pythonVersionToUse = getPythonVersionFromPyProject(pyProjectFile);
+    if (!pythonVersionToUse) {
+      core.info(`No valid Python version found in ${pyProjectFile}. Not able to setup Python.`);
+      return;
+    }
+  }
+
+  // Case (4): Python version is provided and pyproject.toml file
+  else if (pythonVersion !== "" && pyProjectFile !== "") {
+    //TODO: Implement this case
+  }
+
+  // If a valid Python version is found, setup Python
+  if (pythonVersionToUse) {
+    core.exportVariable("UV_PYTHON", pythonVersionToUse);
+    core.info(`Setting UV_PYTHON to ${pythonVersionToUse}`);
     const options: exec.ExecOptions = {
       silent: !core.isDebug(),
     };
-    const execArgs = ["venv", "--python", pythonVersion];
+    const execArgs = ["venv", "--python", pythonVersionToUse];
 
-    core.info("Activating python venv...");
+    core.info("Activating Python venv...");	
     await exec.exec("uv", execArgs, options);
 
     let venvBinPath = ".venv/bin";
