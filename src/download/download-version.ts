@@ -78,6 +78,7 @@ export async function resolveVersion(
   versionInput: string,
   githubToken: string,
 ): Promise<string> {
+  core.debug(`Resolving version: ${versionInput}`);
   const version =
     versionInput === "latest"
       ? await getLatestVersion(githubToken)
@@ -87,6 +88,7 @@ export async function resolveVersion(
     return version;
   }
   const availableVersions = await getAvailableVersions(githubToken);
+  core.debug(`Available versions: ${availableVersions}`);
   const resolvedVersion = tc.evaluateVersions(availableVersions, version);
   if (resolvedVersion === "") {
     throw new Error(`No version found for ${version}`);
@@ -123,6 +125,7 @@ async function getReleaseTagNames(
 }
 
 async function getLatestVersion(githubToken: string) {
+  core.debug("Getting latest version...");
   const octokit = new PaginatingOctokit({
     auth: githubToken,
   });
@@ -145,6 +148,7 @@ async function getLatestVersion(githubToken: string) {
   if (!latestRelease) {
     throw new Error("Could not determine latest release.");
   }
+  core.debug(`Latest version: ${latestRelease.tag_name}`);
   return latestRelease.tag_name;
 }
 
