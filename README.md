@@ -412,6 +412,40 @@ output:
   run: echo "Installed uv version is ${{ steps.setup-uv.outputs.uv-version }}"
 ```
 
+### Should I include the resolution strategy in the cache key?
+
+**Yes!**
+
+The cache key gets computed by using the [cache-dependency-glob](#cache-dependency-glob).
+
+If you
+have jobs which use the same dependency definitions from `requirements.txt` or
+`pyproject.toml` but different
+[resolution strategies](https://docs.astral.sh/uv/concepts/resolution/#resolution-strategy),
+each job will have different dependencies or dependency versions.
+But if you do not add the resolution strategy as a [cache-suffix](#enable-caching),
+they will have the same cache key.
+
+This means the first job which starts uploading its cache will win and all other job will fail
+uploading the cache,
+because they try to upload with the same cache key.
+
+You might see errors like
+`Failed to save: Failed to CreateCacheEntry: Received non-retryable error: Failed request: (409) Conflict: cache entry with the same key, version, and scope already exists`
+
+### Why do I see warnings like `Cache not found for keys`
+
+When a workflow runs for the first time on a branch and has a new cache key, because the
+[cache-dependency-glob](#cache-dependency-glob) found changed files (changed dependencies),
+the cache will not be found and the warning `Cache not found for keys` will be printed.
+
+While this might be irritating at first, it is expected behaviour and the cache will be created
+and reused in later workflows.
+
+The reason for the warning is, that we have to way to know if this is the first run of a new
+cache key or the user accidentally misconfigured the [cache-dependency-glob](#cache-dependency-glob)
+or [cache-suffix](#enable-caching) and the cache never gets used.
+
 ## Acknowledgements
 
 `setup-uv` was initially written and published by [Kevin Stillhammer](https://github.com/eifinger)
