@@ -156,6 +156,7 @@ are automatically verified by this action. The sha256 hashes can be found on the
 
 If you enable caching, the [uv cache](https://docs.astral.sh/uv/concepts/cache/) will be uploaded to
 the GitHub Actions cache. This can speed up runs that reuse the cache by several minutes.
+Caching is enabled by default on GitHub-hosted runners.
 
 > [!TIP]
 >
