@@ -1,20 +1,16 @@
 import * as semver from "semver";
 import * as core from "@actions/core";
-import { Octokit } from "@octokit/core";
-import { paginateRest } from "@octokit/plugin-paginate-rest";
-import { restEndpointMethods } from "@octokit/plugin-rest-endpoint-methods";
+import { Octokit } from "./utils/octokit";
 
 import { OWNER, REPO } from "./utils/constants";
 
 import { updateChecksums } from "./download/checksum/update-known-checksums";
 
-const PaginatingOctokit = Octokit.plugin(paginateRest, restEndpointMethods);
-
 async function run(): Promise<void> {
   const checksumFilePath = process.argv.slice(2)[0];
   const github_token = process.argv.slice(2)[1];
 
-  const octokit = new PaginatingOctokit({
+  const octokit = new Octokit({
     auth: github_token,
   });
 
