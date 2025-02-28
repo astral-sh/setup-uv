@@ -13,7 +13,7 @@ import { fetch as undiciFetch, ProxyAgent, type RequestInit } from "undici";
 export type { RestEndpointMethodTypes } from "@octokit/plugin-rest-endpoint-methods";
 
 const DEFAULTS = {
-  baseUrl: getApiBaseUrl(),
+  baseUrl: "https://api.github.com",
   userAgent: "setup-uv",
 };
 
@@ -56,7 +56,3 @@ export const Octokit: typeof Core &
 );
 
 export type Octokit = InstanceType<typeof Octokit>;
-
-function getApiBaseUrl(): string {
-  return process.env.GITHUB_API_URL || "https://api.github.com";
-}

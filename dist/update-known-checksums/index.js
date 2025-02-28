@@ -58103,7 +58103,7 @@ const plugin_paginate_rest_1 = __nccwpck_require__(3779);
 const plugin_rest_endpoint_methods_1 = __nccwpck_require__(9210);
 const undici_1 = __nccwpck_require__(6752);
 const DEFAULTS = {
-    baseUrl: getApiBaseUrl(),
+    baseUrl: "https://api.github.com",
     userAgent: "setup-uv",
 };
 function getProxyAgent() {
@@ -58132,9 +58132,6 @@ exports.Octokit = core_1.Octokit.plugin(plugin_paginate_rest_1.paginateRest, plu
         },
     };
 });
-function getApiBaseUrl() {
-    return process.env.GITHUB_API_URL || "https://api.github.com";
-}
 
 
 /***/ }),
