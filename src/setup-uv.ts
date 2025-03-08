@@ -27,7 +27,7 @@ import {
 } from "./utils/inputs";
 import * as exec from "@actions/exec";
 import fs from "node:fs";
-import { getUvVersionFromConfigFile } from "./utils/pyproject";
+import { getUvVersionFromConfigFile, getPythonVersionFromPyProject } from "./utils/pyproject";
 
 async function run(): Promise<void> {
   const platform = await getPlatform();
@@ -146,23 +146,85 @@ function setToolDir(): void {
 }
 
 async function setupPython(): Promise<void> {
-  if (pythonVersion !== "") {
-    core.exportVariable("UV_PYTHON", pythonVersion);
-    core.info(`Set UV_PYTHON to ${pythonVersion}`);
-    const options: exec.ExecOptions = {
-      silent: !core.isDebug(),
-    };
-    const execArgs = ["venv", "--python", pythonVersion];
+  const options: exec.ExecOptions = {
+    silent: !core.isDebug(),
+  };
 
-    core.info("Activating python venv...");
+  // Case (1): No Python version and no pyproject.toml file
+  if (pythonVersion === "" && pyProjectFile === "") {
+    core.info("No Python setup required.");
+    return;
+  }
+
+  // Case (2): Python version is provided and no pyproject.toml file
+  else if (pythonVersion !== "" && pyProjectFile === "") {
+    const execArgs = ["pin", "python", pythonVersion];
+    core.info(`Pinning Python version to ${pythonVersion}...`);
     await exec.exec("uv", execArgs, options);
+  }
 
-    let venvBinPath = ".venv/bin";
-    if (process.platform === "win32") {
-      venvBinPath = ".venv/Scripts";
+  // Case (3): No Python version and pyproject.toml file
+  else if (pythonVersion === "" && pyProjectFile !== "") {
+    const extractedPythonVersion = getPythonVersionFromPyProject(pyProjectFile);
+
+    if (!extractedPythonVersion){
+      core.warning(
+        `Could not find python version in pyproject.toml. Won't setup python.`,
+      );
+      return;
     }
-    core.addPath(path.resolve(venvBinPath));
-    core.exportVariable("VIRTUAL_ENV", path.resolve(".venv"));
+
+    const execArgs = ["pin", "python", extractedPythonVersion, "--project", pyProjectFile];
+    core.info(`Pinning Python version to ${extractedPythonVersion}...`);
+    await exec.exec("uv", execArgs, options);
+  }
+
+  // Case (4): Pin python version using uv pin if python version is provided and pyproject.toml file is present
+  if (pythonVersion !== "" && pyProjectFile !== "") {
+    const execArgs = ["pin", "python", pythonVersion, "--project", pyProjectFile];
+    core.info(`Pinning Python version to ${pythonVersion}...`);
+    await exec.exec("uv", execArgs, options);
+  }
+
+  // Extract the pinned python version
+  let pinnedPythonVersion = getPinnedPythonVersion();
+  if (!pinnedPythonVersion) {
+    core.setFailed("Failed to determine pinned Python version after uv pin.");
+    return;
+  }
+
+  // Setup and activate venv
+  // Set UV_PYHTON to the pinned python version
+  core.exportVariable("UV_PYTHON", pinnedPythonVersion);
+  core.info(`Setting UV_PYTHON to ${pinnedPythonVersion}`);
+
+  core.info("Activating Python venv...");
+  const execArgs = ["venv"];
+  await exec.exec("uv", execArgs, options);
+
+  let venvBinPath = ".venv/bin";
+  if (process.platform === "win32") {
+    venvBinPath = ".venv/Scripts";
+  }
+  core.addPath(path.resolve(venvBinPath));
+  core.exportVariable("VIRTUAL_ENV", path.resolve(".venv"));
+}
+
+function getPinnedPythonVersion(): string | undefined {
+  const pythonVersionFile = ".python-version";
+
+  if (!fs.existsSync(pythonVersionFile)) {
+    core.warning(`No .python-version file found after uv pin.`);
+    return undefined;
+  }
+
+  try {
+    const version = fs.readFileSync(pythonVersionFile, "utf-8").trim();
+    core.info(`Detected pinned Python version from .python-version: ${version}`);
+    return version;
+  } catch (error) {
+    core.warning(`Failed to read .python-version: ${error}`);
+    return undefined;
   }
 }
 
