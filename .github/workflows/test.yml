@@ -218,6 +218,5 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install latest version
         uses: ./
-      - run: apk add python3
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
