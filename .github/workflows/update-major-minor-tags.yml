@@ -1,7 +1,6 @@
 ---
 name: Update Major Minor Tags
 
-# yamllint disable-line rule:truthy
 on:
   push:
     branches-ignore:
@@ -15,5 +14,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Run Update semver
-        uses: haya14busa/action-update-semver@v1.2.1
+      - name: Update Major Minor Tags
+        run: |
+          set -x
+
+          cd "${GITHUB_WORKSPACE}" || exit
+
+          # Set up variables.
+          TAG="${GITHUB_REF#refs/tags/}" # v1.2.3
+          MINOR="${TAG%.*}"              # v1.2
+          MAJOR="${MINOR%.*}"            # v1
+
+          if [ "${GITHUB_REF}" = "${TAG}" ]; then
+            echo "This workflow is not triggered by tag push: GITHUB_REF=${GITHUB_REF}"
+            exit 1
+          fi
+
+          MESSAGE="Release ${TAG}"
+
+          # Set up Git.
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+
+          # Update MAJOR/MINOR tag
+          git tag -fa "${MAJOR}" -m "${MESSAGE}"
+          git tag -fa "${MINOR}" -m "${MESSAGE}"
+
+          # Push
+          git push --force origin "${MINOR}"
+          git push --force origin "${MAJOR}"
