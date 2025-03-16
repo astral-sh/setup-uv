@@ -16,6 +16,7 @@ import {
 import {
   cacheLocalPath,
   checkSum,
+  ignoreEmptyWorkdir,
   enableCache,
   githubToken,
   pyProjectFile,
@@ -30,6 +31,7 @@ import fs from "node:fs";
 import { getUvVersionFromConfigFile } from "./utils/pyproject";
 
 async function run(): Promise<void> {
+  detectEmptyWorkdir();
   const platform = await getPlatform();
   const arch = getArch();
 
@@ -58,6 +60,20 @@ async function run(): Promise<void> {
     process.exit(0);
   } catch (err) {
     core.setFailed((err as Error).message);
+  }
+}
+
+function detectEmptyWorkdir(): void {
+  if (fs.readdirSync(".").length === 0) {
+    if (ignoreEmptyWorkdir) {
+      core.info(
+        "Empty workdir detected. Ignoring because ignore-empty-workdir is enabled",
+      );
+    } else {
+      core.warning(
+        "Empty workdir detected. This may cause unexpected behavior. You can enable ignore-empty-workdir to mute this warning.",
+      );
+    }
   }
 }
 

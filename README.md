@@ -279,6 +279,20 @@ If you want to ignore this, set the `ignore-nothing-to-cache` input to `true`.
     ignore-nothing-to-cache: true
 ```
 
+### Ignore empty workdir
+
+By default, the action will warn if the workdir is empty, because this is usually the case when
+`actions/checkout` is configured to run after `setup-uv`, which is not supported.
+
+If you want to ignore this, set the `ignore-empty-workdir` input to `true`.
+
+```yaml
+- name: Ignore empty workdir
+  uses: astral-sh/setup-uv@v5
+  with:
+    ignore-empty-workdir: true
+```
+
 ### GitHub authentication token
 
 This action uses the GitHub API to fetch the uv release artifacts. To avoid hitting the GitHub API
@@ -446,6 +460,13 @@ and reused in later workflows.
 The reason for the warning is, that we have to way to know if this is the first run of a new
 cache key or the user accidentally misconfigured the [cache-dependency-glob](#cache-dependency-glob)
 or [cache-suffix](#enable-caching) and the cache never gets used.
+
+### Do I have to run `actions/checkout` before or after `setup-uv`?
+
+Some workflows need uv but do not need to access the repository content.
+
+But **if** you need to access the repository content, you have run `actions/checkout` before running `setup-uv`.
+Running `actions/checkout` after `setup-uv` **is not supported**.
 
 ## Acknowledgements
 

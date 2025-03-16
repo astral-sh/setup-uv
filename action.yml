@@ -45,6 +45,9 @@ inputs:
   ignore-nothing-to-cache:
     description: "Ignore when nothing is found to cache."
     default: "false"
+  ignore-empty-workdir:
+    description: "Ignore when the working directory is empty."
+    default: "false"
   tool-dir:
     description: "Custom path to set UV_TOOL_DIR to."
     required: false
