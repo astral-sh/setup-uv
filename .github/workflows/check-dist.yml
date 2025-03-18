@@ -6,11 +6,13 @@
 name: Check dist/
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
   pull_request:
-  workflow_dispatch:
+    branches:
+      - main
 
 jobs:
   check-dist:
