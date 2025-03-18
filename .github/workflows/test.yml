@@ -36,13 +36,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, macos-14]
+        os: [ubuntu-latest, macos-latest, macos-14, windows-latest]
     steps:
       - uses: actions/checkout@v4
       - name: Install latest version
         uses: ./
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
+        shell: bash
   test-specific-version:
     runs-on: ubuntu-latest
     strategy:

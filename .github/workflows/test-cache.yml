@@ -21,7 +21,7 @@ jobs:
     strategy:
       matrix:
         enable-cache: [ "true", "false", "auto" ]
-        os: ["ubuntu-latest", "selfhosted-ubuntu-arm64"]
+        os: [ "ubuntu-latest", "selfhosted-ubuntu-arm64", "windows-latest" ]
     steps:
       - uses: actions/checkout@v4
       - name: Setup with cache
@@ -31,12 +31,13 @@ jobs:
           cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-${{ matrix.os }}-${{ matrix.enable-cache }}
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
+        shell: bash
   test-restore-cache:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         enable-cache: [ "true", "false", "auto" ]
-        os: [ "ubuntu-latest", "selfhosted-ubuntu-arm64" ]
+        os: [ "ubuntu-latest", "selfhosted-ubuntu-arm64", "windows-latest" ]
     needs: test-setup-cache
     steps:
       - uses: actions/checkout@v4
@@ -54,6 +55,7 @@ jobs:
           fi
         env:
           CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
+        shell: bash
       - name: Cache was not hit
         if: ${{ matrix.enable-cache == 'false' || (matrix.enable-cache == 'auto' && matrix.os == 'selfhosted-ubuntu-arm64') }}
         run: |
@@ -62,8 +64,10 @@ jobs:
           fi
         env:
           CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
+        shell: bash
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
+        shell: bash
   test-setup-cache-requirements-txt:
     runs-on: ubuntu-latest
     steps:
