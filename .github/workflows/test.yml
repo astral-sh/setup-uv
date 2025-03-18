@@ -13,10 +13,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Actionlint
+        uses: eifinger/actionlint-action@23c85443d840cd73bbecb9cddfc933cc21649a38  # v1.9.1
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
@@ -26,7 +28,7 @@ jobs:
           npm run all
       - name: Make sure no changes from linters are detected
         run: |
-          git diff --exit-code
+          git diff --exit-code || (echo "::error::Please run 'npm run all' to fix the issues" && exit 1)
   test-default-version:
     runs-on: ${{ matrix.os }}
     strategy:
