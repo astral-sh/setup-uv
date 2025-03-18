@@ -12,6 +12,9 @@ jobs:
   update_release_draft:
     name: ✏️ Draft release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
     steps:
       - name: 🚀 Run Release Drafter
         uses: release-drafter/release-drafter@v6.1.0
