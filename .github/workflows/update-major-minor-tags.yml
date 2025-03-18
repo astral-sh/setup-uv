@@ -12,6 +12,8 @@ jobs:
   update_major_minor_tags:
     name: Make sure major and minor tags are up to date on a patch release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - name: Update Major Minor Tags
