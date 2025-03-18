@@ -440,6 +440,7 @@ jobs:
     needs:
       - test-tilde-expansion-cache-local-path
       - test-tilde-expansion-cache-dependency-glob
+    if: always()
     runs-on: selfhosted-ubuntu-arm64
     steps:
       - name: Remove cache directory
@@ -461,3 +462,35 @@ jobs:
           enable-cache: true
       - run: uv sync
         working-directory: __tests__/fixtures/old-python-constraint-project
+
+  all-tests-passed:
+    runs-on: ubuntu-latest
+    needs:
+      - lint
+      - test-default-version
+      - test-specific-version
+      - test-semver-range
+      - test-pyproject-file-version
+      - test-malformed-pyproject-file-fallback
+      - test-uv-file-version
+      - test-checksum
+      - test-with-explicit-token
+      - test-uvx
+      - test-tool-install
+      - test-tilde-expansion-tool-dirs
+      - test-python-version
+      - test-musl
+      - test-restore-cache
+      - test-restore-cache-requirements-txt
+      - test-restore-cache-dependency-glob
+      - test-restore-cache-local
+      - test-tilde-expansion-cache-local-path
+      - test-tilde-expansion-cache-dependency-glob
+      - cleanup-tilde-expansion-tests
+      - test-no-python-version
+    if: always()
+    steps:
+      - name: All tests passed
+        run: |
+          echo "All jobs passed: ${{ !contains(needs.*.result, 'failure') }}"
+          exit ${{ contains(needs.*.result, 'failure') && 1 || 0 }}
