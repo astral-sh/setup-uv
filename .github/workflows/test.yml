@@ -106,16 +106,12 @@ jobs:
         env:
           UV_VERSION: ${{ steps.setup-uv.outputs.uv-version }}
   test-checksum:
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.inputs.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        checksum:
-          ["4d9279ad5ca596b1e2d703901d508430eb07564dc4d8837de9e2fca9c90f8ecd"]
-        exclude:
-          - os: macos-latest
+        inputs:
+          - os: ubuntu-latest
             checksum: "4d9279ad5ca596b1e2d703901d508430eb07564dc4d8837de9e2fca9c90f8ecd"
-        include:
           - os: macos-latest
             checksum: "a70cbfbf3bb5c08b2f84963b4f12c94e08fbb2468ba418a3bfe1066fbe9e7218"
     steps:
@@ -124,7 +120,7 @@ jobs:
         uses: ./
         with:
           version: "0.3.2"
-          checksum: ${{ matrix.checksum }}
+          checksum: ${{ matrix.inputs.checksum }}
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
   test-with-explicit-token:
