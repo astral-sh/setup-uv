@@ -88,6 +88,17 @@ jobs:
           fi
         env:
           UV_VERSION: ${{ steps.setup-uv.outputs.uv-version }}
+  test-malformed-pyproject-file-fallback:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install using malformed pyproject.toml
+        id: setup-uv
+        uses: ./
+        with:
+          pyproject-file: "__tests__/fixtures/malformed-pyproject-toml-project/pyproject.toml"
+      - run: uv sync
+        working-directory: __tests__/fixtures/uv-project
   test-uv-file-version:
     runs-on: ubuntu-latest
     steps:
@@ -204,17 +215,6 @@ jobs:
             exit 1
           fi
         shell: bash
-  test-malformed-pyproject-file-fallback:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install using malformed pyproject.toml
-        id: setup-uv
-        uses: ./
-        with:
-          pyproject-file: "__tests__/fixtures/malformed-pyproject-toml-project/pyproject.toml"
-      - run: uv sync
-        working-directory: __tests__/fixtures/uv-project
   test-musl:
     runs-on: ubuntu-latest
     container: alpine
