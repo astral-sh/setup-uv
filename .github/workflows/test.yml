@@ -16,10 +16,12 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Actionlint
+        uses: eifinger/actionlint-action@23c85443d840cd73bbecb9cddfc933cc21649a38  # v1.9.1
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
@@ -29,18 +31,21 @@ jobs:
           npm run all
       - name: Make sure no changes from linters are detected
         run: |
-          git diff --exit-code
+          git diff --exit-code || (echo "::error::Please run 'npm run all' to fix the issues" && exit 1)
+
   test-default-version:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, macos-14]
+        os: [ubuntu-latest, macos-latest, macos-14, windows-latest]
     steps:
       - uses: actions/checkout@v4
       - name: Install latest version
         uses: ./
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
+        shell: bash
+
   test-specific-version:
     runs-on: ubuntu-latest
     strategy:
@@ -54,6 +59,7 @@ jobs:
           version: ${{ matrix.uv-version }}
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
+
   test-semver-range:
     runs-on: ubuntu-latest
     steps:
@@ -70,6 +76,7 @@ jobs:
           fi
         env:
           UV_VERSION: ${{ steps.setup-uv.outputs.uv-version }}
+
   test-pyproject-file-version:
     runs-on: ubuntu-latest
     steps:
@@ -86,6 +93,19 @@ jobs:
           fi
         env:
           UV_VERSION: ${{ steps.setup-uv.outputs.uv-version }}
+
+  test-malformed-pyproject-file-fallback:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install using malformed pyproject.toml
+        id: setup-uv
+        uses: ./
+        with:
+          pyproject-file: "__tests__/fixtures/malformed-pyproject-toml-project/pyproject.toml"
+      - run: uv sync
+        working-directory: __tests__/fixtures/uv-project
+
   test-uv-file-version:
     runs-on: ubuntu-latest
     steps:
@@ -103,17 +123,14 @@ jobs:
           fi
         env:
           UV_VERSION: ${{ steps.setup-uv.outputs.uv-version }}
+
   test-checksum:
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.inputs.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        checksum:
-          ["4d9279ad5ca596b1e2d703901d508430eb07564dc4d8837de9e2fca9c90f8ecd"]
-        exclude:
-          - os: macos-latest
+        inputs:
+          - os: ubuntu-latest
             checksum: "4d9279ad5ca596b1e2d703901d508430eb07564dc4d8837de9e2fca9c90f8ecd"
-        include:
           - os: macos-latest
             checksum: "a70cbfbf3bb5c08b2f84963b4f12c94e08fbb2468ba418a3bfe1066fbe9e7218"
     steps:
@@ -122,9 +139,10 @@ jobs:
         uses: ./
         with:
           version: "0.3.2"
-          checksum: ${{ matrix.checksum }}
+          checksum: ${{ matrix.inputs.checksum }}
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
+
   test-with-explicit-token:
     runs-on: ubuntu-latest
     steps:
@@ -135,6 +153,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
+
   test-uvx:
     runs-on: ubuntu-latest
     steps:
@@ -142,6 +161,7 @@ jobs:
       - name: Install default version
         uses: ./
       - run: uvx ruff --version
+
   test-tool-install:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -159,6 +179,7 @@ jobs:
         uses: ./
       - run: uv tool install ruff
       - run: ruff --version
+
   test-tilde-expansion-tool-dirs:
     runs-on: selfhosted-ubuntu-arm64
     steps:
@@ -178,6 +199,7 @@ jobs:
               echo "UV_TOOL_DIR does not contain /home/ubuntu/tool-dir: $UV_TOOL_DIR"
               exit 1
           fi
+
   test-python-version:
     runs-on: ubuntu-latest
     strategy:
@@ -206,17 +228,7 @@ jobs:
             exit 1
           fi
         shell: bash
-  test-malformed-pyproject-file-fallback:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install using malformed pyproject.toml
-        id: setup-uv
-        uses: ./
-        with:
-          pyproject-file: "__tests__/fixtures/malformed-pyproject-toml-project/pyproject.toml"
-      - run: uv sync
-        working-directory: __tests__/fixtures/uv-project
+
   test-musl:
     runs-on: ubuntu-latest
     container: alpine
@@ -226,3 +238,260 @@ jobs:
         uses: ./
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
+
+  test-setup-cache:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        enable-cache: [ "true", "false", "auto" ]
+        os: [ "ubuntu-latest", "selfhosted-ubuntu-arm64", "windows-latest" ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup with cache
+        uses: ./
+        with:
+          enable-cache: ${{ matrix.enable-cache }}
+          cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-${{ matrix.os }}-${{ matrix.enable-cache }}
+      - run: uv sync
+        working-directory: __tests__/fixtures/uv-project
+        shell: bash
+  test-restore-cache:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        enable-cache: [ "true", "false", "auto" ]
+        os: [ "ubuntu-latest", "selfhosted-ubuntu-arm64", "windows-latest" ]
+    needs: test-setup-cache
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore with cache
+        id: restore
+        uses: ./
+        with:
+          enable-cache: ${{ matrix.enable-cache }}
+          cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-${{ matrix.os }}-${{ matrix.enable-cache }}
+      - name: Cache was hit
+        if: ${{ matrix.enable-cache == 'true' || (matrix.enable-cache == 'auto' && matrix.os == 'ubuntu-latest') }}
+        run: |
+          if [ "$CACHE_HIT" != "true" ]; then
+            exit 1
+          fi
+        env:
+          CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
+        shell: bash
+      - name: Cache was not hit
+        if: ${{ matrix.enable-cache == 'false' || (matrix.enable-cache == 'auto' && matrix.os == 'selfhosted-ubuntu-arm64') }}
+        run: |
+          if [ "$CACHE_HIT" == "true" ]; then
+            exit 1
+          fi
+        env:
+          CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
+        shell: bash
+      - run: uv sync
+        working-directory: __tests__/fixtures/uv-project
+        shell: bash
+
+  test-setup-cache-requirements-txt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup with cache
+        uses: ./
+        with:
+          enable-cache: true
+          cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-requirements-txt
+      - run: |
+          uv venv
+          uv pip install -r requirements.txt
+        working-directory: __tests__/fixtures/requirements-txt-project
+  test-restore-cache-requirements-txt:
+    runs-on: ubuntu-latest
+    needs: test-setup-cache
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore with cache
+        id: restore
+        uses: ./
+        with:
+          enable-cache: true
+          cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-requirements-txt
+      - name: Cache was hit
+        run: |
+          if [ "$CACHE_HIT" != "true" ]; then
+            exit 1
+          fi
+        env:
+          CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
+      - run: |
+          uv venv
+          uv pip install -r requirements.txt
+        working-directory: __tests__/fixtures/requirements-txt-project
+
+  test-setup-cache-dependency-glob:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup with cache
+        uses: ./
+        with:
+          enable-cache: true
+          cache-dependency-glob: |
+            __tests__/fixtures/uv-project/uv.lock
+            **/pyproject.toml
+          cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-dependency-glob
+      - run: uv sync
+        working-directory: __tests__/fixtures/uv-project
+  test-restore-cache-dependency-glob:
+    runs-on: ubuntu-latest
+    needs: test-setup-cache-dependency-glob
+    steps:
+      - uses: actions/checkout@v4
+      - name: Change pyproject.toml
+        run: |
+          echo '[tool.uv]' >> __tests__/fixtures/uv-project/pyproject.toml
+          echo 'dev-dependencies = []' >> __tests__/fixtures/uv-project/pyproject.toml
+      - name: Restore with cache
+        id: restore
+        uses: ./
+        with:
+          enable-cache: true
+          cache-dependency-glob: |
+            __tests__/fixtures/uv-project/uv.lock
+            **/pyproject.toml
+          cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-dependency-glob
+          ignore-nothing-to-cache: true
+      - name: Cache was not hit
+        run: |
+          if [ "$CACHE_HIT" == "true" ]; then
+            exit 1
+          fi
+        env:
+          CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
+
+  test-setup-cache-local:
+    runs-on: selfhosted-ubuntu-arm64
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup with cache
+        uses: ./
+        with:
+          enable-cache: true
+          cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-local
+          cache-local-path: /tmp/uv-cache
+      - run: uv sync
+        working-directory: __tests__/fixtures/uv-project
+  test-restore-cache-local:
+    runs-on: selfhosted-ubuntu-arm64
+    needs: test-setup-cache-local
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore with cache
+        id: restore
+        uses: ./
+        with:
+          enable-cache: true
+          cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-local
+          cache-local-path: /tmp/uv-cache
+      - name: Cache was hit
+        run: |
+          if [ "$CACHE_HIT" != "true" ]; then
+            exit 1
+          fi
+        env:
+          CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
+      - run: uv sync
+        working-directory: __tests__/fixtures/uv-project
+
+  test-tilde-expansion-cache-local-path:
+    runs-on: selfhosted-ubuntu-arm64
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create cache directory
+        run: mkdir -p ~/uv-cache
+        shell: bash
+      - name: Setup with cache
+        uses: ./
+        with:
+          cache-local-path: ~/uv-cache/cache-local-path
+      - run: uv sync
+        working-directory: __tests__/fixtures/uv-project
+
+  test-tilde-expansion-cache-dependency-glob:
+    runs-on: selfhosted-ubuntu-arm64
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create cache directory
+        run: mkdir -p ~/uv-cache
+        shell: bash
+      - name: Create cache dependency glob file
+        run: touch ~/uv-cache.glob
+        shell: bash
+      - name: Setup with cache
+        uses: ./
+        with:
+          enable-cache: true
+          cache-local-path: ~/uv-cache/cache-dependency-glob
+          cache-dependency-glob: "~/uv-cache.glob"
+      - run: uv sync
+        working-directory: __tests__/fixtures/uv-project
+
+  cleanup-tilde-expansion-tests:
+    needs:
+      - test-tilde-expansion-cache-local-path
+      - test-tilde-expansion-cache-dependency-glob
+    if: always()
+    runs-on: selfhosted-ubuntu-arm64
+    steps:
+      - name: Remove cache directory
+        run: rm -rf ~/uv-cache
+        shell: bash
+      - name: Remove cache dependency glob file
+        run: rm -f ~/uv-cache.glob
+        shell: bash
+
+  test-no-python-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fake pyproject.toml at root
+        run: cp __tests__/fixtures/old-python-constraint-project/pyproject.toml pyproject.toml
+      - name: Setup with cache
+        uses: ./
+        with:
+          enable-cache: true
+      - run: uv sync
+        working-directory: __tests__/fixtures/old-python-constraint-project
+
+  all-tests-passed:
+    runs-on: ubuntu-latest
+    needs:
+      - lint
+      - test-default-version
+      - test-specific-version
+      - test-semver-range
+      - test-pyproject-file-version
+      - test-malformed-pyproject-file-fallback
+      - test-uv-file-version
+      - test-checksum
+      - test-with-explicit-token
+      - test-uvx
+      - test-tool-install
+      - test-tilde-expansion-tool-dirs
+      - test-python-version
+      - test-musl
+      - test-restore-cache
+      - test-restore-cache-requirements-txt
+      - test-restore-cache-dependency-glob
+      - test-restore-cache-local
+      - test-tilde-expansion-cache-local-path
+      - test-tilde-expansion-cache-dependency-glob
+      - cleanup-tilde-expansion-tests
+      - test-no-python-version
+    if: always()
+    steps:
+      - name: All tests passed
+        run: |
+          echo "All jobs passed: ${{ !contains(needs.*.result, 'failure') }}"
+          # shellcheck disable=SC2242
+          exit ${{ contains(needs.*.result, 'failure') && 1 || 0 }}

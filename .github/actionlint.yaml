@@ -1,0 +1,9 @@
+self-hosted-runner:
+  # Custom labels of self-hosted or large GitHub hosted runners
+  # so that actionlint knows that they are not a typo
+  labels:
+    - selfhosted-ubuntu-arm64
+# Configuration variables in array of strings defined in your repository or
+# organization. `null` means disabling configuration variables check.
+# Empty array means no configuration variable is allowed.
+config-variables: null
