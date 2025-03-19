@@ -448,11 +448,11 @@ because they try to upload with the same cache key.
 You might see errors like
 `Failed to save: Failed to CreateCacheEntry: Received non-retryable error: Failed request: (409) Conflict: cache entry with the same key, version, and scope already exists`
 
-### Why do I see warnings like `Cache not found for keys`
+### Why do I see warnings like `No GitHub Actions cache found for key`
 
 When a workflow runs for the first time on a branch and has a new cache key, because the
 [cache-dependency-glob](#cache-dependency-glob) found changed files (changed dependencies),
-the cache will not be found and the warning `Cache not found for keys` will be printed.
+the cache will not be found and the warning `No GitHub Actions cache found for key` will be printed.
 
 While this might be irritating at first, it is expected behaviour and the cache will be created
 and reused in later workflows.
