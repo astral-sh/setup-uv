@@ -41,10 +41,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install latest version
+        id: setup-uv
         uses: ./
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
         shell: bash
+      - name: Check uv-path is set
+        run: ${{ steps.setup-uv.outputs.uv-path }} --version
+      - name: Check uvx-path is set
+        run: ${{ steps.setup-uv.outputs.uvx-path }} --version
 
   test-specific-version:
     runs-on: ubuntu-latest

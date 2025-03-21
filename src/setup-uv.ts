@@ -44,7 +44,7 @@ async function run(): Promise<void> {
     }
     const setupResult = await setupUv(platform, arch, checkSum, githubToken);
 
-    addUvToPath(setupResult.uvDir);
+    addUvToPathAndOutput(setupResult.uvDir);
     addToolBinToPath();
     setToolDir();
     await setupPython();
@@ -129,7 +129,9 @@ async function determineVersion(): Promise<string> {
   return await resolveVersion(versionFromConfigFile || "latest", githubToken);
 }
 
-function addUvToPath(cachedPath: string): void {
+function addUvToPathAndOutput(cachedPath: string): void {
+  core.setOutput("uv-path", `${cachedPath}${path.sep}uv`);
+  core.setOutput("uvx-path", `${cachedPath}${path.sep}uvx`);
   core.addPath(cachedPath);
   core.info(`Added ${cachedPath} to the path`);
 }

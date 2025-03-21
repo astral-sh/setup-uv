@@ -57,6 +57,10 @@ inputs:
 outputs:
   uv-version:
     description: "The installed uv version. Useful when using latest."
+  uv-path:
+    description: "The path to the installed uv binary."
+  uvx-path:
+    description: "The path to the installed uvx binary."
   cache-hit:
     description: "A boolean value to indicate a cache entry was found"
 runs:
