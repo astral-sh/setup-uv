@@ -191,6 +191,8 @@ changes. If you use relative paths, they are relative to the repository root.
 
 > [!NOTE]
 >
+> You can look up supported patterns [here]((https://github.com/actions/toolkit/tree/main/packages/glob#patterns))
+>
 > The default is
 > ```yaml
 > cache-dependency-glob: |
