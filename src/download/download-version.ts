@@ -1,6 +1,7 @@
 import * as core from "@actions/core";
 import * as tc from "@actions/tool-cache";
 import * as path from "node:path";
+import * as pep440 from "@renovatebot/pep440";
 import { promises as fs } from "node:fs";
 import { OWNER, REPO, TOOL_CACHE_NAME } from "../utils/constants";
 import type { Architecture, Platform } from "../utils/platforms";
@@ -85,8 +86,8 @@ export async function resolveVersion(
   }
   const availableVersions = await getAvailableVersions(githubToken);
   core.debug(`Available versions: ${availableVersions}`);
-  const resolvedVersion = tc.evaluateVersions(availableVersions, version);
-  if (resolvedVersion === "") {
+  const resolvedVersion = maxSatisfying(availableVersions, version);
+  if (resolvedVersion === undefined) {
     throw new Error(`No version found for ${version}`);
   }
   return resolvedVersion;
@@ -153,4 +154,23 @@ async function getLatestRelease(octokit: InstanceType<typeof Octokit>) {
     repo: REPO,
   });
   return latestRelease;
+}
+
+function maxSatisfying(
+  versions: string[],
+  version: string,
+): string | undefined {
+  const maxSemver = tc.evaluateVersions(versions, version);
+  if (maxSemver !== "") {
+    core.debug(`Found a version that satisfies the semver range: ${maxSemver}`);
+    return maxSemver;
+  }
+  const maxPep440 = pep440.maxSatisfying(versions, version);
+  if (maxPep440 !== null) {
+    core.debug(
+      `Found a version that satisfies the pep440 specifier: ${maxPep440}`,
+    );
+    return maxPep440;
+  }
+  return undefined;
 }

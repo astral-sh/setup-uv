@@ -82,6 +82,23 @@ jobs:
         env:
           UV_VERSION: ${{ steps.setup-uv.outputs.uv-version }}
 
+  test-pep440-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install version 0.4.30
+        id: setup-uv
+        uses: ./
+        with:
+          version: ">=0.4.25,<0.5"
+      - name: Correct version gets installed
+        run: |
+          if [ "$UV_VERSION" != "0.4.30" ]; then
+            exit 1
+          fi
+        env:
+          UV_VERSION: ${{ steps.setup-uv.outputs.uv-version }}
+
   test-pyproject-file-version:
     runs-on: ubuntu-latest
     steps:
@@ -475,6 +492,7 @@ jobs:
       - test-default-version
       - test-specific-version
       - test-semver-range
+      - test-pep440-version
       - test-pyproject-file-version
       - test-malformed-pyproject-file-fallback
       - test-uv-file-version
