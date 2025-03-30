@@ -66,6 +66,7 @@ For an example workflow, see
 ### Install a version by supplying a semver range
 
 You can specify a [semver range](https://github.com/npm/node-semver?tab=readme-ov-file#ranges)
+or [pep440 identifier](https://peps.python.org/pep-0440/#version-specifiers)
 to install the latest version that satisfies the range.
 
 ```yaml
@@ -80,6 +81,13 @@ to install the latest version that satisfies the range.
   uses: astral-sh/setup-uv@v5
   with:
     version: "0.4.x"
+```
+
+```yaml
+- name: Install a pep440-specifier-satisfying version of uv
+  uses: astral-sh/setup-uv@v5
+  with:
+    version: ">=0.4.25,<0.5"
 ```
 
 ### Install a required-version
