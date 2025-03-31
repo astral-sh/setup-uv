@@ -14,7 +14,7 @@ Set up your GitHub Actions workflow with a specific version of [uv](https://docs
   - [Install a required-version or latest (default)](#install-a-required-version-or-latest-default)
   - [Install the latest version](#install-the-latest-version)
   - [Install a specific version](#install-a-specific-version)
-  - [Install a version by supplying a semver range or pep440 identifier](#install-a-version-by-supplying-a-semver-range-or-pep440-identifier)
+  - [Install a version by supplying a semver range or pep440 specifier](#install-a-version-by-supplying-a-semver-range-or-pep440-specifier)
   - [Install a required-version](#install-a-required-version)
   - [Python version](#python-version)
   - [Validate checksum](#validate-checksum)
@@ -63,10 +63,10 @@ For an example workflow, see
     version: "0.4.4"
 ```
 
-### Install a version by supplying a semver range or pep440 identifier
+### Install a version by supplying a semver range or pep440 specifier
 
 You can specify a [semver range](https://github.com/npm/node-semver?tab=readme-ov-file#ranges)
-or [pep440 identifier](https://peps.python.org/pep-0440/#version-specifiers)
+or [pep440 specifier](https://peps.python.org/pep-0440/#version-specifiers)
 to install the latest version that satisfies the range.
 
 ```yaml
