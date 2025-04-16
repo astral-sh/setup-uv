@@ -44,8 +44,8 @@ async function run(): Promise<void> {
     }
     const setupResult = await setupUv(platform, arch, checkSum, githubToken);
 
-    addUvToPathAndOutput(setupResult.uvDir);
     addToolBinToPath();
+    addUvToPathAndOutput(setupResult.uvDir);
     setToolDir();
     await setupPython();
     addMatchers();

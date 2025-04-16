@@ -66,7 +66,10 @@ jobs:
         working-directory: __tests__/fixtures/uv-project
 
   test-semver-range:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, selfhosted-ubuntu-arm64 ]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - name: Install version 0.3
@@ -75,6 +78,12 @@ jobs:
         with:
           version: "0.3"
       - name: Correct version gets installed
+        run: |
+          if [ "$(uv --version)" != "uv 0.3.5" ]; then
+            echo "Wrong uv version: $(uv --version)"
+            exit 1
+          fi
+      - name: Output has correct version
         run: |
           if [ "$UV_VERSION" != "0.3.5" ]; then
             exit 1
@@ -93,11 +102,10 @@ jobs:
           version: ">=0.4.25,<0.5"
       - name: Correct version gets installed
         run: |
-          if [ "$UV_VERSION" != "0.4.30" ]; then
+          if [ "$(uv --version)" != "uv 0.4.30" ]; then
+            echo "Wrong uv version: $(uv --version)"
             exit 1
           fi
-        env:
-          UV_VERSION: ${{ steps.setup-uv.outputs.uv-version }}
 
   test-pyproject-file-version:
     runs-on: ubuntu-latest
@@ -110,11 +118,10 @@ jobs:
           pyproject-file: "__tests__/fixtures/pyproject-toml-project/pyproject.toml"
       - name: Correct version gets installed
         run: |
-          if [ "$UV_VERSION" != "0.5.14" ]; then
+          if [ "$(uv --version)" != "uv 0.5.14" ]; then
+            echo "Wrong uv version: $(uv --version)"
             exit 1
           fi
-        env:
-          UV_VERSION: ${{ steps.setup-uv.outputs.uv-version }}
 
   test-malformed-pyproject-file-fallback:
     runs-on: ubuntu-latest
@@ -140,11 +147,10 @@ jobs:
           uv-file: "__tests__/fixtures/uv-toml-project/uv.toml"
       - name: Correct version gets installed
         run: |
-          if [ "$UV_VERSION" != "0.5.15" ]; then
+          if [ "$(uv --version)" != "uv 0.5.15" ]; then
+            echo "Wrong uv version: $(uv --version)"
             exit 1
           fi
-        env:
-          UV_VERSION: ${{ steps.setup-uv.outputs.uv-version }}
 
   test-checksum:
     runs-on: ${{ matrix.inputs.os }}
