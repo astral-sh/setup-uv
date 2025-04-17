@@ -167,13 +167,10 @@ async function setupPython(): Promise<void> {
   if (pythonVersion !== "") {
     core.exportVariable("UV_PYTHON", pythonVersion);
     core.info(`Set UV_PYTHON to ${pythonVersion}`);
-    const options: exec.ExecOptions = {
-      silent: !core.isDebug(),
-    };
     const execArgs = ["venv", "--python", pythonVersion];
 
     core.info("Activating python venv...");
-    await exec.exec("uv", execArgs, options);
+    await exec.exec("uv", execArgs);
 
     let venvBinPath = ".venv/bin";
     if (process.platform === "win32") {
