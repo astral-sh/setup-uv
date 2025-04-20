@@ -27,7 +27,7 @@ export async function updateChecksums(
 }
 
 function getKey(downloadUrl: string): string | undefined {
-  // https://github.com/astral-sh/uv/releases/download/0.3.2/uv-aarch64-apple-darwin.tar.gz.sha256
+  // https://github.com/tekowalsky/uv/releases/download/0.3.2/uv-aarch64-apple-darwin.tar.gz.sha256
   const parts = downloadUrl.split("/");
   const fileName = parts[parts.length - 1];
   if (fileName.startsWith("source")) {

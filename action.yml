@@ -1,6 +1,6 @@
-name: "astral-sh/setup-uv"
+name: "tekowalsky/setup-uv"
 description:
-  "Set up your GitHub Actions workflow with a specific version of uv."
+  "Set up your GitHub Actions workflow with a specific version of uv. (forked from astral-sh/setup-uv)"
 author: "astral-sh"
 inputs:
   version:

@@ -7,6 +7,7 @@ Set up your GitHub Actions workflow with a specific version of [uv](https://docs
 - Register problem matchers for error output
 - (Optional) Persist the uv's cache in the GitHub Actions Cache
 - (Optional) Verify the checksum of the downloaded uv executable
+- This version uses my own repositories to test.
 
 ## Contents
 
@@ -36,7 +37,7 @@ Set up your GitHub Actions workflow with a specific version of [uv](https://docs
 
 ```yaml
 - name: Install the latest version of uv
-  uses: astral-sh/setup-uv@v5
+  uses: tekowalsky/setup-uv@v5
 ```
 
 If you do not specify a version, this action will look for a [required-version](https://docs.astral.sh/uv/reference/settings/#required-version)
@@ -49,7 +50,7 @@ For an example workflow, see
 
 ```yaml
 - name: Install the latest version of uv
-  uses: astral-sh/setup-uv@v5
+  uses: tekowalsky/setup-uv@v5
   with:
     version: "latest"
 ```
@@ -58,7 +59,7 @@ For an example workflow, see
 
 ```yaml
 - name: Install a specific version of uv
-  uses: astral-sh/setup-uv@v5
+  uses: tekowalsky/setup-uv@v5
   with:
     version: "0.4.4"
 ```
@@ -71,21 +72,21 @@ to install the latest version that satisfies the range.
 
 ```yaml
 - name: Install a semver range of uv
-  uses: astral-sh/setup-uv@v5
+  uses: tekowalsky/setup-uv@v5
   with:
     version: ">=0.4.0"
 ```
 
 ```yaml
 - name: Pinning a minor version of uv
-  uses: astral-sh/setup-uv@v5
+  uses: tekowalsky/setup-uv@v5
   with:
     version: "0.4.x"
 ```
 
 ```yaml
 - name: Install a pep440-specifier-satisfying version of uv
-  uses: astral-sh/setup-uv@v5
+  uses: tekowalsky/setup-uv@v5
   with:
     version: ">=0.4.25,<0.5"
 ```
@@ -97,14 +98,14 @@ in either a `uv.toml` or `pyproject.toml` file:
 
 ```yaml
 - name: Install required-version defined in uv.toml
-  uses: astral-sh/setup-uv@v5
+  uses: tekowalsky/setup-uv@v5
   with:
     uv-file: "path/to/uv.toml"
 ```
 
 ```yaml
 - name: Install required-version defined in pyproject.toml
-  uses: astral-sh/setup-uv@v5
+  uses: tekowalsky/setup-uv@v5
   with:
     pyproject-file: "path/to/pyproject.toml"
 ```
@@ -121,7 +122,7 @@ This will override any python version specifications in `pyproject.toml` and `.p
 
 ```yaml
 - name: Install the latest version of uv and set the python version to 3.13t
-  uses: astral-sh/setup-uv@v5
+  uses: tekowalsky/setup-uv@v5
   with:
     python-version: 3.13t
 - run: uv pip install --python=3.13t pip
@@ -139,7 +140,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install the latest version of uv and set the python version
-        uses: astral-sh/setup-uv@v5
+        uses: tekowalsky/setup-uv@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Test with python ${{ matrix.python-version }}
@@ -150,11 +151,11 @@ jobs:
 
 You can specify a checksum to validate the downloaded executable. Checksums up to the default version
 are automatically verified by this action. The sha256 hashes can be found on the
-[releases page](https://github.com/astral-sh/uv/releases) of the uv repo.
+[releases page](https://github.com/tekowalsky/uv/releases) of the uv repo.
 
 ```yaml
 - name: Install a specific version and validate the checksum
-  uses: astral-sh/setup-uv@v5
+  uses: tekowalsky/setup-uv@v5
   with:
     version: "0.3.1"
     checksum: "e11b01402ab645392c7ad6044db63d37e4fd1e745e015306993b07695ea5f9f8"
@@ -176,7 +177,7 @@ You can optionally define a custom cache key suffix.
 ```yaml
 - name: Enable caching and define a custom cache key suffix
   id: setup-uv
-  uses: astral-sh/setup-uv@v5
+  uses: tekowalsky/setup-uv@v5
   with:
     enable-cache: true
     cache-suffix: "optional-suffix"
@@ -210,7 +211,7 @@ changes. If you use relative paths, they are relative to the repository root.
 
 ```yaml
 - name: Define a cache dependency glob
-  uses: astral-sh/setup-uv@v5
+  uses: tekowalsky/setup-uv@v5
   with:
     enable-cache: true
     cache-dependency-glob: "**/pyproject.toml"
@@ -218,7 +219,7 @@ changes. If you use relative paths, they are relative to the repository root.
 
 ```yaml
 - name: Define a list of cache dependency globs
-  uses: astral-sh/setup-uv@v5
+  uses: tekowalsky/setup-uv@v5
   with:
     enable-cache: true
     cache-dependency-glob: |
@@ -228,7 +229,7 @@ changes. If you use relative paths, they are relative to the repository root.
 
 ```yaml
 - name: Define an absolute cache dependency glob
-  uses: astral-sh/setup-uv@v5
+  uses: tekowalsky/setup-uv@v5
   with:
     enable-cache: true
     cache-dependency-glob: "/tmp/my-folder/requirements*.txt"
@@ -236,7 +237,7 @@ changes. If you use relative paths, they are relative to the repository root.
 
 ```yaml
 - name: Never invalidate the cache
-  uses: astral-sh/setup-uv@v5
+  uses: tekowalsky/setup-uv@v5
   with:
     enable-cache: true
     cache-dependency-glob: ""
@@ -251,7 +252,7 @@ It defaults to `setup-uv-cache` in the `TMP` dir, `D:\a\_temp\uv-tool-dir` on Wi
 
 ```yaml
 - name: Define a custom uv cache path
-  uses: astral-sh/setup-uv@v5
+  uses: tekowalsky/setup-uv@v5
   with:
     cache-local-path: "/path/to/cache"
 ```
@@ -270,7 +271,7 @@ input.
 
 ```yaml
 - name: Don't prune the cache before saving it
-  uses: astral-sh/setup-uv@v5
+  uses: tekowalsky/setup-uv@v5
   with:
     enable-cache: true
     prune-cache: false
@@ -283,7 +284,7 @@ If you want to ignore this, set the `ignore-nothing-to-cache` input to `true`.
 
 ```yaml
 - name: Ignore nothing to cache
-  uses: astral-sh/setup-uv@v5
+  uses: tekowalsky/setup-uv@v5
   with:
     enable-cache: true
     ignore-nothing-to-cache: true
@@ -298,7 +299,7 @@ If you want to ignore this, set the `ignore-empty-workdir` input to `true`.
 
 ```yaml
 - name: Ignore empty workdir
-  uses: astral-sh/setup-uv@v5
+  uses: tekowalsky/setup-uv@v5
   with:
     ignore-empty-workdir: true
 ```
@@ -315,7 +316,7 @@ are not sufficient, you can provide a custom GitHub token with the necessary per
 
 ```yaml
 - name: Install the latest version of uv with a custom GitHub token
-  uses: astral-sh/setup-uv@v5
+  uses: tekowalsky/setup-uv@v5
   with:
     github-token: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
 ```
@@ -333,7 +334,7 @@ input:
 
 ```yaml
 - name: Install the latest version of uv with a custom tool dir
-  uses: astral-sh/setup-uv@v5
+  uses: tekowalsky/setup-uv@v5
   with:
     tool-dir: "/path/to/tool/dir"
 ```
@@ -352,7 +353,7 @@ If you want to change this behaviour (especially on self-hosted runners) you can
 
 ```yaml
 - name: Install the latest version of uv with a custom tool bin dir
-  uses: astral-sh/setup-uv@v5
+  uses: tekowalsky/setup-uv@v5
   with:
     tool-bin-dir: "/path/to/tool-bin/dir"
 ```
@@ -368,7 +369,7 @@ This action supports expanding the `~` character to the user's home directory fo
 
 ```yaml
 - name: Expand the tilde character
-  uses: astral-sh/setup-uv@v5
+  uses: tekowalsky/setup-uv@v5
   with:
     cache-local-path: "~/path/to/cache"
     tool-dir: "~/path/to/tool/dir"
@@ -379,7 +380,7 @@ This action supports expanding the `~` character to the user's home directory fo
 ## How it works
 
 This action downloads uv from the uv repo's official
-[GitHub Releases](https://github.com/astral-sh/uv) and uses the
+[GitHub Releases](https://github.com/tekowalsky/uv) and uses the
 [GitHub Actions Toolkit](https://github.com/actions/toolkit) to cache it as a tool to speed up
 consecutive runs on self-hosted runners.
 
@@ -401,7 +402,7 @@ For example:
 - name: Checkout the repository
   uses: actions/checkout@main
 - name: Install the latest version of uv
-  uses: astral-sh/setup-uv@v5
+  uses: tekowalsky/setup-uv@v5
   with:
     enable-cache: true
 - name: Test
@@ -413,7 +414,7 @@ To install a specific version of Python, use
 
 ```yaml
 - name: Install the latest version of uv
-  uses: astral-sh/setup-uv@v5
+  uses: tekowalsky/setup-uv@v5
   with:
     enable-cache: true
 - name: Install Python 3.12
@@ -432,7 +433,7 @@ output:
   uses: actions/checkout@main
 - name: Install the default version of uv
   id: setup-uv
-  uses: astral-sh/setup-uv@v5
+  uses: tekowalsky/setup-uv@v5
 - name: Print the installed version
   run: echo "Installed uv version is ${{ steps.setup-uv.outputs.uv-version }}"
 ```
@@ -491,6 +492,6 @@ MIT
 
 <div align="center">
   <a target="_blank" href="https://astral.sh" style="background:none">
-    <img src="https://raw.githubusercontent.com/astral-sh/uv/main/assets/svg/Astral.svg" alt="Made by Astral">
+    <img src="https://raw.githubusercontent.com/tekowalsky/uv/main/assets/svg/Astral.svg" alt="Made by Astral">
   </a>
 </div>
