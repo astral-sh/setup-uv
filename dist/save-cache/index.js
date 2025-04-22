@@ -89053,10 +89053,16 @@ function getCacheLocalPath() {
     if (cacheLocalPathInput !== "") {
         return expandTilde(cacheLocalPathInput);
     }
-    if (process.env.RUNNER_TEMP !== undefined) {
-        return `${process.env.RUNNER_TEMP}${node_path_1.default.sep}setup-uv-cache`;
+    if (process.env.RUNNER_ENVIRONMENT === "github-hosted") {
+        if (process.env.RUNNER_TEMP !== undefined) {
+            return `${process.env.RUNNER_TEMP}${node_path_1.default.sep}setup-uv-cache`;
+        }
+        throw Error("Could not determine UV_CACHE_DIR. Please make sure RUNNER_TEMP is set or provide the cache-local-path input");
     }
-    throw Error("Could not determine UV_CACHE_DIR. Please make sure RUNNER_TEMP is set or provide the cache-local-path input");
+    if (process.platform === "win32") {
+        return `${process.env.APPDATA}${node_path_1.default.sep}uv${node_path_1.default.sep}cache`;
+    }
+    return `${process.env.HOME}${node_path_1.default.sep}.cache${node_path_1.default.sep}uv`;
 }
 function expandTilde(input) {
     if (input.startsWith("~")) {
