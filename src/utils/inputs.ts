@@ -64,12 +64,18 @@ function getCacheLocalPath(): string {
   if (cacheLocalPathInput !== "") {
     return expandTilde(cacheLocalPathInput);
   }
-  if (process.env.RUNNER_TEMP !== undefined) {
-    return `${process.env.RUNNER_TEMP}${path.sep}setup-uv-cache`;
+  if (process.env.RUNNER_ENVIRONMENT === "github-hosted") {
+    if (process.env.RUNNER_TEMP !== undefined) {
+      return `${process.env.RUNNER_TEMP}${path.sep}setup-uv-cache`;
+    }
+    throw Error(
+      "Could not determine UV_CACHE_DIR. Please make sure RUNNER_TEMP is set or provide the cache-local-path input",
+    );
   }
-  throw Error(
-    "Could not determine UV_CACHE_DIR. Please make sure RUNNER_TEMP is set or provide the cache-local-path input",
-  );
+  if (process.platform === "win32") {
+    return `${process.env.APPDATA}${path.sep}uv${path.sep}cache`;
+  }
+  return `${process.env.HOME}${path.sep}.cache${path.sep}uv`;
 }
 
 function expandTilde(input: string): string {

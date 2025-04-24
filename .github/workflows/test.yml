@@ -408,6 +408,30 @@ jobs:
         env:
           CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
 
+  test-cache-local:
+    strategy:
+      matrix:
+        inputs:
+          - os: ubuntu-latest
+            expected-cache-dir: "/home/runner/work/_temp/setup-uv-cache"
+          - os: windows-latest
+            expected-cache-dir: "D:\\a\\_temp\\setup-uv-cache"
+          - os: selfhosted-ubuntu-arm64
+            expected-cache-dir: "/home/ubuntu/.cache/uv"
+    runs-on: ${{ matrix.inputs.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup with cache
+        uses: ./
+        with:
+          cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-cache-local
+      - run: |
+          if [ "$UV_CACHE_DIR" != "${{ matrix.inputs.expected-cache-dir }}" ]; then
+            echo "UV_CACHE_DIR is not set to the expected value: $UV_CACHE_DIR"
+            exit 1
+          fi
+        shell: bash
+
   test-setup-cache-local:
     runs-on: selfhosted-ubuntu-arm64
     steps:
@@ -521,6 +545,7 @@ jobs:
       - test-python-version
       - test-activate-environment
       - test-musl
+      - test-cache-local
       - test-restore-cache
       - test-restore-cache-requirements-txt
       - test-restore-cache-dependency-glob
