@@ -5,9 +5,9 @@ import * as toml from "smol-toml";
 export function getUvVersionFromConfigFile(
   filePath: string,
 ): string | undefined {
-  core.debug(`Trying to find required-version for uv in: ${filePath}`);
+  core.info(`Trying to find required-version for uv in: ${filePath}`);
   if (!fs.existsSync(filePath)) {
-    core.warning(`Could not find file: ${filePath}`);
+    core.info(`Could not find file: ${filePath}`);
     return undefined;
   }
   let requiredVersion: string | undefined;

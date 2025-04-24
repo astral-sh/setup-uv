@@ -5,6 +5,7 @@ import {
   cacheLocalPath,
   cacheSuffix,
   pythonVersion as pythonVersionInput,
+  workingDirectory,
 } from "../utils/inputs";
 import { getArch, getPlatform } from "../utils/platforms";
 import { hashFiles } from "../hash/hash-files";
@@ -73,7 +74,7 @@ async function getPythonVersion(): Promise<string> {
   };
 
   try {
-    const execArgs = ["python", "find"];
+    const execArgs = ["python", "find", "--directory", workingDirectory];
     await exec.exec("uv", execArgs, options);
     const pythonPath = output.trim();
 

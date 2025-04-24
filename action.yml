@@ -6,15 +6,15 @@ inputs:
   version:
     description: "The version of uv to install e.g., `0.5.0` Defaults to the version in pyproject.toml or 'latest'."
     default: ""
-  pyproject-file:
-    description: "Path to a pyproject.toml"
-    default: ""
-  uv-file:
-    description: "Path to a uv.toml"
-    default: ""
   python-version:
     description: "The version of Python to set UV_PYTHON to"
     required: false
+  activate-environment:
+    description: "Use uv venv to activate a venv ready to be used by later steps. "
+    default: "false"
+  working-directory:
+    description: "The directory to execute all commands in and look for files such as pyproject.toml"
+    default: ${{ github.workspace }}
   checksum:
     description: "The checksum of the uv version to install"
     required: false
