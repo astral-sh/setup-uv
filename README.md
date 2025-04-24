@@ -15,8 +15,9 @@ Set up your GitHub Actions workflow with a specific version of [uv](https://docs
   - [Install the latest version](#install-the-latest-version)
   - [Install a specific version](#install-a-specific-version)
   - [Install a version by supplying a semver range or pep440 specifier](#install-a-version-by-supplying-a-semver-range-or-pep440-specifier)
-  - [Install a required-version](#install-a-required-version)
   - [Python version](#python-version)
+  - [Activate environment](#activate-environment)
+  - [Working directory](#working-directory)
   - [Validate checksum](#validate-checksum)
   - [Enable Caching](#enable-caching)
     - [Cache dependency glob](#cache-dependency-glob)
@@ -90,32 +91,9 @@ to install the latest version that satisfies the range.
     version: ">=0.4.25,<0.5"
 ```
 
-### Install a required-version
-
-You can specify a [required-version](https://docs.astral.sh/uv/reference/settings/#required-version)
-in either a `uv.toml` or `pyproject.toml` file:
-
-```yaml
-- name: Install required-version defined in uv.toml
-  uses: astral-sh/setup-uv@v5
-  with:
-    uv-file: "path/to/uv.toml"
-```
-
-```yaml
-- name: Install required-version defined in pyproject.toml
-  uses: astral-sh/setup-uv@v5
-  with:
-    pyproject-file: "path/to/pyproject.toml"
-```
-
 ### Python version
 
-You can use the input `python-version` to
-
-- set the environment variable `UV_PYTHON` for the rest of your workflow
-- create a new virtual environment with the specified python version
-- activate the virtual environment for the rest of your workflow
+You can use the input `python-version` to set the environment variable `UV_PYTHON` for the rest of your workflow
 
 This will override any python version specifications in `pyproject.toml` and `.python-version`
 
@@ -144,6 +122,34 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Test with python ${{ matrix.python-version }}
         run: uv run --frozen pytest
+```
+
+### Activate environment
+
+You can set `activate-environment` to `true` to automatically activate a venv.
+This allows directly using it in later steps:
+
+```yaml
+- name: Install the latest version of uv and activate the environment
+  uses: astral-sh/setup-uv@v5
+  with:
+    activate-environment: true
+- run: uv pip install pip
+```
+
+### Working directory
+
+You can set the working directory with the `working-directory` input.
+This controls where we look for `pyproject.toml`, `uv.toml` and `.python-version` files
+which are used to determine the version of uv and python to install.
+
+It also controls where [the venv gets created](#activate-environment).
+
+```yaml
+- name: Install uv based on the config files in the working-directory
+  uses: astral-sh/setup-uv@v5
+  with:
+    working-directory: my/subproject/dir
 ```
 
 ### Validate checksum
@@ -383,7 +389,7 @@ This action downloads uv from the uv repo's official
 [GitHub Actions Toolkit](https://github.com/actions/toolkit) to cache it as a tool to speed up
 consecutive runs on self-hosted runners.
 
-The installed version of uv is then added to the runner PATH, enabling subsequent steps to invoke it
+The installed version of uv is then added to the runner PATH, enabling later steps to invoke it
 by name (`uv`).
 
 ## FAQ

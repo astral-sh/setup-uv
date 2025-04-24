@@ -115,7 +115,7 @@ jobs:
         id: setup-uv
         uses: ./
         with:
-          pyproject-file: "__tests__/fixtures/pyproject-toml-project/pyproject.toml"
+          working-directory: "__tests__/fixtures/pyproject-toml-project"
       - name: Correct version gets installed
         run: |
           if [ "$(uv --version)" != "uv 0.5.14" ]; then
@@ -131,9 +131,8 @@ jobs:
         id: setup-uv
         uses: ./
         with:
-          pyproject-file: "__tests__/fixtures/malformed-pyproject-toml-project/pyproject.toml"
-      - run: uv sync
-        working-directory: __tests__/fixtures/uv-project
+          working-directory: "__tests__/fixtures/malformed-pyproject-toml-project"
+      - run: uv --help
 
   test-uv-file-version:
     runs-on: ubuntu-latest
@@ -143,8 +142,7 @@ jobs:
         id: setup-uv
         uses: ./
         with:
-          pyproject-file: "__tests__/fixtures/uv-toml-project/pyproject.toml"
-          uv-file: "__tests__/fixtures/uv-toml-project/uv.toml"
+          working-directory: "__tests__/fixtures/uv-toml-project"
       - name: Correct version gets installed
         run: |
           if [ "$(uv --version)" != "uv 0.5.15" ]; then
@@ -229,7 +227,7 @@ jobs:
           fi
 
   test-python-version:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
@@ -246,8 +244,21 @@ jobs:
             exit 1
           fi
         shell: bash
+
+  test-activate-environment:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install latest version
+        uses: ./
+        with:
+          python-version: 3.13.1t
+          activate-environment: true
       - name: Verify packages can be installed
-        run: uv pip install --python=3.13.1t pip
+        run: uv pip install pip
         shell: bash
       - name: Verify python version is correct
         run: |
@@ -508,6 +519,7 @@ jobs:
       - test-tool-install
       - test-tilde-expansion-tool-dirs
       - test-python-version
+      - test-activate-environment
       - test-musl
       - test-restore-cache
       - test-restore-cache-requirements-txt

@@ -14,21 +14,21 @@ import {
   type Platform,
 } from "./utils/platforms";
 import {
+  activateEnvironment as activateEnvironmentInput,
   cacheLocalPath,
   checkSum,
   ignoreEmptyWorkdir,
   enableCache,
   githubToken,
-  pyProjectFile,
   pythonVersion,
   toolBinDir,
   toolDir,
-  uvFile,
   version as versionInput,
+  workingDirectory,
 } from "./utils/inputs";
 import * as exec from "@actions/exec";
 import fs from "node:fs";
-import { getUvVersionFromConfigFile } from "./utils/pyproject";
+import { getUvVersionFromConfigFile } from "./utils/config-file";
 
 async function run(): Promise<void> {
   detectEmptyWorkdir();
@@ -47,7 +47,8 @@ async function run(): Promise<void> {
     addToolBinToPath();
     addUvToPathAndOutput(setupResult.uvDir);
     setToolDir();
-    await setupPython();
+    setupPython();
+    await activateEnvironment();
     addMatchers();
     setCacheDir(cacheLocalPath);
 
@@ -111,22 +112,21 @@ async function determineVersion(): Promise<string> {
   if (versionInput !== "") {
     return await resolveVersion(versionInput, githubToken);
   }
-  const configFile = uvFile !== "" ? uvFile : pyProjectFile;
-  if (configFile !== "") {
-    const versionFromConfigFile = getUvVersionFromConfigFile(configFile);
-    if (versionFromConfigFile === undefined) {
-      core.warning(
-        `Could not find required-version under [tool.uv] in ${configFile}. Falling back to latest`,
-      );
-    }
-    return await resolveVersion(versionFromConfigFile || "latest", githubToken);
+  const versionFromUvToml = getUvVersionFromConfigFile(
+    `${workingDirectory}${path.sep}uv.toml`,
+  );
+  const versionFromPyproject = getUvVersionFromConfigFile(
+    `${workingDirectory}${path.sep}pyproject.toml`,
+  );
+  if (versionFromUvToml === undefined && versionFromPyproject === undefined) {
+    core.info(
+      "Could not determine uv version from uv.toml or pyproject.toml. Falling back to latest.",
+    );
   }
-  if (!fs.existsSync("uv.toml") && !fs.existsSync("pyproject.toml")) {
-    return await resolveVersion("latest", githubToken);
-  }
-  const versionFile = fs.existsSync("uv.toml") ? "uv.toml" : "pyproject.toml";
-  const versionFromConfigFile = getUvVersionFromConfigFile(versionFile);
-  return await resolveVersion(versionFromConfigFile || "latest", githubToken);
+  return await resolveVersion(
+    versionFromUvToml || versionFromPyproject || "latest",
+    githubToken,
+  );
 }
 
 function addUvToPathAndOutput(cachedPath: string): void {
@@ -163,21 +163,29 @@ function setToolDir(): void {
   }
 }
 
-async function setupPython(): Promise<void> {
+function setupPython(): void {
   if (pythonVersion !== "") {
     core.exportVariable("UV_PYTHON", pythonVersion);
     core.info(`Set UV_PYTHON to ${pythonVersion}`);
-    const execArgs = ["venv", "--python", pythonVersion];
+  }
+}
+
+async function activateEnvironment(): Promise<void> {
+  if (activateEnvironmentInput) {
+    const execArgs = ["venv", ".venv", "--directory", workingDirectory];
 
     core.info("Activating python venv...");
     await exec.exec("uv", execArgs);
 
-    let venvBinPath = ".venv/bin";
+    let venvBinPath = `${workingDirectory}${path.sep}.venv${path.sep}bin`;
     if (process.platform === "win32") {
-      venvBinPath = ".venv/Scripts";
+      venvBinPath = `${workingDirectory}${path.sep}.venv${path.sep}Scripts`;
     }
     core.addPath(path.resolve(venvBinPath));
-    core.exportVariable("VIRTUAL_ENV", path.resolve(".venv"));
+    core.exportVariable(
+      "VIRTUAL_ENV",
+      path.resolve(`${workingDirectory}${path.sep}.venv`),
+    );
   }
 }
 

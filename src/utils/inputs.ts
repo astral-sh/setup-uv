@@ -2,9 +2,9 @@ import * as core from "@actions/core";
 import path from "node:path";
 
 export const version = core.getInput("version");
-export const pyProjectFile = core.getInput("pyproject-file");
-export const uvFile = core.getInput("uv-file");
 export const pythonVersion = core.getInput("python-version");
+export const activateEnvironment = core.getBooleanInput("activate-environment");
+export const workingDirectory = core.getInput("working-directory");
 export const checkSum = core.getInput("checksum");
 export const enableCache = getEnableCache();
 export const cacheSuffix = core.getInput("cache-suffix") || "";

@@ -88731,7 +88731,7 @@ async function getPythonVersion() {
         },
     };
     try {
-        const execArgs = ["python", "find"];
+        const execArgs = ["python", "find", "--directory", inputs_1.workingDirectory];
         await exec.exec("uv", execArgs, options);
         const pythonPath = output.trim();
         output = "";
@@ -88997,13 +88997,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.githubToken = exports.toolDir = exports.toolBinDir = exports.ignoreEmptyWorkdir = exports.ignoreNothingToCache = exports.pruneCache = exports.cacheDependencyGlob = exports.cacheLocalPath = exports.cacheSuffix = exports.enableCache = exports.checkSum = exports.pythonVersion = exports.uvFile = exports.pyProjectFile = exports.version = void 0;
+exports.githubToken = exports.toolDir = exports.toolBinDir = exports.ignoreEmptyWorkdir = exports.ignoreNothingToCache = exports.pruneCache = exports.cacheDependencyGlob = exports.cacheLocalPath = exports.cacheSuffix = exports.enableCache = exports.checkSum = exports.workingDirectory = exports.activateEnvironment = exports.pythonVersion = exports.version = void 0;
 const core = __importStar(__nccwpck_require__(7484));
 const node_path_1 = __importDefault(__nccwpck_require__(6760));
 exports.version = core.getInput("version");
-exports.pyProjectFile = core.getInput("pyproject-file");
-exports.uvFile = core.getInput("uv-file");
 exports.pythonVersion = core.getInput("python-version");
+exports.activateEnvironment = core.getBooleanInput("activate-environment");
+exports.workingDirectory = core.getInput("working-directory");
 exports.checkSum = core.getInput("checksum");
 exports.enableCache = getEnableCache();
 exports.cacheSuffix = core.getInput("cache-suffix") || "";
