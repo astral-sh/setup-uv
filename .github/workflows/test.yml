@@ -244,6 +244,8 @@ jobs:
             exit 1
           fi
         shell: bash
+      - run: uv sync
+        working-directory: __tests__/fixtures/uv-project
 
   test-activate-environment:
     runs-on: ${{ matrix.os }}
