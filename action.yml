@@ -31,7 +31,10 @@ inputs:
       "Glob pattern to match files relative to the repository root to control
       the cache."
     default: |
-      **/*(requirements|constraints)*.(txt|in)
+      **/*requirements*.txt
+      **/*requirements*.in
+      **/*constraints*.txt
+      **/*constraints*.in
       **/pyproject.toml
       **/uv.lock
   cache-suffix:

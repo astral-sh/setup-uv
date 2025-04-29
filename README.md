@@ -210,7 +210,10 @@ changes. If you use relative paths, they are relative to the repository root.
 > The default is
 > ```yaml
 > cache-dependency-glob: |
->   **/*(requirements|constraints)*.(txt|in)
+>   **/*requirements*.txt
+>   **/*requirements*.in
+>   **/*constraints*.txt
+>   **/*constraints*.in
 >   **/pyproject.toml
 >   **/uv.lock
 > ```
