@@ -491,7 +491,7 @@ Running `actions/checkout` after `setup-uv` **is not supported**.
 ### Does `setup-uv` also install my project or its dependencies automatically?
 
 No, `setup-uv` alone wont install any libraries from your `pyproject.toml` or `requirements.txt`, it only sets up `uv`.  
-You should run `uv sync`, `uv pip install .`, or use `uv run ...` to have your project and its dependencies installed.
+You should run `uv sync` or `uv pip install .` separately, or use `uv run ...` to ensure necessary dependencies are installed.
 
 ## Acknowledgements
 
