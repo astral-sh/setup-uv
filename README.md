@@ -101,8 +101,8 @@ This will override any python version specifications in `pyproject.toml` and `.p
 - name: Install the latest version of uv and set the python version to 3.13t
   uses: astral-sh/setup-uv@v6
   with:
-    python-version: 3.13t
-- run: uv pip install --python=3.13t pip
+    python-version: 3.13
+- run: uv pip install --python=3.13 pip
 ```
 
 You can combine this with a matrix to test multiple python versions:
@@ -487,6 +487,11 @@ Some workflows need uv but do not need to access the repository content.
 
 But **if** you need to access the repository content, you have run `actions/checkout` before running `setup-uv`.
 Running `actions/checkout` after `setup-uv` **is not supported**.
+
+### Does `setup-uv` also install my project or its dependencies automatically?
+
+No, `setup-uv` alone wont install any libraries from your `pyproject.toml` or `requirements.txt`, it only sets up `uv`.  
+You should run `uv sync`, `uv pip install .`, or use `uv run ...` to have your project and its dependencies installed.
 
 ## Acknowledgements
 
