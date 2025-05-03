@@ -9,10 +9,10 @@
     "format": "biome format --fix",
     "format-check": "biome format",
     "lint": "biome lint --fix",
-    "package": "ncc build -o dist/setup src/setup-uv.ts && ncc build -o dist/save-cache src/save-cache.ts && ncc build -o dist/update-known-checksums src/update-known-checksums.ts",
+    "package": "ncc build -o dist/setup src/setup-uv.ts && ncc build -o dist/save-cache src/save-cache.ts && ncc build -o dist/update-known-versions src/update-known-versions.ts",
     "test": "jest",
     "act": "act pull_request -W .github/workflows/test.yml --container-architecture linux/amd64 -s GITHUB_TOKEN=\"$(gh auth token)\"",
-    "update-known-checksums": "RUNNER_TEMP=known_checksums node dist/update-known-checksums/index.js src/download/checksum/known-checksums.ts \"$(gh auth token)\"",
+    "update-known-versions": "RUNNER_TEMP=known_versions node dist/update-known-versions/index.js src/download/checksum/known-versions.ts \"$(gh auth token)\"",
     "all": "npm run build && npm run format && npm run lint && npm run package && npm test"
   },
   "repository": {
