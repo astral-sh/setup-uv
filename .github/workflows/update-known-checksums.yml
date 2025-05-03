@@ -1,4 +1,4 @@
-name: "Update known checksums"
+name: "Update known versions"
 on:
   workflow_dispatch:
   schedule:
@@ -15,23 +15,23 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Update known checksums
-        id: update-known-checksums
+      - name: Update known versions
+        id: update-known-versions
         run:
-          node dist/update-known-checksums/index.js
-          src/download/checksum/known-checksums.ts ${{ secrets.GITHUB_TOKEN }}
+          node dist/update-known-versions/index.js
+          src/download/checksum/known-versions.ts ${{ secrets.GITHUB_TOKEN }}
       - run: npm install && npm run all
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         with:
-          commit-message: "chore: update known checksums"
+          commit-message: "chore: update known versions"
           title:
-            "chore: update known checksums for ${{
-            steps.update-known-checksums.outputs.latest-version }}"
+            "chore: update known versions for ${{
+            steps.update-known-versions.outputs.latest-version }}"
           body:
-            "chore: update known checksums for ${{
-            steps.update-known-checksums.outputs.latest-version }}"
+            "chore: update known versions for ${{
+            steps.update-known-versions.outputs.latest-version }}"
           base: main
-          labels: "automated-pr,update-known-checksums"
-          branch: update-known-checksums-pr
+          labels: "automated-pr,update-known-versions"
+          branch: update-known-versions-pr
           delete-branch: true
