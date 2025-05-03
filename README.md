@@ -101,8 +101,8 @@ This will override any python version specifications in `pyproject.toml` and `.p
 - name: Install the latest version of uv and set the python version to 3.13t
   uses: astral-sh/setup-uv@v6
   with:
-    python-version: 3.13
-- run: uv pip install --python=3.13 pip
+    python-version: 3.13t
+- run: uv pip install --python=3.13t pip
 ```
 
 You can combine this with a matrix to test multiple python versions:
