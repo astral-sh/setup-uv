@@ -488,6 +488,11 @@ Some workflows need uv but do not need to access the repository content.
 But **if** you need to access the repository content, you have run `actions/checkout` before running `setup-uv`.
 Running `actions/checkout` after `setup-uv` **is not supported**.
 
+### Does `setup-uv` also install my project or its dependencies automatically?
+
+No, `setup-uv` alone wont install any libraries from your `pyproject.toml` or `requirements.txt`, it only sets up `uv`.  
+You should run `uv sync` or `uv pip install .` separately, or use `uv run ...` to ensure necessary dependencies are installed.
+
 ## Acknowledgements
 
 `setup-uv` was initially written and published by [Kevin Stillhammer](https://github.com/eifinger)
