@@ -20,7 +20,7 @@ jobs:
         run:
           node dist/update-known-versions/index.js
           src/download/checksum/known-versions.ts
-          version-manifest.ts
+          version-manifest.json
           ${{ secrets.GITHUB_TOKEN }}
       - run: npm install && npm run all
       - name: Create Pull Request
