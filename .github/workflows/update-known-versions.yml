@@ -19,7 +19,9 @@ jobs:
         id: update-known-versions
         run:
           node dist/update-known-versions/index.js
-          src/download/checksum/known-versions.ts ${{ secrets.GITHUB_TOKEN }}
+          src/download/checksum/known-versions.ts
+          version-manifest.ts
+          ${{ secrets.GITHUB_TOKEN }}
       - run: npm install && npm run all
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
