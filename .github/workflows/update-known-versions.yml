@@ -19,7 +19,7 @@ jobs:
         id: update-known-versions
         run:
           node dist/update-known-versions/index.js
-          src/download/checksum/known-versions.ts
+          src/download/checksum/known-checksums.ts
           version-manifest.json
           ${{ secrets.GITHUB_TOKEN }}
       - run: npm install && npm run all
