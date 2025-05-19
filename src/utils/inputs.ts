@@ -17,6 +17,7 @@ export const ignoreEmptyWorkdir =
   core.getInput("ignore-empty-workdir") === "true";
 export const toolBinDir = getToolBinDir();
 export const toolDir = getToolDir();
+export const githubUrl = getGithubUrl();
 export const githubToken = core.getInput("github-token");
 
 function getEnableCache(): boolean {
@@ -83,4 +84,15 @@ function expandTilde(input: string): string {
     return `${process.env.HOME}${input.substring(1)}`;
   }
   return input;
+}
+
+function getGithubUrl(): string {
+  let url = "https://github.com";
+  if(process.env.GITHUB_URL) {
+    url = process.env.GITHUB_URL;
+  }
+  if(url.endsWith("/")) {
+    url = url.replaceAll(/\/+$/g, "")
+  }
+  return url;
 }
