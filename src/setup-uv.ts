@@ -25,7 +25,7 @@ import {
   toolDir,
   version as versionInput,
   workingDirectory,
-  githubUrl,
+  serverUrl,
 } from "./utils/inputs";
 import * as exec from "@actions/exec";
 import fs from "node:fs";
@@ -96,7 +96,7 @@ async function setupUv(
   }
 
   const downloadVersionResult = await downloadVersion(
-    githubUrl,
+    serverUrl,
     platform,
     arch,
     resolvedVersion,

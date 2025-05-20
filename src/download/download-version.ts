@@ -24,7 +24,7 @@ export function tryGetFromToolCache(
 }
 
 export async function downloadVersion(
-  githubUrl: string,
+  serverUrl: string,
   platform: Platform,
   arch: Architecture,
   version: string,
@@ -37,7 +37,7 @@ export async function downloadVersion(
   if (platform === "pc-windows-msvc") {
     extension = ".zip";
   }
-  const downloadUrl = `${githubUrl}/${OWNER}/${REPO}/releases/download/${resolvedVersion}/${artifact}${extension}`;
+  const downloadUrl = `${serverUrl}/${OWNER}/${REPO}/releases/download/${resolvedVersion}/${artifact}${extension}`;
   core.info(`Downloading uv from "${downloadUrl}" ...`);
 
   const downloadPath = await tc.downloadTool(
