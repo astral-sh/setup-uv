@@ -87,9 +87,5 @@ function expandTilde(input: string): string {
 }
 
 function getServerUrl(): string {
-  const url = core.getInput("server-url");
-  if(url.endsWith("/")) {
-    return url.replaceAll(/\/+$/g, "")
-  }
-  return url;
+  return core.getInput("server-url");
 }
