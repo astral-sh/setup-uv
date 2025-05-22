@@ -42,9 +42,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install latest version
         id: setup-uv
-        uses: ./
+        uses: astral-sh/setup-uv@v6
+        with:
+          working-directory: backend
       - run: uv sync
-        working-directory: __tests__/fixtures/uv-project
+        working-directory: backend
         shell: bash
       - name: Check uv-path is set
         run: ${{ steps.setup-uv.outputs.uv-path }} --version
