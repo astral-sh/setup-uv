@@ -88715,7 +88715,8 @@ async function computeKeys() {
     const suffix = inputs_1.cacheSuffix ? `-${inputs_1.cacheSuffix}` : "";
     const pythonVersion = await getPythonVersion();
     const platform = await (0, platforms_1.getPlatform)();
-    return `setup-uv-${CACHE_VERSION}-${(0, platforms_1.getArch)()}-${platform}-${pythonVersion}${cacheDependencyPathHash}${suffix}`;
+    const pruned = inputs_1.pruneCache ? "-pruned" : "";
+    return `setup-uv-${CACHE_VERSION}-${(0, platforms_1.getArch)()}-${platform}-${pythonVersion}${pruned}${cacheDependencyPathHash}${suffix}`;
 }
 async function getPythonVersion() {
     if (inputs_1.pythonVersion !== "") {
@@ -89014,7 +89015,7 @@ exports.ignoreNothingToCache = core.getInput("ignore-nothing-to-cache") === "tru
 exports.ignoreEmptyWorkdir = core.getInput("ignore-empty-workdir") === "true";
 exports.toolBinDir = getToolBinDir();
 exports.toolDir = getToolDir();
-exports.serverUrl = getServerUrl();
+exports.serverUrl = core.getInput("server-url");
 exports.githubToken = core.getInput("github-token");
 function getEnableCache() {
     const enableCacheInput = core.getInput("enable-cache");
@@ -89070,9 +89071,6 @@ function expandTilde(input) {
         return `${process.env.HOME}${input.substring(1)}`;
     }
     return input;
-}
-function getServerUrl() {
-    return core.getInput("server-url");
 }
 
 

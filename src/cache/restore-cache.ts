@@ -4,6 +4,7 @@ import {
   cacheDependencyGlob,
   cacheLocalPath,
   cacheSuffix,
+  pruneCache,
   pythonVersion as pythonVersionInput,
   workingDirectory,
 } from "../utils/inputs";
@@ -55,7 +56,8 @@ async function computeKeys(): Promise<string> {
   const suffix = cacheSuffix ? `-${cacheSuffix}` : "";
   const pythonVersion = await getPythonVersion();
   const platform = await getPlatform();
-  return `setup-uv-${CACHE_VERSION}-${getArch()}-${platform}-${pythonVersion}${cacheDependencyPathHash}${suffix}`;
+  const pruned = pruneCache ? "-pruned" : "";
+  return `setup-uv-${CACHE_VERSION}-${getArch()}-${platform}-${pythonVersion}${pruned}${cacheDependencyPathHash}${suffix}`;
 }
 
 async function getPythonVersion(): Promise<string> {
