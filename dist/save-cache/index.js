@@ -89014,7 +89014,7 @@ exports.ignoreNothingToCache = core.getInput("ignore-nothing-to-cache") === "tru
 exports.ignoreEmptyWorkdir = core.getInput("ignore-empty-workdir") === "true";
 exports.toolBinDir = getToolBinDir();
 exports.toolDir = getToolDir();
-exports.serverUrl = getServerUrl();
+exports.serverUrl = core.getInput("server-url");
 exports.githubToken = core.getInput("github-token");
 function getEnableCache() {
     const enableCacheInput = core.getInput("enable-cache");
@@ -89070,9 +89070,6 @@ function expandTilde(input) {
         return `${process.env.HOME}${input.substring(1)}`;
     }
     return input;
-}
-function getServerUrl() {
-    return core.getInput("server-url");
 }
 
 
