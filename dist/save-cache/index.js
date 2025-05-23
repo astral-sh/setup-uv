@@ -88715,7 +88715,8 @@ async function computeKeys() {
     const suffix = inputs_1.cacheSuffix ? `-${inputs_1.cacheSuffix}` : "";
     const pythonVersion = await getPythonVersion();
     const platform = await (0, platforms_1.getPlatform)();
-    return `setup-uv-${CACHE_VERSION}-${(0, platforms_1.getArch)()}-${platform}-${pythonVersion}${cacheDependencyPathHash}${suffix}`;
+    const pruned = inputs_1.pruneCache ? "-pruned" : "";
+    return `setup-uv-${CACHE_VERSION}-${(0, platforms_1.getArch)()}-${platform}-${pythonVersion}${pruned}${cacheDependencyPathHash}${suffix}`;
 }
 async function getPythonVersion() {
     if (inputs_1.pythonVersion !== "") {
