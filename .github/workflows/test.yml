@@ -29,6 +29,11 @@ jobs:
           npm install
       - run: |
           npm run all
+      - name: Check all jobs are in all-tests-passed.needs
+        run: |
+          tsc check-all-tests-passed-needs.ts
+          node check-all-tests-passed-needs.js
+        working-directory: .github/scripts
       - name: Make sure no changes from linters are detected
         run: |
           git diff --exit-code || (echo "::error::Please run 'npm run all' to fix the issues" && exit 1)
@@ -548,9 +553,13 @@ jobs:
       - test-activate-environment
       - test-musl
       - test-cache-local
+      - test-setup-cache
       - test-restore-cache
+      - test-setup-cache-requirements-txt
       - test-restore-cache-requirements-txt
+      - test-setup-cache-dependency-glob
       - test-restore-cache-dependency-glob
+      - test-setup-cache-local
       - test-restore-cache-local
       - test-tilde-expansion-cache-local-path
       - test-tilde-expansion-cache-dependency-glob
