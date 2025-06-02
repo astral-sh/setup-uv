@@ -137,6 +137,16 @@ This allows directly using it in later steps:
 - run: uv pip install pip
 ```
 
+> [!WARNING]
+>
+> Activating the environment adds your dependencies to the `PATH`, which could break some workflows.
+> For example, if you have a dependency which requires uv, e.g., `hatch`, activating the
+> environment will shadow the `uv` binary installed by this action and may result in a different uv
+> version being used.
+>
+> We do not recommend using this setting for most use-cases. Instead, use `uv run` to execute
+> commands in the environment.
+
 ### Working directory
 
 You can set the working directory with the `working-directory` input.
