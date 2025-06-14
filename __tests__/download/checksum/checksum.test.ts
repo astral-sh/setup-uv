@@ -1,9 +1,9 @@
-import { expect, test, it } from "@jest/globals";
+import { expect, test, it } 
 import {
   isknownVersion,
   validateChecksum,
-} from "../../../src/download/checksum/checksum";
-
+  from "../../../src/download/checksum/checksum";
+}
 test("checksum should match", async () => {
   const validChecksum =
     "f3da96ec7e995debee7f5d52ecd034dfb7074309a1da42f76429ecb814d813a3";

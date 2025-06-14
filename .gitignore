@@ -65,7 +65,7 @@ typings/
 # Yarn Integrity file
 .yarn-integrity
 
-# dotenv environment variables file
+
 .env
 .env.test
 
@@ -100,3 +100,4 @@ lib/**/*
 
 # Idea IDEs (PyCharm, WebStorm, IntelliJ, etc)
 .idea/
+
