@@ -19,7 +19,7 @@ inputs:
     description: "The checksum of the uv version to install"
     required: false
   server-url:
-    description: "The server url to use when downloading uv"
+    description: "(Deprecated) The server url to use when downloading uv"
     required: false
     default: "https://github.com"
   github-token:
@@ -61,6 +61,9 @@ inputs:
     required: false
   tool-bin-dir:
     description: "Custom path to set UV_TOOL_BIN_DIR to."
+    required: false
+  manifest-file:
+    description: "URL to the manifest file containing available versions and download URLs."
     required: false
 outputs:
   uv-version:

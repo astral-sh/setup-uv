@@ -88998,7 +88998,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.githubToken = exports.serverUrl = exports.toolDir = exports.toolBinDir = exports.ignoreEmptyWorkdir = exports.ignoreNothingToCache = exports.pruneCache = exports.cacheDependencyGlob = exports.cacheLocalPath = exports.cacheSuffix = exports.enableCache = exports.checkSum = exports.workingDirectory = exports.activateEnvironment = exports.pythonVersion = exports.version = void 0;
+exports.manifestFile = exports.githubToken = exports.serverUrl = exports.toolDir = exports.toolBinDir = exports.ignoreEmptyWorkdir = exports.ignoreNothingToCache = exports.pruneCache = exports.cacheDependencyGlob = exports.cacheLocalPath = exports.cacheSuffix = exports.enableCache = exports.checkSum = exports.workingDirectory = exports.activateEnvironment = exports.pythonVersion = exports.version = void 0;
 const core = __importStar(__nccwpck_require__(7484));
 const node_path_1 = __importDefault(__nccwpck_require__(6760));
 exports.version = core.getInput("version");
@@ -89017,6 +89017,7 @@ exports.toolBinDir = getToolBinDir();
 exports.toolDir = getToolDir();
 exports.serverUrl = core.getInput("server-url");
 exports.githubToken = core.getInput("github-token");
+exports.manifestFile = getManifestFile();
 function getEnableCache() {
     const enableCacheInput = core.getInput("enable-cache");
     if (enableCacheInput === "auto") {
@@ -89071,6 +89072,13 @@ function expandTilde(input) {
         return `${process.env.HOME}${input.substring(1)}`;
     }
     return input;
+}
+function getManifestFile() {
+    const manifestFileInput = core.getInput("manifest-file");
+    if (manifestFileInput !== "") {
+        return manifestFileInput;
+    }
+    return undefined;
 }
 
 

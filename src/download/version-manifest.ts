@@ -1,8 +1,9 @@
 import { promises as fs } from "node:fs";
 import * as core from "@actions/core";
 import * as semver from "semver";
+import { fetch } from "../utils/fetch";
 
-interface VersionManifestEntry {
+interface ManifestEntry {
   version: string;
   artifactName: string;
   arch: string;
@@ -11,22 +12,57 @@ interface VersionManifestEntry {
 }
 
 export async function getLatestKnownVersion(
-  versionManifestFile: string,
+  manifestUrl: string | undefined,
 ): Promise<string> {
-  const data = await fs.readFile(versionManifestFile);
-  const versionManifestEntries: VersionManifestEntry[] = JSON.parse(
-    data.toString(),
-  );
-  return versionManifestEntries.reduce((a, b) =>
+  const manifestEntries = await getManifestEntries(manifestUrl);
+  return manifestEntries.reduce((a, b) =>
     semver.gt(a.version, b.version) ? a : b,
   ).version;
 }
 
+export async function getDownloadUrl(
+  manifestUrl: string | undefined,
+  version: string,
+  arch: string,
+  platform: string,
+): Promise<string | undefined> {
+  const manifestEntries = await getManifestEntries(manifestUrl);
+  const entry = manifestEntries.find(
+    (entry) =>
+      entry.version === version &&
+      entry.arch === arch &&
+      entry.platform === platform,
+  );
+  return entry ? entry.downloadUrl : undefined;
+}
+
+async function getManifestEntries(
+  manifestUrl: string | undefined,
+): Promise<ManifestEntry[]> {
+  let data: string;
+  if (manifestUrl !== undefined) {
+    core.info(`Fetching manifest-file from: ${manifestUrl}`);
+    const response = await fetch(manifestUrl, {});
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch manifest-file: ${response.status} ${response.statusText}`,
+      );
+    }
+    data = await response.text();
+  } else {
+    core.info("manifest-file not provided, reading from local file.");
+    const fileContent = await fs.readFile("version-manifest.json");
+    data = fileContent.toString();
+  }
+
+  return JSON.parse(data);
+}
+
 export async function updateVersionManifest(
-  versionManifestFile: string,
+  manifestUrl: string,
   downloadUrls: string[],
 ): Promise<void> {
-  const versionManifest: VersionManifestEntry[] = [];
+  const manifest: ManifestEntry[] = [];
 
   for (const downloadUrl of downloadUrls) {
     const urlParts = downloadUrl.split("/");
@@ -39,7 +75,7 @@ export async function updateVersionManifest(
       continue;
     }
     const artifactParts = artifactName.split(".")[0].split("-");
-    versionManifest.push({
+    manifest.push({
       version: version,
       artifactName: artifactName,
       arch: artifactParts[1],
@@ -47,6 +83,6 @@ export async function updateVersionManifest(
       downloadUrl: downloadUrl,
     });
   }
-  core.debug(`Updating version manifest: ${JSON.stringify(versionManifest)}`);
-  await fs.writeFile(versionManifestFile, JSON.stringify(versionManifest));
+  core.debug(`Updating manifest-file: ${JSON.stringify(manifest)}`);
+  await fs.writeFile(manifestUrl, JSON.stringify(manifest));
 }

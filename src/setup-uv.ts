@@ -1,9 +1,10 @@
 import * as core from "@actions/core";
 import * as path from "node:path";
 import {
-  downloadVersion,
   tryGetFromToolCache,
   resolveVersion,
+  downloadVersionFromGithub,
+  downloadVersionFromManifest,
 } from "./download/download-version";
 import { restoreCache } from "./cache/restore-cache";
 
@@ -26,6 +27,7 @@ import {
   version as versionInput,
   workingDirectory,
   serverUrl,
+  manifestFile,
 } from "./utils/inputs";
 import * as exec from "@actions/exec";
 import fs from "node:fs";
@@ -95,14 +97,29 @@ async function setupUv(
     };
   }
 
-  const downloadVersionResult = await downloadVersion(
-    serverUrl,
-    platform,
-    arch,
-    resolvedVersion,
-    checkSum,
-    githubToken,
-  );
+  let downloadVersionResult: { version: string; cachedToolDir: string };
+  if (serverUrl !== "https://github.com") {
+    core.warning(
+      "The input server-url is deprecated. Please use manifest-file instead.",
+    );
+    downloadVersionResult = await downloadVersionFromGithub(
+      serverUrl,
+      platform,
+      arch,
+      resolvedVersion,
+      checkSum,
+      githubToken,
+    );
+  } else {
+    downloadVersionResult = await downloadVersionFromManifest(
+      manifestFile,
+      platform,
+      arch,
+      resolvedVersion,
+      checkSum,
+      githubToken,
+    );
+  }
 
   return {
     uvDir: downloadVersionResult.cachedToolDir,

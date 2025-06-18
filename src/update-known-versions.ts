@@ -12,7 +12,7 @@ import {
 
 async function run(): Promise<void> {
   const checksumFilePath = process.argv.slice(2)[0];
-  const versionsManifestFilePath = process.argv.slice(2)[1];
+  const versionsManifestFile = process.argv.slice(2)[1];
   const githubToken = process.argv.slice(2)[2];
 
   const octokit = new Octokit({
@@ -24,9 +24,7 @@ async function run(): Promise<void> {
     repo: REPO,
   });
 
-  const latestKnownVersion = await getLatestKnownVersion(
-    versionsManifestFilePath,
-  );
+  const latestKnownVersion = await getLatestKnownVersion(undefined);
 
   if (semver.lte(latestRelease.tag_name, latestKnownVersion)) {
     core.info(
@@ -52,7 +50,7 @@ async function run(): Promise<void> {
       .map((asset) => asset.browser_download_url),
   );
 
-  await updateVersionManifest(versionsManifestFilePath, artifactDownloadUrls);
+  await updateVersionManifest(versionsManifestFile, artifactDownloadUrls);
 
   core.setOutput("latest-version", latestRelease.tag_name);
 }

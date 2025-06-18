@@ -1,5 +1,6 @@
 import * as core from "@actions/core";
 import path from "node:path";
+import { getManifestFromRepo } from "@actions/tool-cache";
 
 export const version = core.getInput("version");
 export const pythonVersion = core.getInput("python-version");
@@ -19,6 +20,7 @@ export const toolBinDir = getToolBinDir();
 export const toolDir = getToolDir();
 export const serverUrl = core.getInput("server-url");
 export const githubToken = core.getInput("github-token");
+export const manifestFile = getManifestFile();
 
 function getEnableCache(): boolean {
   const enableCacheInput = core.getInput("enable-cache");
@@ -84,4 +86,12 @@ function expandTilde(input: string): string {
     return `${process.env.HOME}${input.substring(1)}`;
   }
   return input;
+}
+
+function getManifestFile(): string | undefined {
+  const manifestFileInput = core.getInput("manifest-file");
+  if (manifestFileInput !== "") {
+    return manifestFileInput;
+  }
+  return undefined;
 }

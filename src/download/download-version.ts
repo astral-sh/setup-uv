@@ -7,6 +7,7 @@ import { OWNER, REPO, TOOL_CACHE_NAME } from "../utils/constants";
 import type { Architecture, Platform } from "../utils/platforms";
 import { validateChecksum } from "./checksum/checksum";
 import { Octokit } from "../utils/octokit";
+import { getDownloadUrl } from "./version-manifest";
 
 export function tryGetFromToolCache(
   arch: Architecture,
@@ -23,7 +24,7 @@ export function tryGetFromToolCache(
   return { version: resolvedVersion, installedPath };
 }
 
-export async function downloadVersion(
+export async function downloadVersionFromGithub(
   serverUrl: string,
   platform: Platform,
   arch: Architecture,
@@ -31,29 +32,77 @@ export async function downloadVersion(
   checkSum: string | undefined,
   githubToken: string,
 ): Promise<{ version: string; cachedToolDir: string }> {
-  const resolvedVersion = await resolveVersion(version, githubToken);
   const artifact = `uv-${arch}-${platform}`;
-  let extension = ".tar.gz";
-  if (platform === "pc-windows-msvc") {
-    extension = ".zip";
-  }
-  const downloadUrl = `${serverUrl}/${OWNER}/${REPO}/releases/download/${resolvedVersion}/${artifact}${extension}`;
-  core.info(`Downloading uv from "${downloadUrl}" ...`);
+  const extension = getExtension(platform);
+  const downloadUrl = `${serverUrl}/${OWNER}/${REPO}/releases/download/${version}/${artifact}${extension}`;
+  return await downloadVersion(
+    downloadUrl,
+    artifact,
+    platform,
+    arch,
+    version,
+    checkSum,
+    githubToken,
+  );
+}
 
+export async function downloadVersionFromManifest(
+  manifestUrl: string | undefined,
+  platform: Platform,
+  arch: Architecture,
+  version: string,
+  checkSum: string | undefined,
+  githubToken: string,
+): Promise<{ version: string; cachedToolDir: string }> {
+  const downloadUrl = await getDownloadUrl(
+    manifestUrl,
+    version,
+    arch,
+    platform,
+  );
+  if (!downloadUrl) {
+    core.warning(
+      `manifest-file does not contain version ${version}, arch ${arch}, platform ${platform}. Falling back to GitHub releases.`,
+    );
+    return await downloadVersionFromGithub(
+      "https://github.com",
+      platform,
+      arch,
+      version,
+      checkSum,
+      githubToken,
+    );
+  }
+  return await downloadVersion(
+    downloadUrl,
+    `uv-${arch}-${platform}`,
+    platform,
+    arch,
+    version,
+    checkSum,
+    githubToken,
+  );
+}
+
+async function downloadVersion(
+  downloadUrl: string,
+  artifactName: string,
+  platform: Platform,
+  arch: Architecture,
+  version: string,
+  checkSum: string | undefined,
+  githubToken: string,
+): Promise<{ version: string; cachedToolDir: string }> {
+  core.info(`Downloading uv from "${downloadUrl}" ...`);
   const downloadPath = await tc.downloadTool(
     downloadUrl,
     undefined,
     githubToken,
   );
-  await validateChecksum(
-    checkSum,
-    downloadPath,
-    arch,
-    platform,
-    resolvedVersion,
-  );
+  await validateChecksum(checkSum, downloadPath, arch, platform, version);
 
   let uvDir: string;
+  const extension = getExtension(platform);
   if (platform === "pc-windows-msvc") {
     const fullPathWithExtension = `${downloadPath}${extension}`;
     await fs.copyFile(downloadPath, fullPathWithExtension);
@@ -61,15 +110,19 @@ export async function downloadVersion(
     // On windows extracting the zip does not create an intermediate directory
   } else {
     const extractedDir = await tc.extractTar(downloadPath);
-    uvDir = path.join(extractedDir, artifact);
+    uvDir = path.join(extractedDir, artifactName);
   }
   const cachedToolDir = await tc.cacheDir(
     uvDir,
     TOOL_CACHE_NAME,
-    resolvedVersion,
+    version,
     arch,
   );
-  return { version: resolvedVersion, cachedToolDir };
+  return { version: version, cachedToolDir };
+}
+
+function getExtension(platform: Platform): string {
+  return platform === "pc-windows-msvc" ? ".zip" : ".tar.gz";
 }
 
 export async function resolveVersion(
