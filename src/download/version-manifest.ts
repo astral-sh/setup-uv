@@ -2,6 +2,9 @@ import { promises as fs } from "node:fs";
 import * as core from "@actions/core";
 import * as semver from "semver";
 import { fetch } from "../utils/fetch";
+import { join } from "node:path";
+
+const localManifestFile = join(__dirname, "..", "..", "version-manifest.json");
 
 interface ManifestEntry {
   version: string;
@@ -51,7 +54,7 @@ async function getManifestEntries(
     data = await response.text();
   } else {
     core.info("manifest-file not provided, reading from local file.");
-    const fileContent = await fs.readFile("version-manifest.json");
+    const fileContent = await fs.readFile(localManifestFile);
     data = fileContent.toString();
   }
 
