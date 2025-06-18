@@ -62432,6 +62432,8 @@ const node_fs_1 = __nccwpck_require__(3024);
 const core = __importStar(__nccwpck_require__(7484));
 const semver = __importStar(__nccwpck_require__(9318));
 const fetch_1 = __nccwpck_require__(3385);
+const node_path_1 = __nccwpck_require__(6760);
+const localManifestFile = (0, node_path_1.join)(__dirname, "..", "..", "version-manifest.json");
 async function getLatestKnownVersion(manifestUrl) {
     const manifestEntries = await getManifestEntries(manifestUrl);
     return manifestEntries.reduce((a, b) => semver.gt(a.version, b.version) ? a : b).version;
@@ -62455,7 +62457,7 @@ async function getManifestEntries(manifestUrl) {
     }
     else {
         core.info("manifest-file not provided, reading from local file.");
-        const fileContent = await node_fs_1.promises.readFile("version-manifest.json");
+        const fileContent = await node_fs_1.promises.readFile(localManifestFile);
         data = fileContent.toString();
     }
     return JSON.parse(data);
@@ -62837,6 +62839,14 @@ module.exports = require("node:http2");
 
 "use strict";
 module.exports = require("node:net");
+
+/***/ }),
+
+/***/ 6760:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:path");
 
 /***/ }),
 
