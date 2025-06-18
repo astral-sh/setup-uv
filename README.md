@@ -28,6 +28,7 @@ Set up your GitHub Actions workflow with a specific version of [uv](https://docs
   - [UV_TOOL_DIR](#uv_tool_dir)
   - [UV_TOOL_BIN_DIR](#uv_tool_bin_dir)
   - [Tilde Expansion](#tilde-expansion)
+  - [Manifest file](#manifest-file)
 - [How it works](#how-it-works)
 - [FAQ](#faq)
 
@@ -396,6 +397,39 @@ This action supports expanding the `~` character to the user's home directory fo
     cache-dependency-glob: "~/my-cache-buster"
 ```
 
+### Manifest file
+
+The `manifest-file` input allows you to specify a JSON manifest that lists available uv versions,
+architectures, and their download URLs. By default, this action uses the manifest file contained
+in this repository, which is automatically updated with each release of uv.
+
+The manifest file contains an array of objects, each describing a version,
+architecture, platform, and the corresponding download URL. For example:
+
+```json
+[
+  {
+    "version": "0.7.13",
+    "artifactName": "uv-aarch64-apple-darwin.tar.gz",
+    "arch": "aarch64",
+    "platform": "apple-darwin",
+    "downloadUrl": "https://github.com/astral-sh/uv/releases/download/0.7.13/uv-aarch64-apple-darwin.tar.gz"
+  },
+  ...
+]
+```
+
+You can supply a custom manifest file URL to define additional versions,
+architectures, or different download URLs.
+This is useful if you maintain your own uv builds or want to override the default sources.
+
+```yaml
+- name: Use a custom manifest file
+  uses: astral-sh/setup-uv@v6
+  with:
+    manifest-file: "https://example.com/my-custom-manifest.json"
+```
+
 ## How it works
 
 This action downloads uv from the uv repo's official
@@ -500,7 +534,7 @@ Running `actions/checkout` after `setup-uv` **is not supported**.
 
 ### Does `setup-uv` also install my project or its dependencies automatically?
 
-No, `setup-uv` alone wont install any libraries from your `pyproject.toml` or `requirements.txt`, it only sets up `uv`.  
+No, `setup-uv` alone wont install any libraries from your `pyproject.toml` or `requirements.txt`, it only sets up `uv`.
 You should run `uv sync` or `uv pip install .` separately, or use `uv run ...` to ensure necessary dependencies are installed.
 
 ## Acknowledgements

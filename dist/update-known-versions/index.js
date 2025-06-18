@@ -62426,17 +62426,42 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getLatestKnownVersion = getLatestKnownVersion;
+exports.getDownloadUrl = getDownloadUrl;
 exports.updateVersionManifest = updateVersionManifest;
 const node_fs_1 = __nccwpck_require__(3024);
 const core = __importStar(__nccwpck_require__(7484));
 const semver = __importStar(__nccwpck_require__(9318));
-async function getLatestKnownVersion(versionManifestFile) {
-    const data = await node_fs_1.promises.readFile(versionManifestFile);
-    const versionManifestEntries = JSON.parse(data.toString());
-    return versionManifestEntries.reduce((a, b) => semver.gt(a.version, b.version) ? a : b).version;
+const fetch_1 = __nccwpck_require__(3385);
+async function getLatestKnownVersion(manifestUrl) {
+    const manifestEntries = await getManifestEntries(manifestUrl);
+    return manifestEntries.reduce((a, b) => semver.gt(a.version, b.version) ? a : b).version;
 }
-async function updateVersionManifest(versionManifestFile, downloadUrls) {
-    const versionManifest = [];
+async function getDownloadUrl(manifestUrl, version, arch, platform) {
+    const manifestEntries = await getManifestEntries(manifestUrl);
+    const entry = manifestEntries.find((entry) => entry.version === version &&
+        entry.arch === arch &&
+        entry.platform === platform);
+    return entry ? entry.downloadUrl : undefined;
+}
+async function getManifestEntries(manifestUrl) {
+    let data;
+    if (manifestUrl !== undefined) {
+        core.info(`Fetching manifest-file from: ${manifestUrl}`);
+        const response = await (0, fetch_1.fetch)(manifestUrl, {});
+        if (!response.ok) {
+            throw new Error(`Failed to fetch manifest-file: ${response.status} ${response.statusText}`);
+        }
+        data = await response.text();
+    }
+    else {
+        core.info("manifest-file not provided, reading from local file.");
+        const fileContent = await node_fs_1.promises.readFile("version-manifest.json");
+        data = fileContent.toString();
+    }
+    return JSON.parse(data);
+}
+async function updateVersionManifest(manifestUrl, downloadUrls) {
+    const manifest = [];
     for (const downloadUrl of downloadUrls) {
         const urlParts = downloadUrl.split("/");
         const version = urlParts[urlParts.length - 2];
@@ -62448,7 +62473,7 @@ async function updateVersionManifest(versionManifestFile, downloadUrls) {
             continue;
         }
         const artifactParts = artifactName.split(".")[0].split("-");
-        versionManifest.push({
+        manifest.push({
             version: version,
             artifactName: artifactName,
             arch: artifactParts[1],
@@ -62456,8 +62481,8 @@ async function updateVersionManifest(versionManifestFile, downloadUrls) {
             downloadUrl: downloadUrl,
         });
     }
-    core.debug(`Updating version manifest: ${JSON.stringify(versionManifest)}`);
-    await node_fs_1.promises.writeFile(versionManifestFile, JSON.stringify(versionManifest));
+    core.debug(`Updating manifest-file: ${JSON.stringify(manifest)}`);
+    await node_fs_1.promises.writeFile(manifestUrl, JSON.stringify(manifest));
 }
 
 
@@ -62510,7 +62535,7 @@ const update_known_checksums_1 = __nccwpck_require__(6182);
 const version_manifest_1 = __nccwpck_require__(4000);
 async function run() {
     const checksumFilePath = process.argv.slice(2)[0];
-    const versionsManifestFilePath = process.argv.slice(2)[1];
+    const versionsManifestFile = process.argv.slice(2)[1];
     const githubToken = process.argv.slice(2)[2];
     const octokit = new octokit_1.Octokit({
         auth: githubToken,
@@ -62519,7 +62544,7 @@ async function run() {
         owner: constants_1.OWNER,
         repo: constants_1.REPO,
     });
-    const latestKnownVersion = await (0, version_manifest_1.getLatestKnownVersion)(versionsManifestFilePath);
+    const latestKnownVersion = await (0, version_manifest_1.getLatestKnownVersion)(undefined);
     if (semver.lte(latestRelease.tag_name, latestKnownVersion)) {
         core.info(`Latest release (${latestRelease.tag_name}) is not newer than the latest known version (${latestKnownVersion}). Skipping update.`);
         return;
@@ -62535,7 +62560,7 @@ async function run() {
     const artifactDownloadUrls = releases.flatMap((release) => release.assets
         .filter((asset) => !asset.name.endsWith(".sha256"))
         .map((asset) => asset.browser_download_url));
-    await (0, version_manifest_1.updateVersionManifest)(versionsManifestFilePath, artifactDownloadUrls);
+    await (0, version_manifest_1.updateVersionManifest)(versionsManifestFile, artifactDownloadUrls);
     core.setOutput("latest-version", latestRelease.tag_name);
 }
 run();
@@ -62557,24 +62582,17 @@ exports.TOOL_CACHE_NAME = "uv";
 
 /***/ }),
 
-/***/ 3352:
+/***/ 3385:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.Octokit = exports.customFetch = void 0;
+exports.fetch = void 0;
 exports.getProxyAgent = getProxyAgent;
-const core_1 = __nccwpck_require__(767);
-const plugin_paginate_rest_1 = __nccwpck_require__(3779);
-const plugin_rest_endpoint_methods_1 = __nccwpck_require__(9210);
 const undici_1 = __nccwpck_require__(6752);
-const DEFAULTS = {
-    baseUrl: "https://api.github.com",
-    userAgent: "setup-uv",
-};
 function getProxyAgent() {
-    const httpProxy = process.env.HTTP_PROXY || process.env.http_prox;
+    const httpProxy = process.env.HTTP_PROXY || process.env.http_proxy;
     if (httpProxy) {
         return new undici_1.ProxyAgent(httpProxy);
     }
@@ -62584,17 +62602,36 @@ function getProxyAgent() {
     }
     return undefined;
 }
-const customFetch = async (url, opts) => await (0, undici_1.fetch)(url, {
+const fetch = async (url, opts) => await (0, undici_1.fetch)(url, {
     dispatcher: getProxyAgent(),
     ...opts,
 });
-exports.customFetch = customFetch;
+exports.fetch = fetch;
+
+
+/***/ }),
+
+/***/ 3352:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Octokit = void 0;
+const core_1 = __nccwpck_require__(767);
+const plugin_paginate_rest_1 = __nccwpck_require__(3779);
+const plugin_rest_endpoint_methods_1 = __nccwpck_require__(9210);
+const fetch_1 = __nccwpck_require__(3385);
+const DEFAULTS = {
+    baseUrl: "https://api.github.com",
+    userAgent: "setup-uv",
+};
 exports.Octokit = core_1.Octokit.plugin(plugin_paginate_rest_1.paginateRest, plugin_rest_endpoint_methods_1.legacyRestEndpointMethods).defaults(function buildDefaults(options) {
     return {
         ...DEFAULTS,
         ...options,
         request: {
-            fetch: exports.customFetch,
+            fetch: fetch_1.fetch,
             ...options.request,
         },
     };
