@@ -7,7 +7,10 @@ import { OWNER, REPO, TOOL_CACHE_NAME } from "../utils/constants";
 import type { Architecture, Platform } from "../utils/platforms";
 import { validateChecksum } from "./checksum/checksum";
 import { Octokit } from "../utils/octokit";
-import { getDownloadUrl } from "./version-manifest";
+import {
+  getDownloadUrl,
+  getLatestKnownVersion as getLatestVersionInManifest,
+} from "./version-manifest";
 
 export function tryGetFromToolCache(
   arch: Architecture,
@@ -127,13 +130,22 @@ function getExtension(platform: Platform): string {
 
 export async function resolveVersion(
   versionInput: string,
+  manifestFile: string | undefined,
   githubToken: string,
 ): Promise<string> {
   core.debug(`Resolving version: ${versionInput}`);
-  const version =
-    versionInput === "latest"
-      ? await getLatestVersion(githubToken)
-      : versionInput;
+  let version: string;
+  if (manifestFile) {
+    version =
+      versionInput === "latest"
+        ? await getLatestVersionInManifest(manifestFile)
+        : versionInput;
+  } else {
+    version =
+      versionInput === "latest"
+        ? await getLatestVersion(githubToken)
+        : versionInput;
+  }
   if (tc.isExplicitVersion(version)) {
     core.debug(`Version ${version} is an explicit version.`);
     return version;

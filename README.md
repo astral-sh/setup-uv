@@ -430,6 +430,11 @@ This is useful if you maintain your own uv builds or want to override the defaul
     manifest-file: "https://example.com/my-custom-manifest.json"
 ```
 
+> [!NOTE]
+> When you use a custom manifest file and do not set the `version` input, its default value is `latest`.
+> This means the action will install the latest version available in the custom manifest file.
+> This is different from the default behavior of installing the latest version from the official uv releases.
+
 ## How it works
 
 This action downloads uv from the uv repo's official
