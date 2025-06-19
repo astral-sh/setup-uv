@@ -87,7 +87,7 @@ async function setupUv(
   checkSum: string | undefined,
   githubToken: string,
 ): Promise<{ uvDir: string; version: string }> {
-  const resolvedVersion = await determineVersion();
+  const resolvedVersion = await determineVersion(manifestFile);
   const toolCacheResult = tryGetFromToolCache(arch, resolvedVersion);
   if (toolCacheResult.installedPath) {
     core.info(`Found uv in tool-cache for ${toolCacheResult.version}`);
@@ -127,9 +127,11 @@ async function setupUv(
   };
 }
 
-async function determineVersion(): Promise<string> {
+async function determineVersion(
+  manifestFile: string | undefined,
+): Promise<string> {
   if (versionInput !== "") {
-    return await resolveVersion(versionInput, githubToken);
+    return await resolveVersion(versionInput, manifestFile, githubToken);
   }
   const versionFromUvToml = getUvVersionFromConfigFile(
     `${workingDirectory}${path.sep}uv.toml`,
@@ -144,6 +146,7 @@ async function determineVersion(): Promise<string> {
   }
   return await resolveVersion(
     versionFromUvToml || versionFromPyproject || "latest",
+    manifestFile,
     githubToken,
   );
 }
