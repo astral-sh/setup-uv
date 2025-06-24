@@ -422,7 +422,7 @@ jobs:
           - os: ubuntu-latest
             expected-cache-dir: "/home/runner/work/_temp/setup-uv-cache"
           - os: windows-latest
-            expected-cache-dir: "C:\\a\\_temp\\setup-uv-cache"
+            expected-cache-dir: "D:\\a\\_temp\\setup-uv-cache"
           - os: selfhosted-ubuntu-arm64
             expected-cache-dir: "/home/ubuntu/.cache/uv"
     runs-on: ${{ matrix.inputs.os }}
