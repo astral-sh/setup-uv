@@ -64,7 +64,7 @@ export async function downloadVersionFromManifest(
     platform,
   );
   if (!downloadUrl) {
-    core.warning(
+    core.info(
       `manifest-file does not contain version ${version}, arch ${arch}, platform ${platform}. Falling back to GitHub releases.`,
     );
     return await downloadVersionFromGithub(
