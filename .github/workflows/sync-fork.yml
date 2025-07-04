@@ -1,0 +1,30 @@
+name: Sync Fork with Upstream
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Forked Repository
+        uses: actions/checkout@v4
+        with:
+            fetch-tags: true
+            token: ${{ secrets.SYNC_FORK_TOKEN }}
+
+      - name: Configure comitter
+        run: |
+          git config --global user.email "mkirkeng@leukeleu.nl"
+          git config --global user.name "Mathias Kirkeng"
+
+      - name: Add Upstream Remote
+        run: git remote add upstream https://github.com/astral-sh/setup-uv.git
+
+      - name: Fetch Upstream Changes
+        run: git fetch --prune --all --verbose
+
+      - name: Push changes to origin
+        run: |
+          git push origin refs/heads/main --tags --verbose
