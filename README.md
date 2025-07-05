@@ -542,6 +542,23 @@ Running `actions/checkout` after `setup-uv` **is not supported**.
 No, `setup-uv` alone wont install any libraries from your `pyproject.toml` or `requirements.txt`, it only sets up `uv`.
 You should run `uv sync` or `uv pip install .` separately, or use `uv run ...` to ensure necessary dependencies are installed.
 
+### Why is a changed cache not detected and not the full cache uploaded?
+
+When `setup-uv` starts it has to know whether it is better to download an existing cache
+or start fresh and download every dependency again.
+It does this by using a combination of hashes calculated on the contents of e.g. `uv.lock`.
+
+By calculating these hashes and combining them in a key `setup-uv` can check
+if an uploaded cache exists for this key.
+If yes (e.g. contents of `uv.lock` did not change since last run) the dependencies in the cache
+are up to date and the cache will be downloaded and used.
+
+Details on determining which files will lead to different caches can be read under
+[cache-dependency-glob](#cache-dependency-glob)
+
+Some dependencies will never be uploaded to the cache and will be downloaded again on each run
+as described in [disable-cache-pruning](#disable-cache-pruning)
+
 ## Acknowledgements
 
 `setup-uv` was initially written and published by [Kevin Stillhammer](https://github.com/eifinger)
