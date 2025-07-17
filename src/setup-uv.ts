@@ -25,13 +25,14 @@ import {
   toolBinDir,
   toolDir,
   version as versionInput,
+  versionFile as versionFileInput,
   workingDirectory,
   serverUrl,
   manifestFile,
 } from "./utils/inputs";
 import * as exec from "@actions/exec";
 import fs from "node:fs";
-import { getUvVersionFromConfigFile } from "./utils/config-file";
+import { getUvVersionFromFile } from "./version/resolve";
 
 async function run(): Promise<void> {
   detectEmptyWorkdir();
@@ -133,10 +134,19 @@ async function determineVersion(
   if (versionInput !== "") {
     return await resolveVersion(versionInput, manifestFile, githubToken);
   }
-  const versionFromUvToml = getUvVersionFromConfigFile(
+  if (versionFileInput !== "") {
+    const versionFromFile = getUvVersionFromFile(versionFileInput);
+    if (versionFromFile === undefined) {
+      throw new Error(
+        `Could not determine uv version from file: ${versionFileInput}`,
+      );
+    }
+    return await resolveVersion(versionFromFile, manifestFile, githubToken);
+  }
+  const versionFromUvToml = getUvVersionFromFile(
     `${workingDirectory}${path.sep}uv.toml`,
   );
-  const versionFromPyproject = getUvVersionFromConfigFile(
+  const versionFromPyproject = getUvVersionFromFile(
     `${workingDirectory}${path.sep}pyproject.toml`,
   );
   if (versionFromUvToml === undefined && versionFromPyproject === undefined) {

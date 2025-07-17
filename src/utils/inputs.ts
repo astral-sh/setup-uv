@@ -3,6 +3,7 @@ import path from "node:path";
 import { getManifestFromRepo } from "@actions/tool-cache";
 
 export const version = core.getInput("version");
+export const versionFile = core.getInput("version-file");
 export const pythonVersion = core.getInput("python-version");
 export const activateEnvironment = core.getBooleanInput("activate-environment");
 export const workingDirectory = core.getInput("working-directory");

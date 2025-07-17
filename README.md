@@ -15,6 +15,7 @@ Set up your GitHub Actions workflow with a specific version of [uv](https://docs
   - [Install the latest version](#install-the-latest-version)
   - [Install a specific version](#install-a-specific-version)
   - [Install a version by supplying a semver range or pep440 specifier](#install-a-version-by-supplying-a-semver-range-or-pep440-specifier)
+  - [Install a version defined in a requirements or config file](#install-a-version-defined-in-a-requirements-or-config-file)
   - [Python version](#python-version)
   - [Activate environment](#activate-environment)
   - [Working directory](#working-directory)
@@ -90,6 +91,19 @@ to install the latest version that satisfies the range.
   uses: astral-sh/setup-uv@v6
   with:
     version: ">=0.4.25,<0.5"
+```
+
+### Install a version defined in a requirements or config file
+
+You can use the `version-file` input to specify a file that contains the version of uv to install.
+This can either be a `pyproject.toml` or `uv.toml` file which defines a `required-version` or
+uv defined as a dependency in `pyproject.toml` or `requirements.txt`.
+
+```yaml
+- name: Install uv based on the version defined in pyproject.toml
+  uses: astral-sh/setup-uv@v6
+  with:
+    version-file: "pyproject.toml"
 ```
 
 ### Python version
