@@ -275,6 +275,27 @@ jobs:
           fi
         shell: bash
 
+  test-activate-environment-bin:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install latest version
+        uses: ./
+        with:
+          activate-environment: true
+          working-directory: __tests__/fixtures/uv-project
+      - name: uv sync
+        working-directory: __tests__/fixtures/uv-project
+        run: uv sync
+        shell: bash
+      - name: Verify bin files available
+        working-directory: __tests__/fixtures/uv-project
+        run: ruff --version
+        shell: bash
+
   test-musl:
     runs-on: ubuntu-latest
     container: alpine
