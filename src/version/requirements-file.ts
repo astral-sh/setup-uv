@@ -15,8 +15,8 @@ function getUvVersionFromAllDependencies(
   allDependencies: string[],
 ): string | undefined {
   return allDependencies
-    .find((dep: string) => dep.startsWith("uv"))
-    ?.match(/^uv([^A-Z0-9._-]+.*)$/)?.[1]
+    .find((dep: string) => dep.match(/^uv[=<>~!]/))
+    ?.match(/^uv([=<>~!]+.*)$/)?.[1]
     .trim();
 }
 
