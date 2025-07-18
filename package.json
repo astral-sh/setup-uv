@@ -42,7 +42,7 @@
     "@types/node": "^24.0.14",
     "@types/semver": "^7.7.0",
     "@vercel/ncc": "^0.38.3",
-    "jest": "^29.7.0",
+    "jest": "^30.0.4",
     "js-yaml": "^4.1.0",
     "ts-jest": "^29.4.0",
     "typescript": "^5.8.3"
