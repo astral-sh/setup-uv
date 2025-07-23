@@ -566,6 +566,24 @@ jobs:
             exit 1
           fi
 
+  test-absolute-path:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create requirements.txt
+        run: echo "uv==0.6.17" > /tmp/setup-uv-requirements.txt
+      - name: Install from requirements file
+        id: setup-uv
+        uses: ./
+        with:
+          version-file: "/tmp/setup-uv-requirements.txt"
+      - name: Correct version gets installed
+        run: |
+          if [ "$(uv --version)" != "uv 0.6.17" ]; then
+            echo "Wrong uv version: $(uv --version)"
+            exit 1
+          fi
+
   all-tests-passed:
     runs-on: ubuntu-latest
     needs:
@@ -600,6 +618,7 @@ jobs:
       - cleanup-tilde-expansion-tests
       - test-no-python-version
       - test-custom-manifest-file
+      - test-absolute-path
     if: always()
     steps:
       - name: All tests passed
