@@ -1,11 +1,11 @@
 import * as core from "@actions/core";
 import path from "node:path";
 
+export const workingDirectory = core.getInput("working-directory");
 export const version = core.getInput("version");
-export const versionFile = core.getInput("version-file");
+export const versionFile = getVersionFile();
 export const pythonVersion = core.getInput("python-version");
 export const activateEnvironment = core.getBooleanInput("activate-environment");
-export const workingDirectory = core.getInput("working-directory");
 export const checkSum = core.getInput("checksum");
 export const enableCache = getEnableCache();
 export const cacheSuffix = core.getInput("cache-suffix") || "";
@@ -21,6 +21,15 @@ export const toolDir = getToolDir();
 export const serverUrl = core.getInput("server-url");
 export const githubToken = core.getInput("github-token");
 export const manifestFile = getManifestFile();
+
+function getVersionFile(): string {
+  const versionFileInput = core.getInput("version-file");
+  if (versionFileInput !== "") {
+    const tildeExpanded = expandTilde(versionFileInput);
+    return resolveRelativePath(tildeExpanded);
+  }
+  return versionFileInput;
+}
 
 function getEnableCache(): boolean {
   const enableCacheInput = core.getInput("enable-cache");
@@ -108,7 +117,11 @@ function resolveRelativePath(inputPath: string): string {
   if (path.isAbsolute(inputPath)) {
     return inputPath;
   }
-  const absolutePath = `${workingDirectory}${path.sep}${inputPath}`;
+  let absolutePath = inputPath;
+  if (absolutePath.startsWith("./")) {
+    absolutePath = absolutePath.substring(2);
+  }
+  absolutePath = `${workingDirectory}${path.sep}${absolutePath}`;
   core.debug(`Resolving relative path ${inputPath} to ${absolutePath}`);
   return absolutePath;
 }

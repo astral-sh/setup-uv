@@ -88998,14 +88998,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.manifestFile = exports.githubToken = exports.serverUrl = exports.toolDir = exports.toolBinDir = exports.ignoreEmptyWorkdir = exports.ignoreNothingToCache = exports.pruneCache = exports.cacheDependencyGlob = exports.cacheLocalPath = exports.cacheSuffix = exports.enableCache = exports.checkSum = exports.workingDirectory = exports.activateEnvironment = exports.pythonVersion = exports.versionFile = exports.version = void 0;
+exports.manifestFile = exports.githubToken = exports.serverUrl = exports.toolDir = exports.toolBinDir = exports.ignoreEmptyWorkdir = exports.ignoreNothingToCache = exports.pruneCache = exports.cacheDependencyGlob = exports.cacheLocalPath = exports.cacheSuffix = exports.enableCache = exports.checkSum = exports.activateEnvironment = exports.pythonVersion = exports.versionFile = exports.version = exports.workingDirectory = void 0;
 const core = __importStar(__nccwpck_require__(7484));
 const node_path_1 = __importDefault(__nccwpck_require__(6760));
+exports.workingDirectory = core.getInput("working-directory");
 exports.version = core.getInput("version");
-exports.versionFile = core.getInput("version-file");
+exports.versionFile = getVersionFile();
 exports.pythonVersion = core.getInput("python-version");
 exports.activateEnvironment = core.getBooleanInput("activate-environment");
-exports.workingDirectory = core.getInput("working-directory");
 exports.checkSum = core.getInput("checksum");
 exports.enableCache = getEnableCache();
 exports.cacheSuffix = core.getInput("cache-suffix") || "";
@@ -89019,6 +89019,14 @@ exports.toolDir = getToolDir();
 exports.serverUrl = core.getInput("server-url");
 exports.githubToken = core.getInput("github-token");
 exports.manifestFile = getManifestFile();
+function getVersionFile() {
+    const versionFileInput = core.getInput("version-file");
+    if (versionFileInput !== "") {
+        const tildeExpanded = expandTilde(versionFileInput);
+        return resolveRelativePath(tildeExpanded);
+    }
+    return versionFileInput;
+}
 function getEnableCache() {
     const enableCacheInput = core.getInput("enable-cache");
     if (enableCacheInput === "auto") {
@@ -89093,7 +89101,11 @@ function resolveRelativePath(inputPath) {
     if (node_path_1.default.isAbsolute(inputPath)) {
         return inputPath;
     }
-    const absolutePath = `${exports.workingDirectory}${node_path_1.default.sep}${inputPath}`;
+    let absolutePath = inputPath;
+    if (absolutePath.startsWith("./")) {
+        absolutePath = absolutePath.substring(2);
+    }
+    absolutePath = `${exports.workingDirectory}${node_path_1.default.sep}${absolutePath}`;
     core.debug(`Resolving relative path ${inputPath} to ${absolutePath}`);
     return absolutePath;
 }
