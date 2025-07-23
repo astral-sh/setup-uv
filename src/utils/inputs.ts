@@ -1,6 +1,5 @@
 import * as core from "@actions/core";
 import path from "node:path";
-import { getManifestFromRepo } from "@actions/tool-cache";
 
 export const version = core.getInput("version");
 export const versionFile = core.getInput("version-file");
@@ -11,7 +10,7 @@ export const checkSum = core.getInput("checksum");
 export const enableCache = getEnableCache();
 export const cacheSuffix = core.getInput("cache-suffix") || "";
 export const cacheLocalPath = getCacheLocalPath();
-export const cacheDependencyGlob = core.getInput("cache-dependency-glob");
+export const cacheDependencyGlob = getCacheDependencyGlob();
 export const pruneCache = core.getInput("prune-cache") === "true";
 export const ignoreNothingToCache =
   core.getInput("ignore-nothing-to-cache") === "true";
@@ -34,7 +33,8 @@ function getEnableCache(): boolean {
 function getToolBinDir(): string | undefined {
   const toolBinDirInput = core.getInput("tool-bin-dir");
   if (toolBinDirInput !== "") {
-    return expandTilde(toolBinDirInput);
+    const tildeExpanded = expandTilde(toolBinDirInput);
+    return resolveRelativePath(tildeExpanded);
   }
   if (process.platform === "win32") {
     if (process.env.RUNNER_TEMP !== undefined) {
@@ -50,7 +50,8 @@ function getToolBinDir(): string | undefined {
 function getToolDir(): string | undefined {
   const toolDirInput = core.getInput("tool-dir");
   if (toolDirInput !== "") {
-    return expandTilde(toolDirInput);
+    const tildeExpanded = expandTilde(toolDirInput);
+    return resolveRelativePath(tildeExpanded);
   }
   if (process.platform === "win32") {
     if (process.env.RUNNER_TEMP !== undefined) {
@@ -66,7 +67,8 @@ function getToolDir(): string | undefined {
 function getCacheLocalPath(): string {
   const cacheLocalPathInput = core.getInput("cache-local-path");
   if (cacheLocalPathInput !== "") {
-    return expandTilde(cacheLocalPathInput);
+    const tildeExpanded = expandTilde(cacheLocalPathInput);
+    return resolveRelativePath(tildeExpanded);
   }
   if (process.env.RUNNER_ENVIRONMENT === "github-hosted") {
     if (process.env.RUNNER_TEMP !== undefined) {
@@ -82,11 +84,33 @@ function getCacheLocalPath(): string {
   return `${process.env.HOME}${path.sep}.cache${path.sep}uv`;
 }
 
+function getCacheDependencyGlob(): string {
+  const cacheDependencyGlobInput = core.getInput("cache-dependency-glob");
+  if (cacheDependencyGlobInput !== "") {
+    return cacheDependencyGlobInput
+      .split("\n")
+      .map((part) => part.trim())
+      .map((part) => expandTilde(part))
+      .map((part) => resolveRelativePath(part))
+      .join("\n");
+  }
+  return cacheDependencyGlobInput;
+}
+
 function expandTilde(input: string): string {
   if (input.startsWith("~")) {
     return `${process.env.HOME}${input.substring(1)}`;
   }
   return input;
+}
+
+function resolveRelativePath(inputPath: string): string {
+  if (path.isAbsolute(inputPath)) {
+    return inputPath;
+  }
+  const absolutePath = `${workingDirectory}${path.sep}${inputPath}`;
+  core.debug(`Resolving relative path ${inputPath} to ${absolutePath}`);
+  return absolutePath;
 }
 
 function getManifestFile(): string | undefined {

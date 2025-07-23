@@ -89010,7 +89010,7 @@ exports.checkSum = core.getInput("checksum");
 exports.enableCache = getEnableCache();
 exports.cacheSuffix = core.getInput("cache-suffix") || "";
 exports.cacheLocalPath = getCacheLocalPath();
-exports.cacheDependencyGlob = core.getInput("cache-dependency-glob");
+exports.cacheDependencyGlob = getCacheDependencyGlob();
 exports.pruneCache = core.getInput("prune-cache") === "true";
 exports.ignoreNothingToCache = core.getInput("ignore-nothing-to-cache") === "true";
 exports.ignoreEmptyWorkdir = core.getInput("ignore-empty-workdir") === "true";
@@ -89029,7 +89029,8 @@ function getEnableCache() {
 function getToolBinDir() {
     const toolBinDirInput = core.getInput("tool-bin-dir");
     if (toolBinDirInput !== "") {
-        return expandTilde(toolBinDirInput);
+        const tildeExpanded = expandTilde(toolBinDirInput);
+        return resolveRelativePath(tildeExpanded);
     }
     if (process.platform === "win32") {
         if (process.env.RUNNER_TEMP !== undefined) {
@@ -89042,7 +89043,8 @@ function getToolBinDir() {
 function getToolDir() {
     const toolDirInput = core.getInput("tool-dir");
     if (toolDirInput !== "") {
-        return expandTilde(toolDirInput);
+        const tildeExpanded = expandTilde(toolDirInput);
+        return resolveRelativePath(tildeExpanded);
     }
     if (process.platform === "win32") {
         if (process.env.RUNNER_TEMP !== undefined) {
@@ -89055,7 +89057,8 @@ function getToolDir() {
 function getCacheLocalPath() {
     const cacheLocalPathInput = core.getInput("cache-local-path");
     if (cacheLocalPathInput !== "") {
-        return expandTilde(cacheLocalPathInput);
+        const tildeExpanded = expandTilde(cacheLocalPathInput);
+        return resolveRelativePath(tildeExpanded);
     }
     if (process.env.RUNNER_ENVIRONMENT === "github-hosted") {
         if (process.env.RUNNER_TEMP !== undefined) {
@@ -89068,11 +89071,31 @@ function getCacheLocalPath() {
     }
     return `${process.env.HOME}${node_path_1.default.sep}.cache${node_path_1.default.sep}uv`;
 }
+function getCacheDependencyGlob() {
+    const cacheDependencyGlobInput = core.getInput("cache-dependency-glob");
+    if (cacheDependencyGlobInput !== "") {
+        return cacheDependencyGlobInput
+            .split("\n")
+            .map((part) => part.trim())
+            .map((part) => expandTilde(part))
+            .map((part) => resolveRelativePath(part))
+            .join("\n");
+    }
+    return cacheDependencyGlobInput;
+}
 function expandTilde(input) {
     if (input.startsWith("~")) {
         return `${process.env.HOME}${input.substring(1)}`;
     }
     return input;
+}
+function resolveRelativePath(inputPath) {
+    if (node_path_1.default.isAbsolute(inputPath)) {
+        return inputPath;
+    }
+    const absolutePath = `${exports.workingDirectory}${node_path_1.default.sep}${inputPath}`;
+    core.debug(`Resolving relative path ${inputPath} to ${absolutePath}`);
+    return absolutePath;
 }
 function getManifestFile() {
     const manifestFileInput = core.getInput("manifest-file");
