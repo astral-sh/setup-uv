@@ -584,6 +584,28 @@ jobs:
             exit 1
           fi
 
+  test-relative-path:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: mkdir
+        run: mkdir -p /tmp/setup-uv-test-relative-path
+      - name: Create requirements.txt
+        run: echo "uv==0.6.17" > /tmp/setup-uv-test-relative-path/setup-uv-requirements.txt
+      - name: Install from requirements file
+        id: setup-uv
+        uses: ./
+        with:
+          version-file: "./setup-uv-requirements.txt"
+          working-directory: "/tmp/setup-uv-test-relative-path"
+          cache-dependency-glob: "./setup-uv-requirements.txt"
+      - name: Correct version gets installed
+        run: |
+          if [ "$(uv --version)" != "uv 0.6.17" ]; then
+            echo "Wrong uv version: $(uv --version)"
+            exit 1
+          fi
+
   all-tests-passed:
     runs-on: ubuntu-latest
     needs:
@@ -619,6 +641,7 @@ jobs:
       - test-no-python-version
       - test-custom-manifest-file
       - test-absolute-path
+      - test-relative-path
     if: always()
     steps:
       - name: All tests passed
