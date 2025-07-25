@@ -634,6 +634,7 @@ jobs:
       - test-malformed-pyproject-file-fallback
       - test-uv-file-version
       - test-version-file-version
+      - test-version-file-hash-version
       - test-checksum
       - test-with-explicit-token
       - test-uvx
