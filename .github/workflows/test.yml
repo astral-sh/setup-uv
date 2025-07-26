@@ -171,6 +171,22 @@ jobs:
             exit 1
           fi
 
+  test-version-file-hash-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install from requirements file
+        id: setup-uv
+        uses: ./
+        with:
+          version-file: "__tests__/fixtures/uv-in-requirements-hash-txt-project/requirements.txt"
+      - name: Correct version gets installed
+        run: |
+          if [ "$(uv --version)" != "uv 0.8.3" ]; then
+            echo "Wrong uv version: $(uv --version)"
+            exit 1
+          fi
+
   test-checksum:
     runs-on: ${{ matrix.inputs.os }}
     strategy:
@@ -618,6 +634,7 @@ jobs:
       - test-malformed-pyproject-file-fallback
       - test-uv-file-version
       - test-version-file-version
+      - test-version-file-hash-version
       - test-checksum
       - test-with-explicit-token
       - test-uvx
