@@ -193,6 +193,10 @@ are automatically verified by this action. The sha256 hashes can be found on the
 
 ### Enable caching
 
+> [!NOTE]
+> The cache is pruned before it is uploaded to the GitHub Actions cache. This can lead to
+> a small or empty cache. See [Disable cache pruning](#disable-cache-pruning) for more details.
+
 If you enable caching, the [uv cache](https://docs.astral.sh/uv/concepts/cache/) will be uploaded to
 the GitHub Actions cache. This can speed up runs that reuse the cache by several minutes.
 Caching is enabled by default on GitHub-hosted runners.
@@ -396,6 +400,7 @@ If you want to change this behaviour (especially on self-hosted runners) you can
 
 This action supports expanding the `~` character to the user's home directory for the following inputs:
 
+- `version-file`
 - `cache-local-path`
 - `tool-dir`
 - `tool-bin-dir`
