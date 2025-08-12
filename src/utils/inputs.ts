@@ -21,6 +21,8 @@ export const toolDir = getToolDir();
 export const serverUrl = core.getInput("server-url");
 export const githubToken = core.getInput("github-token");
 export const manifestFile = getManifestFile();
+export const addProblemMatchers =
+  core.getInput("add-problem-matchers") === "true";
 
 function getVersionFile(): string {
   const versionFileInput = core.getInput("version-file");

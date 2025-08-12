@@ -11,6 +11,7 @@ import {
 } from "./download/download-version";
 import {
   activateEnvironment as activateEnvironmentInput,
+  addProblemMatchers,
   cacheLocalPath,
   checkSum,
   enableCache,
@@ -226,8 +227,10 @@ function setCacheDir(cacheLocalPath: string): void {
 }
 
 function addMatchers(): void {
-  const matchersPath = path.join(__dirname, `..${path.sep}..`, ".github");
-  core.info(`##[add-matcher]${path.join(matchersPath, "python.json")}`);
+  if (addProblemMatchers) {
+    const matchersPath = path.join(__dirname, `..${path.sep}..`, ".github");
+    core.info(`##[add-matcher]${path.join(matchersPath, "python.json")}`);
+  }
 }
 
 run();

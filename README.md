@@ -30,6 +30,7 @@ Set up your GitHub Actions workflow with a specific version of [uv](https://docs
   - [UV_TOOL_BIN_DIR](#uv_tool_bin_dir)
   - [Tilde Expansion](#tilde-expansion)
   - [Manifest file](#manifest-file)
+  - [Add problem matchers](#add-problem-matchers)
 - [How it works](#how-it-works)
 - [FAQ](#faq)
 
@@ -453,6 +454,21 @@ This is useful if you maintain your own uv builds or want to override the defaul
 > When you use a custom manifest file and do not set the `version` input, its default value is `latest`.
 > This means the action will install the latest version available in the custom manifest file.
 > This is different from the default behavior of installing the latest version from the official uv releases.
+
+### Add problem matchers
+
+This action automatically adds
+[problem matchers](https://github.com/actions/toolkit/blob/main/docs/problem-matchers.md)
+for python errors.
+
+You can disable this by setting the `add-problem-matchers` input to `false`.
+
+```yaml
+- name: Install the latest version of uv without problem matchers
+  uses: astral-sh/setup-uv@v6
+  with:
+    add-problem-matchers: false
+```
 
 ## How it works
 

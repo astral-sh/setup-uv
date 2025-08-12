@@ -68,6 +68,9 @@ inputs:
   manifest-file:
     description: "URL to the manifest file containing available versions and download URLs."
     required: false
+  add-problem-matchers:
+    description: "Add problem matchers."
+    default: "true"
 outputs:
   uv-version:
     description: "The installed uv version. Useful when using latest."
