@@ -1,8 +1,8 @@
 import * as crypto from "node:crypto";
-import * as core from "@actions/core";
 import * as fs from "node:fs";
 import * as stream from "node:stream";
 import * as util from "node:util";
+import * as core from "@actions/core";
 import { create } from "@actions/glob";
 
 /**

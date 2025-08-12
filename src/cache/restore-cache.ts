@@ -1,5 +1,7 @@
 import * as cache from "@actions/cache";
 import * as core from "@actions/core";
+import * as exec from "@actions/exec";
+import { hashFiles } from "../hash/hash-files";
 import {
   cacheDependencyGlob,
   cacheLocalPath,
@@ -9,8 +11,6 @@ import {
   workingDirectory,
 } from "../utils/inputs";
 import { getArch, getPlatform } from "../utils/platforms";
-import { hashFiles } from "../hash/hash-files";
-import * as exec from "@actions/exec";
 
 export const STATE_CACHE_KEY = "cache-key";
 export const STATE_CACHE_MATCHED_KEY = "cache-matched-key";
@@ -67,12 +67,12 @@ async function getPythonVersion(): Promise<string> {
 
   let output = "";
   const options: exec.ExecOptions = {
-    silent: !core.isDebug(),
     listeners: {
       stdout: (data: Buffer) => {
         output += data.toString();
       },
     },
+    silent: !core.isDebug(),
   };
 
   try {

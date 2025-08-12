@@ -1,5 +1,5 @@
-import * as core from "@actions/core";
 import path from "node:path";
+import * as core from "@actions/core";
 
 export const workingDirectory = core.getInput("working-directory");
 export const version = core.getInput("version");

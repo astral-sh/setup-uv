@@ -6,14 +6,12 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "format": "biome format --fix",
-    "format-check": "biome format",
-    "lint": "biome lint --fix",
+    "check": "biome check --write",
     "package": "ncc build -o dist/setup src/setup-uv.ts && ncc build -o dist/save-cache src/save-cache.ts && ncc build -o dist/update-known-versions src/update-known-versions.ts",
     "test": "jest",
     "act": "act pull_request -W .github/workflows/test.yml --container-architecture linux/amd64 -s GITHUB_TOKEN=\"$(gh auth token)\"",
     "update-known-versions": "RUNNER_TEMP=known_versions node dist/update-known-versions/index.js src/download/checksum/known-versions.ts \"$(gh auth token)\"",
-    "all": "npm run build && npm run format && npm run lint && npm run package && npm test"
+    "all": "npm run build && npm run check && npm run package && npm test"
   },
   "repository": {
     "type": "git",
@@ -37,7 +35,7 @@
     "undici": "^7.10.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.9.4",
+    "@biomejs/biome": "2.1.4",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^24.0.14",
     "@types/semver": "^7.7.0",

@@ -1,12 +1,12 @@
+import { promises as fs } from "node:fs";
+import * as path from "node:path";
 import * as core from "@actions/core";
 import * as tc from "@actions/tool-cache";
-import * as path from "node:path";
 import * as pep440 from "@renovatebot/pep440";
-import { promises as fs } from "node:fs";
 import { OWNER, REPO, TOOL_CACHE_NAME } from "../utils/constants";
+import { Octokit } from "../utils/octokit";
 import type { Architecture, Platform } from "../utils/platforms";
 import { validateChecksum } from "./checksum/checksum";
-import { Octokit } from "../utils/octokit";
 import {
   getDownloadUrl,
   getLatestKnownVersion as getLatestVersionInManifest,
@@ -24,7 +24,7 @@ export function tryGetFromToolCache(
     resolvedVersion = version;
   }
   const installedPath = tc.find(TOOL_CACHE_NAME, resolvedVersion, arch);
-  return { version: resolvedVersion, installedPath };
+  return { installedPath, version: resolvedVersion };
 }
 
 export async function downloadVersionFromGithub(
@@ -121,7 +121,7 @@ async function downloadVersion(
     version,
     arch,
   );
-  return { version: version, cachedToolDir };
+  return { cachedToolDir, version: version };
 }
 
 function getExtension(platform: Platform): string {

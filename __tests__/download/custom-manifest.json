@@ -1,9 +1,9 @@
 [
   {
-    "version": "0.7.12-alpha.1",
-    "artifactName": "uv-x86_64-unknown-linux-gnu.tar.gz",
     "arch": "x86_64",
+    "artifactName": "uv-x86_64-unknown-linux-gnu.tar.gz",
+    "downloadUrl": "https://release.pyx.dev/0.7.12-alpha.1/uv-x86_64-unknown-linux-gnu.tar.gz",
     "platform": "unknown-linux-gnu",
-    "downloadUrl": "https://release.pyx.dev/0.7.12-alpha.1/uv-x86_64-unknown-linux-gnu.tar.gz"
+    "version": "0.7.12-alpha.1"
   }
 ]
