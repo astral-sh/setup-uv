@@ -19,7 +19,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Actionlint
         uses: eifinger/actionlint-action@23c85443d840cd73bbecb9cddfc933cc21649a38  # v1.9.1
       - uses: actions/setup-node@v4
@@ -44,7 +44,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, macos-14, windows-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install latest version
         id: setup-uv
         uses: ./
@@ -62,7 +62,7 @@ jobs:
       matrix:
         uv-version: ["0.3.0", "0.3.2", "0.3", "0.3.x", ">=0.3.0"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install version ${{ matrix.uv-version }}
         uses: ./
         with:
@@ -76,7 +76,7 @@ jobs:
         os: [ ubuntu-latest, selfhosted-ubuntu-arm64 ]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install version 0.3
         id: setup-uv
         uses: ./
@@ -99,7 +99,7 @@ jobs:
   test-pep440-version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install version 0.4.30
         id: setup-uv
         uses: ./
@@ -115,7 +115,7 @@ jobs:
   test-pyproject-file-version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install version 0.5.14
         id: setup-uv
         uses: ./
@@ -131,7 +131,7 @@ jobs:
   test-malformed-pyproject-file-fallback:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install using malformed pyproject.toml
         id: setup-uv
         uses: ./
@@ -142,7 +142,7 @@ jobs:
   test-uv-file-version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install version 0.5.15
         id: setup-uv
         uses: ./
@@ -158,7 +158,7 @@ jobs:
   test-version-file-version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install from requirements file
         id: setup-uv
         uses: ./
@@ -174,7 +174,7 @@ jobs:
   test-version-file-hash-version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install from requirements file
         id: setup-uv
         uses: ./
@@ -197,7 +197,7 @@ jobs:
           - os: macos-latest
             checksum: "a70cbfbf3bb5c08b2f84963b4f12c94e08fbb2468ba418a3bfe1066fbe9e7218"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Checksum matches expected
         uses: ./
         with:
@@ -209,7 +209,7 @@ jobs:
   test-with-explicit-token:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install default version
         uses: ./
         with:
@@ -220,7 +220,7 @@ jobs:
   test-uvx:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install default version
         uses: ./
       - run: uvx ruff --version
@@ -237,7 +237,7 @@ jobs:
             windows-latest,
           ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install default version
         uses: ./
       - run: uv tool install ruff
@@ -246,7 +246,7 @@ jobs:
   test-tilde-expansion-tool-dirs:
     runs-on: selfhosted-ubuntu-arm64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup with cache
         uses: ./
         with:
@@ -269,7 +269,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install latest version
         uses: ./
         with:
@@ -290,7 +290,7 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-latest, windows-latest ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install latest version
         uses: ./
         with:
@@ -311,7 +311,7 @@ jobs:
     runs-on: ubuntu-latest
     container: alpine
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install latest version
         uses: ./
       - run: uv sync
@@ -324,7 +324,7 @@ jobs:
         enable-cache: [ "true", "false", "auto" ]
         os: [ "ubuntu-latest", "selfhosted-ubuntu-arm64", "windows-latest" ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup with cache
         uses: ./
         with:
@@ -341,7 +341,7 @@ jobs:
         os: [ "ubuntu-latest", "selfhosted-ubuntu-arm64", "windows-latest" ]
     needs: test-setup-cache
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Restore with cache
         id: restore
         uses: ./
@@ -373,7 +373,7 @@ jobs:
   test-setup-cache-requirements-txt:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup with cache
         uses: ./
         with:
@@ -387,7 +387,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: test-setup-cache
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Restore with cache
         id: restore
         uses: ./
@@ -409,7 +409,7 @@ jobs:
   test-setup-cache-dependency-glob:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup with cache
         uses: ./
         with:
@@ -424,7 +424,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: test-setup-cache-dependency-glob
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Change pyproject.toml
         run: |
           echo '[tool.uv]' >> __tests__/fixtures/uv-project/pyproject.toml
@@ -459,7 +459,7 @@ jobs:
             expected-cache-dir: "/home/ubuntu/.cache/uv"
     runs-on: ${{ matrix.inputs.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup with cache
         uses: ./
         with:
@@ -474,7 +474,7 @@ jobs:
   test-setup-cache-local:
     runs-on: selfhosted-ubuntu-arm64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup with cache
         uses: ./
         with:
@@ -487,7 +487,7 @@ jobs:
     runs-on: selfhosted-ubuntu-arm64
     needs: test-setup-cache-local
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Restore with cache
         id: restore
         uses: ./
@@ -508,7 +508,7 @@ jobs:
   test-tilde-expansion-cache-local-path:
     runs-on: selfhosted-ubuntu-arm64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Create cache directory
         run: mkdir -p ~/uv-cache
         shell: bash
@@ -522,7 +522,7 @@ jobs:
   test-tilde-expansion-cache-dependency-glob:
     runs-on: selfhosted-ubuntu-arm64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Create cache directory
         run: mkdir -p ~/uv-cache
         shell: bash
@@ -555,7 +555,7 @@ jobs:
   test-no-python-version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Fake pyproject.toml at root
         run: cp __tests__/fixtures/old-python-constraint-project/pyproject.toml pyproject.toml
       - name: Setup with cache
@@ -568,7 +568,7 @@ jobs:
   test-custom-manifest-file:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install from custom manifest file
         uses: ./
         with:
@@ -585,7 +585,7 @@ jobs:
   test-absolute-path:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Create requirements.txt
         run: echo "uv==0.6.17" > /tmp/setup-uv-requirements.txt
       - name: Install from requirements file
@@ -603,7 +603,7 @@ jobs:
   test-relative-path:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: mkdir
         run: mkdir -p /tmp/setup-uv-test-relative-path
       - name: Create requirements.txt
