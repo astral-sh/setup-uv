@@ -90068,7 +90068,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.manifestFile = exports.githubToken = exports.serverUrl = exports.toolDir = exports.toolBinDir = exports.ignoreEmptyWorkdir = exports.ignoreNothingToCache = exports.pruneCache = exports.cacheDependencyGlob = exports.cacheLocalPath = exports.cacheSuffix = exports.enableCache = exports.checkSum = exports.activateEnvironment = exports.pythonVersion = exports.versionFile = exports.version = exports.workingDirectory = void 0;
+exports.addProblemMatchers = exports.manifestFile = exports.githubToken = exports.serverUrl = exports.toolDir = exports.toolBinDir = exports.ignoreEmptyWorkdir = exports.ignoreNothingToCache = exports.pruneCache = exports.cacheDependencyGlob = exports.cacheLocalPath = exports.cacheSuffix = exports.enableCache = exports.checkSum = exports.activateEnvironment = exports.pythonVersion = exports.versionFile = exports.version = exports.workingDirectory = void 0;
 const node_path_1 = __importDefault(__nccwpck_require__(6760));
 const core = __importStar(__nccwpck_require__(7484));
 exports.workingDirectory = core.getInput("working-directory");
@@ -90089,6 +90089,7 @@ exports.toolDir = getToolDir();
 exports.serverUrl = core.getInput("server-url");
 exports.githubToken = core.getInput("github-token");
 exports.manifestFile = getManifestFile();
+exports.addProblemMatchers = core.getInput("add-problem-matchers") === "true";
 function getVersionFile() {
     const versionFileInput = core.getInput("version-file");
     if (versionFileInput !== "") {
