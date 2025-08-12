@@ -184,7 +184,13 @@ async function getReleaseTagNames(
     owner: OWNER,
     repo: REPO,
   });
-  return response.map((release) => release.tag_name);
+  const releaseTagNames = response.map((release) => release.tag_name);
+  if (releaseTagNames.length === 0) {
+    throw Error(
+      "Github API request failed while getting releases. Check the GitHub status page for outages. Try again later.",
+    );
+  }
+  return releaseTagNames;
 }
 
 async function getLatestVersion(githubToken: string) {
@@ -197,14 +203,18 @@ async function getLatestVersion(githubToken: string) {
   try {
     latestRelease = await getLatestRelease(octokit);
   } catch (err) {
-    core.info(
-      "No (valid) GitHub token provided. Falling back to anonymous. Requests might be rate limited.",
-    );
-    if (err instanceof Error) {
-      core.debug(err.message);
+    if ((err as Error).message.includes("Bad credentials")) {
+      core.info(
+        "No (valid) GitHub token provided. Falling back to anonymous. Requests might be rate limited.",
+      );
+      const octokit = new Octokit();
+      latestRelease = await getLatestRelease(octokit);
+    } else {
+      core.error(
+        "Github API request failed while getting latest release. Check the GitHub status page for outages. Try again later.",
+      );
+      throw err;
     }
-    const octokit = new Octokit();
-    latestRelease = await getLatestRelease(octokit);
   }
 
   if (!latestRelease) {
