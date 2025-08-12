@@ -1,4 +1,4 @@
-import { fetch as undiciFetch, ProxyAgent, type RequestInit } from "undici";
+import { ProxyAgent, type RequestInit, fetch as undiciFetch } from "undici";
 
 export function getProxyAgent() {
   const httpProxy = process.env.HTTP_PROXY || process.env.http_proxy;

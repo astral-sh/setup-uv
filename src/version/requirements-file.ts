@@ -1,5 +1,5 @@
-import * as toml from "smol-toml";
 import fs from "node:fs";
+import * as toml from "smol-toml";
 
 export function getUvVersionFromRequirementsFile(
   filePath: string,

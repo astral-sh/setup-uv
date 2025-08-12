@@ -1,5 +1,5 @@
-import * as core from "@actions/core";
 import fs from "node:fs";
+import * as core from "@actions/core";
 import { getRequiredVersionFromConfigFile } from "./config-file";
 import { getUvVersionFromRequirementsFile } from "./requirements-file";
 

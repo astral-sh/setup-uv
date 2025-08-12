@@ -1,37 +1,36 @@
-import * as core from "@actions/core";
+import fs from "node:fs";
 import * as path from "node:path";
+import * as core from "@actions/core";
+import * as exec from "@actions/exec";
+import { restoreCache } from "./cache/restore-cache";
 import {
-  tryGetFromToolCache,
-  resolveVersion,
   downloadVersionFromGithub,
   downloadVersionFromManifest,
+  resolveVersion,
+  tryGetFromToolCache,
 } from "./download/download-version";
-import { restoreCache } from "./cache/restore-cache";
-
+import {
+  activateEnvironment as activateEnvironmentInput,
+  cacheLocalPath,
+  checkSum,
+  enableCache,
+  githubToken,
+  ignoreEmptyWorkdir,
+  manifestFile,
+  pythonVersion,
+  serverUrl,
+  toolBinDir,
+  toolDir,
+  versionFile as versionFileInput,
+  version as versionInput,
+  workingDirectory,
+} from "./utils/inputs";
 import {
   type Architecture,
   getArch,
   getPlatform,
   type Platform,
 } from "./utils/platforms";
-import {
-  activateEnvironment as activateEnvironmentInput,
-  cacheLocalPath,
-  checkSum,
-  ignoreEmptyWorkdir,
-  enableCache,
-  githubToken,
-  pythonVersion,
-  toolBinDir,
-  toolDir,
-  version as versionInput,
-  versionFile as versionFileInput,
-  workingDirectory,
-  serverUrl,
-  manifestFile,
-} from "./utils/inputs";
-import * as exec from "@actions/exec";
-import fs from "node:fs";
 import { getUvVersionFromFile } from "./version/resolve";
 
 async function run(): Promise<void> {

@@ -1,8 +1,8 @@
 import { promises as fs } from "node:fs";
+import { join } from "node:path";
 import * as core from "@actions/core";
 import * as semver from "semver";
 import { fetch } from "../utils/fetch";
-import { join } from "node:path";
 
 const localManifestFile = join(__dirname, "..", "..", "version-manifest.json");
 
@@ -79,11 +79,11 @@ export async function updateVersionManifest(
     }
     const artifactParts = artifactName.split(".")[0].split("-");
     manifest.push({
-      version: version,
-      artifactName: artifactName,
       arch: artifactParts[1],
-      platform: artifactName.split(`uv-${artifactParts[1]}-`)[1].split(".")[0],
+      artifactName: artifactName,
       downloadUrl: downloadUrl,
+      platform: artifactName.split(`uv-${artifactParts[1]}-`)[1].split(".")[0],
+      version: version,
     });
   }
   core.debug(`Updating manifest-file: ${JSON.stringify(manifest)}`);

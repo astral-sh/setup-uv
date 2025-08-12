@@ -4,8 +4,8 @@ import type {
   OctokitOptions,
 } from "@octokit/core/dist-types/types";
 import {
-  paginateRest,
   type PaginateInterface,
+  paginateRest,
 } from "@octokit/plugin-paginate-rest";
 import { legacyRestEndpointMethods } from "@octokit/plugin-rest-endpoint-methods";
 import { fetch as customFetch } from "./fetch";

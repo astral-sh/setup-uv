@@ -1,14 +1,12 @@
-import * as semver from "semver";
 import * as core from "@actions/core";
-import { Octokit } from "./utils/octokit";
-
-import { OWNER, REPO } from "./utils/constants";
-
+import * as semver from "semver";
 import { updateChecksums } from "./download/checksum/update-known-checksums";
 import {
-  updateVersionManifest,
   getLatestKnownVersion,
+  updateVersionManifest,
 } from "./download/version-manifest";
+import { OWNER, REPO } from "./utils/constants";
+import { Octokit } from "./utils/octokit";
 
 async function run(): Promise<void> {
   const checksumFilePath = process.argv.slice(2)[0];

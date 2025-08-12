@@ -1,4 +1,4 @@
-import { expect, test, it } from "@jest/globals";
+import { expect, it, test } from "@jest/globals";
 import {
   isknownVersion,
   validateChecksum,
@@ -22,12 +22,12 @@ type KnownVersionFixture = { version: string; known: boolean };
 
 it.each<KnownVersionFixture>([
   {
-    version: "0.3.0",
     known: true,
+    version: "0.3.0",
   },
   {
-    version: "0.0.15",
     known: false,
+    version: "0.0.15",
   },
 ])(
   "isknownVersion should return $known for version $version",

@@ -1,5 +1,5 @@
-import * as exec from "@actions/exec";
 import * as core from "@actions/core";
+import * as exec from "@actions/exec";
 export type Platform =
   | "unknown-linux-gnu"
   | "unknown-linux-musl"
@@ -16,11 +16,11 @@ export type Architecture =
 export function getArch(): Architecture | undefined {
   const arch = process.arch;
   const archMapping: { [key: string]: Architecture } = {
-    ia32: "i686",
-    x64: "x86_64",
     arm64: "aarch64",
-    s390x: "s390x",
+    ia32: "i686",
     ppc64: "powerpc64le",
+    s390x: "s390x",
+    x64: "x86_64",
   };
 
   if (arch in archMapping) {
@@ -31,8 +31,8 @@ export function getArch(): Architecture | undefined {
 export async function getPlatform(): Promise<Platform | undefined> {
   const processPlatform = process.platform;
   const platformMapping: { [key: string]: Platform } = {
-    linux: "unknown-linux-gnu",
     darwin: "apple-darwin",
+    linux: "unknown-linux-gnu",
     win32: "pc-windows-msvc",
   };
 
@@ -50,16 +50,16 @@ async function isMuslOs(): Promise<boolean> {
   let stdOutput = "";
   let errOutput = "";
   const options: exec.ExecOptions = {
-    silent: !core.isDebug(),
+    ignoreReturnCode: true,
     listeners: {
-      stdout: (data: Buffer) => {
-        stdOutput += data.toString();
-      },
       stderr: (data: Buffer) => {
         errOutput += data.toString();
       },
+      stdout: (data: Buffer) => {
+        stdOutput += data.toString();
+      },
     },
-    ignoreReturnCode: true,
+    silent: !core.isDebug(),
   };
 
   try {

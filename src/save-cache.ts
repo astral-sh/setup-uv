@@ -1,10 +1,10 @@
+import * as fs from "node:fs";
 import * as cache from "@actions/cache";
 import * as core from "@actions/core";
 import * as exec from "@actions/exec";
-import * as fs from "node:fs";
 import {
-  STATE_CACHE_MATCHED_KEY,
   STATE_CACHE_KEY,
+  STATE_CACHE_MATCHED_KEY,
 } from "./cache/restore-cache";
 import {
   cacheLocalPath,

@@ -1,9 +1,9 @@
-import * as fs from "node:fs";
 import * as crypto from "node:crypto";
+import * as fs from "node:fs";
 
 import * as core from "@actions/core";
-import { KNOWN_CHECKSUMS } from "./known-checksums";
 import type { Architecture, Platform } from "../../utils/platforms";
+import { KNOWN_CHECKSUMS } from "./known-checksums";
 
 export async function validateChecksum(
   checkSum: string | undefined,
@@ -12,7 +12,7 @@ export async function validateChecksum(
   platform: Platform,
   version: string,
 ): Promise<void> {
-  let isValid: boolean | undefined = undefined;
+  let isValid: boolean | undefined;
   if (checkSum !== undefined && checkSum !== "") {
     isValid = await validateFileCheckSum(downloadPath, checkSum);
   } else {

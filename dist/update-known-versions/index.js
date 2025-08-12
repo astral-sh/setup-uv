@@ -3021,7 +3021,7 @@ module.exports = Agent
 
 /***/ }),
 
-/***/ 6937:
+/***/ 9318:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 const { addAbortListener } = __nccwpck_require__(1544)
@@ -3091,7 +3091,7 @@ module.exports = {
 const { AsyncResource } = __nccwpck_require__(290)
 const { InvalidArgumentError, RequestAbortedError, SocketError } = __nccwpck_require__(8091)
 const util = __nccwpck_require__(1544)
-const { addSignal, removeSignal } = __nccwpck_require__(6937)
+const { addSignal, removeSignal } = __nccwpck_require__(9318)
 
 class ConnectHandler extends AsyncResource {
   constructor (opts, callback) {
@@ -3212,7 +3212,7 @@ const {
 } = __nccwpck_require__(8091)
 const util = __nccwpck_require__(1544)
 const { AsyncResource } = __nccwpck_require__(290)
-const { addSignal, removeSignal } = __nccwpck_require__(6937)
+const { addSignal, removeSignal } = __nccwpck_require__(9318)
 const assert = __nccwpck_require__(2613)
 
 const kResume = Symbol('resume')
@@ -3465,7 +3465,7 @@ const {
 const util = __nccwpck_require__(1544)
 const { getResolveErrorBodyCallback } = __nccwpck_require__(8447)
 const { AsyncResource } = __nccwpck_require__(290)
-const { addSignal, removeSignal } = __nccwpck_require__(6937)
+const { addSignal, removeSignal } = __nccwpck_require__(9318)
 
 class RequestHandler extends AsyncResource {
   constructor (opts, callback) {
@@ -3654,7 +3654,7 @@ const {
 const util = __nccwpck_require__(1544)
 const { getResolveErrorBodyCallback } = __nccwpck_require__(8447)
 const { AsyncResource } = __nccwpck_require__(290)
-const { addSignal, removeSignal } = __nccwpck_require__(6937)
+const { addSignal, removeSignal } = __nccwpck_require__(9318)
 
 class StreamHandler extends AsyncResource {
   constructor (opts, factory, callback) {
@@ -3876,7 +3876,7 @@ module.exports = stream
 const { InvalidArgumentError, RequestAbortedError, SocketError } = __nccwpck_require__(8091)
 const { AsyncResource } = __nccwpck_require__(290)
 const util = __nccwpck_require__(1544)
-const { addSignal, removeSignal } = __nccwpck_require__(6937)
+const { addSignal, removeSignal } = __nccwpck_require__(9318)
 const assert = __nccwpck_require__(2613)
 
 class UpgradeHandler extends AsyncResource {
@@ -25393,7 +25393,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports._readLinuxVersionFile = exports._getOsVersion = exports._findMatch = void 0;
-const semver = __importStar(__nccwpck_require__(9318));
+const semver = __importStar(__nccwpck_require__(6937));
 const core_1 = __nccwpck_require__(7484);
 // needs to be require for core node modules to be mocked
 /* eslint @typescript-eslint/no-require-imports: 0 */
@@ -25631,7 +25631,7 @@ const mm = __importStar(__nccwpck_require__(8036));
 const os = __importStar(__nccwpck_require__(857));
 const path = __importStar(__nccwpck_require__(6928));
 const httpm = __importStar(__nccwpck_require__(4844));
-const semver = __importStar(__nccwpck_require__(9318));
+const semver = __importStar(__nccwpck_require__(6937));
 const stream = __importStar(__nccwpck_require__(2203));
 const util = __importStar(__nccwpck_require__(9023));
 const assert_1 = __nccwpck_require__(2613);
@@ -26257,7 +26257,7 @@ function _unique(values) {
 
 /***/ }),
 
-/***/ 9318:
+/***/ 6937:
 /***/ ((module, exports) => {
 
 exports = module.exports = SemVer
@@ -62771,10 +62771,10 @@ exports.getLatestKnownVersion = getLatestKnownVersion;
 exports.getDownloadUrl = getDownloadUrl;
 exports.updateVersionManifest = updateVersionManifest;
 const node_fs_1 = __nccwpck_require__(3024);
-const core = __importStar(__nccwpck_require__(7484));
-const semver = __importStar(__nccwpck_require__(9318));
-const fetch_1 = __nccwpck_require__(3385);
 const node_path_1 = __nccwpck_require__(6760);
+const core = __importStar(__nccwpck_require__(7484));
+const semver = __importStar(__nccwpck_require__(6937));
+const fetch_1 = __nccwpck_require__(3385);
 const localManifestFile = (0, node_path_1.join)(__dirname, "..", "..", "version-manifest.json");
 async function getLatestKnownVersion(manifestUrl) {
     const manifestEntries = await getManifestEntries(manifestUrl);
@@ -62818,11 +62818,11 @@ async function updateVersionManifest(manifestUrl, downloadUrls) {
         }
         const artifactParts = artifactName.split(".")[0].split("-");
         manifest.push({
-            version: version,
-            artifactName: artifactName,
             arch: artifactParts[1],
-            platform: artifactName.split(`uv-${artifactParts[1]}-`)[1].split(".")[0],
+            artifactName: artifactName,
             downloadUrl: downloadUrl,
+            platform: artifactName.split(`uv-${artifactParts[1]}-`)[1].split(".")[0],
+            version: version,
         });
     }
     core.debug(`Updating manifest-file: ${JSON.stringify(manifest)}`);
@@ -62871,12 +62871,12 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const semver = __importStar(__nccwpck_require__(9318));
 const core = __importStar(__nccwpck_require__(7484));
-const octokit_1 = __nccwpck_require__(3352);
-const constants_1 = __nccwpck_require__(6156);
+const semver = __importStar(__nccwpck_require__(6937));
 const update_known_checksums_1 = __nccwpck_require__(6182);
 const version_manifest_1 = __nccwpck_require__(4000);
+const constants_1 = __nccwpck_require__(6156);
+const octokit_1 = __nccwpck_require__(3352);
 async function run() {
     const checksumFilePath = process.argv.slice(2)[0];
     const versionsManifestFile = process.argv.slice(2)[1];
