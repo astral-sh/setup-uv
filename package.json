@@ -37,7 +37,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.1.4",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^24.0.14",
+    "@types/node": "^24.2.1",
     "@types/semver": "^7.7.0",
     "@vercel/ncc": "^0.38.3",
     "jest": "^30.0.5",
