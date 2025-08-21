@@ -28211,6 +28211,7 @@ const MockClient = __nccwpck_require__(7365)
 const { MockCallHistory, MockCallHistoryLog } = __nccwpck_require__(431)
 const MockAgent = __nccwpck_require__(7501)
 const MockPool = __nccwpck_require__(4004)
+const SnapshotAgent = __nccwpck_require__(5095)
 const mockErrors = __nccwpck_require__(2429)
 const RetryHandler = __nccwpck_require__(7816)
 const { getGlobalDispatcher, setGlobalDispatcher } = __nccwpck_require__(2581)
@@ -28350,10 +28351,12 @@ module.exports.parseMIMEType = parseMIMEType
 module.exports.serializeAMimeType = serializeAMimeType
 
 const { CloseEvent, ErrorEvent, MessageEvent } = __nccwpck_require__(5188)
-module.exports.WebSocket = __nccwpck_require__(3726).WebSocket
+const { WebSocket, ping } = __nccwpck_require__(3726)
+module.exports.WebSocket = WebSocket
 module.exports.CloseEvent = CloseEvent
 module.exports.ErrorEvent = ErrorEvent
 module.exports.MessageEvent = MessageEvent
+module.exports.ping = ping
 
 module.exports.WebSocketStream = __nccwpck_require__(2873).WebSocketStream
 module.exports.WebSocketError = __nccwpck_require__(6919).WebSocketError
@@ -28369,11 +28372,27 @@ module.exports.MockCallHistory = MockCallHistory
 module.exports.MockCallHistoryLog = MockCallHistoryLog
 module.exports.MockPool = MockPool
 module.exports.MockAgent = MockAgent
+module.exports.SnapshotAgent = SnapshotAgent
 module.exports.mockErrors = mockErrors
 
 const { EventSource } = __nccwpck_require__(1238)
 
 module.exports.EventSource = EventSource
+
+function install () {
+  globalThis.fetch = module.exports.fetch
+  globalThis.Headers = module.exports.Headers
+  globalThis.Response = module.exports.Response
+  globalThis.Request = module.exports.Request
+  globalThis.FormData = module.exports.FormData
+  globalThis.WebSocket = module.exports.WebSocket
+  globalThis.CloseEvent = module.exports.CloseEvent
+  globalThis.ErrorEvent = module.exports.ErrorEvent
+  globalThis.MessageEvent = module.exports.MessageEvent
+  globalThis.EventSource = module.exports.EventSource
+}
+
+module.exports.install = install
 
 
 /***/ }),
@@ -29153,7 +29172,7 @@ class StreamHandler extends AsyncResource {
       const { callback, res, opaque, trailers, abort } = this
 
       this.res = null
-      if (err || !res.readable) {
+      if (err || !res?.readable) {
         util.destroy(res, err)
       }
 
@@ -29384,8 +29403,6 @@ module.exports.connect = __nccwpck_require__(2279)
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 "use strict";
-// Ported from https://github.com/nodejs/undici/pull/907
-
 
 
 const assert = __nccwpck_require__(4589)
@@ -29436,23 +29453,32 @@ class BodyReadable extends Readable {
 
     this[kAbort] = abort
 
-    /**
-     * @type {Consume | null}
-     */
+    /** @type {Consume | null} */
     this[kConsume] = null
+
+    /** @type {number} */
     this[kBytesRead] = 0
-    /**
-     * @type {ReadableStream|null}
-     */
+
+    /** @type {ReadableStream|null} */
     this[kBody] = null
+
+    /** @type {boolean} */
     this[kUsed] = false
+
+    /** @type {string} */
     this[kContentType] = contentType
+
+    /** @type {number|null} */
     this[kContentLength] = Number.isFinite(contentLength) ? contentLength : null
 
-    // Is stream being consumed through Readable API?
-    // This is an optimization so that we avoid checking
-    // for 'data' and 'readable' listeners in the hot path
-    // inside push().
+    /**
+     * Is stream being consumed through Readable API?
+     * This is an optimization so that we avoid checking
+     * for 'data' and 'readable' listeners in the hot path
+     * inside push().
+     *
+     * @type {boolean}
+     */
     this[kReading] = false
   }
 
@@ -29475,16 +29501,14 @@ class BodyReadable extends Readable {
     // promise (i.e micro tick) for installing an 'error' listener will
     // never get a chance and will always encounter an unhandled exception.
     if (!this[kUsed]) {
-      setImmediate(() => {
-        callback(err)
-      })
+      setImmediate(callback, err)
     } else {
       callback(err)
     }
   }
 
   /**
-   * @param {string} event
+   * @param {string|symbol} event
    * @param {(...args: any[]) => void} listener
    * @returns {this}
    */
@@ -29497,7 +29521,7 @@ class BodyReadable extends Readable {
   }
 
   /**
-   * @param {string} event
+   * @param {string|symbol} event
    * @param {(...args: any[]) => void} listener
    * @returns {this}
    */
@@ -29535,12 +29559,14 @@ class BodyReadable extends Readable {
    * @returns {boolean}
    */
   push (chunk) {
-    this[kBytesRead] += chunk ? chunk.length : 0
-
-    if (this[kConsume] && chunk !== null) {
-      consumePush(this[kConsume], chunk)
-      return this[kReading] ? super.push(chunk) : true
+    if (chunk) {
+      this[kBytesRead] += chunk.length
+      if (this[kConsume]) {
+        consumePush(this[kConsume], chunk)
+        return this[kReading] ? super.push(chunk) : true
+      }
     }
+
     return super.push(chunk)
   }
 
@@ -29727,8 +29753,22 @@ function isUnusable (bodyReadable) {
 }
 
 /**
+ * @typedef {'text' | 'json' | 'blob' | 'bytes' | 'arrayBuffer'} ConsumeType
+ */
+
+/**
+ * @template {ConsumeType} T
+ * @typedef {T extends 'text' ? string :
+ *           T extends 'json' ? unknown :
+ *           T extends 'blob' ? Blob :
+ *           T extends 'arrayBuffer' ? ArrayBuffer :
+ *           T extends 'bytes' ? Uint8Array :
+ *           never
+ * } ConsumeReturnType
+ */
+/**
  * @typedef {object} Consume
- * @property {string} type
+ * @property {ConsumeType} type
  * @property {BodyReadable} stream
  * @property {((value?: any) => void)} resolve
  * @property {((err: Error) => void)} reject
@@ -29737,9 +29777,10 @@ function isUnusable (bodyReadable) {
  */
 
 /**
+ * @template {ConsumeType} T
  * @param {BodyReadable} stream
- * @param {string} type
- * @returns {Promise<any>}
+ * @param {T} type
+ * @returns {Promise<ConsumeReturnType<T>>}
  */
 function consume (stream, type) {
   assert(!stream[kConsume])
@@ -29749,9 +29790,7 @@ function consume (stream, type) {
       const rState = stream._readableState
       if (rState.destroyed && rState.closeEmitted === false) {
         stream
-          .on('error', err => {
-            reject(err)
-          })
+          .on('error', reject)
           .on('close', () => {
             reject(new TypeError('unusable'))
           })
@@ -29826,7 +29865,7 @@ function consumeStart (consume) {
 /**
  * @param {Buffer[]} chunks
  * @param {number} length
- * @param {BufferEncoding} encoding
+ * @param {BufferEncoding} [encoding='utf8']
  * @returns {string}
  */
 function chunksDecode (chunks, length, encoding) {
@@ -29968,9 +30007,9 @@ const { assertCacheKey, assertCacheValue } = __nccwpck_require__(7659)
  * @extends {EventEmitter}
  */
 class MemoryCacheStore extends EventEmitter {
-  #maxCount = Infinity
-  #maxSize = Infinity
-  #maxEntrySize = Infinity
+  #maxCount = 1024
+  #maxSize = 104857600 // 100MB
+  #maxEntrySize = 5242880 // 5MB
 
   #size = 0
   #count = 0
@@ -30194,7 +30233,7 @@ module.exports = MemoryCacheStore
 "use strict";
 
 
-const { Writable } = __nccwpck_require__(2203)
+const { Writable } = __nccwpck_require__(7075)
 const { assertCacheKey, assertCacheValue } = __nccwpck_require__(7659)
 
 let DatabaseSync
@@ -30675,64 +30714,34 @@ let tls // include tls conditionally since it is not always available
 // resolve the same servername multiple times even when
 // re-use is enabled.
 
-let SessionCache
-// FIXME: remove workaround when the Node bug is fixed
-// https://github.com/nodejs/node/issues/49344#issuecomment-1741776308
-if (global.FinalizationRegistry && !(process.env.NODE_V8_COVERAGE || process.env.UNDICI_NO_FG)) {
-  SessionCache = class WeakSessionCache {
-    constructor (maxCachedSessions) {
-      this._maxCachedSessions = maxCachedSessions
-      this._sessionCache = new Map()
-      this._sessionRegistry = new global.FinalizationRegistry((key) => {
-        if (this._sessionCache.size < this._maxCachedSessions) {
-          return
-        }
-
-        const ref = this._sessionCache.get(key)
-        if (ref !== undefined && ref.deref() === undefined) {
-          this._sessionCache.delete(key)
-        }
-      })
-    }
-
-    get (sessionKey) {
-      const ref = this._sessionCache.get(sessionKey)
-      return ref ? ref.deref() : null
-    }
-
-    set (sessionKey, session) {
-      if (this._maxCachedSessions === 0) {
+const SessionCache = class WeakSessionCache {
+  constructor (maxCachedSessions) {
+    this._maxCachedSessions = maxCachedSessions
+    this._sessionCache = new Map()
+    this._sessionRegistry = new FinalizationRegistry((key) => {
+      if (this._sessionCache.size < this._maxCachedSessions) {
         return
       }
 
-      this._sessionCache.set(sessionKey, new WeakRef(session))
-      this._sessionRegistry.register(session, sessionKey)
-    }
+      const ref = this._sessionCache.get(key)
+      if (ref !== undefined && ref.deref() === undefined) {
+        this._sessionCache.delete(key)
+      }
+    })
   }
-} else {
-  SessionCache = class SimpleSessionCache {
-    constructor (maxCachedSessions) {
-      this._maxCachedSessions = maxCachedSessions
-      this._sessionCache = new Map()
+
+  get (sessionKey) {
+    const ref = this._sessionCache.get(sessionKey)
+    return ref ? ref.deref() : null
+  }
+
+  set (sessionKey, session) {
+    if (this._maxCachedSessions === 0) {
+      return
     }
 
-    get (sessionKey) {
-      return this._sessionCache.get(sessionKey)
-    }
-
-    set (sessionKey, session) {
-      if (this._maxCachedSessions === 0) {
-        return
-      }
-
-      if (this._sessionCache.size >= this._maxCachedSessions) {
-        // remove the oldest session
-        const { value: oldestKey } = this._sessionCache.keys().next()
-        this._sessionCache.delete(oldestKey)
-      }
-
-      this._sessionCache.set(sessionKey, session)
-    }
+    this._sessionCache.set(sessionKey, new WeakRef(session))
+    this._sessionRegistry.register(session, sessionKey)
   }
 }
 
@@ -31002,6 +31011,8 @@ const channels = {
   // Request
   create: diagnosticsChannel.channel('undici:request:create'),
   bodySent: diagnosticsChannel.channel('undici:request:bodySent'),
+  bodyChunkSent: diagnosticsChannel.channel('undici:request:bodyChunkSent'),
+  bodyChunkReceived: diagnosticsChannel.channel('undici:request:bodyChunkReceived'),
   headers: diagnosticsChannel.channel('undici:request:headers'),
   trailers: diagnosticsChannel.channel('undici:request:trailers'),
   error: diagnosticsChannel.channel('undici:request:error'),
@@ -31071,7 +31082,7 @@ function trackClientEvents (debugLog = undiciDebugLog) {
       const {
         request: { method, path, origin }
       } = evt
-      debugLog('sending request to %s %s/%s', method, origin, path)
+      debugLog('sending request to %s %s%s', method, origin, path)
     })
 }
 
@@ -31091,7 +31102,7 @@ function trackRequestEvents (debugLog = undiciDebugLog) {
         response: { statusCode }
       } = evt
       debugLog(
-        'received response to %s %s/%s - HTTP %d',
+        'received response to %s %s%s - HTTP %d',
         method,
         origin,
         path,
@@ -31104,7 +31115,7 @@ function trackRequestEvents (debugLog = undiciDebugLog) {
       const {
         request: { method, path, origin }
       } = evt
-      debugLog('trailers received from %s %s/%s', method, origin, path)
+      debugLog('trailers received from %s %s%s', method, origin, path)
     })
 
   diagnosticsChannel.subscribe('undici:request:error',
@@ -31114,7 +31125,7 @@ function trackRequestEvents (debugLog = undiciDebugLog) {
         error
       } = evt
       debugLog(
-        'request to %s %s/%s errored - %s',
+        'request to %s %s%s errored - %s',
         method,
         origin,
         path,
@@ -31484,7 +31495,8 @@ class Request {
     reset,
     expectContinue,
     servername,
-    throwOnError
+    throwOnError,
+    maxRedirections
   }, handler) {
     if (typeof path !== 'string') {
       throw new InvalidArgumentError('path must be a string')
@@ -31526,6 +31538,10 @@ class Request {
 
     if (throwOnError != null) {
       throw new InvalidArgumentError('invalid throwOnError')
+    }
+
+    if (maxRedirections != null && maxRedirections !== 0) {
+      throw new InvalidArgumentError('maxRedirections is not supported, use the redirect interceptor')
     }
 
     this.headersTimeout = headersTimeout
@@ -31636,6 +31652,9 @@ class Request {
   }
 
   onBodySent (chunk) {
+    if (channels.bodyChunkSent.hasSubscribers) {
+      channels.bodyChunkSent.publish({ request: this, chunk })
+    }
     if (this[kHandler].onBodySent) {
       try {
         return this[kHandler].onBodySent(chunk)
@@ -31694,6 +31713,9 @@ class Request {
     assert(!this.aborted)
     assert(!this.completed)
 
+    if (channels.bodyChunkReceived.hasSubscribers) {
+      channels.bodyChunkReceived.publish({ request: this, chunk })
+    }
     try {
       return this[kHandler].onData(chunk)
     } catch (err) {
@@ -32009,7 +32031,7 @@ class TstNode {
 
   /**
    * @param {Uint8Array} key
-   * @return {TstNode | null}
+   * @returns {TstNode | null}
    */
   search (key) {
     const keylength = key.length
@@ -32096,8 +32118,6 @@ const { kDestroyed, kBodyUsed, kListeners, kBody } = __nccwpck_require__(6443)
 const { IncomingMessage } = __nccwpck_require__(7067)
 const stream = __nccwpck_require__(7075)
 const net = __nccwpck_require__(7030)
-const { Blob } = __nccwpck_require__(4573)
-const nodeUtil = __nccwpck_require__(7975)
 const { stringify } = __nccwpck_require__(1792)
 const { EventEmitter: EE } = __nccwpck_require__(8474)
 const timers = __nccwpck_require__(6603)
@@ -32752,48 +32772,6 @@ function addAbortListener (signal, listener) {
 }
 
 /**
- * @function
- * @param {string} value
- * @returns {string}
- */
-const toUSVString = (() => {
-  if (typeof String.prototype.toWellFormed === 'function') {
-    /**
-     * @param {string} value
-     * @returns {string}
-     */
-    return (value) => `${value}`.toWellFormed()
-  } else {
-    /**
-     * @param {string} value
-     * @returns {string}
-     */
-    return nodeUtil.toUSVString
-  }
-})()
-
-/**
- * @param {*} value
- * @returns {boolean}
- */
-// TODO: move this to webidl
-const isUSVString = (() => {
-  if (typeof String.prototype.isWellFormed === 'function') {
-    /**
-     * @param {*} value
-     * @returns {boolean}
-     */
-    return (value) => `${value}`.isWellFormed()
-  } else {
-    /**
-     * @param {*} value
-     * @returns {boolean}
-     */
-    return (value) => toUSVString(value) === `${value}`
-  }
-})()
-
-/**
  * @see https://tools.ietf.org/html/rfc7230#section-3.2.6
  * @param {number} c
  * @returns {boolean}
@@ -33034,8 +33012,6 @@ Object.setPrototypeOf(normalizedMethodRecords, null)
 module.exports = {
   kEnumerableProperty,
   isDisturbed,
-  toUSVString,
-  isUSVString,
   isBlobLike,
   parseOrigin,
   parseURL,
@@ -33504,12 +33480,12 @@ const removeAllListeners = util.removeAllListeners
 
 let extractBody
 
-async function lazyllhttp () {
+function lazyllhttp () {
   const llhttpWasmData = process.env.JEST_WORKER_ID ? __nccwpck_require__(3870) : undefined
 
   let mod
   try {
-    mod = await WebAssembly.compile(__nccwpck_require__(3434))
+    mod = new WebAssembly.Module(__nccwpck_require__(3434))
   } catch (e) {
     /* istanbul ignore next */
 
@@ -33517,10 +33493,10 @@ async function lazyllhttp () {
     // being enabled, but the occurring of this other error
     // * https://github.com/emscripten-core/emscripten/issues/11495
     // got me to remove that check to avoid breaking Node 12.
-    mod = await WebAssembly.compile(llhttpWasmData || __nccwpck_require__(3870))
+    mod = new WebAssembly.Module(llhttpWasmData || __nccwpck_require__(3870))
   }
 
-  return await WebAssembly.instantiate(mod, {
+  return new WebAssembly.Instance(mod, {
     env: {
       /**
        * @param {number} p
@@ -33609,11 +33585,6 @@ async function lazyllhttp () {
 }
 
 let llhttpInstance = null
-/**
- * @type {Promise<WebAssembly.Instance>|null}
- */
-let llhttpPromise = lazyllhttp()
-llhttpPromise.catch()
 
 /**
  * @type {Parser|null}
@@ -33693,7 +33664,7 @@ class Parser {
           this.timeout = timers.setFastTimeout(onParserTimeout, delay, new WeakRef(this))
         } else {
           this.timeout = setTimeout(onParserTimeout, delay, new WeakRef(this))
-          this.timeout.unref()
+          this.timeout?.unref()
         }
       }
 
@@ -34176,7 +34147,7 @@ class Parser {
       // We must wait a full event loop cycle to reuse this socket to make sure
       // that non-spec compliant servers are not closing the connection even if they
       // said they won't.
-      setImmediate(() => client[kResume]())
+      setImmediate(client[kResume])
     } else {
       client[kResume]()
     }
@@ -34213,11 +34184,7 @@ async function connectH1 (client, socket) {
   client[kSocket] = socket
 
   if (!llhttpInstance) {
-    const noop = () => {}
-    socket.on('error', noop)
-    llhttpInstance = await llhttpPromise
-    llhttpPromise = null
-    socket.off('error', noop)
+    llhttpInstance = lazyllhttp()
   }
 
   if (socket.errored) {
@@ -34741,9 +34708,9 @@ function writeStream (abort, body, client, request, socket, contentLength, heade
     .on('error', onFinished)
 
   if (body.errorEmitted ?? body.errored) {
-    setImmediate(() => onFinished(body.errored))
+    setImmediate(onFinished, body.errored)
   } else if (body.endEmitted ?? body.readableEnded) {
-    setImmediate(() => onFinished(null))
+    setImmediate(onFinished, null)
   }
 
   if (body.closeEmitted ?? body.closed) {
@@ -37501,8 +37468,7 @@ module.exports = Pool
 "use strict";
 
 
-const { kProxy, kClose, kDestroy, kDispatch, kConnector } = __nccwpck_require__(6443)
-const { URL } = __nccwpck_require__(3136)
+const { kProxy, kClose, kDestroy, kDispatch } = __nccwpck_require__(6443)
 const Agent = __nccwpck_require__(7405)
 const Pool = __nccwpck_require__(628)
 const DispatcherBase = __nccwpck_require__(1841)
@@ -37528,61 +37494,69 @@ function defaultFactory (origin, opts) {
 
 const noop = () => {}
 
-class ProxyClient extends DispatcherBase {
-  #client = null
-  constructor (origin, opts) {
-    if (typeof origin === 'string') {
-      origin = new URL(origin)
-    }
+function defaultAgentFactory (origin, opts) {
+  if (opts.connections === 1) {
+    return new Client(origin, opts)
+  }
+  return new Pool(origin, opts)
+}
 
-    if (origin.protocol !== 'http:' && origin.protocol !== 'https:') {
-      throw new InvalidArgumentError('ProxyClient only supports http and https protocols')
-    }
+class Http1ProxyWrapper extends DispatcherBase {
+  #client
 
+  constructor (proxyUrl, { headers = {}, connect, factory }) {
     super()
+    if (!proxyUrl) {
+      throw new InvalidArgumentError('Proxy URL is mandatory')
+    }
 
-    this.#client = new Client(origin, opts)
+    this[kProxyHeaders] = headers
+    if (factory) {
+      this.#client = factory(proxyUrl, { connect })
+    } else {
+      this.#client = new Client(proxyUrl, { connect })
+    }
+  }
+
+  [kDispatch] (opts, handler) {
+    const onHeaders = handler.onHeaders
+    handler.onHeaders = function (statusCode, data, resume) {
+      if (statusCode === 407) {
+        if (typeof handler.onError === 'function') {
+          handler.onError(new InvalidArgumentError('Proxy Authentication Required (407)'))
+        }
+        return
+      }
+      if (onHeaders) onHeaders.call(this, statusCode, data, resume)
+    }
+
+    // Rewrite request as an HTTP1 Proxy request, without tunneling.
+    const {
+      origin,
+      path = '/',
+      headers = {}
+    } = opts
+
+    opts.path = origin + path
+
+    if (!('host' in headers) && !('Host' in headers)) {
+      const { host } = new URL(origin)
+      headers.host = host
+    }
+    opts.headers = { ...this[kProxyHeaders], ...headers }
+
+    return this.#client[kDispatch](opts, handler)
   }
 
   async [kClose] () {
-    await this.#client.close()
+    return this.#client.close()
   }
 
-  async [kDestroy] () {
-    await this.#client.destroy()
-  }
-
-  async [kDispatch] (opts, handler) {
-    const { method, origin } = opts
-    if (method === 'CONNECT') {
-      this.#client[kConnector]({
-        origin,
-        port: opts.port || defaultProtocolPort(opts.protocol),
-        path: opts.host,
-        signal: opts.signal,
-        headers: {
-          ...this[kProxyHeaders],
-          host: opts.host
-        },
-        servername: this[kProxyTls]?.servername || opts.servername
-      },
-      (err, socket) => {
-        if (err) {
-          handler.callback(err)
-        } else {
-          handler.callback(null, { socket, statusCode: 200 })
-        }
-      }
-      )
-      return
-    }
-    if (typeof origin === 'string') {
-      opts.origin = new URL(origin)
-    }
-
-    return this.#client.dispatch(opts, handler)
+  async [kDestroy] (err) {
+    return this.#client.destroy(err)
   }
 }
+
 class ProxyAgent extends DispatcherBase {
   constructor (opts) {
     if (!opts || (typeof opts === 'object' && !(opts instanceof URL) && !opts.uri)) {
@@ -37605,6 +37579,7 @@ class ProxyAgent extends DispatcherBase {
     this[kRequestTls] = opts.requestTls
     this[kProxyTls] = opts.proxyTls
     this[kProxyHeaders] = opts.headers || {}
+    this[kTunnelProxy] = proxyTunnel
 
     if (opts.auth && opts.token) {
       throw new InvalidArgumentError('opts.auth cannot be used in combination with opts.token')
@@ -37617,21 +37592,25 @@ class ProxyAgent extends DispatcherBase {
       this[kProxyHeaders]['proxy-authorization'] = `Basic ${Buffer.from(`${decodeURIComponent(username)}:${decodeURIComponent(password)}`).toString('base64')}`
     }
 
-    const factory = (!proxyTunnel && protocol === 'http:')
-      ? (origin, options) => {
-          if (origin.protocol === 'http:') {
-            return new ProxyClient(origin, options)
-          }
-          return new Client(origin, options)
-        }
-      : undefined
-
     const connect = buildConnector({ ...opts.proxyTls })
     this[kConnectEndpoint] = buildConnector({ ...opts.requestTls })
-    this[kClient] = clientFactory(url, { connect, factory })
-    this[kTunnelProxy] = proxyTunnel
+
+    const agentFactory = opts.factory || defaultAgentFactory
+    const factory = (origin, options) => {
+      const { protocol } = new URL(origin)
+      if (!this[kTunnelProxy] && protocol === 'http:' && this[kProxy].protocol === 'http:') {
+        return new Http1ProxyWrapper(this[kProxy].uri, {
+          headers: this[kProxyHeaders],
+          connect,
+          factory: agentFactory
+        })
+      }
+      return agentFactory(origin, options)
+    }
+    this[kClient] = clientFactory(url, { connect })
     this[kAgent] = new Agent({
       ...opts,
+      factory,
       connect: async (opts, callback) => {
         let requestedPath = opts.host
         if (!opts.port) {
@@ -37645,7 +37624,8 @@ class ProxyAgent extends DispatcherBase {
             signal: opts.signal,
             headers: {
               ...this[kProxyHeaders],
-              host: opts.host
+              host: opts.host,
+              ...(opts.connections == null || opts.connections > 0 ? { 'proxy-connection': 'keep-alive' } : {})
             },
             servername: this[kProxyTls]?.servername || proxyHostname
           })
@@ -37685,10 +37665,6 @@ class ProxyAgent extends DispatcherBase {
       headers.host = host
     }
 
-    if (!this.#shouldConnect(new URL(opts.origin))) {
-      opts.path = opts.origin + opts.path
-    }
-
     return this[kAgent].dispatch(
       {
         ...opts,
@@ -37699,7 +37675,7 @@ class ProxyAgent extends DispatcherBase {
   }
 
   /**
-   * @param {import('../types/proxy-agent').ProxyAgent.Options | string | URL} opts
+   * @param {import('../../types/proxy-agent').ProxyAgent.Options | string | URL} opts
    * @returns {URL}
    */
   #getUrl (opts) {
@@ -37720,19 +37696,6 @@ class ProxyAgent extends DispatcherBase {
   async [kDestroy] () {
     await this[kAgent].destroy()
     await this[kClient].destroy()
-  }
-
-  #shouldConnect (uri) {
-    if (typeof uri === 'string') {
-      uri = new URL(uri)
-    }
-    if (this[kTunnelProxy]) {
-      return true
-    }
-    if (uri.protocol !== 'http:' || this[kProxy].protocol !== 'http:') {
-      return true
-    }
-    return false
   }
 }
 
@@ -37880,6 +37843,15 @@ function noop () {}
 // Status codes that we can use some heuristics on to cache
 const HEURISTICALLY_CACHEABLE_STATUS_CODES = [
   200, 203, 204, 206, 300, 301, 308, 404, 405, 410, 414, 501
+]
+
+// Status codes which semantic is not handled by the cache
+// https://datatracker.ietf.org/doc/html/rfc9111#section-3
+// This list should not grow beyond 206 and 304 unless the RFC is updated
+// by a newer one including more. Please introduce another list if
+// implementing caching of responses with the 'must-understand' directive.
+const NOT_UNDERSTOOD_STATUS_CODES = [
+  206, 304
 ]
 
 const MAX_RESPONSE_AGE = 2147483647000
@@ -38108,7 +38080,19 @@ class CacheHandler {
  * @param {import('../../types/cache-interceptor.d.ts').default.CacheControlDirectives} cacheControlDirectives
  */
 function canCacheResponse (cacheType, statusCode, resHeaders, cacheControlDirectives) {
-  if (statusCode !== 200 && statusCode !== 307) {
+  // Status code must be final and understood.
+  if (statusCode < 200 || NOT_UNDERSTOOD_STATUS_CODES.includes(statusCode)) {
+    return false
+  }
+  // Responses with neither status codes that are heuristically cacheable, nor "explicit enough" caching
+  // directives, are not cacheable. "Explicit enough": see https://www.rfc-editor.org/rfc/rfc9111.html#section-3
+  if (!HEURISTICALLY_CACHEABLE_STATUS_CODES.includes(statusCode) && !resHeaders['expires'] &&
+    !cacheControlDirectives.public &&
+    cacheControlDirectives['max-age'] === undefined &&
+    // RFC 9111: a private response directive, if the cache is not shared
+    !(cacheControlDirectives.private && cacheType === 'private') &&
+    !(cacheControlDirectives['s-maxage'] !== undefined && cacheType === 'shared')
+  ) {
     return false
   }
 
@@ -38572,7 +38556,8 @@ class RedirectHandler {
 
     this.dispatch = dispatch
     this.location = null
-    this.opts = { ...opts, maxRedirections: 0 } // opts must be a copy
+    const { maxRedirections: _, ...cleanOpts } = opts
+    this.opts = cleanOpts // opts must be a copy, exclude maxRedirections
     this.maxRedirections = maxRedirections
     this.handler = handler
     this.history = []
@@ -38662,13 +38647,22 @@ class RedirectHandler {
     const { origin, pathname, search } = util.parseURL(new URL(this.location, this.opts.origin && new URL(this.opts.path, this.opts.origin)))
     const path = search ? `${pathname}${search}` : pathname
 
+    // Check for redirect loops by seeing if we've already visited this URL in our history
+    // This catches the case where Client/Pool try to handle cross-origin redirects but fail
+    // and keep redirecting to the same URL in an infinite loop
+    const redirectUrlString = `${origin}${path}`
+    for (const historyUrl of this.history) {
+      if (historyUrl.toString() === redirectUrlString) {
+        throw new InvalidArgumentError(`Redirect loop detected. Cannot redirect to ${origin}. This typically happens when using a Client or Pool with cross-origin redirects. Use an Agent for cross-origin redirects.`)
+      }
+    }
+
     // Remove headers referring to the original URL.
     // By default it is Host only, unless it's a 303 (see below), which removes also all Content-* headers.
     // https://tools.ietf.org/html/rfc7231#section-6.4
     this.opts.headers = cleanRequestHeaders(this.opts.headers, statusCode === 303, this.opts.origin !== origin)
     this.opts.path = path
     this.opts.origin = origin
-    this.opts.maxRedirections = 0
     this.opts.query = null
   }
 
@@ -38794,13 +38788,16 @@ class RetryHandler {
       methods,
       errorCodes,
       retryAfter,
-      statusCodes
+      statusCodes,
+      throwOnError
     } = retryOptions ?? {}
 
+    this.error = null
     this.dispatch = dispatch
     this.handler = WrapHandler.wrap(handler)
     this.opts = { ...dispatchOpts, body: wrapRequestBody(opts.body) }
     this.retryOpts = {
+      throwOnError: throwOnError ?? true,
       retry: retryFn ?? RetryHandler[kRetryHandlerDefaultRetry],
       retryAfter: retryAfter ?? true,
       maxTimeout: maxTimeout ?? 30 * 1000, // 30s,
@@ -38831,6 +38828,50 @@ class RetryHandler {
     this.start = 0
     this.end = null
     this.etag = null
+  }
+
+  onResponseStartWithRetry (controller, statusCode, headers, statusMessage, err) {
+    if (this.retryOpts.throwOnError) {
+      // Preserve old behavior for status codes that are not eligible for retry
+      if (this.retryOpts.statusCodes.includes(statusCode) === false) {
+        this.headersSent = true
+        this.handler.onResponseStart?.(controller, statusCode, headers, statusMessage)
+      } else {
+        this.error = err
+      }
+
+      return
+    }
+
+    if (isDisturbed(this.opts.body)) {
+      this.headersSent = true
+      this.handler.onResponseStart?.(controller, statusCode, headers, statusMessage)
+      return
+    }
+
+    function shouldRetry (passedErr) {
+      if (passedErr) {
+        this.headersSent = true
+
+        this.headersSent = true
+        this.handler.onResponseStart?.(controller, statusCode, headers, statusMessage)
+        controller.resume()
+        return
+      }
+
+      this.error = err
+      controller.resume()
+    }
+
+    controller.pause()
+    this.retryOpts.retry(
+      err,
+      {
+        state: { counter: this.retryCount },
+        opts: { retryOptions: this.retryOpts, ...this.opts }
+      },
+      shouldRetry.bind(this)
+    )
   }
 
   onRequestStart (controller, context) {
@@ -38902,26 +38943,19 @@ class RetryHandler {
   }
 
   onResponseStart (controller, statusCode, headers, statusMessage) {
+    this.error = null
     this.retryCount += 1
 
     if (statusCode >= 300) {
-      if (this.retryOpts.statusCodes.includes(statusCode) === false) {
-        this.headersSent = true
-        this.handler.onResponseStart?.(
-          controller,
-          statusCode,
-          headers,
-          statusMessage
-        )
-        return
-      } else {
-        throw new RequestRetryError('Request failed', statusCode, {
-          headers,
-          data: {
-            count: this.retryCount
-          }
-        })
-      }
+      const err = new RequestRetryError('Request failed', statusCode, {
+        headers,
+        data: {
+          count: this.retryCount
+        }
+      })
+
+      this.onResponseStartWithRetry(controller, statusCode, headers, statusMessage, err)
+      return
     }
 
     // Checkpoint for resume from where we left it
@@ -38940,6 +38974,7 @@ class RetryHandler {
       const contentRange = parseRangeHeader(headers['content-range'])
       // If no content range
       if (!contentRange) {
+        // We always throw here as we want to indicate that we entred unexpected path
         throw new RequestRetryError('Content-Range mismatch', statusCode, {
           headers,
           data: { count: this.retryCount }
@@ -38948,6 +38983,7 @@ class RetryHandler {
 
       // Let's start with a weak etag check
       if (this.etag != null && this.etag !== headers.etag) {
+        // We always throw here as we want to indicate that we entred unexpected path
         throw new RequestRetryError('ETag mismatch', statusCode, {
           headers,
           data: { count: this.retryCount }
@@ -39031,20 +39067,67 @@ class RetryHandler {
   }
 
   onResponseData (controller, chunk) {
+    if (this.error) {
+      return
+    }
+
     this.start += chunk.length
 
     this.handler.onResponseData?.(controller, chunk)
   }
 
   onResponseEnd (controller, trailers) {
-    this.retryCount = 0
-    return this.handler.onResponseEnd?.(controller, trailers)
+    if (this.error && this.retryOpts.throwOnError) {
+      throw this.error
+    }
+
+    if (!this.error) {
+      this.retryCount = 0
+      return this.handler.onResponseEnd?.(controller, trailers)
+    }
+
+    this.retry(controller)
+  }
+
+  retry (controller) {
+    if (this.start !== 0) {
+      const headers = { range: `bytes=${this.start}-${this.end ?? ''}` }
+
+      // Weak etag check - weak etags will make comparison algorithms never match
+      if (this.etag != null) {
+        headers['if-match'] = this.etag
+      }
+
+      this.opts = {
+        ...this.opts,
+        headers: {
+          ...this.opts.headers,
+          ...headers
+        }
+      }
+    }
+
+    try {
+      this.retryCountCheckpoint = this.retryCount
+      this.dispatch(this.opts, this)
+    } catch (err) {
+      this.handler.onResponseError?.(controller, err)
+    }
   }
 
   onResponseError (controller, err) {
     if (controller?.aborted || isDisturbed(this.opts.body)) {
       this.handler.onResponseError?.(controller, err)
       return
+    }
+
+    function shouldRetry (returnedErr) {
+      if (!returnedErr) {
+        this.retry(controller)
+        return
+      }
+
+      this.handler?.onResponseError?.(controller, returnedErr)
     }
 
     // We reconcile in case of a mix between network errors
@@ -39064,43 +39147,8 @@ class RetryHandler {
         state: { counter: this.retryCount },
         opts: { retryOptions: this.retryOpts, ...this.opts }
       },
-      onRetry.bind(this)
+      shouldRetry.bind(this)
     )
-
-    /**
-     * @this {RetryHandler}
-     * @param {Error} [err]
-     * @returns
-     */
-    function onRetry (err) {
-      if (err != null || controller?.aborted || isDisturbed(this.opts.body)) {
-        return this.handler.onResponseError?.(controller, err)
-      }
-
-      if (this.start !== 0) {
-        const headers = { range: `bytes=${this.start}-${this.end ?? ''}` }
-
-        // Weak etag check - weak etags will make comparison algorithms never match
-        if (this.etag != null) {
-          headers['if-match'] = this.etag
-        }
-
-        this.opts = {
-          ...this.opts,
-          headers: {
-            ...this.opts.headers,
-            ...headers
-          }
-        }
-      }
-
-      try {
-        this.retryCountCheckpoint = this.retryCount
-        this.dispatch(this.opts, this)
-      } catch (err) {
-        this.handler.onResponseError?.(controller, err)
-      }
-    }
   }
 }
 
@@ -39328,7 +39376,7 @@ const util = __nccwpck_require__(3440)
 const CacheHandler = __nccwpck_require__(9976)
 const MemoryCacheStore = __nccwpck_require__(4889)
 const CacheRevalidationHandler = __nccwpck_require__(7133)
-const { assertCacheStore, assertCacheMethods, makeCacheKey, normaliseHeaders, parseCacheControlHeader } = __nccwpck_require__(7659)
+const { assertCacheStore, assertCacheMethods, makeCacheKey, normalizeHeaders, parseCacheControlHeader } = __nccwpck_require__(7659)
 const { AbortError } = __nccwpck_require__(8707)
 
 /**
@@ -39623,11 +39671,11 @@ module.exports = (opts = {}) => {
   assertCacheMethods(methods, 'opts.methods')
 
   if (typeof cacheByDefault !== 'undefined' && typeof cacheByDefault !== 'number') {
-    throw new TypeError(`exepcted opts.cacheByDefault to be number or undefined, got ${typeof cacheByDefault}`)
+    throw new TypeError(`expected opts.cacheByDefault to be number or undefined, got ${typeof cacheByDefault}`)
   }
 
   if (typeof type !== 'undefined' && type !== 'shared' && type !== 'private') {
-    throw new TypeError(`exepcted opts.type to be shared, private, or undefined, got ${typeof type}`)
+    throw new TypeError(`expected opts.type to be shared, private, or undefined, got ${typeof type}`)
   }
 
   const globalOpts = {
@@ -39648,7 +39696,7 @@ module.exports = (opts = {}) => {
 
       opts = {
         ...opts,
-        headers: normaliseHeaders(opts)
+        headers: normalizeHeaders(opts)
       }
 
       const reqCacheControl = opts.headers?.['cache-control']
@@ -40199,7 +40247,8 @@ class DumpHandler extends DecoratorHandler {
       return
     }
 
-    err = this.#controller.reason ?? err
+    // On network errors before connect, controller will be null
+    err = this.#controller?.reason ?? err
 
     super.onResponseError(controller, err)
   }
@@ -40272,7 +40321,7 @@ function createRedirectInterceptor ({ maxRedirections: defaultMaxRedirections } 
         return dispatch(opts, handler)
       }
 
-      const dispatchOpts = { ...rest, maxRedirections: 0 } // Stop sub dispatcher from also redirecting.
+      const dispatchOpts = { ...rest } // Stop sub dispatcher from also redirecting.
       const redirectHandler = new RedirectHandler(dispatch, maxRedirections, dispatchOpts, handler)
       return dispatch(dispatchOpts, redirectHandler)
     }
@@ -41012,7 +41061,8 @@ const {
   kMockAgentAddCallHistoryLog,
   kMockAgentMockCallHistoryInstance,
   kMockAgentAcceptsNonStandardSearchParameters,
-  kMockCallHistoryAddLog
+  kMockCallHistoryAddLog,
+  kIgnoreTrailingSlash
 } = __nccwpck_require__(1117)
 const MockClient = __nccwpck_require__(7365)
 const MockPool = __nccwpck_require__(4004)
@@ -41032,6 +41082,7 @@ class MockAgent extends Dispatcher {
     this[kIsMockActive] = true
     this[kMockAgentIsCallHistoryEnabled] = mockOptions?.enableCallHistory ?? false
     this[kMockAgentAcceptsNonStandardSearchParameters] = mockOptions?.acceptNonStandardSearchParameters ?? false
+    this[kIgnoreTrailingSlash] = mockOptions?.ignoreTrailingSlash ?? false
 
     // Instantiate Agent and encapsulate
     if (opts?.agent && typeof opts.agent.dispatch !== 'function') {
@@ -41049,11 +41100,15 @@ class MockAgent extends Dispatcher {
   }
 
   get (origin) {
-    let dispatcher = this[kMockAgentGet](origin)
+    const originKey = this[kIgnoreTrailingSlash]
+      ? origin.replace(/\/$/, '')
+      : origin
+
+    let dispatcher = this[kMockAgentGet](originKey)
 
     if (!dispatcher) {
-      dispatcher = this[kFactory](origin)
-      this[kMockAgentSet](origin, dispatcher)
+      dispatcher = this[kFactory](originKey)
+      this[kMockAgentSet](originKey, dispatcher)
     }
     return dispatcher
   }
@@ -41537,6 +41592,10 @@ class MockClient extends Client {
     )
   }
 
+  cleanMocks () {
+    this[kDispatches] = []
+  }
+
   async [kClose] () {
     await promisify(this[kOriginalClose])()
     this[kConnected] = 0
@@ -41851,6 +41910,10 @@ class MockPool extends Pool {
       opts && { ignoreTrailingSlash: this[kIgnoreTrailingSlash], ...opts },
       this[kDispatches]
     )
+  }
+
+  cleanMocks () {
+    this[kDispatches] = []
   }
 
   async [kClose] () {
@@ -42396,6 +42459,1115 @@ module.exports = class PendingInterceptorsFormatter {
 
 /***/ }),
 
+/***/ 5095:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const Agent = __nccwpck_require__(7405)
+const MockAgent = __nccwpck_require__(7501)
+const { SnapshotRecorder } = __nccwpck_require__(3766)
+const WrapHandler = __nccwpck_require__(9510)
+const { InvalidArgumentError, UndiciError } = __nccwpck_require__(8707)
+const { validateSnapshotMode } = __nccwpck_require__(9683)
+
+const kSnapshotRecorder = Symbol('kSnapshotRecorder')
+const kSnapshotMode = Symbol('kSnapshotMode')
+const kSnapshotPath = Symbol('kSnapshotPath')
+const kSnapshotLoaded = Symbol('kSnapshotLoaded')
+const kRealAgent = Symbol('kRealAgent')
+
+// Static flag to ensure warning is only emitted once per process
+let warningEmitted = false
+
+class SnapshotAgent extends MockAgent {
+  constructor (opts = {}) {
+    // Emit experimental warning only once
+    if (!warningEmitted) {
+      process.emitWarning(
+        'SnapshotAgent is experimental and subject to change',
+        'ExperimentalWarning'
+      )
+      warningEmitted = true
+    }
+
+    const {
+      mode = 'record',
+      snapshotPath = null,
+      ...mockAgentOpts
+    } = opts
+
+    super(mockAgentOpts)
+
+    validateSnapshotMode(mode)
+
+    // Validate snapshotPath is provided when required
+    if ((mode === 'playback' || mode === 'update') && !snapshotPath) {
+      throw new InvalidArgumentError(`snapshotPath is required when mode is '${mode}'`)
+    }
+
+    this[kSnapshotMode] = mode
+    this[kSnapshotPath] = snapshotPath
+
+    this[kSnapshotRecorder] = new SnapshotRecorder({
+      snapshotPath: this[kSnapshotPath],
+      mode: this[kSnapshotMode],
+      maxSnapshots: opts.maxSnapshots,
+      autoFlush: opts.autoFlush,
+      flushInterval: opts.flushInterval,
+      matchHeaders: opts.matchHeaders,
+      ignoreHeaders: opts.ignoreHeaders,
+      excludeHeaders: opts.excludeHeaders,
+      matchBody: opts.matchBody,
+      matchQuery: opts.matchQuery,
+      caseSensitive: opts.caseSensitive,
+      shouldRecord: opts.shouldRecord,
+      shouldPlayback: opts.shouldPlayback,
+      excludeUrls: opts.excludeUrls
+    })
+    this[kSnapshotLoaded] = false
+
+    // For recording/update mode, we need a real agent to make actual requests
+    if (this[kSnapshotMode] === 'record' || this[kSnapshotMode] === 'update') {
+      this[kRealAgent] = new Agent(opts)
+    }
+
+    // Auto-load snapshots in playback/update mode
+    if ((this[kSnapshotMode] === 'playback' || this[kSnapshotMode] === 'update') && this[kSnapshotPath]) {
+      this.loadSnapshots().catch(() => {
+        // Ignore load errors - file might not exist yet
+      })
+    }
+  }
+
+  dispatch (opts, handler) {
+    handler = WrapHandler.wrap(handler)
+    const mode = this[kSnapshotMode]
+
+    if (mode === 'playback' || mode === 'update') {
+      // Ensure snapshots are loaded
+      if (!this[kSnapshotLoaded]) {
+        // Need to load asynchronously, delegate to async version
+        return this.#asyncDispatch(opts, handler)
+      }
+
+      // Try to find existing snapshot (synchronous)
+      const snapshot = this[kSnapshotRecorder].findSnapshot(opts)
+
+      if (snapshot) {
+        // Use recorded response (synchronous)
+        return this.#replaySnapshot(snapshot, handler)
+      } else if (mode === 'update') {
+        // Make real request and record it (async required)
+        return this.#recordAndReplay(opts, handler)
+      } else {
+        // Playback mode but no snapshot found
+        const error = new UndiciError(`No snapshot found for ${opts.method || 'GET'} ${opts.path}`)
+        if (handler.onError) {
+          handler.onError(error)
+          return
+        }
+        throw error
+      }
+    } else if (mode === 'record') {
+      // Record mode - make real request and save response (async required)
+      return this.#recordAndReplay(opts, handler)
+    }
+  }
+
+  /**
+   * Async version of dispatch for when we need to load snapshots first
+   */
+  async #asyncDispatch (opts, handler) {
+    await this.loadSnapshots()
+    return this.dispatch(opts, handler)
+  }
+
+  /**
+   * Records a real request and replays the response
+   */
+  #recordAndReplay (opts, handler) {
+    const responseData = {
+      statusCode: null,
+      headers: {},
+      trailers: {},
+      body: []
+    }
+
+    const self = this // Capture 'this' context for use within nested handler callbacks
+
+    const recordingHandler = {
+      onRequestStart (controller, context) {
+        return handler.onRequestStart(controller, { ...context, history: this.history })
+      },
+
+      onRequestUpgrade (controller, statusCode, headers, socket) {
+        return handler.onRequestUpgrade(controller, statusCode, headers, socket)
+      },
+
+      onResponseStart (controller, statusCode, headers, statusMessage) {
+        responseData.statusCode = statusCode
+        responseData.headers = headers
+        return handler.onResponseStart(controller, statusCode, headers, statusMessage)
+      },
+
+      onResponseData (controller, chunk) {
+        responseData.body.push(chunk)
+        return handler.onResponseData(controller, chunk)
+      },
+
+      onResponseEnd (controller, trailers) {
+        responseData.trailers = trailers
+
+        // Record the interaction using captured 'self' context (fire and forget)
+        const responseBody = Buffer.concat(responseData.body)
+        self[kSnapshotRecorder].record(opts, {
+          statusCode: responseData.statusCode,
+          headers: responseData.headers,
+          body: responseBody,
+          trailers: responseData.trailers
+        }).then(() => {
+          handler.onResponseEnd(controller, trailers)
+        }).catch((error) => {
+          handler.onResponseError(controller, error)
+        })
+      }
+    }
+
+    // Use composed agent if available (includes interceptors), otherwise use real agent
+    const agent = this[kRealAgent]
+    return agent.dispatch(opts, recordingHandler)
+  }
+
+  /**
+   * Replays a recorded response
+   *
+   * @param {Object} snapshot - The recorded snapshot to replay.
+   * @param {Object} handler - The handler to call with the response data.
+   * @returns {void}
+   */
+  #replaySnapshot (snapshot, handler) {
+    try {
+      const { response } = snapshot
+
+      const controller = {
+        pause () { },
+        resume () { },
+        abort (reason) {
+          this.aborted = true
+          this.reason = reason
+        },
+
+        aborted: false,
+        paused: false
+      }
+
+      handler.onRequestStart(controller)
+
+      handler.onResponseStart(controller, response.statusCode, response.headers)
+
+      // Body is always stored as base64 string
+      const body = Buffer.from(response.body, 'base64')
+      handler.onResponseData(controller, body)
+
+      handler.onResponseEnd(controller, response.trailers)
+    } catch (error) {
+      handler.onError?.(error)
+    }
+  }
+
+  /**
+   * Loads snapshots from file
+   *
+   * @param {string} [filePath] - Optional file path to load snapshots from.
+   * @returns {Promise<void>} - Resolves when snapshots are loaded.
+   */
+  async loadSnapshots (filePath) {
+    await this[kSnapshotRecorder].loadSnapshots(filePath || this[kSnapshotPath])
+    this[kSnapshotLoaded] = true
+
+    // In playback mode, set up MockAgent interceptors for all snapshots
+    if (this[kSnapshotMode] === 'playback') {
+      this.#setupMockInterceptors()
+    }
+  }
+
+  /**
+   * Saves snapshots to file
+   *
+   * @param {string} [filePath] - Optional file path to save snapshots to.
+   * @returns {Promise<void>} - Resolves when snapshots are saved.
+   */
+  async saveSnapshots (filePath) {
+    return this[kSnapshotRecorder].saveSnapshots(filePath || this[kSnapshotPath])
+  }
+
+  /**
+   * Sets up MockAgent interceptors based on recorded snapshots.
+   *
+   * This method creates MockAgent interceptors for each recorded snapshot,
+   * allowing the SnapshotAgent to fall back to MockAgent's standard intercept
+   * mechanism in playback mode. Each interceptor is configured to persist
+   * (remain active for multiple requests) and responds with the recorded
+   * response data.
+   *
+   * Called automatically when loading snapshots in playback mode.
+   *
+   * @returns {void}
+   */
+  #setupMockInterceptors () {
+    for (const snapshot of this[kSnapshotRecorder].getSnapshots()) {
+      const { request, responses, response } = snapshot
+      const url = new URL(request.url)
+
+      const mockPool = this.get(url.origin)
+
+      // Handle both new format (responses array) and legacy format (response object)
+      const responseData = responses ? responses[0] : response
+      if (!responseData) continue
+
+      mockPool.intercept({
+        path: url.pathname + url.search,
+        method: request.method,
+        headers: request.headers,
+        body: request.body
+      }).reply(responseData.statusCode, responseData.body, {
+        headers: responseData.headers,
+        trailers: responseData.trailers
+      }).persist()
+    }
+  }
+
+  /**
+   * Gets the snapshot recorder
+   * @return {SnapshotRecorder} - The snapshot recorder instance
+   */
+  getRecorder () {
+    return this[kSnapshotRecorder]
+  }
+
+  /**
+   * Gets the current mode
+   * @return {import('./snapshot-utils').SnapshotMode} - The current snapshot mode
+   */
+  getMode () {
+    return this[kSnapshotMode]
+  }
+
+  /**
+   * Clears all snapshots
+   * @returns {void}
+   */
+  clearSnapshots () {
+    this[kSnapshotRecorder].clear()
+  }
+
+  /**
+   * Resets call counts for all snapshots (useful for test cleanup)
+   * @returns {void}
+   */
+  resetCallCounts () {
+    this[kSnapshotRecorder].resetCallCounts()
+  }
+
+  /**
+   * Deletes a specific snapshot by request options
+   * @param {import('./snapshot-recorder').SnapshotRequestOptions} requestOpts - Request options to identify the snapshot
+   * @return {Promise<boolean>} - Returns true if the snapshot was deleted, false if not found
+   */
+  deleteSnapshot (requestOpts) {
+    return this[kSnapshotRecorder].deleteSnapshot(requestOpts)
+  }
+
+  /**
+   * Gets information about a specific snapshot
+   * @returns {import('./snapshot-recorder').SnapshotInfo|null} - Snapshot information or null if not found
+   */
+  getSnapshotInfo (requestOpts) {
+    return this[kSnapshotRecorder].getSnapshotInfo(requestOpts)
+  }
+
+  /**
+   * Replaces all snapshots with new data (full replacement)
+   * @param {Array<{hash: string; snapshot: import('./snapshot-recorder').SnapshotEntryshotEntry}>|Record<string, import('./snapshot-recorder').SnapshotEntry>} snapshotData - New snapshot data to replace existing snapshots
+   * @returns {void}
+   */
+  replaceSnapshots (snapshotData) {
+    this[kSnapshotRecorder].replaceSnapshots(snapshotData)
+  }
+
+  /**
+   * Closes the agent, saving snapshots and cleaning up resources.
+   *
+   * @returns {Promise<void>}
+   */
+  async close () {
+    await this[kSnapshotRecorder].close()
+    await this[kRealAgent]?.close()
+    await super.close()
+  }
+}
+
+module.exports = SnapshotAgent
+
+
+/***/ }),
+
+/***/ 3766:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const { writeFile, readFile, mkdir } = __nccwpck_require__(1455)
+const { dirname, resolve } = __nccwpck_require__(6760)
+const { setTimeout, clearTimeout } = __nccwpck_require__(7997)
+const { InvalidArgumentError, UndiciError } = __nccwpck_require__(8707)
+const { hashId, isUrlExcludedFactory, normalizeHeaders, createHeaderFilters } = __nccwpck_require__(9683)
+
+/**
+ * @typedef {Object} SnapshotRequestOptions
+ * @property {string} method - HTTP method (e.g. 'GET', 'POST', etc.)
+ * @property {string} path - Request path
+ * @property {string} origin - Request origin (base URL)
+ * @property {import('./snapshot-utils').Headers|import('./snapshot-utils').UndiciHeaders} headers - Request headers
+ * @property {import('./snapshot-utils').NormalizedHeaders} _normalizedHeaders - Request headers as a lowercase object
+ * @property {string|Buffer} [body] - Request body (optional)
+ */
+
+/**
+ * @typedef {Object} SnapshotEntryRequest
+ * @property {string} method - HTTP method (e.g. 'GET', 'POST', etc.)
+ * @property {string} url - Full URL of the request
+ * @property {import('./snapshot-utils').NormalizedHeaders} headers - Normalized headers as a lowercase object
+ * @property {string|Buffer} [body] - Request body (optional)
+ */
+
+/**
+ * @typedef {Object} SnapshotEntryResponse
+ * @property {number} statusCode - HTTP status code of the response
+ * @property {import('./snapshot-utils').NormalizedHeaders} headers - Normalized response headers as a lowercase object
+ * @property {string} body - Response body as a base64url encoded string
+ * @property {Object} [trailers] - Optional response trailers
+ */
+
+/**
+ * @typedef {Object} SnapshotEntry
+ * @property {SnapshotEntryRequest} request - The request object
+ * @property {Array<SnapshotEntryResponse>} responses - Array of response objects
+ * @property {number} callCount - Number of times this snapshot has been called
+ * @property {string} timestamp - ISO timestamp of when the snapshot was created
+ */
+
+/**
+ * @typedef {Object} SnapshotRecorderMatchOptions
+ * @property {Array<string>} [matchHeaders=[]] - Headers to match (empty array means match all headers)
+ * @property {Array<string>} [ignoreHeaders=[]] - Headers to ignore for matching
+ * @property {Array<string>} [excludeHeaders=[]] - Headers to exclude from matching
+ * @property {boolean} [matchBody=true] - Whether to match request body
+ * @property {boolean} [matchQuery=true] - Whether to match query properties
+ * @property {boolean} [caseSensitive=false] - Whether header matching is case-sensitive
+ */
+
+/**
+ * @typedef {Object} SnapshotRecorderOptions
+ * @property {string} [snapshotPath] - Path to save/load snapshots
+ * @property {import('./snapshot-utils').SnapshotMode} [mode='record'] - Mode: 'record' or 'playback'
+ * @property {number} [maxSnapshots=Infinity] - Maximum number of snapshots to keep
+ * @property {boolean} [autoFlush=false] - Whether to automatically flush snapshots to disk
+ * @property {number} [flushInterval=30000] - Auto-flush interval in milliseconds (default: 30 seconds)
+ * @property {Array<string|RegExp>} [excludeUrls=[]] - URLs to exclude from recording
+ * @property {function} [shouldRecord=null] - Function to filter requests for recording
+ * @property {function} [shouldPlayback=null] - Function to filter requests
+ */
+
+/**
+ * @typedef {Object} SnapshotFormattedRequest
+ * @property {string} method - HTTP method (e.g. 'GET', 'POST', etc.)
+ * @property {string} url - Full URL of the request (with query parameters if matchQuery is true)
+ * @property {import('./snapshot-utils').NormalizedHeaders} headers - Normalized headers as a lowercase object
+ * @property {string} body - Request body (optional, only if matchBody is true)
+ */
+
+/**
+ * @typedef {Object} SnapshotInfo
+ * @property {string} hash - Hash key for the snapshot
+ * @property {SnapshotEntryRequest} request - The request object
+ * @property {number} responseCount - Number of responses recorded for this request
+ * @property {number} callCount - Number of times this snapshot has been called
+ * @property {string} timestamp - ISO timestamp of when the snapshot was created
+ */
+
+/**
+ * Formats a request for consistent snapshot storage
+ * Caches normalized headers to avoid repeated processing
+ *
+ * @param {SnapshotRequestOptions} opts - Request options
+ * @param {import('./snapshot-utils').HeaderFilters} headerFilters - Cached header sets for performance
+ * @param {SnapshotRecorderMatchOptions} [matchOptions] - Matching options for headers and body
+ * @returns {SnapshotFormattedRequest} - Formatted request object
+ */
+function formatRequestKey (opts, headerFilters, matchOptions = {}) {
+  const url = new URL(opts.path, opts.origin)
+
+  // Cache normalized headers if not already done
+  const normalized = opts._normalizedHeaders || normalizeHeaders(opts.headers)
+  if (!opts._normalizedHeaders) {
+    opts._normalizedHeaders = normalized
+  }
+
+  return {
+    method: opts.method || 'GET',
+    url: matchOptions.matchQuery !== false ? url.toString() : `${url.origin}${url.pathname}`,
+    headers: filterHeadersForMatching(normalized, headerFilters, matchOptions),
+    body: matchOptions.matchBody !== false && opts.body ? String(opts.body) : ''
+  }
+}
+
+/**
+ * Filters headers based on matching configuration
+ *
+ * @param {import('./snapshot-utils').Headers} headers - Headers to filter
+ * @param {import('./snapshot-utils').HeaderFilters} headerFilters - Cached sets for ignore, exclude, and match headers
+ * @param {SnapshotRecorderMatchOptions} [matchOptions] - Matching options for headers
+ */
+function filterHeadersForMatching (headers, headerFilters, matchOptions = {}) {
+  if (!headers || typeof headers !== 'object') return {}
+
+  const {
+    caseSensitive = false
+  } = matchOptions
+
+  const filtered = {}
+  const { ignore, exclude, match } = headerFilters
+
+  for (const [key, value] of Object.entries(headers)) {
+    const headerKey = caseSensitive ? key : key.toLowerCase()
+
+    // Skip if in exclude list (for security)
+    if (exclude.has(headerKey)) continue
+
+    // Skip if in ignore list (for matching)
+    if (ignore.has(headerKey)) continue
+
+    // If matchHeaders is specified, only include those headers
+    if (match.size !== 0) {
+      if (!match.has(headerKey)) continue
+    }
+
+    filtered[headerKey] = value
+  }
+
+  return filtered
+}
+
+/**
+ * Filters headers for storage (only excludes sensitive headers)
+ *
+ * @param {import('./snapshot-utils').Headers} headers - Headers to filter
+ * @param {import('./snapshot-utils').HeaderFilters} headerFilters - Cached sets for ignore, exclude, and match headers
+ * @param {SnapshotRecorderMatchOptions} [matchOptions] - Matching options for headers
+ */
+function filterHeadersForStorage (headers, headerFilters, matchOptions = {}) {
+  if (!headers || typeof headers !== 'object') return {}
+
+  const {
+    caseSensitive = false
+  } = matchOptions
+
+  const filtered = {}
+  const { exclude: excludeSet } = headerFilters
+
+  for (const [key, value] of Object.entries(headers)) {
+    const headerKey = caseSensitive ? key : key.toLowerCase()
+
+    // Skip if in exclude list (for security)
+    if (excludeSet.has(headerKey)) continue
+
+    filtered[headerKey] = value
+  }
+
+  return filtered
+}
+
+/**
+ * Creates a hash key for request matching
+ * Properly orders headers to avoid conflicts and uses crypto hashing when available
+ *
+ * @param {SnapshotFormattedRequest} formattedRequest - Request object
+ * @returns {string} - Base64url encoded hash of the request
+ */
+function createRequestHash (formattedRequest) {
+  const parts = [
+    formattedRequest.method,
+    formattedRequest.url
+  ]
+
+  // Process headers in a deterministic way to avoid conflicts
+  if (formattedRequest.headers && typeof formattedRequest.headers === 'object') {
+    const headerKeys = Object.keys(formattedRequest.headers).sort()
+    for (const key of headerKeys) {
+      const values = Array.isArray(formattedRequest.headers[key])
+        ? formattedRequest.headers[key]
+        : [formattedRequest.headers[key]]
+
+      // Add header name
+      parts.push(key)
+
+      // Add all values for this header, sorted for consistency
+      for (const value of values.sort()) {
+        parts.push(String(value))
+      }
+    }
+  }
+
+  // Add body
+  parts.push(formattedRequest.body)
+
+  const content = parts.join('|')
+
+  return hashId(content)
+}
+
+class SnapshotRecorder {
+  /** @type {NodeJS.Timeout | null} */
+  #flushTimeout
+
+  /** @type {import('./snapshot-utils').IsUrlExcluded} */
+  #isUrlExcluded
+
+  /** @type {Map<string, SnapshotEntry>} */
+  #snapshots = new Map()
+
+  /** @type {string|undefined} */
+  #snapshotPath
+
+  /** @type {number} */
+  #maxSnapshots = Infinity
+
+  /** @type {boolean} */
+  #autoFlush = false
+
+  /** @type {import('./snapshot-utils').HeaderFilters} */
+  #headerFilters
+
+  /**
+   * Creates a new SnapshotRecorder instance
+   * @param {SnapshotRecorderOptions&SnapshotRecorderMatchOptions} [options={}] - Configuration options for the recorder
+   */
+  constructor (options = {}) {
+    this.#snapshotPath = options.snapshotPath
+    this.#maxSnapshots = options.maxSnapshots || Infinity
+    this.#autoFlush = options.autoFlush || false
+    this.flushInterval = options.flushInterval || 30000 // 30 seconds default
+    this._flushTimer = null
+
+    // Matching configuration
+    /** @type {Required<SnapshotRecorderMatchOptions>} */
+    this.matchOptions = {
+      matchHeaders: options.matchHeaders || [], // empty means match all headers
+      ignoreHeaders: options.ignoreHeaders || [],
+      excludeHeaders: options.excludeHeaders || [],
+      matchBody: options.matchBody !== false, // default: true
+      matchQuery: options.matchQuery !== false, // default: true
+      caseSensitive: options.caseSensitive || false
+    }
+
+    // Cache processed header sets to avoid recreating them on every request
+    this.#headerFilters = createHeaderFilters(this.matchOptions)
+
+    // Request filtering callbacks
+    this.shouldRecord = options.shouldRecord || (() => true) // function(requestOpts) -> boolean
+    this.shouldPlayback = options.shouldPlayback || (() => true) // function(requestOpts) -> boolean
+
+    // URL pattern filtering
+    this.#isUrlExcluded = isUrlExcludedFactory(options.excludeUrls) // Array of regex patterns or strings
+
+    // Start auto-flush timer if enabled
+    if (this.#autoFlush && this.#snapshotPath) {
+      this.#startAutoFlush()
+    }
+  }
+
+  /**
+   * Records a request-response interaction
+   * @param {SnapshotRequestOptions} requestOpts - Request options
+   * @param {SnapshotEntryResponse} response - Response data to record
+   * @return {Promise<void>} - Resolves when the recording is complete
+   */
+  async record (requestOpts, response) {
+    // Check if recording should be filtered out
+    if (!this.shouldRecord(requestOpts)) {
+      return // Skip recording
+    }
+
+    // Check URL exclusion patterns
+    const url = new URL(requestOpts.path, requestOpts.origin).toString()
+    if (this.#isUrlExcluded(url)) {
+      return // Skip recording
+    }
+
+    const request = formatRequestKey(requestOpts, this.#headerFilters, this.matchOptions)
+    const hash = createRequestHash(request)
+
+    // Extract response data - always store body as base64
+    const normalizedHeaders = normalizeHeaders(response.headers)
+
+    /** @type {SnapshotEntryResponse} */
+    const responseData = {
+      statusCode: response.statusCode,
+      headers: filterHeadersForStorage(normalizedHeaders, this.#headerFilters, this.matchOptions),
+      body: Buffer.isBuffer(response.body)
+        ? response.body.toString('base64')
+        : Buffer.from(String(response.body || '')).toString('base64'),
+      trailers: response.trailers
+    }
+
+    // Remove oldest snapshot if we exceed maxSnapshots limit
+    if (this.#snapshots.size >= this.#maxSnapshots && !this.#snapshots.has(hash)) {
+      const oldestKey = this.#snapshots.keys().next().value
+      this.#snapshots.delete(oldestKey)
+    }
+
+    // Support sequential responses - if snapshot exists, add to responses array
+    const existingSnapshot = this.#snapshots.get(hash)
+    if (existingSnapshot && existingSnapshot.responses) {
+      existingSnapshot.responses.push(responseData)
+      existingSnapshot.timestamp = new Date().toISOString()
+    } else {
+      this.#snapshots.set(hash, {
+        request,
+        responses: [responseData], // Always store as array for consistency
+        callCount: 0,
+        timestamp: new Date().toISOString()
+      })
+    }
+
+    // Auto-flush if enabled
+    if (this.#autoFlush && this.#snapshotPath) {
+      this.#scheduleFlush()
+    }
+  }
+
+  /**
+   * Finds a matching snapshot for the given request
+   * Returns the appropriate response based on call count for sequential responses
+   *
+   * @param {SnapshotRequestOptions} requestOpts - Request options to match
+   * @returns {SnapshotEntry&Record<'response', SnapshotEntryResponse>|undefined} - Matching snapshot response or undefined if not found
+   */
+  findSnapshot (requestOpts) {
+    // Check if playback should be filtered out
+    if (!this.shouldPlayback(requestOpts)) {
+      return undefined // Skip playback
+    }
+
+    // Check URL exclusion patterns
+    const url = new URL(requestOpts.path, requestOpts.origin).toString()
+    if (this.#isUrlExcluded(url)) {
+      return undefined // Skip playback
+    }
+
+    const request = formatRequestKey(requestOpts, this.#headerFilters, this.matchOptions)
+    const hash = createRequestHash(request)
+    const snapshot = this.#snapshots.get(hash)
+
+    if (!snapshot) return undefined
+
+    // Handle sequential responses
+    const currentCallCount = snapshot.callCount || 0
+    const responseIndex = Math.min(currentCallCount, snapshot.responses.length - 1)
+    snapshot.callCount = currentCallCount + 1
+
+    return {
+      ...snapshot,
+      response: snapshot.responses[responseIndex]
+    }
+  }
+
+  /**
+   * Loads snapshots from file
+   * @param {string} [filePath] - Optional file path to load snapshots from
+   * @return {Promise<void>} - Resolves when snapshots are loaded
+   */
+  async loadSnapshots (filePath) {
+    const path = filePath || this.#snapshotPath
+    if (!path) {
+      throw new InvalidArgumentError('Snapshot path is required')
+    }
+
+    try {
+      const data = await readFile(resolve(path), 'utf8')
+      const parsed = JSON.parse(data)
+
+      // Convert array format back to Map
+      if (Array.isArray(parsed)) {
+        this.#snapshots.clear()
+        for (const { hash, snapshot } of parsed) {
+          this.#snapshots.set(hash, snapshot)
+        }
+      } else {
+        // Legacy object format
+        this.#snapshots = new Map(Object.entries(parsed))
+      }
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        // File doesn't exist yet - that's ok for recording mode
+        this.#snapshots.clear()
+      } else {
+        throw new UndiciError(`Failed to load snapshots from ${path}`, { cause: error })
+      }
+    }
+  }
+
+  /**
+   * Saves snapshots to file
+   *
+   * @param {string} [filePath] - Optional file path to save snapshots
+   * @returns {Promise<void>} - Resolves when snapshots are saved
+   */
+  async saveSnapshots (filePath) {
+    const path = filePath || this.#snapshotPath
+    if (!path) {
+      throw new InvalidArgumentError('Snapshot path is required')
+    }
+
+    const resolvedPath = resolve(path)
+
+    // Ensure directory exists
+    await mkdir(dirname(resolvedPath), { recursive: true })
+
+    // Convert Map to serializable format
+    const data = Array.from(this.#snapshots.entries()).map(([hash, snapshot]) => ({
+      hash,
+      snapshot
+    }))
+
+    await writeFile(resolvedPath, JSON.stringify(data, null, 2), { flush: true })
+  }
+
+  /**
+   * Clears all recorded snapshots
+   * @returns {void}
+   */
+  clear () {
+    this.#snapshots.clear()
+  }
+
+  /**
+   * Gets all recorded snapshots
+   * @return {Array<SnapshotEntry>} - Array of all recorded snapshots
+   */
+  getSnapshots () {
+    return Array.from(this.#snapshots.values())
+  }
+
+  /**
+   * Gets snapshot count
+   * @return {number} - Number of recorded snapshots
+   */
+  size () {
+    return this.#snapshots.size
+  }
+
+  /**
+   * Resets call counts for all snapshots (useful for test cleanup)
+   * @returns {void}
+   */
+  resetCallCounts () {
+    for (const snapshot of this.#snapshots.values()) {
+      snapshot.callCount = 0
+    }
+  }
+
+  /**
+   * Deletes a specific snapshot by request options
+   * @param {SnapshotRequestOptions} requestOpts - Request options to match
+   * @returns {boolean} - True if snapshot was deleted, false if not found
+   */
+  deleteSnapshot (requestOpts) {
+    const request = formatRequestKey(requestOpts, this.#headerFilters, this.matchOptions)
+    const hash = createRequestHash(request)
+    return this.#snapshots.delete(hash)
+  }
+
+  /**
+   * Gets information about a specific snapshot
+   * @param {SnapshotRequestOptions} requestOpts - Request options to match
+   * @returns {SnapshotInfo|null} - Snapshot information or null if not found
+   */
+  getSnapshotInfo (requestOpts) {
+    const request = formatRequestKey(requestOpts, this.#headerFilters, this.matchOptions)
+    const hash = createRequestHash(request)
+    const snapshot = this.#snapshots.get(hash)
+
+    if (!snapshot) return null
+
+    return {
+      hash,
+      request: snapshot.request,
+      responseCount: snapshot.responses ? snapshot.responses.length : (snapshot.response ? 1 : 0), // .response for legacy snapshots
+      callCount: snapshot.callCount || 0,
+      timestamp: snapshot.timestamp
+    }
+  }
+
+  /**
+   * Replaces all snapshots with new data (full replacement)
+   * @param {Array<{hash: string; snapshot: SnapshotEntry}>|Record<string, SnapshotEntry>} snapshotData - New snapshot data to replace existing ones
+   * @returns {void}
+   */
+  replaceSnapshots (snapshotData) {
+    this.#snapshots.clear()
+
+    if (Array.isArray(snapshotData)) {
+      for (const { hash, snapshot } of snapshotData) {
+        this.#snapshots.set(hash, snapshot)
+      }
+    } else if (snapshotData && typeof snapshotData === 'object') {
+      // Legacy object format
+      this.#snapshots = new Map(Object.entries(snapshotData))
+    }
+  }
+
+  /**
+   * Starts the auto-flush timer
+   * @returns {void}
+   */
+  #startAutoFlush () {
+    return this.#scheduleFlush()
+  }
+
+  /**
+   * Stops the auto-flush timer
+   * @returns {void}
+   */
+  #stopAutoFlush () {
+    if (this.#flushTimeout) {
+      clearTimeout(this.#flushTimeout)
+      // Ensure any pending flush is completed
+      this.saveSnapshots().catch(() => {
+      // Ignore flush errors
+      })
+      this.#flushTimeout = null
+    }
+  }
+
+  /**
+   * Schedules a flush (debounced to avoid excessive writes)
+   */
+  #scheduleFlush () {
+    this.#flushTimeout = setTimeout(() => {
+      this.saveSnapshots().catch(() => {
+        // Ignore flush errors
+      })
+      if (this.#autoFlush) {
+        this.#flushTimeout?.refresh()
+      } else {
+        this.#flushTimeout = null
+      }
+    }, 1000) // 1 second debounce
+  }
+
+  /**
+   * Cleanup method to stop timers
+   * @returns {void}
+   */
+  destroy () {
+    this.#stopAutoFlush()
+    if (this.#flushTimeout) {
+      clearTimeout(this.#flushTimeout)
+      this.#flushTimeout = null
+    }
+  }
+
+  /**
+   * Async close method that saves all recordings and performs cleanup
+   * @returns {Promise<void>}
+   */
+  async close () {
+    // Save any pending recordings if we have a snapshot path
+    if (this.#snapshotPath && this.#snapshots.size !== 0) {
+      await this.saveSnapshots()
+    }
+
+    // Perform cleanup
+    this.destroy()
+  }
+}
+
+module.exports = { SnapshotRecorder, formatRequestKey, createRequestHash, filterHeadersForMatching, filterHeadersForStorage, createHeaderFilters }
+
+
+/***/ }),
+
+/***/ 9683:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const { InvalidArgumentError } = __nccwpck_require__(8707)
+
+/**
+ * @typedef {Object} HeaderFilters
+ * @property {Set<string>} ignore - Set of headers to ignore for matching
+ * @property {Set<string>} exclude - Set of headers to exclude from matching
+ * @property {Set<string>} match - Set of headers to match (empty means match
+ */
+
+/**
+ * Creates cached header sets for performance
+ *
+ * @param {import('./snapshot-recorder').SnapshotRecorderMatchOptions} matchOptions - Matching options for headers
+ * @returns {HeaderFilters} - Cached sets for ignore, exclude, and match headers
+ */
+function createHeaderFilters (matchOptions = {}) {
+  const { ignoreHeaders = [], excludeHeaders = [], matchHeaders = [], caseSensitive = false } = matchOptions
+
+  return {
+    ignore: new Set(ignoreHeaders.map(header => caseSensitive ? header : header.toLowerCase())),
+    exclude: new Set(excludeHeaders.map(header => caseSensitive ? header : header.toLowerCase())),
+    match: new Set(matchHeaders.map(header => caseSensitive ? header : header.toLowerCase()))
+  }
+}
+
+let crypto
+try {
+  crypto = __nccwpck_require__(7598)
+} catch { /* Fallback if crypto is not available */ }
+
+/**
+ * @callback HashIdFunction
+ * @param {string} value - The value to hash
+ * @returns {string} - The base64url encoded hash of the value
+ */
+
+/**
+ * Generates a hash for a given value
+ * @type {HashIdFunction}
+ */
+const hashId = crypto?.hash
+  ? (value) => crypto.hash('sha256', value, 'base64url')
+  : (value) => Buffer.from(value).toString('base64url')
+
+/**
+ * @typedef {(url: string) => boolean} IsUrlExcluded Checks if a URL matches any of the exclude patterns
+ */
+
+/** @typedef {{[key: Lowercase<string>]: string}} NormalizedHeaders */
+/** @typedef {Array<string>} UndiciHeaders */
+/** @typedef {Record<string, string|string[]>} Headers */
+
+/**
+ * @param {*} headers
+ * @returns {headers is UndiciHeaders}
+ */
+function isUndiciHeaders (headers) {
+  return Array.isArray(headers) && (headers.length & 1) === 0
+}
+
+/**
+ * Factory function to create a URL exclusion checker
+ * @param {Array<string| RegExp>} [excludePatterns=[]] - Array of patterns to exclude
+ * @returns {IsUrlExcluded} - A function that checks if a URL matches any of the exclude patterns
+ */
+function isUrlExcludedFactory (excludePatterns = []) {
+  if (excludePatterns.length === 0) {
+    return () => false
+  }
+
+  return function isUrlExcluded (url) {
+    let urlLowerCased
+
+    for (const pattern of excludePatterns) {
+      if (typeof pattern === 'string') {
+        if (!urlLowerCased) {
+          // Convert URL to lowercase only once
+          urlLowerCased = url.toLowerCase()
+        }
+        // Simple string match (case-insensitive)
+        if (urlLowerCased.includes(pattern.toLowerCase())) {
+          return true
+        }
+      } else if (pattern instanceof RegExp) {
+        // Regex pattern match
+        if (pattern.test(url)) {
+          return true
+        }
+      }
+    }
+
+    return false
+  }
+}
+
+/**
+ * Normalizes headers for consistent comparison
+ *
+ * @param {Object|UndiciHeaders} headers - Headers to normalize
+ * @returns {NormalizedHeaders} - Normalized headers as a lowercase object
+ */
+function normalizeHeaders (headers) {
+  /** @type {NormalizedHeaders} */
+  const normalizedHeaders = {}
+
+  if (!headers) return normalizedHeaders
+
+  // Handle array format (undici internal format: [name, value, name, value, ...])
+  if (isUndiciHeaders(headers)) {
+    for (let i = 0; i < headers.length; i += 2) {
+      const key = headers[i]
+      const value = headers[i + 1]
+      if (key && value !== undefined) {
+        // Convert Buffers to strings if needed
+        const keyStr = Buffer.isBuffer(key) ? key.toString() : key
+        const valueStr = Buffer.isBuffer(value) ? value.toString() : value
+        normalizedHeaders[keyStr.toLowerCase()] = valueStr
+      }
+    }
+    return normalizedHeaders
+  }
+
+  // Handle object format
+  if (headers && typeof headers === 'object') {
+    for (const [key, value] of Object.entries(headers)) {
+      if (key && typeof key === 'string') {
+        normalizedHeaders[key.toLowerCase()] = Array.isArray(value) ? value.join(', ') : String(value)
+      }
+    }
+  }
+
+  return normalizedHeaders
+}
+
+const validSnapshotModes = /** @type {const} */ (['record', 'playback', 'update'])
+
+/** @typedef {typeof validSnapshotModes[number]} SnapshotMode */
+
+/**
+ * @param {*} mode - The snapshot mode to validate
+ * @returns {asserts mode is SnapshotMode}
+ */
+function validateSnapshotMode (mode) {
+  if (!validSnapshotModes.includes(mode)) {
+    throw new InvalidArgumentError(`Invalid snapshot mode: ${mode}. Must be one of: ${validSnapshotModes.join(', ')}`)
+  }
+}
+
+module.exports = {
+  createHeaderFilters,
+  hashId,
+  isUndiciHeaders,
+  normalizeHeaders,
+  isUrlExcludedFactory,
+  validateSnapshotMode
+}
+
+
+/***/ }),
+
 /***/ 7659:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -42406,6 +43578,8 @@ const {
   safeHTTPMethods
 } = __nccwpck_require__(3440)
 
+const { serializePathWithQuery } = __nccwpck_require__(3440)
+
 /**
  * @param {import('../../types/dispatcher.d.ts').default.DispatchOptions} opts
  */
@@ -42414,19 +43588,27 @@ function makeCacheKey (opts) {
     throw new Error('opts.origin is undefined')
   }
 
+  let fullPath
+  try {
+    fullPath = serializePathWithQuery(opts.path || '/', opts.query)
+  } catch (error) {
+    // If fails (path already has query params), use as-is
+    fullPath = opts.path || '/'
+  }
+
   return {
     origin: opts.origin.toString(),
     method: opts.method,
-    path: opts.path,
+    path: fullPath,
     headers: opts.headers
   }
 }
 
 /**
  * @param {Record<string, string[] | string>}
- * @return {Record<string, string[] | string>}
+ * @returns {Record<string, string[] | string>}
  */
-function normaliseHeaders (opts) {
+function normalizeHeaders (opts) {
   let headers
   if (opts.headers == null) {
     headers = {}
@@ -42626,7 +43808,7 @@ function parseCacheControlHeader (header) {
               }
             }
           } else {
-            // Something like `no-cache=some-header`
+            // Something like `no-cache="some-header"`
             if (key in output) {
               output[key] = output[key].concat(value)
             } else {
@@ -42759,7 +43941,7 @@ function assertCacheMethods (methods, name = 'CacheMethods') {
 
 module.exports = {
   makeCacheKey,
-  normaliseHeaders,
+  normalizeHeaders,
   assertCacheKey,
   assertCacheValue,
   parseCacheControlHeader,
@@ -43039,6 +44221,42 @@ module.exports = {
 
 /***/ }),
 
+/***/ 6436:
+/***/ ((module) => {
+
+"use strict";
+
+
+/**
+ * @template {*} T
+ * @typedef {Object} DeferredPromise
+ * @property {Promise<T>} promise
+ * @property {(value?: T) => void} resolve
+ * @property {(reason?: any) => void} reject
+ */
+
+/**
+ * @template {*} T
+ * @returns {DeferredPromise<T>} An object containing a promise and its resolve/reject methods.
+ */
+function createDeferredPromise () {
+  let res
+  let rej
+  const promise = new Promise((resolve, reject) => {
+    res = resolve
+    rej = reject
+  })
+
+  return { promise, resolve: res, reject: rej }
+}
+
+module.exports = {
+  createDeferredPromise
+}
+
+
+/***/ }),
+
 /***/ 6854:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -43273,19 +44491,21 @@ function onTick () {
 }
 
 function refreshTimeout () {
-  // If the fastNowTimeout is already set, refresh it.
-  if (fastNowTimeout) {
+  // If the fastNowTimeout is already set and the Timer has the refresh()-
+  // method available, call it to refresh the timer.
+  // Some timer objects returned by setTimeout may not have a .refresh()
+  // method (e.g. mocked timers in tests).
+  if (fastNowTimeout?.refresh) {
     fastNowTimeout.refresh()
-  // fastNowTimeout is not instantiated yet, create a new Timer.
+    // fastNowTimeout is not instantiated yet or refresh is not availabe,
+    // create a new Timer.
   } else {
     clearTimeout(fastNowTimeout)
     fastNowTimeout = setTimeout(onTick, TICK_MS)
-
-    // If the Timer has an unref method, call it to allow the process to exit if
-    // there are no other active handles.
-    if (fastNowTimeout.unref) {
-      fastNowTimeout.unref()
-    }
+    // If the Timer has an unref method, call it to allow the process to exit,
+    // if there are no other active handles. When using fake timers or mocked
+    // environments (like Jest), .unref() may not be defined,
+    fastNowTimeout?.unref()
   }
 }
 
@@ -43516,15 +44736,17 @@ module.exports = {
 "use strict";
 
 
+const assert = __nccwpck_require__(4589)
+
 const { kConstruct } = __nccwpck_require__(6443)
 const { urlEquals, getFieldValues } = __nccwpck_require__(6798)
 const { kEnumerableProperty, isDisturbed } = __nccwpck_require__(3440)
-const { webidl } = __nccwpck_require__(5893)
+const { webidl } = __nccwpck_require__(7879)
 const { cloneResponse, fromInnerResponse, getResponseState } = __nccwpck_require__(9051)
 const { Request, fromInnerRequest, getRequestState } = __nccwpck_require__(9967)
 const { fetching } = __nccwpck_require__(4398)
-const { urlIsHttpHttpsScheme, createDeferredPromise, readAllBytes } = __nccwpck_require__(3168)
-const assert = __nccwpck_require__(4589)
+const { urlIsHttpHttpsScheme, readAllBytes } = __nccwpck_require__(3168)
+const { createDeferredPromise } = __nccwpck_require__(6436)
 
 /**
  * @see https://w3c.github.io/ServiceWorker/#dfn-cache-batch-operation
@@ -43532,7 +44754,7 @@ const assert = __nccwpck_require__(4589)
  * @property {'delete' | 'put'} type
  * @property {any} request
  * @property {any} response
- * @property {import('../../types/cache').CacheQueryOptions} options
+ * @property {import('../../../types/cache').CacheQueryOptions} options
  */
 
 /**
@@ -43562,7 +44784,7 @@ class Cache {
     const prefix = 'Cache.match'
     webidl.argumentLengthCheck(arguments, 1, prefix)
 
-    request = webidl.converters.RequestInfo(request, prefix, 'request')
+    request = webidl.converters.RequestInfo(request)
     options = webidl.converters.CacheQueryOptions(options, prefix, 'options')
 
     const p = this.#internalMatchAll(request, options, 1)
@@ -43578,7 +44800,7 @@ class Cache {
     webidl.brandCheck(this, Cache)
 
     const prefix = 'Cache.matchAll'
-    if (request !== undefined) request = webidl.converters.RequestInfo(request, prefix, 'request')
+    if (request !== undefined) request = webidl.converters.RequestInfo(request)
     options = webidl.converters.CacheQueryOptions(options, prefix, 'options')
 
     return this.#internalMatchAll(request, options)
@@ -43590,7 +44812,7 @@ class Cache {
     const prefix = 'Cache.add'
     webidl.argumentLengthCheck(arguments, 1, prefix)
 
-    request = webidl.converters.RequestInfo(request, prefix, 'request')
+    request = webidl.converters.RequestInfo(request)
 
     // 1.
     const requests = [request]
@@ -43778,7 +45000,7 @@ class Cache {
     const prefix = 'Cache.put'
     webidl.argumentLengthCheck(arguments, 2, prefix)
 
-    request = webidl.converters.RequestInfo(request, prefix, 'request')
+    request = webidl.converters.RequestInfo(request)
     response = webidl.converters.Response(response, prefix, 'response')
 
     // 1.
@@ -43909,7 +45131,7 @@ class Cache {
     const prefix = 'Cache.delete'
     webidl.argumentLengthCheck(arguments, 1, prefix)
 
-    request = webidl.converters.RequestInfo(request, prefix, 'request')
+    request = webidl.converters.RequestInfo(request)
     options = webidl.converters.CacheQueryOptions(options, prefix, 'options')
 
     /**
@@ -43966,7 +45188,7 @@ class Cache {
   /**
    * @see https://w3c.github.io/ServiceWorker/#dom-cache-keys
    * @param {any} request
-   * @param {import('../../types/cache').CacheQueryOptions} options
+   * @param {import('../../../types/cache').CacheQueryOptions} options
    * @returns {Promise<readonly Request[]>}
    */
   async keys (request = undefined, options = {}) {
@@ -43974,7 +45196,7 @@ class Cache {
 
     const prefix = 'Cache.keys'
 
-    if (request !== undefined) request = webidl.converters.RequestInfo(request, prefix, 'request')
+    if (request !== undefined) request = webidl.converters.RequestInfo(request)
     options = webidl.converters.CacheQueryOptions(options, prefix, 'options')
 
     // 1.
@@ -44184,7 +45406,7 @@ class Cache {
   /**
    * @see https://w3c.github.io/ServiceWorker/#query-cache
    * @param {any} requestQuery
-   * @param {import('../../types/cache').CacheQueryOptions} options
+   * @param {import('../../../types/cache').CacheQueryOptions} options
    * @param {requestResponseList} targetStorage
    * @returns {requestResponseList}
    */
@@ -44209,7 +45431,7 @@ class Cache {
    * @param {any} requestQuery
    * @param {any} request
    * @param {any | null} response
-   * @param {import('../../types/cache').CacheQueryOptions | undefined} options
+   * @param {import('../../../types/cache').CacheQueryOptions | undefined} options
    * @returns {boolean}
    */
   #requestMatchesCachedItem (requestQuery, request, response = null, options) {
@@ -44387,7 +45609,7 @@ module.exports = {
 
 
 const { Cache } = __nccwpck_require__(9634)
-const { webidl } = __nccwpck_require__(5893)
+const { webidl } = __nccwpck_require__(7879)
 const { kEnumerableProperty } = __nccwpck_require__(3440)
 const { kConstruct } = __nccwpck_require__(6443)
 
@@ -44621,7 +45843,7 @@ module.exports = {
 
 const { parseSetCookie } = __nccwpck_require__(1978)
 const { stringify } = __nccwpck_require__(7797)
-const { webidl } = __nccwpck_require__(5893)
+const { webidl } = __nccwpck_require__(7879)
 const { Headers } = __nccwpck_require__(660)
 
 const brandChecks = webidl.brandCheckMultiple([Headers, globalThis.Headers].filter(Boolean))
@@ -45856,7 +47078,7 @@ module.exports = {
 const { pipeline } = __nccwpck_require__(7075)
 const { fetching } = __nccwpck_require__(4398)
 const { makeRequest } = __nccwpck_require__(9967)
-const { webidl } = __nccwpck_require__(5893)
+const { webidl } = __nccwpck_require__(7879)
 const { EventSourceStream } = __nccwpck_require__(4031)
 const { parseMIMEType } = __nccwpck_require__(1900)
 const { createFastMessageEvent } = __nccwpck_require__(5188)
@@ -45977,10 +47199,10 @@ class EventSource extends EventTarget {
     url = webidl.converters.USVString(url)
     eventSourceInitDict = webidl.converters.EventSourceInitDict(eventSourceInitDict, prefix, 'eventSourceInitDict')
 
-    this.#dispatcher = eventSourceInitDict.dispatcher
+    this.#dispatcher = eventSourceInitDict.node.dispatcher || eventSourceInitDict.dispatcher
     this.#state = {
       lastEventId: '',
-      reconnectionTime: defaultReconnectionTime
+      reconnectionTime: eventSourceInitDict.node.reconnectionTime
     }
 
     // 2. Let settings be ev's relevant settings object.
@@ -46084,12 +47306,9 @@ class EventSource extends EventTarget {
 
     // 14. Let processEventSourceEndOfBody given response res be the following step: if res is not a network error, then reestablish the connection.
     const processEventSourceEndOfBody = (response) => {
-      if (isNetworkError(response)) {
-        this.dispatchEvent(new Event('error'))
-        this.close()
+      if (!isNetworkError(response)) {
+        return this.#reconnect()
       }
-
-      this.#reconnect()
     }
 
     // 15. Fetch request, with processResponseEndOfBody set to processEventSourceEndOfBody...
@@ -46328,6 +47547,21 @@ webidl.converters.EventSourceInitDict = webidl.dictionaryConverter([
   {
     key: 'dispatcher', // undici only
     converter: webidl.converters.any
+  },
+  {
+    key: 'node', // undici only
+    converter: webidl.dictionaryConverter([
+      {
+        key: 'reconnectionTime',
+        converter: webidl.converters['unsigned long'],
+        defaultValue: () => defaultReconnectionTime
+      },
+      {
+        key: 'dispatcher',
+        converter: webidl.converters.any
+      }
+    ]),
+    defaultValue: () => ({})
   }
 ])
 
@@ -46371,7 +47605,7 @@ function isASCIINumber (value) {
 // https://github.com/nodejs/undici/issues/2664
 function delay (ms) {
   return new Promise((resolve) => {
-    setTimeout(resolve, ms).unref()
+    setTimeout(resolve, ms)
   })
 }
 
@@ -46394,19 +47628,19 @@ const util = __nccwpck_require__(3440)
 const {
   ReadableStreamFrom,
   readableStreamClose,
-  createDeferredPromise,
   fullyReadBody,
   extractMimeType,
   utf8DecodeBytes
 } = __nccwpck_require__(3168)
 const { FormData, setFormDataState } = __nccwpck_require__(5910)
-const { webidl } = __nccwpck_require__(5893)
-const { Blob } = __nccwpck_require__(4573)
+const { webidl } = __nccwpck_require__(7879)
 const assert = __nccwpck_require__(4589)
 const { isErrored, isDisturbed } = __nccwpck_require__(7075)
 const { isArrayBuffer } = __nccwpck_require__(3429)
 const { serializeAMimeType } = __nccwpck_require__(1900)
 const { multipartFormDataParser } = __nccwpck_require__(116)
+const { createDeferredPromise } = __nccwpck_require__(6436)
+
 let random
 
 try {
@@ -46419,19 +47653,22 @@ try {
 const textEncoder = new TextEncoder()
 function noop () {}
 
-const hasFinalizationRegistry = globalThis.FinalizationRegistry && process.version.indexOf('v18') !== 0
-let streamRegistry
+const streamRegistry = new FinalizationRegistry((weakRef) => {
+  const stream = weakRef.deref()
+  if (stream && !stream.locked && !isDisturbed(stream) && !isErrored(stream)) {
+    stream.cancel('Response object has been garbage collected').catch(noop)
+  }
+})
 
-if (hasFinalizationRegistry) {
-  streamRegistry = new FinalizationRegistry((weakRef) => {
-    const stream = weakRef.deref()
-    if (stream && !stream.locked && !isDisturbed(stream) && !isErrored(stream)) {
-      stream.cancel('Response object has been garbage collected').catch(noop)
-    }
-  })
-}
-
-// https://fetch.spec.whatwg.org/#concept-bodyinit-extract
+/**
+ * Extract a body with type from a byte sequence or BodyInit object
+ *
+ * @param {import('../../../types').BodyInit} object - The BodyInit object to extract from
+ * @param {boolean} [keepalive=false] - If true, indicates that the body
+ * @returns {[{stream: ReadableStream, source: any, length: number | null}, string | null]} - Returns a tuple containing the body and its type
+ *
+ * @see https://fetch.spec.whatwg.org/#concept-bodyinit-extract
+ */
 function extractBody (object, keepalive = false) {
   // 1. Let stream be null.
   let stream = null
@@ -46657,7 +47894,22 @@ function extractBody (object, keepalive = false) {
   return [body, type]
 }
 
-// https://fetch.spec.whatwg.org/#bodyinit-safely-extract
+/**
+ * @typedef {object} ExtractBodyResult
+ * @property {ReadableStream<Uint8Array<ArrayBuffer>>} stream - The ReadableStream containing the body data
+ * @property {any} source - The original source of the body data
+ * @property {number | null} length - The length of the body data, or null
+ */
+
+/**
+ * Safely extract a body with type from a byte sequence or BodyInit object.
+ *
+ * @param {import('../../../types').BodyInit} object - The BodyInit object to extract from
+ * @param {boolean} [keepalive=false] - If true, indicates that the body
+ * @returns {[ExtractBodyResult, string | null]} - Returns a tuple containing the body and its type
+ *
+ * @see https://fetch.spec.whatwg.org/#bodyinit-safely-extract
+ */
 function safelyExtractBody (object, keepalive = false) {
   // To safely extract a body and a `Content-Type` value from
   // a byte sequence or BodyInit object object, run these steps:
@@ -46665,9 +47917,7 @@ function safelyExtractBody (object, keepalive = false) {
   // 1. If object is a ReadableStream object, then:
   if (webidl.is.ReadableStream(object)) {
     // Assert: object is neither disturbed nor locked.
-    // istanbul ignore next
     assert(!util.isDisturbed(object), 'The body has already been consumed.')
-    // istanbul ignore next
     assert(!object.locked, 'The stream is locked.')
   }
 
@@ -46675,17 +47925,13 @@ function safelyExtractBody (object, keepalive = false) {
   return extractBody(object, keepalive)
 }
 
-function cloneBody (instance, body) {
+function cloneBody (body) {
   // To clone a body body, run these steps:
 
   // https://fetch.spec.whatwg.org/#concept-body-clone
 
   // 1. Let « out1, out2 » be the result of teeing body’s stream.
-  const [out1, out2] = body.stream.tee()
-
-  if (hasFinalizationRegistry) {
-    streamRegistry.register(instance, new WeakRef(out1))
-  }
+  const { 0: out1, 1: out2 } = body.stream.tee()
 
   // 2. Set body’s stream to out1.
   body.stream = out1
@@ -46917,7 +48163,6 @@ module.exports = {
   cloneBody,
   mixinBody,
   streamRegistry,
-  hasFinalizationRegistry,
   bodyUnusable
 }
 
@@ -47815,75 +49060,18 @@ module.exports = {
 
 /***/ }),
 
-/***/ 6653:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const { kConnected, kSize } = __nccwpck_require__(6443)
-
-class CompatWeakRef {
-  constructor (value) {
-    this.value = value
-  }
-
-  deref () {
-    return this.value[kConnected] === 0 && this.value[kSize] === 0
-      ? undefined
-      : this.value
-  }
-}
-
-class CompatFinalizer {
-  constructor (finalizer) {
-    this.finalizer = finalizer
-  }
-
-  register (dispatcher, key) {
-    if (dispatcher.on) {
-      dispatcher.on('disconnect', () => {
-        if (dispatcher[kConnected] === 0 && dispatcher[kSize] === 0) {
-          this.finalizer(key)
-        }
-      })
-    }
-  }
-
-  unregister (key) {}
-}
-
-module.exports = function () {
-  // FIXME: remove workaround when the Node bug is backported to v18
-  // https://github.com/nodejs/node/issues/49344#issuecomment-1741776308
-  if (process.env.NODE_V8_COVERAGE && process.version.startsWith('v18')) {
-    process._rawDebug('Using compatibility WeakRef and FinalizationRegistry')
-    return {
-      WeakRef: CompatWeakRef,
-      FinalizationRegistry: CompatFinalizer
-    }
-  }
-  return { WeakRef, FinalizationRegistry }
-}
-
-
-/***/ }),
-
 /***/ 116:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 "use strict";
 
 
-const { isUSVString, bufferToLowerCasedHeaderName } = __nccwpck_require__(3440)
+const { bufferToLowerCasedHeaderName } = __nccwpck_require__(3440)
 const { utf8DecodeBytes } = __nccwpck_require__(3168)
 const { HTTP_TOKEN_CODEPOINTS, isomorphicDecode } = __nccwpck_require__(1900)
 const { makeEntry } = __nccwpck_require__(5910)
-const { webidl } = __nccwpck_require__(5893)
+const { webidl } = __nccwpck_require__(7879)
 const assert = __nccwpck_require__(4589)
-const { File: NodeFile } = __nccwpck_require__(4573)
-
-const File = globalThis.File ?? NodeFile
 
 const formDataNameBuffer = Buffer.from('form-data; name="')
 const filenameBuffer = Buffer.from('filename')
@@ -48075,8 +49263,8 @@ function multipartFormDataParser (input, mimeType) {
     }
 
     // 5.12. Assert: name is a scalar value string and value is either a scalar value string or a File object.
-    assert(isUSVString(name))
-    assert((typeof value === 'string' && isUSVString(value)) || webidl.is.File(value))
+    assert(webidl.is.USVString(name))
+    assert((typeof value === 'string' && webidl.is.USVString(value)) || webidl.is.File(value))
 
     // 5.13. Create an entry with name and value, and append it to entry list.
     entryList.push(makeEntry(name, value, filename))
@@ -48386,18 +49574,14 @@ module.exports = {
 
 const { iteratorMixin } = __nccwpck_require__(3168)
 const { kEnumerableProperty } = __nccwpck_require__(3440)
-const { webidl } = __nccwpck_require__(5893)
-const { File: NativeFile } = __nccwpck_require__(4573)
+const { webidl } = __nccwpck_require__(7879)
 const nodeUtil = __nccwpck_require__(7975)
-
-/** @type {globalThis['File']} */
-const File = globalThis.File ?? NativeFile
 
 // https://xhr.spec.whatwg.org/#formdata
 class FormData {
   #state = []
 
-  constructor (form) {
+  constructor (form = undefined) {
     webidl.util.markAsUncloneable(this)
 
     if (form !== undefined) {
@@ -48712,7 +49896,7 @@ const {
   isValidHeaderName,
   isValidHeaderValue
 } = __nccwpck_require__(3168)
-const { webidl } = __nccwpck_require__(5893)
+const { webidl } = __nccwpck_require__(7879)
 const assert = __nccwpck_require__(4589)
 const util = __nccwpck_require__(7975)
 
@@ -49460,7 +50644,6 @@ const {
   crossOriginResourcePolicyCheck,
   determineRequestsReferrer,
   coarsenedSharedCurrentTime,
-  createDeferredPromise,
   sameOrigin,
   isCancelled,
   isAborted,
@@ -49491,8 +50674,9 @@ const { Readable, pipeline, finished, isErrored, isReadable } = __nccwpck_requir
 const { addAbortListener, bufferToLowerCasedHeaderName } = __nccwpck_require__(3440)
 const { dataURLProcessor, serializeAMimeType, minimizeSupportedMimeType } = __nccwpck_require__(1900)
 const { getGlobalDispatcher } = __nccwpck_require__(2581)
-const { webidl } = __nccwpck_require__(5893)
+const { webidl } = __nccwpck_require__(7879)
 const { STATUS_CODES } = __nccwpck_require__(7067)
+const { createDeferredPromise } = __nccwpck_require__(6436)
 const GET_OR_HEAD = ['GET', 'HEAD']
 
 const defaultUserAgent = typeof __UNDICI_IS_NODE__ !== 'undefined' || typeof esbuildDetection !== 'undefined'
@@ -49937,257 +51121,258 @@ function fetching ({
   }
 
   // 16. Run main fetch given fetchParams.
-  mainFetch(fetchParams)
-    .catch(err => {
-      fetchParams.controller.terminate(err)
-    })
+  mainFetch(fetchParams, false)
 
   // 17. Return fetchParam's controller
   return fetchParams.controller
 }
 
 // https://fetch.spec.whatwg.org/#concept-main-fetch
-async function mainFetch (fetchParams, recursive = false) {
-  // 1. Let request be fetchParams’s request.
-  const request = fetchParams.request
+async function mainFetch (fetchParams, recursive) {
+  try {
+    // 1. Let request be fetchParams’s request.
+    const request = fetchParams.request
 
-  // 2. Let response be null.
-  let response = null
+    // 2. Let response be null.
+    let response = null
 
-  // 3. If request’s local-URLs-only flag is set and request’s current URL is
-  // not local, then set response to a network error.
-  if (request.localURLsOnly && !urlIsLocal(requestCurrentURL(request))) {
-    response = makeNetworkError('local URLs only')
-  }
+    // 3. If request’s local-URLs-only flag is set and request’s current URL is
+    // not local, then set response to a network error.
+    if (request.localURLsOnly && !urlIsLocal(requestCurrentURL(request))) {
+      response = makeNetworkError('local URLs only')
+    }
 
-  // 4. Run report Content Security Policy violations for request.
-  // TODO
+    // 4. Run report Content Security Policy violations for request.
+    // TODO
 
-  // 5. Upgrade request to a potentially trustworthy URL, if appropriate.
-  tryUpgradeRequestToAPotentiallyTrustworthyURL(request)
+    // 5. Upgrade request to a potentially trustworthy URL, if appropriate.
+    tryUpgradeRequestToAPotentiallyTrustworthyURL(request)
 
-  // 6. If should request be blocked due to a bad port, should fetching request
-  // be blocked as mixed content, or should request be blocked by Content
-  // Security Policy returns blocked, then set response to a network error.
-  if (requestBadPort(request) === 'blocked') {
-    response = makeNetworkError('bad port')
-  }
-  // TODO: should fetching request be blocked as mixed content?
-  // TODO: should request be blocked by Content Security Policy?
+    // 6. If should request be blocked due to a bad port, should fetching request
+    // be blocked as mixed content, or should request be blocked by Content
+    // Security Policy returns blocked, then set response to a network error.
+    if (requestBadPort(request) === 'blocked') {
+      response = makeNetworkError('bad port')
+    }
+    // TODO: should fetching request be blocked as mixed content?
+    // TODO: should request be blocked by Content Security Policy?
 
-  // 7. If request’s referrer policy is the empty string, then set request’s
-  // referrer policy to request’s policy container’s referrer policy.
-  if (request.referrerPolicy === '') {
-    request.referrerPolicy = request.policyContainer.referrerPolicy
-  }
+    // 7. If request’s referrer policy is the empty string, then set request’s
+    // referrer policy to request’s policy container’s referrer policy.
+    if (request.referrerPolicy === '') {
+      request.referrerPolicy = request.policyContainer.referrerPolicy
+    }
 
-  // 8. If request’s referrer is not "no-referrer", then set request’s
-  // referrer to the result of invoking determine request’s referrer.
-  if (request.referrer !== 'no-referrer') {
-    request.referrer = determineRequestsReferrer(request)
-  }
+    // 8. If request’s referrer is not "no-referrer", then set request’s
+    // referrer to the result of invoking determine request’s referrer.
+    if (request.referrer !== 'no-referrer') {
+      request.referrer = determineRequestsReferrer(request)
+    }
 
-  // 9. Set request’s current URL’s scheme to "https" if all of the following
-  // conditions are true:
-  // - request’s current URL’s scheme is "http"
-  // - request’s current URL’s host is a domain
-  // - Matching request’s current URL’s host per Known HSTS Host Domain Name
-  //   Matching results in either a superdomain match with an asserted
-  //   includeSubDomains directive or a congruent match (with or without an
-  //   asserted includeSubDomains directive). [HSTS]
-  // TODO
+    // 9. Set request’s current URL’s scheme to "https" if all of the following
+    // conditions are true:
+    // - request’s current URL’s scheme is "http"
+    // - request’s current URL’s host is a domain
+    // - Matching request’s current URL’s host per Known HSTS Host Domain Name
+    //   Matching results in either a superdomain match with an asserted
+    //   includeSubDomains directive or a congruent match (with or without an
+    //   asserted includeSubDomains directive). [HSTS]
+    // TODO
 
-  // 10. If recursive is false, then run the remaining steps in parallel.
-  // TODO
+    // 10. If recursive is false, then run the remaining steps in parallel.
+    // TODO
 
-  // 11. If response is null, then set response to the result of running
-  // the steps corresponding to the first matching statement:
-  if (response === null) {
-    const currentURL = requestCurrentURL(request)
-    if (
-      // - request’s current URL’s origin is same origin with request’s origin,
-      //   and request’s response tainting is "basic"
-      (sameOrigin(currentURL, request.url) && request.responseTainting === 'basic') ||
-      // request’s current URL’s scheme is "data"
-      (currentURL.protocol === 'data:') ||
-      // - request’s mode is "navigate" or "websocket"
-      (request.mode === 'navigate' || request.mode === 'websocket')
-    ) {
-      // 1. Set request’s response tainting to "basic".
-      request.responseTainting = 'basic'
+    // 11. If response is null, then set response to the result of running
+    // the steps corresponding to the first matching statement:
+    if (response === null) {
+      const currentURL = requestCurrentURL(request)
+      if (
+        // - request’s current URL’s origin is same origin with request’s origin,
+        //   and request’s response tainting is "basic"
+        (sameOrigin(currentURL, request.url) && request.responseTainting === 'basic') ||
+        // request’s current URL’s scheme is "data"
+        (currentURL.protocol === 'data:') ||
+        // - request’s mode is "navigate" or "websocket"
+        (request.mode === 'navigate' || request.mode === 'websocket')
+      ) {
+        // 1. Set request’s response tainting to "basic".
+        request.responseTainting = 'basic'
 
-      // 2. Return the result of running scheme fetch given fetchParams.
-      response = await schemeFetch(fetchParams)
-
-    // request’s mode is "same-origin"
-    } else if (request.mode === 'same-origin') {
-      // 1. Return a network error.
-      response = makeNetworkError('request mode cannot be "same-origin"')
-
-    // request’s mode is "no-cors"
-    } else if (request.mode === 'no-cors') {
-      // 1. If request’s redirect mode is not "follow", then return a network
-      // error.
-      if (request.redirect !== 'follow') {
-        response = makeNetworkError(
-          'redirect mode cannot be "follow" for "no-cors" request'
-        )
-      } else {
-        // 2. Set request’s response tainting to "opaque".
-        request.responseTainting = 'opaque'
-
-        // 3. Return the result of running scheme fetch given fetchParams.
+        // 2. Return the result of running scheme fetch given fetchParams.
         response = await schemeFetch(fetchParams)
+
+      // request’s mode is "same-origin"
+      } else if (request.mode === 'same-origin') {
+        // 1. Return a network error.
+        response = makeNetworkError('request mode cannot be "same-origin"')
+
+      // request’s mode is "no-cors"
+      } else if (request.mode === 'no-cors') {
+        // 1. If request’s redirect mode is not "follow", then return a network
+        // error.
+        if (request.redirect !== 'follow') {
+          response = makeNetworkError(
+            'redirect mode cannot be "follow" for "no-cors" request'
+          )
+        } else {
+          // 2. Set request’s response tainting to "opaque".
+          request.responseTainting = 'opaque'
+
+          // 3. Return the result of running scheme fetch given fetchParams.
+          response = await schemeFetch(fetchParams)
+        }
+      // request’s current URL’s scheme is not an HTTP(S) scheme
+      } else if (!urlIsHttpHttpsScheme(requestCurrentURL(request))) {
+        // Return a network error.
+        response = makeNetworkError('URL scheme must be a HTTP(S) scheme')
+
+        // - request’s use-CORS-preflight flag is set
+        // - request’s unsafe-request flag is set and either request’s method is
+        //   not a CORS-safelisted method or CORS-unsafe request-header names with
+        //   request’s header list is not empty
+        //    1. Set request’s response tainting to "cors".
+        //    2. Let corsWithPreflightResponse be the result of running HTTP fetch
+        //    given fetchParams and true.
+        //    3. If corsWithPreflightResponse is a network error, then clear cache
+        //    entries using request.
+        //    4. Return corsWithPreflightResponse.
+        // TODO
+
+      // Otherwise
+      } else {
+        //    1. Set request’s response tainting to "cors".
+        request.responseTainting = 'cors'
+
+        //    2. Return the result of running HTTP fetch given fetchParams.
+        response = await httpFetch(fetchParams)
       }
-    // request’s current URL’s scheme is not an HTTP(S) scheme
-    } else if (!urlIsHttpHttpsScheme(requestCurrentURL(request))) {
-      // Return a network error.
-      response = makeNetworkError('URL scheme must be a HTTP(S) scheme')
-
-      // - request’s use-CORS-preflight flag is set
-      // - request’s unsafe-request flag is set and either request’s method is
-      //   not a CORS-safelisted method or CORS-unsafe request-header names with
-      //   request’s header list is not empty
-      //    1. Set request’s response tainting to "cors".
-      //    2. Let corsWithPreflightResponse be the result of running HTTP fetch
-      //    given fetchParams and true.
-      //    3. If corsWithPreflightResponse is a network error, then clear cache
-      //    entries using request.
-      //    4. Return corsWithPreflightResponse.
-      // TODO
-
-    // Otherwise
-    } else {
-      //    1. Set request’s response tainting to "cors".
-      request.responseTainting = 'cors'
-
-      //    2. Return the result of running HTTP fetch given fetchParams.
-      response = await httpFetch(fetchParams)
-    }
-  }
-
-  // 12. If recursive is true, then return response.
-  if (recursive) {
-    return response
-  }
-
-  // 13. If response is not a network error and response is not a filtered
-  // response, then:
-  if (response.status !== 0 && !response.internalResponse) {
-    // If request’s response tainting is "cors", then:
-    if (request.responseTainting === 'cors') {
-      // 1. Let headerNames be the result of extracting header list values
-      // given `Access-Control-Expose-Headers` and response’s header list.
-      // TODO
-      // 2. If request’s credentials mode is not "include" and headerNames
-      // contains `*`, then set response’s CORS-exposed header-name list to
-      // all unique header names in response’s header list.
-      // TODO
-      // 3. Otherwise, if headerNames is not null or failure, then set
-      // response’s CORS-exposed header-name list to headerNames.
-      // TODO
     }
 
-    // Set response to the following filtered response with response as its
-    // internal response, depending on request’s response tainting:
-    if (request.responseTainting === 'basic') {
-      response = filterResponse(response, 'basic')
-    } else if (request.responseTainting === 'cors') {
-      response = filterResponse(response, 'cors')
-    } else if (request.responseTainting === 'opaque') {
-      response = filterResponse(response, 'opaque')
-    } else {
-      assert(false)
-    }
-  }
-
-  // 14. Let internalResponse be response, if response is a network error,
-  // and response’s internal response otherwise.
-  let internalResponse =
-    response.status === 0 ? response : response.internalResponse
-
-  // 15. If internalResponse’s URL list is empty, then set it to a clone of
-  // request’s URL list.
-  if (internalResponse.urlList.length === 0) {
-    internalResponse.urlList.push(...request.urlList)
-  }
-
-  // 16. If request’s timing allow failed flag is unset, then set
-  // internalResponse’s timing allow passed flag.
-  if (!request.timingAllowFailed) {
-    response.timingAllowPassed = true
-  }
-
-  // 17. If response is not a network error and any of the following returns
-  // blocked
-  // - should internalResponse to request be blocked as mixed content
-  // - should internalResponse to request be blocked by Content Security Policy
-  // - should internalResponse to request be blocked due to its MIME type
-  // - should internalResponse to request be blocked due to nosniff
-  // TODO
-
-  // 18. If response’s type is "opaque", internalResponse’s status is 206,
-  // internalResponse’s range-requested flag is set, and request’s header
-  // list does not contain `Range`, then set response and internalResponse
-  // to a network error.
-  if (
-    response.type === 'opaque' &&
-    internalResponse.status === 206 &&
-    internalResponse.rangeRequested &&
-    !request.headers.contains('range', true)
-  ) {
-    response = internalResponse = makeNetworkError()
-  }
-
-  // 19. If response is not a network error and either request’s method is
-  // `HEAD` or `CONNECT`, or internalResponse’s status is a null body status,
-  // set internalResponse’s body to null and disregard any enqueuing toward
-  // it (if any).
-  if (
-    response.status !== 0 &&
-    (request.method === 'HEAD' ||
-      request.method === 'CONNECT' ||
-      nullBodyStatus.includes(internalResponse.status))
-  ) {
-    internalResponse.body = null
-    fetchParams.controller.dump = true
-  }
-
-  // 20. If request’s integrity metadata is not the empty string, then:
-  if (request.integrity) {
-    // 1. Let processBodyError be this step: run fetch finale given fetchParams
-    // and a network error.
-    const processBodyError = (reason) =>
-      fetchFinale(fetchParams, makeNetworkError(reason))
-
-    // 2. If request’s response tainting is "opaque", or response’s body is null,
-    // then run processBodyError and abort these steps.
-    if (request.responseTainting === 'opaque' || response.body == null) {
-      processBodyError(response.error)
-      return
+    // 12. If recursive is true, then return response.
+    if (recursive) {
+      return response
     }
 
-    // 3. Let processBody given bytes be these steps:
-    const processBody = (bytes) => {
-      // 1. If bytes do not match request’s integrity metadata,
-      // then run processBodyError and abort these steps. [SRI]
-      if (!bytesMatch(bytes, request.integrity)) {
-        processBodyError('integrity mismatch')
+    // 13. If response is not a network error and response is not a filtered
+    // response, then:
+    if (response.status !== 0 && !response.internalResponse) {
+      // If request’s response tainting is "cors", then:
+      if (request.responseTainting === 'cors') {
+        // 1. Let headerNames be the result of extracting header list values
+        // given `Access-Control-Expose-Headers` and response’s header list.
+        // TODO
+        // 2. If request’s credentials mode is not "include" and headerNames
+        // contains `*`, then set response’s CORS-exposed header-name list to
+        // all unique header names in response’s header list.
+        // TODO
+        // 3. Otherwise, if headerNames is not null or failure, then set
+        // response’s CORS-exposed header-name list to headerNames.
+        // TODO
+      }
+
+      // Set response to the following filtered response with response as its
+      // internal response, depending on request’s response tainting:
+      if (request.responseTainting === 'basic') {
+        response = filterResponse(response, 'basic')
+      } else if (request.responseTainting === 'cors') {
+        response = filterResponse(response, 'cors')
+      } else if (request.responseTainting === 'opaque') {
+        response = filterResponse(response, 'opaque')
+      } else {
+        assert(false)
+      }
+    }
+
+    // 14. Let internalResponse be response, if response is a network error,
+    // and response’s internal response otherwise.
+    let internalResponse =
+      response.status === 0 ? response : response.internalResponse
+
+    // 15. If internalResponse’s URL list is empty, then set it to a clone of
+    // request’s URL list.
+    if (internalResponse.urlList.length === 0) {
+      internalResponse.urlList.push(...request.urlList)
+    }
+
+    // 16. If request’s timing allow failed flag is unset, then set
+    // internalResponse’s timing allow passed flag.
+    if (!request.timingAllowFailed) {
+      response.timingAllowPassed = true
+    }
+
+    // 17. If response is not a network error and any of the following returns
+    // blocked
+    // - should internalResponse to request be blocked as mixed content
+    // - should internalResponse to request be blocked by Content Security Policy
+    // - should internalResponse to request be blocked due to its MIME type
+    // - should internalResponse to request be blocked due to nosniff
+    // TODO
+
+    // 18. If response’s type is "opaque", internalResponse’s status is 206,
+    // internalResponse’s range-requested flag is set, and request’s header
+    // list does not contain `Range`, then set response and internalResponse
+    // to a network error.
+    if (
+      response.type === 'opaque' &&
+      internalResponse.status === 206 &&
+      internalResponse.rangeRequested &&
+      !request.headers.contains('range', true)
+    ) {
+      response = internalResponse = makeNetworkError()
+    }
+
+    // 19. If response is not a network error and either request’s method is
+    // `HEAD` or `CONNECT`, or internalResponse’s status is a null body status,
+    // set internalResponse’s body to null and disregard any enqueuing toward
+    // it (if any).
+    if (
+      response.status !== 0 &&
+      (request.method === 'HEAD' ||
+        request.method === 'CONNECT' ||
+        nullBodyStatus.includes(internalResponse.status))
+    ) {
+      internalResponse.body = null
+      fetchParams.controller.dump = true
+    }
+
+    // 20. If request’s integrity metadata is not the empty string, then:
+    if (request.integrity) {
+      // 1. Let processBodyError be this step: run fetch finale given fetchParams
+      // and a network error.
+      const processBodyError = (reason) =>
+        fetchFinale(fetchParams, makeNetworkError(reason))
+
+      // 2. If request’s response tainting is "opaque", or response’s body is null,
+      // then run processBodyError and abort these steps.
+      if (request.responseTainting === 'opaque' || response.body == null) {
+        processBodyError(response.error)
         return
       }
 
-      // 2. Set response’s body to bytes as a body.
-      response.body = safelyExtractBody(bytes)[0]
+      // 3. Let processBody given bytes be these steps:
+      const processBody = (bytes) => {
+        // 1. If bytes do not match request’s integrity metadata,
+        // then run processBodyError and abort these steps. [SRI]
+        if (!bytesMatch(bytes, request.integrity)) {
+          processBodyError('integrity mismatch')
+          return
+        }
 
-      // 3. Run fetch finale given fetchParams and response.
+        // 2. Set response’s body to bytes as a body.
+        response.body = safelyExtractBody(bytes)[0]
+
+        // 3. Run fetch finale given fetchParams and response.
+        fetchFinale(fetchParams, response)
+      }
+
+      // 4. Fully read response’s body given processBody and processBodyError.
+      fullyReadBody(response.body, processBody, processBodyError)
+    } else {
+      // 21. Otherwise, run fetch finale given fetchParams and response.
       fetchFinale(fetchParams, response)
     }
-
-    // 4. Fully read response’s body given processBody and processBodyError.
-    await fullyReadBody(response.body, processBody, processBodyError)
-  } else {
-    // 21. Otherwise, run fetch finale given fetchParams and response.
-    fetchFinale(fetchParams, response)
+  } catch (err) {
+    fetchParams.controller.terminate(err)
   }
 }
 
@@ -51339,15 +52524,11 @@ async function httpNetworkFetch (
   //     cancelAlgorithm set to cancelAlgorithm.
   const stream = new ReadableStream(
     {
-      async start (controller) {
+      start (controller) {
         fetchParams.controller.controller = controller
       },
-      async pull (controller) {
-        await pullAlgorithm(controller)
-      },
-      async cancel (reason) {
-        await cancelAlgorithm(reason)
-      },
+      pull: pullAlgorithm,
+      cancel: cancelAlgorithm,
       type: 'bytes'
     }
   )
@@ -51485,7 +52666,7 @@ async function httpNetworkFetch (
 
   function dispatch ({ body }) {
     const url = requestCurrentURL(request)
-    /** @type {import('../..').Agent} */
+    /** @type {import('../../..').Agent} */
     const agent = fetchParams.controller.dispatcher
 
     return new Promise((resolve, reject) => agent.dispatch(
@@ -51534,12 +52715,11 @@ async function httpNetworkFetch (
 
         onHeaders (status, rawHeaders, resume, statusText) {
           if (status < 200) {
-            return
+            return false
           }
 
           /** @type {string[]} */
           let codings = []
-          let location = ''
 
           const headersList = new HeadersList()
 
@@ -51552,7 +52732,7 @@ async function httpNetworkFetch (
             // "All content-coding values are case-insensitive..."
             codings = contentEncoding.toLowerCase().split(',').map((x) => x.trim())
           }
-          location = headersList.get('location', true)
+          const location = headersList.get('location', true)
 
           this.body = new Readable({ read: resume })
 
@@ -51584,6 +52764,12 @@ async function httpNetworkFetch (
                 decoders.push(zlib.createBrotliDecompress({
                   flush: zlib.constants.BROTLI_OPERATION_FLUSH,
                   finishFlush: zlib.constants.BROTLI_OPERATION_FLUSH
+                }))
+              } else if (coding === 'zstd' && typeof zlib.createZstdDecompress === 'function') {
+                // Node.js v23.8.0+ and v22.15.0+ supports Zstandard
+                decoders.push(zlib.createZstdDecompress({
+                  flush: zlib.constants.ZSTD_e_continue,
+                  finishFlush: zlib.constants.ZSTD_e_end
                 }))
               } else {
                 decoders.length = 0
@@ -51700,7 +52886,6 @@ module.exports = {
 
 const { extractBody, mixinBody, cloneBody, bodyUnusable } = __nccwpck_require__(4492)
 const { Headers, fill: fillHeaders, HeadersList, setHeadersGuard, getHeadersGuard, setHeadersList, getHeadersList } = __nccwpck_require__(660)
-const { FinalizationRegistry } = __nccwpck_require__(6653)()
 const util = __nccwpck_require__(3440)
 const nodeUtil = __nccwpck_require__(7975)
 const {
@@ -51719,7 +52904,7 @@ const {
   requestDuplex
 } = __nccwpck_require__(4495)
 const { kEnumerableProperty, normalizedMethodRecordsBase, normalizedMethodRecords } = util
-const { webidl } = __nccwpck_require__(5893)
+const { webidl } = __nccwpck_require__(7879)
 const { URLSerializer } = __nccwpck_require__(1900)
 const { kConstruct } = __nccwpck_require__(6443)
 const assert = __nccwpck_require__(4589)
@@ -51805,8 +52990,8 @@ class Request {
     const prefix = 'Request constructor'
     webidl.argumentLengthCheck(arguments, 1, prefix)
 
-    input = webidl.converters.RequestInfo(input, prefix, 'input')
-    init = webidl.converters.RequestInit(init, prefix, 'init')
+    input = webidl.converters.RequestInfo(input)
+    init = webidl.converters.RequestInit(init)
 
     // 1. Let request be null.
     let request = null
@@ -52633,7 +53818,7 @@ function cloneRequest (request) {
   // 2. If request’s body is non-null, set newRequest’s body to the
   // result of cloning request’s body.
   if (request.body != null) {
-    newRequest.body = cloneBody(newRequest, request.body)
+    newRequest.body = cloneBody(request.body)
   }
 
   // 3. Return newRequest.
@@ -52689,8 +53874,13 @@ Object.defineProperties(Request.prototype, {
 
 webidl.is.Request = webidl.util.MakeTypeAssertion(Request)
 
-// https://fetch.spec.whatwg.org/#requestinfo
-webidl.converters.RequestInfo = function (V, prefix, argument) {
+/**
+ * @param {*} V
+ * @returns {import('../../../types/fetch').Request|string}
+ *
+ * @see https://fetch.spec.whatwg.org/#requestinfo
+ */
+webidl.converters.RequestInfo = function (V) {
   if (typeof V === 'string') {
     return webidl.converters.USVString(V)
   }
@@ -52702,7 +53892,11 @@ webidl.converters.RequestInfo = function (V, prefix, argument) {
   return webidl.converters.USVString(V)
 }
 
-// https://fetch.spec.whatwg.org/#requestinit
+/**
+ * @param {*} V
+ * @returns {import('../../../types/fetch').RequestInit}
+ * @see https://fetch.spec.whatwg.org/#requestinit
+ */
 webidl.converters.RequestInit = webidl.dictionaryConverter([
   {
     key: 'method',
@@ -52804,7 +53998,7 @@ module.exports = {
 
 
 const { Headers, HeadersList, fill, getHeadersGuard, setHeadersGuard, setHeadersList } = __nccwpck_require__(660)
-const { extractBody, cloneBody, mixinBody, hasFinalizationRegistry, streamRegistry, bodyUnusable } = __nccwpck_require__(4492)
+const { extractBody, cloneBody, mixinBody, streamRegistry, bodyUnusable } = __nccwpck_require__(4492)
 const util = __nccwpck_require__(3440)
 const nodeUtil = __nccwpck_require__(7975)
 const { kEnumerableProperty } = util
@@ -52821,11 +54015,12 @@ const {
   redirectStatusSet,
   nullBodyStatus
 } = __nccwpck_require__(4495)
-const { webidl } = __nccwpck_require__(5893)
+const { webidl } = __nccwpck_require__(7879)
 const { URLSerializer } = __nccwpck_require__(1900)
 const { kConstruct } = __nccwpck_require__(6443)
 const assert = __nccwpck_require__(4589)
-const { types } = __nccwpck_require__(7975)
+
+const { isArrayBuffer } = nodeUtil.types
 
 const textEncoder = new TextEncoder('utf-8')
 
@@ -53046,6 +54241,11 @@ class Response {
     // 2. Let clonedResponse be the result of cloning this’s response.
     const clonedResponse = cloneResponse(this.#state)
 
+    // Note: To re-register because of a new stream.
+    if (this.#state.body?.stream) {
+      streamRegistry.register(this, new WeakRef(this.#state.body.stream))
+    }
+
     // 3. Return the result of creating a Response object, given
     // clonedResponse, this’s headers’s guard, and this’s relevant Realm.
     return fromInnerResponse(clonedResponse, getHeadersGuard(this.#headers))
@@ -53155,7 +54355,7 @@ function cloneResponse (response) {
   // 3. If response’s body is non-null, then set newResponse’s body to the
   // result of cloning response’s body.
   if (response.body != null) {
-    newResponse.body = cloneBody(newResponse, response.body)
+    newResponse.body = cloneBody(response.body)
   }
 
   // 4. Return newResponse.
@@ -53355,7 +54555,7 @@ function fromInnerResponse (innerResponse, guard) {
   setHeadersList(headers, innerResponse.headersList)
   setHeadersGuard(headers, guard)
 
-  if (hasFinalizationRegistry && innerResponse.body?.stream) {
+  if (innerResponse.body?.stream) {
     // If the target (response) is reclaimed, the cleanup callback may be called at some point with
     // the held value provided for it (innerResponse.body.stream). The held value can be any value:
     // a primitive or an object, even undefined. If the held value is an object, the registry keeps
@@ -53377,7 +54577,7 @@ webidl.converters.XMLHttpRequestBodyInit = function (V, prefix, name) {
     return V
   }
 
-  if (ArrayBuffer.isView(V) || types.isArrayBuffer(V)) {
+  if (ArrayBuffer.isView(V) || isArrayBuffer(V)) {
     return V
   }
 
@@ -53456,7 +54656,7 @@ const { performance } = __nccwpck_require__(643)
 const { ReadableStreamFrom, isValidHTTPToken, normalizedMethodRecordsBase } = __nccwpck_require__(3440)
 const assert = __nccwpck_require__(4589)
 const { isUint8Array } = __nccwpck_require__(3429)
-const { webidl } = __nccwpck_require__(5893)
+const { webidl } = __nccwpck_require__(7879)
 
 let supportedHashes = []
 
@@ -54371,17 +55571,6 @@ function sameOrigin (A, B) {
   return false
 }
 
-function createDeferredPromise () {
-  let res
-  let rej
-  const promise = new Promise((resolve, reject) => {
-    res = resolve
-    rej = reject
-  })
-
-  return { promise, resolve: res, reject: rej }
-}
-
 function isAborted (fetchParams) {
   return fetchParams.controller.state === 'aborted'
 }
@@ -54624,6 +55813,11 @@ function iteratorMixin (name, object, kInternalIterator, keyIndex = 0, valueInde
 }
 
 /**
+ * @param {import('./body').ExtractBodyResult} body
+ * @param {(bytes: Uint8Array) => void} processBody
+ * @param {(error: Error) => void} processBodyError
+ * @returns {void}
+ *
  * @see https://fetch.spec.whatwg.org/#body-fully-read
  */
 function fullyReadBody (body, processBody, processBodyError) {
@@ -54638,20 +55832,17 @@ function fullyReadBody (body, processBody, processBodyError) {
   //    with taskDestination.
   const errorSteps = processBodyError
 
+  try {
   // 4. Let reader be the result of getting a reader for body’s stream.
   //    If that threw an exception, then run errorSteps with that
   //    exception and return.
-  let reader
+    const reader = body.stream.getReader()
 
-  try {
-    reader = body.stream.getReader()
+    // 5. Read all bytes from reader, given successSteps and errorSteps.
+    readAllBytes(reader, successSteps, errorSteps)
   } catch (e) {
     errorSteps(e)
-    return
   }
-
-  // 5. Read all bytes from reader, given successSteps and errorSteps.
-  readAllBytes(reader, successSteps, errorSteps)
 }
 
 /**
@@ -54688,15 +55879,16 @@ function isomorphicEncode (input) {
 /**
  * @see https://streams.spec.whatwg.org/#readablestreamdefaultreader-read-all-bytes
  * @see https://streams.spec.whatwg.org/#read-loop
- * @param {ReadableStreamDefaultReader} reader
+ * @param {ReadableStream<Uint8Array<ArrayBuffer>>} reader
  * @param {(bytes: Uint8Array) => void} successSteps
  * @param {(error: Error) => void} failureSteps
+ * @returns {Promise<void>}
  */
 async function readAllBytes (reader, successSteps, failureSteps) {
-  const bytes = []
-  let byteLength = 0
-
   try {
+    const bytes = []
+    let byteLength = 0
+
     do {
       const { done, value: chunk } = await reader.read()
 
@@ -54709,7 +55901,7 @@ async function readAllBytes (reader, successSteps, failureSteps) {
       // 1. If chunk is not a Uint8Array object, call failureSteps
       //    with a TypeError and abort these steps.
       if (!isUint8Array(chunk)) {
-        failureSteps(TypeError('Received non-Uint8Array chunk'))
+        failureSteps(new TypeError('Received non-Uint8Array chunk'))
         return
       }
 
@@ -54772,9 +55964,16 @@ function urlIsHttpHttpsScheme (url) {
 }
 
 /**
+ * @typedef {Object} RangeHeaderValue
+ * @property {number|null} rangeStartValue
+ * @property {number|null} rangeEndValue
+ */
+
+/**
  * @see https://fetch.spec.whatwg.org/#simple-range-header-value
  * @param {string} value
  * @param {boolean} allowWhitespace
+ * @return {RangeHeaderValue|'failure'}
  */
 function simpleRangeHeaderValue (value, allowWhitespace) {
   // 1. Let data be the isomorphic decoding of value.
@@ -55179,7 +56378,6 @@ module.exports = {
   isAborted,
   isCancelled,
   isValidEncodedURL,
-  createDeferredPromise,
   ReadableStreamFrom,
   tryUpgradeRequestToAPotentiallyTrustworthyURL,
   clampAndCoarsenConnectionTimingInfo,
@@ -55231,7 +56429,7 @@ module.exports = {
 
 /***/ }),
 
-/***/ 5893:
+/***/ 7879:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 "use strict";
@@ -55239,7 +56437,6 @@ module.exports = {
 
 const { types, inspect } = __nccwpck_require__(7975)
 const { markAsUncloneable } = __nccwpck_require__(5919)
-const { toUSVString } = __nccwpck_require__(3440)
 
 const UNDEFINED = 1
 const BOOLEAN = 2
@@ -55260,22 +56457,48 @@ const webidl = {
   is: {}
 }
 
+/**
+ * @description Instantiate an error.
+ *
+ * @param {Object} opts
+ * @param {string} opts.header
+ * @param {string} opts.message
+ * @returns {TypeError}
+ */
 webidl.errors.exception = function (message) {
   return new TypeError(`${message.header}: ${message.message}`)
 }
 
-webidl.errors.conversionFailed = function (context) {
-  const plural = context.types.length === 1 ? '' : ' one of'
+/**
+ * @description Instantiate an error when conversion from one type to another has failed.
+ *
+ * @param {Object} opts
+ * @param {string} opts.prefix
+ * @param {string} opts.argument
+ * @param {string[]} opts.types
+ * @returns {TypeError}
+ */
+webidl.errors.conversionFailed = function (opts) {
+  const plural = opts.types.length === 1 ? '' : ' one of'
   const message =
-    `${context.argument} could not be converted to` +
-    `${plural}: ${context.types.join(', ')}.`
+    `${opts.argument} could not be converted to` +
+    `${plural}: ${opts.types.join(', ')}.`
 
   return webidl.errors.exception({
-    header: context.prefix,
+    header: opts.prefix,
     message
   })
 }
 
+/**
+ * @description Instantiate an error when an invalid argument is provided
+ *
+ * @param {Object} context
+ * @param {string} context.prefix
+ * @param {string} context.value
+ * @param {string} context.type
+ * @returns {TypeError}
+ */
 webidl.errors.invalidArgument = function (context) {
   return webidl.errors.exception({
     header: context.prefix,
@@ -55515,6 +56738,8 @@ webidl.util.Stringify = function (V) {
       return inspect(V)
     case STRING:
       return `"${V}"`
+    case BIGINT:
+      return `${V}n`
     default:
       return `${V}`
   }
@@ -55705,10 +56930,21 @@ webidl.nullableConverter = function (converter) {
   }
 }
 
+/**
+ * @param {*} value
+ * @returns {boolean}
+ */
+webidl.is.USVString = function (value) {
+  return (
+    typeof value === 'string' &&
+    value.isWellFormed()
+  )
+}
+
 webidl.is.ReadableStream = webidl.util.MakeTypeAssertion(ReadableStream)
 webidl.is.Blob = webidl.util.MakeTypeAssertion(Blob)
 webidl.is.URLSearchParams = webidl.util.MakeTypeAssertion(URLSearchParams)
-webidl.is.File = webidl.util.MakeTypeAssertion(globalThis.File ?? (__nccwpck_require__(4573).File))
+webidl.is.File = webidl.util.MakeTypeAssertion(File)
 webidl.is.URL = webidl.util.MakeTypeAssertion(URL)
 webidl.is.AbortSignal = webidl.util.MakeTypeAssertion(AbortSignal)
 webidl.is.MessagePort = webidl.util.MakeTypeAssertion(MessagePort)
@@ -55766,13 +57002,23 @@ webidl.converters.ByteString = function (V, prefix, argument) {
   return x
 }
 
-// https://webidl.spec.whatwg.org/#es-USVString
-// TODO: rewrite this so we can control the errors thrown
-webidl.converters.USVString = toUSVString
+/**
+ * @param {unknown} value
+ * @returns {string}
+ * @see https://webidl.spec.whatwg.org/#es-USVString
+ */
+webidl.converters.USVString = function (value) {
+  // TODO: rewrite this so we can control the errors thrown
+  if (typeof value === 'string') {
+    return value.toWellFormed()
+  }
+  return `${value}`.toWellFormed()
+}
 
 // https://webidl.spec.whatwg.org/#es-boolean
 webidl.converters.boolean = function (V) {
   // 1. Let x be the result of computing ToBoolean(V).
+  // https://262.ecma-international.org/10.0/index.html#table-10
   const x = Boolean(V)
 
   // 2. Return the IDL boolean value that is the one that represents
@@ -55987,7 +57233,6 @@ module.exports = {
 
 const { uid, states, sentCloseFrameState, emptyBuffer, opcodes } = __nccwpck_require__(736)
 const { parseExtensions, isClosed, isClosing, isEstablished, validateCloseCodeAndReason } = __nccwpck_require__(8625)
-const { channels } = __nccwpck_require__(2414)
 const { makeRequest } = __nccwpck_require__(9967)
 const { fetching } = __nccwpck_require__(4398)
 const { Headers, getHeadersList } = __nccwpck_require__(660)
@@ -56090,7 +57335,7 @@ function establishWebSocketConnection (url, protocols, client, handler, options)
       // 1. If response is a network error or its status is not 101,
       //    fail the WebSocket connection.
       if (response.type === 'error' || response.status !== 101) {
-        failWebsocketConnection(handler, 1002, 'Received network error or non-101 status code.')
+        failWebsocketConnection(handler, 1002, 'Received network error or non-101 status code.', response.error)
         return
       }
 
@@ -56185,14 +57430,6 @@ function establishWebSocketConnection (url, protocols, client, handler, options)
       response.socket.on('close', handler.onSocketClose)
       response.socket.on('error', handler.onSocketError)
 
-      if (channels.open.hasSubscribers) {
-        channels.open.publish({
-          address: response.socket.address(),
-          protocol: secProtocol,
-          extensions: secExtension
-        })
-      }
-
       handler.wasEverConnected = true
       handler.onConnectionEstablished(response, extensions)
     }
@@ -56283,9 +57520,10 @@ function closeWebSocketConnection (object, code, reason, validate = false) {
  * @param {import('./websocket').Handler} handler
  * @param {number} code
  * @param {string|undefined} reason
+ * @param {unknown} cause
  * @returns {void}
  */
-function failWebsocketConnection (handler, code, reason) {
+function failWebsocketConnection (handler, code, reason, cause) {
   // If _The WebSocket Connection is Established_ prior to the point where
   // the endpoint is required to _Fail the WebSocket Connection_, the
   // endpoint SHOULD send a Close frame with an appropriate status code
@@ -56300,7 +57538,7 @@ function failWebsocketConnection (handler, code, reason) {
     handler.socket.destroy()
   }
 
-  handler.onFail(code, reason)
+  handler.onFail(code, reason, cause)
 }
 
 module.exports = {
@@ -56452,7 +57690,7 @@ module.exports = {
 "use strict";
 
 
-const { webidl } = __nccwpck_require__(5893)
+const { webidl } = __nccwpck_require__(7879)
 const { kEnumerableProperty } = __nccwpck_require__(3440)
 const { kConstruct } = __nccwpck_require__(6443)
 
@@ -56925,7 +58163,8 @@ class WebsocketFrameSend {
 }
 
 module.exports = {
-  WebsocketFrameSend
+  WebsocketFrameSend,
+  generateMask // for benchmark
 }
 
 
@@ -57018,7 +58257,6 @@ module.exports = { PerMessageDeflate }
 const { Writable } = __nccwpck_require__(7075)
 const assert = __nccwpck_require__(4589)
 const { parserStates, opcodes, states, emptyBuffer, sentCloseFrameState } = __nccwpck_require__(736)
-const { channels } = __nccwpck_require__(2414)
 const {
   isValidStatusCode,
   isValidOpcode,
@@ -57438,22 +58676,13 @@ class ByteParser extends Writable {
 
         this.#handler.socket.write(frame.createFrame(opcodes.PONG))
 
-        if (channels.ping.hasSubscribers) {
-          channels.ping.publish({
-            payload: body
-          })
-        }
+        this.#handler.onPing(body)
       }
     } else if (opcode === opcodes.PONG) {
       // A Pong frame MAY be sent unsolicited.  This serves as a
       // unidirectional heartbeat.  A response to an unsolicited Pong frame is
       // not expected.
-
-      if (channels.pong.hasSubscribers) {
-        channels.pong.publish({
-          payload: body
-        })
-      }
+      this.#handler.onPong(body)
     }
 
     return true
@@ -57594,7 +58823,7 @@ module.exports = { SendQueue }
 "use strict";
 
 
-const { webidl } = __nccwpck_require__(5893)
+const { webidl } = __nccwpck_require__(7879)
 const { validateCloseCodeAndReason } = __nccwpck_require__(8625)
 const { kConstruct } = __nccwpck_require__(6443)
 const { kEnumerableProperty } = __nccwpck_require__(3440)
@@ -57685,12 +58914,13 @@ module.exports = { WebSocketError, createUnvalidatedWebSocketError }
 "use strict";
 
 
-const { createDeferredPromise, environmentSettingsObject } = __nccwpck_require__(3168)
+const { createDeferredPromise } = __nccwpck_require__(6436)
+const { environmentSettingsObject } = __nccwpck_require__(3168)
 const { states, opcodes, sentCloseFrameState } = __nccwpck_require__(736)
-const { webidl } = __nccwpck_require__(5893)
+const { webidl } = __nccwpck_require__(7879)
 const { getURLRecord, isValidSubprotocol, isEstablished, utf8Decode } = __nccwpck_require__(8625)
 const { establishWebSocketConnection, failWebsocketConnection, closeWebSocketConnection } = __nccwpck_require__(6897)
-const { types } = __nccwpck_require__(7975)
+const { isArrayBuffer } = __nccwpck_require__(3429)
 const { channels } = __nccwpck_require__(2414)
 const { WebsocketFrameSend } = __nccwpck_require__(3264)
 const { ByteParser } = __nccwpck_require__(1652)
@@ -57706,11 +58936,11 @@ class WebSocketStream {
   #url
 
   // Each WebSocketStream object has an associated opened promise , which is a promise.
-  /** @type {ReturnType<typeof createDeferredPromise>} */
+  /** @type {import('../../../util/promise').DeferredPromise} */
   #openedPromise
 
   // Each WebSocketStream object has an associated closed promise , which is a promise.
-  /** @type {ReturnType<typeof createDeferredPromise>} */
+  /** @type {import('../../../util/promise').DeferredPromise} */
   #closedPromise
 
   // Each WebSocketStream object has an associated readable stream , which is a ReadableStream .
@@ -57749,6 +58979,8 @@ class WebSocketStream {
       this.#handler.socket.destroy()
     },
     onSocketClose: () => this.#onSocketClose(),
+    onPing: () => {},
+    onPong: () => {},
 
     readyState: states.CONNECTING,
     socket: null,
@@ -57892,7 +59124,7 @@ class WebSocketStream {
     let opcode = null
 
     // 4. If chunk is a BufferSource ,
-    if (ArrayBuffer.isView(chunk) || types.isArrayBuffer(chunk)) {
+    if (ArrayBuffer.isView(chunk) || isArrayBuffer(chunk)) {
       // 4.1. Set data to a copy of the bytes given chunk .
       data = new Uint8Array(ArrayBuffer.isView(chunk) ? new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength) : chunk)
 
@@ -58073,7 +59305,7 @@ class WebSocketStream {
     // 6. If the connection was closed cleanly ,
     if (wasClean) {
       // 6.1. Close stream ’s readable stream .
-      this.#readableStream.cancel().catch(() => {})
+      this.#readableStreamController.close()
 
       // 6.2. Error stream ’s writable stream with an " InvalidStateError " DOMException indicating that a closed WebSocketStream cannot be written to.
       if (!this.#writableStream.locked) {
@@ -58524,7 +59756,8 @@ module.exports = {
 "use strict";
 
 
-const { webidl } = __nccwpck_require__(5893)
+const { isArrayBuffer } = __nccwpck_require__(3429)
+const { webidl } = __nccwpck_require__(7879)
 const { URLSerializer } = __nccwpck_require__(1900)
 const { environmentSettingsObject } = __nccwpck_require__(3168)
 const { staticPropertyDescriptors, states, sentCloseFrameState, sendHints, opcodes } = __nccwpck_require__(736)
@@ -58532,6 +59765,7 @@ const {
   isConnecting,
   isEstablished,
   isClosing,
+  isClosed,
   isValidSubprotocol,
   fireEvent,
   utf8Decode,
@@ -58542,9 +59776,9 @@ const { establishWebSocketConnection, closeWebSocketConnection, failWebsocketCon
 const { ByteParser } = __nccwpck_require__(1652)
 const { kEnumerableProperty } = __nccwpck_require__(3440)
 const { getGlobalDispatcher } = __nccwpck_require__(2581)
-const { types } = __nccwpck_require__(7975)
 const { ErrorEvent, CloseEvent, createFastMessageEvent } = __nccwpck_require__(5188)
 const { SendQueue } = __nccwpck_require__(3900)
+const { WebsocketFrameSend } = __nccwpck_require__(3264)
 const { channels } = __nccwpck_require__(2414)
 
 /**
@@ -58557,6 +59791,8 @@ const { channels } = __nccwpck_require__(2414)
  * @property {(chunk: Buffer) => void} onSocketData
  * @property {(err: Error) => void} onSocketError
  * @property {() => void} onSocketClose
+ * @property {(body: Buffer) => void} onPing
+ * @property {(body: Buffer) => void} onPong
  *
  * @property {number} readyState
  * @property {import('stream').Duplex} socket
@@ -58584,7 +59820,7 @@ class WebSocket extends EventTarget {
   /** @type {Handler} */
   #handler = {
     onConnectionEstablished: (response, extensions) => this.#onConnectionEstablished(response, extensions),
-    onFail: (code, reason) => this.#onFail(code, reason),
+    onFail: (code, reason, cause) => this.#onFail(code, reason, cause),
     onMessage: (opcode, data) => this.#onMessage(opcode, data),
     onParserError: (err) => failWebsocketConnection(this.#handler, null, err.message),
     onParserDrain: () => this.#onParserDrain(),
@@ -58603,6 +59839,22 @@ class WebSocket extends EventTarget {
       this.#handler.socket.destroy()
     },
     onSocketClose: () => this.#onSocketClose(),
+    onPing: (body) => {
+      if (channels.ping.hasSubscribers) {
+        channels.ping.publish({
+          payload: body,
+          websocket: this
+        })
+      }
+    },
+    onPong: (body) => {
+      if (channels.pong.hasSubscribers) {
+        channels.pong.publish({
+          payload: body,
+          websocket: this
+        })
+      }
+    },
 
     readyState: states.CONNECTING,
     socket: null,
@@ -58761,7 +60013,7 @@ class WebSocket extends EventTarget {
       this.#sendQueue.add(buffer, () => {
         this.#bufferedAmount -= buffer.byteLength
       }, sendHints.text)
-    } else if (types.isArrayBuffer(data)) {
+    } else if (isArrayBuffer(data)) {
       // If the WebSocket connection is established, and the WebSocket
       // closing handshake has not yet started, then the user agent must
       // send a WebSocket Message comprised of data using a binary frame
@@ -58984,13 +60236,29 @@ class WebSocket extends EventTarget {
 
     // 4. Fire an event named open at the WebSocket object.
     fireEvent('open', this)
+
+    if (channels.open.hasSubscribers) {
+      // Convert headers to a plain object for the event
+      const headers = response.headersList.entries
+      channels.open.publish({
+        address: response.socket.address(),
+        protocol: this.#protocol,
+        extensions: this.#extensions,
+        websocket: this,
+        handshakeResponse: {
+          status: response.status,
+          statusText: response.statusText,
+          headers
+        }
+      })
+    }
   }
 
-  #onFail (code, reason) {
+  #onFail (code, reason, cause) {
     if (reason) {
       // TODO: process.nextTick
       fireEvent('error', this, (type, init) => new ErrorEvent(type, init), {
-        error: new Error(reason),
+        error: new Error(reason, cause ? { cause } : undefined),
         message: reason
       })
     }
@@ -59110,7 +60378,33 @@ class WebSocket extends EventTarget {
       })
     }
   }
+
+  /**
+   * @param {WebSocket} ws
+   * @param {Buffer|undefined} buffer
+   */
+  static ping (ws, buffer) {
+    if (Buffer.isBuffer(buffer)) {
+      if (buffer.length > 125) {
+        throw new TypeError('A PING frame cannot have a body larger than 125 bytes.')
+      }
+    } else if (buffer !== undefined) {
+      throw new TypeError('Expected buffer payload')
+    }
+
+    // An endpoint MAY send a Ping frame any time after the connection is
+    // established and before the connection is closed.
+    const readyState = ws.#handler.readyState
+
+    if (isEstablished(readyState) && !isClosing(readyState) && !isClosed(readyState)) {
+      const frame = new WebsocketFrameSend(buffer)
+      ws.#handler.socket.write(frame.createFrame(opcodes.PING))
+    }
+  }
 }
+
+const { ping } = WebSocket
+Reflect.deleteProperty(WebSocket, 'ping')
 
 // https://websockets.spec.whatwg.org/#dom-websocket-connecting
 WebSocket.CONNECTING = WebSocket.prototype.CONNECTING = states.CONNECTING
@@ -59197,7 +60491,7 @@ webidl.converters.WebSocketSendData = function (V) {
       return V
     }
 
-    if (ArrayBuffer.isView(V) || types.isArrayBuffer(V)) {
+    if (ArrayBuffer.isView(V) || isArrayBuffer(V)) {
       return V
     }
   }
@@ -59206,7 +60500,8 @@ webidl.converters.WebSocketSendData = function (V) {
 }
 
 module.exports = {
-  WebSocket
+  WebSocket,
+  ping
 }
 
 
@@ -63214,6 +64509,14 @@ module.exports = require("node:fs");
 
 /***/ }),
 
+/***/ 1455:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:fs/promises");
+
+/***/ }),
+
 /***/ 7067:
 /***/ ((module) => {
 
@@ -63278,19 +64581,19 @@ module.exports = require("node:stream");
 
 /***/ }),
 
+/***/ 7997:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:timers");
+
+/***/ }),
+
 /***/ 1692:
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("node:tls");
-
-/***/ }),
-
-/***/ 3136:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("node:url");
 
 /***/ }),
 
