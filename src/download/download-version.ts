@@ -160,6 +160,7 @@ export async function resolveVersion(
 }
 
 async function getAvailableVersions(githubToken: string): Promise<string[]> {
+  core.info("Getting available versions from GitHub API...");
   try {
     const octokit = new Octokit({
       auth: githubToken,
@@ -194,7 +195,7 @@ async function getReleaseTagNames(
 }
 
 async function getLatestVersion(githubToken: string) {
-  core.debug("Getting latest version...");
+  core.info("Getting latest version from GitHub API...");
   const octokit = new Octokit({
     auth: githubToken,
   });
