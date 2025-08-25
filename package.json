@@ -32,7 +32,7 @@
     "@octokit/plugin-rest-endpoint-methods": "^16.0.0",
     "@renovatebot/pep440": "^4.2.0",
     "smol-toml": "^1.4.2",
-    "undici": "^7.14.0"
+    "undici": "^7.15.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.1.4",
