@@ -58,11 +58,13 @@ jobs:
       - name: Check uv-path is set
         run: |
           "${UV_PATH}" --version
+        shell: bash
         env:
           UV_PATH: ${{ steps.setup-uv.outputs.uv-path }}
       - name: Check uvx-path is set
         run: |
           "${UVX_PATH}" --version
+        shell: bash
         env:
           UVX_PATH: ${{ steps.setup-uv.outputs.uvx-path }}
 
