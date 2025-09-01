@@ -116,16 +116,15 @@ function expandTilde(input: string): string {
 }
 
 function resolveRelativePath(inputPath: string): string {
-  if (path.isAbsolute(inputPath)) {
-    return inputPath;
-  }
-  let absolutePath = inputPath;
-  if (absolutePath.startsWith("./")) {
-    absolutePath = absolutePath.substring(2);
-  }
-  absolutePath = `${workingDirectory}${path.sep}${absolutePath}`;
-  core.debug(`Resolving relative path ${inputPath} to ${absolutePath}`);
-  return absolutePath;
+  const hasNegation = inputPath.startsWith("!");
+  const pathWithoutNegation = hasNegation ? inputPath.substring(1) : inputPath;
+
+  const resolvedPath = path.resolve(workingDirectory, pathWithoutNegation);
+
+  core.debug(
+    `Resolving relative path ${inputPath} to ${hasNegation ? "!" : ""}${resolvedPath}`,
+  );
+  return hasNegation ? `!${resolvedPath}` : resolvedPath;
 }
 
 function getManifestFile(): string | undefined {
