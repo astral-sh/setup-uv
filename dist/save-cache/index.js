@@ -90169,16 +90169,11 @@ function expandTilde(input) {
     return input;
 }
 function resolveRelativePath(inputPath) {
-    if (node_path_1.default.isAbsolute(inputPath)) {
-        return inputPath;
-    }
-    let absolutePath = inputPath;
-    if (absolutePath.startsWith("./")) {
-        absolutePath = absolutePath.substring(2);
-    }
-    absolutePath = `${exports.workingDirectory}${node_path_1.default.sep}${absolutePath}`;
-    core.debug(`Resolving relative path ${inputPath} to ${absolutePath}`);
-    return absolutePath;
+    const hasNegation = inputPath.startsWith("!");
+    const pathWithoutNegation = hasNegation ? inputPath.substring(1) : inputPath;
+    const resolvedPath = node_path_1.default.resolve(exports.workingDirectory, pathWithoutNegation);
+    core.debug(`Resolving relative path ${inputPath} to ${hasNegation ? "!" : ""}${resolvedPath}`);
+    return hasNegation ? `!${resolvedPath}` : resolvedPath;
 }
 function getManifestFile() {
     const manifestFileInput = core.getInput("manifest-file");
