@@ -18,11 +18,17 @@ permissions:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write # for zizmor
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Actionlint
         uses: eifinger/actionlint-action@23c85443d840cd73bbecb9cddfc933cc21649a38  # v1.9.1
-      - uses: actions/setup-node@v4
+      - name: Run zizmor
+        uses: zizmorcore/zizmor-action@5ca5fc7a4779c5263a3ffa0e1f693009994446d1 # v0.1.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "20"
       - run: |
@@ -44,7 +50,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, macos-14, windows-latest]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Install latest version
         id: setup-uv
         uses: ./
@@ -52,9 +60,17 @@ jobs:
         working-directory: __tests__/fixtures/uv-project
         shell: bash
       - name: Check uv-path is set
-        run: ${{ steps.setup-uv.outputs.uv-path }} --version
+        run: |
+          "${UV_PATH}" --version
+        shell: bash
+        env:
+          UV_PATH: ${{ steps.setup-uv.outputs.uv-path }}
       - name: Check uvx-path is set
-        run: ${{ steps.setup-uv.outputs.uvx-path }} --version
+        run: |
+          "${UVX_PATH}" --version
+        shell: bash
+        env:
+          UVX_PATH: ${{ steps.setup-uv.outputs.uvx-path }}
 
   test-specific-version:
     runs-on: ubuntu-latest
@@ -62,7 +78,9 @@ jobs:
       matrix:
         uv-version: ["0.3.0", "0.3.2", "0.3", "0.3.x", ">=0.3.0"]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Install version ${{ matrix.uv-version }}
         uses: ./
         with:
@@ -76,7 +94,9 @@ jobs:
         os: [ ubuntu-latest, selfhosted-ubuntu-arm64 ]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Install version 0.3
         id: setup-uv
         uses: ./
@@ -99,7 +119,9 @@ jobs:
   test-pep440-version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Install version 0.4.30
         id: setup-uv
         uses: ./
@@ -115,7 +137,9 @@ jobs:
   test-pyproject-file-version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Install version 0.5.14
         id: setup-uv
         uses: ./
@@ -131,7 +155,9 @@ jobs:
   test-malformed-pyproject-file-fallback:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Install using malformed pyproject.toml
         id: setup-uv
         uses: ./
@@ -142,7 +168,9 @@ jobs:
   test-uv-file-version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Install version 0.5.15
         id: setup-uv
         uses: ./
@@ -158,7 +186,9 @@ jobs:
   test-version-file-version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Install from requirements file
         id: setup-uv
         uses: ./
@@ -174,7 +204,9 @@ jobs:
   test-version-file-hash-version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Install from requirements file
         id: setup-uv
         uses: ./
@@ -190,7 +222,9 @@ jobs:
   test-tool-versions-file-version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Install from .tools-versions file
         id: setup-uv
         uses: ./
@@ -213,7 +247,9 @@ jobs:
           - os: macos-latest
             checksum: "a70cbfbf3bb5c08b2f84963b4f12c94e08fbb2468ba418a3bfe1066fbe9e7218"
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Checksum matches expected
         uses: ./
         with:
@@ -225,7 +261,9 @@ jobs:
   test-with-explicit-token:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Install default version
         uses: ./
         with:
@@ -236,7 +274,9 @@ jobs:
   test-uvx:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Install default version
         uses: ./
       - run: uvx ruff --version
@@ -253,7 +293,9 @@ jobs:
             windows-latest,
           ]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Install default version
         uses: ./
       - run: uv tool install ruff
@@ -262,7 +304,9 @@ jobs:
   test-tilde-expansion-tool-dirs:
     runs-on: selfhosted-ubuntu-arm64
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Setup with cache
         uses: ./
         with:
@@ -285,7 +329,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Install latest version
         uses: ./
         with:
@@ -306,7 +352,9 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-latest, windows-latest ]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Install latest version
         uses: ./
         with:
@@ -327,7 +375,9 @@ jobs:
     runs-on: ubuntu-latest
     container: alpine
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Install latest version
         uses: ./
       - run: uv sync
@@ -340,7 +390,9 @@ jobs:
         enable-cache: [ "true", "false", "auto" ]
         os: [ "ubuntu-latest", "selfhosted-ubuntu-arm64", "windows-latest" ]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Setup with cache
         uses: ./
         with:
@@ -357,7 +409,9 @@ jobs:
         os: [ "ubuntu-latest", "selfhosted-ubuntu-arm64", "windows-latest" ]
     needs: test-setup-cache
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Restore with cache
         id: restore
         uses: ./
@@ -389,7 +443,9 @@ jobs:
   test-setup-cache-requirements-txt:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Setup with cache
         uses: ./
         with:
@@ -403,7 +459,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: test-setup-cache
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Restore with cache
         id: restore
         uses: ./
@@ -425,7 +483,9 @@ jobs:
   test-setup-cache-dependency-glob:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Setup with cache
         uses: ./
         with:
@@ -440,7 +500,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: test-setup-cache-dependency-glob
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Change pyproject.toml
         run: |
           echo '[tool.uv]' >> __tests__/fixtures/uv-project/pyproject.toml
@@ -475,7 +537,9 @@ jobs:
             expected-cache-dir: "/home/ubuntu/.cache/uv"
     runs-on: ${{ matrix.inputs.os }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Setup with cache
         uses: ./
         with:
@@ -490,7 +554,9 @@ jobs:
   test-setup-cache-local:
     runs-on: selfhosted-ubuntu-arm64
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Setup with cache
         uses: ./
         with:
@@ -503,7 +569,9 @@ jobs:
     runs-on: selfhosted-ubuntu-arm64
     needs: test-setup-cache-local
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Restore with cache
         id: restore
         uses: ./
@@ -524,7 +592,9 @@ jobs:
   test-tilde-expansion-cache-local-path:
     runs-on: selfhosted-ubuntu-arm64
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Create cache directory
         run: mkdir -p ~/uv-cache
         shell: bash
@@ -538,7 +608,9 @@ jobs:
   test-tilde-expansion-cache-dependency-glob:
     runs-on: selfhosted-ubuntu-arm64
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Create cache directory
         run: mkdir -p ~/uv-cache
         shell: bash
@@ -571,7 +643,9 @@ jobs:
   test-no-python-version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Fake pyproject.toml at root
         run: cp __tests__/fixtures/old-python-constraint-project/pyproject.toml pyproject.toml
       - name: Setup with cache
@@ -584,7 +658,9 @@ jobs:
   test-custom-manifest-file:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Install from custom manifest file
         uses: ./
         with:
@@ -601,7 +677,9 @@ jobs:
   test-absolute-path:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Create requirements.txt
         run: echo "uv==0.6.17" > /tmp/setup-uv-requirements.txt
       - name: Install from requirements file
@@ -619,7 +697,9 @@ jobs:
   test-relative-path:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: mkdir
         run: mkdir -p /tmp/setup-uv-test-relative-path
       - name: Create requirements.txt
