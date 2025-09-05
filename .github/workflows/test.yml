@@ -26,6 +26,7 @@ jobs:
         uses: ./
         with:
           python-version: cpython-3.9-macos-x86-64
+          activate-environment: true
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
   lint:
