@@ -25,7 +25,7 @@ jobs:
       - name: Install uv
         uses: ./
         with:
-          python-version: cpython-3.9-macos-x86-64
+          python-version: cpython-3.9-macos-x86_64
           activate-environment: true
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
