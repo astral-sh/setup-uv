@@ -3,6 +3,8 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "0 4 * * *" # Run every day at 4am UTC
+  repository_dispatch:
+    types: [ pypi_release ]
 
 permissions: {}
 
@@ -11,7 +13,6 @@ jobs:
     runs-on: ubuntu-24.04-arm
     permissions:
       contents: write
-      pull-requests: write
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
@@ -26,18 +27,25 @@ jobs:
           src/download/checksum/known-checksums.ts
           version-manifest.json
           ${{ secrets.GITHUB_TOKEN }}
-      - run: npm install && npm run all
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
-        with:
-          commit-message: "chore: update known versions"
-          title:
-            "chore: update known versions for ${{
-            steps.update-known-versions.outputs.latest-version }}"
-          body:
-            "chore: update known versions for ${{
-            steps.update-known-versions.outputs.latest-version }}"
-          base: main
-          labels: "automated-pr,update-known-versions"
-          branch: update-known-versions-pr
-          delete-branch: true
+      - name: Check for changes
+        id: changes_exist
+        run: |
+          git status --porcelain
+          if [ -n "$(git status --porcelain)" ]; then
+              echo "changes_exist=true" >> "$GITHUB_OUTPUT"
+          else
+              echo "changes_exist=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Compile changes
+        if: ${{ steps.changes_exist.outputs.changes_exist == 'true' }}
+        run: npm ci && npm run all
+      - name: Commit and push changes
+        if: ${{ steps.changes_exist.outputs.changes_exist == 'true' }}
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+          git add .
+          git commit -m "chore: update known versions for $LATEST_VERSION"
+          git push origin HEAD:refs/heads/main
+        env:
+          LATEST_VERSION: ${{ steps.update-known-versions.outputs.latest-version }}
