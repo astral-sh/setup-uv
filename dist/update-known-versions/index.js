@@ -28310,16 +28310,14 @@ module.exports.setGlobalDispatcher = setGlobalDispatcher
 module.exports.getGlobalDispatcher = getGlobalDispatcher
 
 const fetchImpl = (__nccwpck_require__(4398).fetch)
-module.exports.fetch = async function fetch (init, options = undefined) {
-  try {
-    return await fetchImpl(init, options)
-  } catch (err) {
+
+module.exports.fetch = function fetch (init, options = undefined) {
+  return fetchImpl(init, options).catch(err => {
     if (err && typeof err === 'object') {
       Error.captureStackTrace(err)
     }
-
     throw err
-  }
+  })
 }
 module.exports.Headers = __nccwpck_require__(660).Headers
 module.exports.Response = __nccwpck_require__(9051).Response
@@ -28334,8 +28332,6 @@ module.exports.getGlobalOrigin = getGlobalOrigin
 const { CacheStorage } = __nccwpck_require__(3245)
 const { kConstruct } = __nccwpck_require__(6443)
 
-// Cache & CacheStorage are tightly coupled with fetch. Even if it may run
-// in an older version of Node, it doesn't have any use without fetch.
 module.exports.caches = new CacheStorage(kConstruct)
 
 const { deleteCookie, getCookies, getSetCookies, setCookie, parseCookie } = __nccwpck_require__(5090)
@@ -28967,14 +28963,28 @@ class RequestHandler extends AsyncResource {
     this.callback = null
     this.res = res
     if (callback !== null) {
-      this.runInAsyncScope(callback, null, null, {
-        statusCode,
-        headers,
-        trailers: this.trailers,
-        opaque,
-        body: res,
-        context
-      })
+      try {
+        this.runInAsyncScope(callback, null, null, {
+          statusCode,
+          headers,
+          trailers: this.trailers,
+          opaque,
+          body: res,
+          context
+        })
+      } catch (err) {
+        // If the callback throws synchronously, we need to handle it
+        // Remove reference to res to allow res being garbage collected
+        this.res = null
+
+        // Destroy the response stream
+        util.destroy(res.on('error', noop), err)
+
+        // Use queueMicrotask to re-throw the error so it reaches uncaughtException
+        queueMicrotask(() => {
+          throw err
+        })
+      }
     }
   }
 
@@ -29668,24 +29678,26 @@ class BodyReadable extends Readable {
    * @param {AbortSignal} [opts.signal] An AbortSignal to cancel the dump.
    * @returns {Promise<null>}
    */
-  async dump (opts) {
+  dump (opts) {
     const signal = opts?.signal
 
     if (signal != null && (typeof signal !== 'object' || !('aborted' in signal))) {
-      throw new InvalidArgumentError('signal must be an AbortSignal')
+      return Promise.reject(new InvalidArgumentError('signal must be an AbortSignal'))
     }
 
     const limit = opts?.limit && Number.isFinite(opts.limit)
       ? opts.limit
       : 128 * 1024
 
-    signal?.throwIfAborted()
-
-    if (this._readableState.closeEmitted) {
-      return null
+    if (signal?.aborted) {
+      return Promise.reject(signal.reason ?? new AbortError())
     }
 
-    return await new Promise((resolve, reject) => {
+    if (this._readableState.closeEmitted) {
+      return Promise.resolve(null)
+    }
+
+    return new Promise((resolve, reject) => {
       if (
         (this[kContentLength] && (this[kContentLength] > limit)) ||
         this[kBytesRead] > limit
@@ -31202,14 +31214,24 @@ module.exports = {
 "use strict";
 
 
+const kUndiciError = Symbol.for('undici.error.UND_ERR')
 class UndiciError extends Error {
   constructor (message, options) {
     super(message, options)
     this.name = 'UndiciError'
     this.code = 'UND_ERR'
   }
+
+  static [Symbol.hasInstance] (instance) {
+    return instance && instance[kUndiciError] === true
+  }
+
+  get [kUndiciError] () {
+    return true
+  }
 }
 
+const kConnectTimeoutError = Symbol.for('undici.error.UND_ERR_CONNECT_TIMEOUT')
 class ConnectTimeoutError extends UndiciError {
   constructor (message) {
     super(message)
@@ -31217,8 +31239,17 @@ class ConnectTimeoutError extends UndiciError {
     this.message = message || 'Connect Timeout Error'
     this.code = 'UND_ERR_CONNECT_TIMEOUT'
   }
+
+  static [Symbol.hasInstance] (instance) {
+    return instance && instance[kConnectTimeoutError] === true
+  }
+
+  get [kConnectTimeoutError] () {
+    return true
+  }
 }
 
+const kHeadersTimeoutError = Symbol.for('undici.error.UND_ERR_HEADERS_TIMEOUT')
 class HeadersTimeoutError extends UndiciError {
   constructor (message) {
     super(message)
@@ -31226,8 +31257,17 @@ class HeadersTimeoutError extends UndiciError {
     this.message = message || 'Headers Timeout Error'
     this.code = 'UND_ERR_HEADERS_TIMEOUT'
   }
+
+  static [Symbol.hasInstance] (instance) {
+    return instance && instance[kHeadersTimeoutError] === true
+  }
+
+  get [kHeadersTimeoutError] () {
+    return true
+  }
 }
 
+const kHeadersOverflowError = Symbol.for('undici.error.UND_ERR_HEADERS_OVERFLOW')
 class HeadersOverflowError extends UndiciError {
   constructor (message) {
     super(message)
@@ -31235,8 +31275,17 @@ class HeadersOverflowError extends UndiciError {
     this.message = message || 'Headers Overflow Error'
     this.code = 'UND_ERR_HEADERS_OVERFLOW'
   }
+
+  static [Symbol.hasInstance] (instance) {
+    return instance && instance[kHeadersOverflowError] === true
+  }
+
+  get [kHeadersOverflowError] () {
+    return true
+  }
 }
 
+const kBodyTimeoutError = Symbol.for('undici.error.UND_ERR_BODY_TIMEOUT')
 class BodyTimeoutError extends UndiciError {
   constructor (message) {
     super(message)
@@ -31244,21 +31293,17 @@ class BodyTimeoutError extends UndiciError {
     this.message = message || 'Body Timeout Error'
     this.code = 'UND_ERR_BODY_TIMEOUT'
   }
-}
 
-class ResponseStatusCodeError extends UndiciError {
-  constructor (message, statusCode, headers, body) {
-    super(message)
-    this.name = 'ResponseStatusCodeError'
-    this.message = message || 'Response Status Code Error'
-    this.code = 'UND_ERR_RESPONSE_STATUS_CODE'
-    this.body = body
-    this.status = statusCode
-    this.statusCode = statusCode
-    this.headers = headers
+  static [Symbol.hasInstance] (instance) {
+    return instance && instance[kBodyTimeoutError] === true
+  }
+
+  get [kBodyTimeoutError] () {
+    return true
   }
 }
 
+const kInvalidArgumentError = Symbol.for('undici.error.UND_ERR_INVALID_ARG')
 class InvalidArgumentError extends UndiciError {
   constructor (message) {
     super(message)
@@ -31266,8 +31311,17 @@ class InvalidArgumentError extends UndiciError {
     this.message = message || 'Invalid Argument Error'
     this.code = 'UND_ERR_INVALID_ARG'
   }
+
+  static [Symbol.hasInstance] (instance) {
+    return instance && instance[kInvalidArgumentError] === true
+  }
+
+  get [kInvalidArgumentError] () {
+    return true
+  }
 }
 
+const kInvalidReturnValueError = Symbol.for('undici.error.UND_ERR_INVALID_RETURN_VALUE')
 class InvalidReturnValueError extends UndiciError {
   constructor (message) {
     super(message)
@@ -31275,16 +31329,35 @@ class InvalidReturnValueError extends UndiciError {
     this.message = message || 'Invalid Return Value Error'
     this.code = 'UND_ERR_INVALID_RETURN_VALUE'
   }
+
+  static [Symbol.hasInstance] (instance) {
+    return instance && instance[kInvalidReturnValueError] === true
+  }
+
+  get [kInvalidReturnValueError] () {
+    return true
+  }
 }
 
+const kAbortError = Symbol.for('undici.error.UND_ERR_ABORT')
 class AbortError extends UndiciError {
   constructor (message) {
     super(message)
     this.name = 'AbortError'
     this.message = message || 'The operation was aborted'
+    this.code = 'UND_ERR_ABORT'
+  }
+
+  static [Symbol.hasInstance] (instance) {
+    return instance && instance[kAbortError] === true
+  }
+
+  get [kAbortError] () {
+    return true
   }
 }
 
+const kRequestAbortedError = Symbol.for('undici.error.UND_ERR_ABORTED')
 class RequestAbortedError extends AbortError {
   constructor (message) {
     super(message)
@@ -31292,8 +31365,17 @@ class RequestAbortedError extends AbortError {
     this.message = message || 'Request aborted'
     this.code = 'UND_ERR_ABORTED'
   }
+
+  static [Symbol.hasInstance] (instance) {
+    return instance && instance[kRequestAbortedError] === true
+  }
+
+  get [kRequestAbortedError] () {
+    return true
+  }
 }
 
+const kInformationalError = Symbol.for('undici.error.UND_ERR_INFO')
 class InformationalError extends UndiciError {
   constructor (message) {
     super(message)
@@ -31301,8 +31383,17 @@ class InformationalError extends UndiciError {
     this.message = message || 'Request information'
     this.code = 'UND_ERR_INFO'
   }
+
+  static [Symbol.hasInstance] (instance) {
+    return instance && instance[kInformationalError] === true
+  }
+
+  get [kInformationalError] () {
+    return true
+  }
 }
 
+const kRequestContentLengthMismatchError = Symbol.for('undici.error.UND_ERR_REQ_CONTENT_LENGTH_MISMATCH')
 class RequestContentLengthMismatchError extends UndiciError {
   constructor (message) {
     super(message)
@@ -31310,8 +31401,17 @@ class RequestContentLengthMismatchError extends UndiciError {
     this.message = message || 'Request body length does not match content-length header'
     this.code = 'UND_ERR_REQ_CONTENT_LENGTH_MISMATCH'
   }
+
+  static [Symbol.hasInstance] (instance) {
+    return instance && instance[kRequestContentLengthMismatchError] === true
+  }
+
+  get [kRequestContentLengthMismatchError] () {
+    return true
+  }
 }
 
+const kResponseContentLengthMismatchError = Symbol.for('undici.error.UND_ERR_RES_CONTENT_LENGTH_MISMATCH')
 class ResponseContentLengthMismatchError extends UndiciError {
   constructor (message) {
     super(message)
@@ -31319,8 +31419,17 @@ class ResponseContentLengthMismatchError extends UndiciError {
     this.message = message || 'Response body length does not match content-length header'
     this.code = 'UND_ERR_RES_CONTENT_LENGTH_MISMATCH'
   }
+
+  static [Symbol.hasInstance] (instance) {
+    return instance && instance[kResponseContentLengthMismatchError] === true
+  }
+
+  get [kResponseContentLengthMismatchError] () {
+    return true
+  }
 }
 
+const kClientDestroyedError = Symbol.for('undici.error.UND_ERR_DESTROYED')
 class ClientDestroyedError extends UndiciError {
   constructor (message) {
     super(message)
@@ -31328,8 +31437,17 @@ class ClientDestroyedError extends UndiciError {
     this.message = message || 'The client is destroyed'
     this.code = 'UND_ERR_DESTROYED'
   }
+
+  static [Symbol.hasInstance] (instance) {
+    return instance && instance[kClientDestroyedError] === true
+  }
+
+  get [kClientDestroyedError] () {
+    return true
+  }
 }
 
+const kClientClosedError = Symbol.for('undici.error.UND_ERR_CLOSED')
 class ClientClosedError extends UndiciError {
   constructor (message) {
     super(message)
@@ -31337,8 +31455,17 @@ class ClientClosedError extends UndiciError {
     this.message = message || 'The client is closed'
     this.code = 'UND_ERR_CLOSED'
   }
+
+  static [Symbol.hasInstance] (instance) {
+    return instance && instance[kClientClosedError] === true
+  }
+
+  get [kClientClosedError] () {
+    return true
+  }
 }
 
+const kSocketError = Symbol.for('undici.error.UND_ERR_SOCKET')
 class SocketError extends UndiciError {
   constructor (message, socket) {
     super(message)
@@ -31347,8 +31474,17 @@ class SocketError extends UndiciError {
     this.code = 'UND_ERR_SOCKET'
     this.socket = socket
   }
+
+  static [Symbol.hasInstance] (instance) {
+    return instance && instance[kSocketError] === true
+  }
+
+  get [kSocketError] () {
+    return true
+  }
 }
 
+const kNotSupportedError = Symbol.for('undici.error.UND_ERR_NOT_SUPPORTED')
 class NotSupportedError extends UndiciError {
   constructor (message) {
     super(message)
@@ -31356,8 +31492,17 @@ class NotSupportedError extends UndiciError {
     this.message = message || 'Not supported error'
     this.code = 'UND_ERR_NOT_SUPPORTED'
   }
+
+  static [Symbol.hasInstance] (instance) {
+    return instance && instance[kNotSupportedError] === true
+  }
+
+  get [kNotSupportedError] () {
+    return true
+  }
 }
 
+const kBalancedPoolMissingUpstreamError = Symbol.for('undici.error.UND_ERR_BPL_MISSING_UPSTREAM')
 class BalancedPoolMissingUpstreamError extends UndiciError {
   constructor (message) {
     super(message)
@@ -31365,8 +31510,17 @@ class BalancedPoolMissingUpstreamError extends UndiciError {
     this.message = message || 'No upstream has been added to the BalancedPool'
     this.code = 'UND_ERR_BPL_MISSING_UPSTREAM'
   }
+
+  static [Symbol.hasInstance] (instance) {
+    return instance && instance[kBalancedPoolMissingUpstreamError] === true
+  }
+
+  get [kBalancedPoolMissingUpstreamError] () {
+    return true
+  }
 }
 
+const kHTTPParserError = Symbol.for('undici.error.UND_ERR_HTTP_PARSER')
 class HTTPParserError extends Error {
   constructor (message, code, data) {
     super(message)
@@ -31374,8 +31528,17 @@ class HTTPParserError extends Error {
     this.code = code ? `HPE_${code}` : undefined
     this.data = data ? data.toString() : undefined
   }
+
+  static [Symbol.hasInstance] (instance) {
+    return instance && instance[kHTTPParserError] === true
+  }
+
+  get [kHTTPParserError] () {
+    return true
+  }
 }
 
+const kResponseExceededMaxSizeError = Symbol.for('undici.error.UND_ERR_RES_EXCEEDED_MAX_SIZE')
 class ResponseExceededMaxSizeError extends UndiciError {
   constructor (message) {
     super(message)
@@ -31383,8 +31546,17 @@ class ResponseExceededMaxSizeError extends UndiciError {
     this.message = message || 'Response content exceeded max size'
     this.code = 'UND_ERR_RES_EXCEEDED_MAX_SIZE'
   }
+
+  static [Symbol.hasInstance] (instance) {
+    return instance && instance[kResponseExceededMaxSizeError] === true
+  }
+
+  get [kResponseExceededMaxSizeError] () {
+    return true
+  }
 }
 
+const kRequestRetryError = Symbol.for('undici.error.UND_ERR_REQ_RETRY')
 class RequestRetryError extends UndiciError {
   constructor (message, code, { headers, data }) {
     super(message)
@@ -31395,8 +31567,17 @@ class RequestRetryError extends UndiciError {
     this.data = data
     this.headers = headers
   }
+
+  static [Symbol.hasInstance] (instance) {
+    return instance && instance[kRequestRetryError] === true
+  }
+
+  get [kRequestRetryError] () {
+    return true
+  }
 }
 
+const kResponseError = Symbol.for('undici.error.UND_ERR_RESPONSE')
 class ResponseError extends UndiciError {
   constructor (message, code, { headers, body }) {
     super(message)
@@ -31407,8 +31588,17 @@ class ResponseError extends UndiciError {
     this.body = body
     this.headers = headers
   }
+
+  static [Symbol.hasInstance] (instance) {
+    return instance && instance[kResponseError] === true
+  }
+
+  get [kResponseError] () {
+    return true
+  }
 }
 
+const kSecureProxyConnectionError = Symbol.for('undici.error.UND_ERR_PRX_TLS')
 class SecureProxyConnectionError extends UndiciError {
   constructor (cause, message, options = {}) {
     super(message, { cause, ...options })
@@ -31416,6 +31606,32 @@ class SecureProxyConnectionError extends UndiciError {
     this.message = message || 'Secure Proxy Connection failed'
     this.code = 'UND_ERR_PRX_TLS'
     this.cause = cause
+  }
+
+  static [Symbol.hasInstance] (instance) {
+    return instance && instance[kSecureProxyConnectionError] === true
+  }
+
+  get [kSecureProxyConnectionError] () {
+    return true
+  }
+}
+
+const kMaxOriginsReachedError = Symbol.for('undici.error.UND_ERR_MAX_ORIGINS_REACHED')
+class MaxOriginsReachedError extends UndiciError {
+  constructor (message) {
+    super(message)
+    this.name = 'MaxOriginsReachedError'
+    this.message = message || 'Maximum allowed origins reached'
+    this.code = 'UND_ERR_MAX_ORIGINS_REACHED'
+  }
+
+  static [Symbol.hasInstance] (instance) {
+    return instance && instance[kMaxOriginsReachedError] === true
+  }
+
+  get [kMaxOriginsReachedError] () {
+    return true
   }
 }
 
@@ -31428,7 +31644,6 @@ module.exports = {
   BodyTimeoutError,
   RequestContentLengthMismatchError,
   ConnectTimeoutError,
-  ResponseStatusCodeError,
   InvalidArgumentError,
   InvalidReturnValueError,
   RequestAbortedError,
@@ -31442,7 +31657,8 @@ module.exports = {
   ResponseExceededMaxSizeError,
   RequestRetryError,
   ResponseError,
-  SecureProxyConnectionError
+  SecureProxyConnectionError,
+  MaxOriginsReachedError
 }
 
 
@@ -31471,7 +31687,8 @@ const {
   serializePathWithQuery,
   assertRequestHandler,
   getServerName,
-  normalizedMethodRecords
+  normalizedMethodRecords,
+  getProtocolFromUrlString
 } = __nccwpck_require__(3440)
 const { channels } = __nccwpck_require__(2414)
 const { headerNameLowerCasedRecord } = __nccwpck_require__(735)
@@ -31595,7 +31812,10 @@ class Request {
 
     this.path = query ? serializePathWithQuery(path, query) : path
 
+    // TODO: shall we maybe standardize it to an URL object?
     this.origin = origin
+
+    this.protocol = getProtocolFromUrlString(origin)
 
     this.idempotent = idempotent == null
       ? method === 'HEAD' || method === 'GET'
@@ -32723,12 +32943,11 @@ function ReadableStreamFrom (iterable) {
   let iterator
   return new ReadableStream(
     {
-      async start () {
+      start () {
         iterator = iterable[Symbol.asyncIterator]()
       },
       pull (controller) {
-        async function pull () {
-          const { done, value } = await iterator.next()
+        return iterator.next().then(({ done, value }) => {
           if (done) {
             queueMicrotask(() => {
               controller.close()
@@ -32739,15 +32958,13 @@ function ReadableStreamFrom (iterable) {
             if (buf.byteLength) {
               controller.enqueue(new Uint8Array(buf))
             } else {
-              return await pull()
+              return this.pull(controller)
             }
           }
-        }
-
-        return pull()
+        })
       },
-      async cancel () {
-        await iterator.return()
+      cancel () {
+        return iterator.return()
       },
       type: 'bytes'
     }
@@ -32993,6 +33210,30 @@ function onConnectTimeout (socket, opts) {
   destroy(socket, new ConnectTimeoutError(message))
 }
 
+/**
+ * @param {string} urlString
+ * @returns {string}
+ */
+function getProtocolFromUrlString (urlString) {
+  if (
+    urlString[0] === 'h' &&
+    urlString[1] === 't' &&
+    urlString[2] === 't' &&
+    urlString[3] === 'p'
+  ) {
+    switch (urlString[4]) {
+      case ':':
+        return 'http:'
+      case 's':
+        if (urlString[5] === ':') {
+          return 'https:'
+        }
+    }
+  }
+  // fallback if none of the usual suspects
+  return urlString.slice(0, urlString.indexOf(':') + 1)
+}
+
 const kEnumerableProperty = Object.create(null)
 kEnumerableProperty.enumerable = true
 
@@ -33064,7 +33305,8 @@ module.exports = {
   nodeMinor,
   safeHTTPMethods: Object.freeze(['GET', 'HEAD', 'OPTIONS', 'TRACE']),
   wrapRequestBody,
-  setupConnectTimeout
+  setupConnectTimeout,
+  getProtocolFromUrlString
 }
 
 
@@ -33076,7 +33318,7 @@ module.exports = {
 "use strict";
 
 
-const { InvalidArgumentError } = __nccwpck_require__(8707)
+const { InvalidArgumentError, MaxOriginsReachedError } = __nccwpck_require__(8707)
 const { kClients, kRunning, kClose, kDestroy, kDispatch, kUrl } = __nccwpck_require__(6443)
 const DispatcherBase = __nccwpck_require__(1841)
 const Pool = __nccwpck_require__(628)
@@ -33089,6 +33331,7 @@ const kOnConnectionError = Symbol('onConnectionError')
 const kOnDrain = Symbol('onDrain')
 const kFactory = Symbol('factory')
 const kOptions = Symbol('options')
+const kOrigins = Symbol('origins')
 
 function defaultFactory (origin, opts) {
   return opts && opts.connections === 1
@@ -33097,7 +33340,7 @@ function defaultFactory (origin, opts) {
 }
 
 class Agent extends DispatcherBase {
-  constructor ({ factory = defaultFactory, connect, ...options } = {}) {
+  constructor ({ factory = defaultFactory, maxOrigins = Infinity, connect, ...options } = {}) {
     if (typeof factory !== 'function') {
       throw new InvalidArgumentError('factory must be a function.')
     }
@@ -33106,15 +33349,20 @@ class Agent extends DispatcherBase {
       throw new InvalidArgumentError('connect must be a function or an object')
     }
 
+    if (typeof maxOrigins !== 'number' || Number.isNaN(maxOrigins) || maxOrigins <= 0) {
+      throw new InvalidArgumentError('maxOrigins must be a number greater than 0')
+    }
+
     super()
 
     if (connect && typeof connect !== 'function') {
       connect = { ...connect }
     }
 
-    this[kOptions] = { ...util.deepClone(options), connect }
+    this[kOptions] = { ...util.deepClone(options), maxOrigins, connect }
     this[kFactory] = factory
     this[kClients] = new Map()
+    this[kOrigins] = new Set()
 
     this[kOnDrain] = (origin, targets) => {
       this.emit('drain', origin, [this, ...targets])
@@ -33149,6 +33397,10 @@ class Agent extends DispatcherBase {
       throw new InvalidArgumentError('opts.origin must be a non-empty string or URL.')
     }
 
+    if (this[kOrigins].size >= this[kOptions].maxOrigins && !this[kOrigins].has(key)) {
+      throw new MaxOriginsReachedError()
+    }
+
     const result = this[kClients].get(key)
     let dispatcher = result && result.dispatcher
     if (!dispatcher) {
@@ -33160,6 +33412,7 @@ class Agent extends DispatcherBase {
             this[kClients].delete(key)
             result.dispatcher.close()
           }
+          this[kOrigins].delete(key)
         }
       }
       dispatcher = this[kFactory](opts.origin, this[kOptions])
@@ -33181,29 +33434,30 @@ class Agent extends DispatcherBase {
         })
 
       this[kClients].set(key, { count: 0, dispatcher })
+      this[kOrigins].add(key)
     }
 
     return dispatcher.dispatch(opts, handler)
   }
 
-  async [kClose] () {
+  [kClose] () {
     const closePromises = []
     for (const { dispatcher } of this[kClients].values()) {
       closePromises.push(dispatcher.close())
     }
     this[kClients].clear()
 
-    await Promise.all(closePromises)
+    return Promise.all(closePromises)
   }
 
-  async [kDestroy] (err) {
+  [kDestroy] (err) {
     const destroyPromises = []
     for (const { dispatcher } of this[kClients].values()) {
       destroyPromises.push(dispatcher.destroy(err))
     }
     this[kClients].clear()
 
-    await Promise.all(destroyPromises)
+    return Promise.all(destroyPromises)
   }
 
   get stats () {
@@ -33506,11 +33760,26 @@ function lazyllhttp () {
   const llhttpWasmData = process.env.JEST_WORKER_ID ? __nccwpck_require__(3870) : undefined
 
   let mod
-  try {
-    mod = new WebAssembly.Module(__nccwpck_require__(3434))
-  } catch {
-    /* istanbul ignore next */
 
+  // We disable wasm SIMD on ppc64 as it seems to be broken on Power 9 architectures.
+  let useWasmSIMD = process.arch !== 'ppc64'
+  // The Env Variable UNDICI_NO_WASM_SIMD allows explicitly overriding the default behavior
+  if (process.env.UNDICI_NO_WASM_SIMD === '1') {
+    useWasmSIMD = true
+  } else if (process.env.UNDICI_NO_WASM_SIMD === '0') {
+    useWasmSIMD = false
+  }
+
+  if (useWasmSIMD) {
+    try {
+      mod = new WebAssembly.Module(__nccwpck_require__(3434))
+      /* istanbul ignore next */
+    } catch {
+    }
+  }
+
+  /* istanbul ignore next */
+  if (!mod) {
     // We could check if the error was caused by the simd option not
     // being enabled, but the occurring of this other error
     // * https://github.com/emscripten-core/emscripten/issues/11495
@@ -33767,10 +34036,6 @@ class Parser {
         currentBufferRef = chunk
         currentParser = this
         ret = llhttp.llhttp_execute(this.ptr, currentBufferPtr, chunk.length)
-        /* eslint-disable-next-line no-useless-catch */
-      } catch (err) {
-        /* istanbul ignore next: difficult to make a test case for */
-        throw err
       } finally {
         currentParser = null
         currentBufferRef = null
@@ -34202,7 +34467,7 @@ function onParserTimeout (parser) {
  * @param {import('net').Socket} socket
  * @returns
  */
-async function connectH1 (client, socket) {
+function connectH1 (client, socket) {
   client[kSocket] = socket
 
   if (!llhttpInstance) {
@@ -35133,7 +35398,7 @@ function parseH2Headers (headers) {
   return result
 }
 
-async function connectH2 (client, socket) {
+function connectH2 (client, socket) {
   client[kSocket] = socket
 
   const session = http2.connect(client[kUrl], {
@@ -35335,7 +35600,7 @@ function shouldSendContentLength (method) {
 function writeH2 (client, request) {
   const requestTimeout = request.bodyTimeout ?? client[kBodyTimeout]
   const session = client[kHTTP2Session]
-  const { method, path, host, upgrade, expectContinue, signal, headers: reqHeaders } = request
+  const { method, path, host, upgrade, expectContinue, signal, protocol, headers: reqHeaders } = request
   let { body } = request
 
   if (upgrade) {
@@ -35347,6 +35612,16 @@ function writeH2 (client, request) {
   for (let n = 0; n < reqHeaders.length; n += 2) {
     const key = reqHeaders[n + 0]
     const val = reqHeaders[n + 1]
+
+    if (key === 'cookie') {
+      if (headers[key] != null) {
+        headers[key] = Array.isArray(headers[key]) ? (headers[key].push(val), headers[key]) : [headers[key], val]
+      } else {
+        headers[key] = val
+      }
+
+      continue
+    }
 
     if (Array.isArray(val)) {
       for (let i = 0; i < val.length; i++) {
@@ -35443,7 +35718,7 @@ function writeH2 (client, request) {
   // :path and :scheme headers must be omitted when sending CONNECT
 
   headers[HTTP2_HEADER_PATH] = path
-  headers[HTTP2_HEADER_SCHEME] = 'https'
+  headers[HTTP2_HEADER_SCHEME] = protocol === 'http:' ? 'http' : 'https'
 
   // https://tools.ietf.org/html/rfc7231#section-4.3.1
   // https://tools.ietf.org/html/rfc7231#section-4.3.2
@@ -36158,8 +36433,7 @@ class Client extends DispatcherBase {
   }
 
   [kDispatch] (opts, handler) {
-    const origin = opts.origin || this[kUrl].origin
-    const request = new Request(origin, opts, handler)
+    const request = new Request(this[kUrl].origin, opts, handler)
 
     this[kQueue].push(request)
     if (this[kResuming]) {
@@ -36179,7 +36453,7 @@ class Client extends DispatcherBase {
     return this[kNeedDrain] < 2
   }
 
-  async [kClose] () {
+  [kClose] () {
     // TODO: for H2 we need to gracefully flush the remaining enqueued
     // request and close each stream.
     return new Promise((resolve) => {
@@ -36191,7 +36465,7 @@ class Client extends DispatcherBase {
     })
   }
 
-  async [kDestroy] (err) {
+  [kDestroy] (err) {
     return new Promise((resolve) => {
       const requests = this[kQueue].splice(this[kPendingIdx])
       for (let i = 0; i < requests.length; i++) {
@@ -36243,9 +36517,9 @@ function onError (client, err) {
 
 /**
  * @param {Client} client
- * @returns
+ * @returns {void}
  */
-async function connect (client) {
+function connect (client) {
   assert(!client[kConnecting])
   assert(!client[kHTTPContext])
 
@@ -36279,26 +36553,23 @@ async function connect (client) {
     })
   }
 
-  try {
-    const socket = await new Promise((resolve, reject) => {
-      client[kConnector]({
-        host,
-        hostname,
-        protocol,
-        port,
-        servername: client[kServerName],
-        localAddress: client[kLocalAddress]
-      }, (err, socket) => {
-        if (err) {
-          reject(err)
-        } else {
-          resolve(socket)
-        }
-      })
-    })
+  client[kConnector]({
+    host,
+    hostname,
+    protocol,
+    port,
+    servername: client[kServerName],
+    localAddress: client[kLocalAddress]
+  }, (err, socket) => {
+    if (err) {
+      handleConnectError(client, err, { host, hostname, protocol, port })
+      client[kResume]()
+      return
+    }
 
     if (client.destroyed) {
       util.destroy(socket.on('error', noop), new ClientDestroyedError())
+      client[kResume]()
       return
     }
 
@@ -36306,11 +36577,13 @@ async function connect (client) {
 
     try {
       client[kHTTPContext] = socket.alpnProtocol === 'h2'
-        ? await connectH2(client, socket)
-        : await connectH1(client, socket)
+        ? connectH2(client, socket)
+        : connectH1(client, socket)
     } catch (err) {
       socket.destroy().on('error', noop)
-      throw err
+      handleConnectError(client, err, { host, hostname, protocol, port })
+      client[kResume]()
+      return
     }
 
     client[kConnecting] = false
@@ -36335,44 +36608,46 @@ async function connect (client) {
         socket
       })
     }
+
     client.emit('connect', client[kUrl], [client])
-  } catch (err) {
-    if (client.destroyed) {
-      return
-    }
+    client[kResume]()
+  })
+}
 
-    client[kConnecting] = false
-
-    if (channels.connectError.hasSubscribers) {
-      channels.connectError.publish({
-        connectParams: {
-          host,
-          hostname,
-          protocol,
-          port,
-          version: client[kHTTPContext]?.version,
-          servername: client[kServerName],
-          localAddress: client[kLocalAddress]
-        },
-        connector: client[kConnector],
-        error: err
-      })
-    }
-
-    if (err.code === 'ERR_TLS_CERT_ALTNAME_INVALID') {
-      assert(client[kRunning] === 0)
-      while (client[kPending] > 0 && client[kQueue][client[kPendingIdx]].servername === client[kServerName]) {
-        const request = client[kQueue][client[kPendingIdx]++]
-        util.errorRequest(client, request, err)
-      }
-    } else {
-      onError(client, err)
-    }
-
-    client.emit('connectionError', client[kUrl], [client], err)
+function handleConnectError (client, err, { host, hostname, protocol, port }) {
+  if (client.destroyed) {
+    return
   }
 
-  client[kResume]()
+  client[kConnecting] = false
+
+  if (channels.connectError.hasSubscribers) {
+    channels.connectError.publish({
+      connectParams: {
+        host,
+        hostname,
+        protocol,
+        port,
+        version: client[kHTTPContext]?.version,
+        servername: client[kServerName],
+        localAddress: client[kLocalAddress]
+      },
+      connector: client[kConnector],
+      error: err
+    })
+  }
+
+  if (err.code === 'ERR_TLS_CERT_ALTNAME_INVALID') {
+    assert(client[kRunning] === 0)
+    while (client[kPending] > 0 && client[kQueue][client[kPendingIdx]].servername === client[kServerName]) {
+      const request = client[kQueue][client[kPendingIdx]++]
+      util.errorRequest(client, request, err)
+    }
+  } else {
+    onError(client, err)
+  }
+
+  client.emit('connectionError', client[kUrl], [client], err)
 }
 
 function emitDrain (client) {
@@ -36497,19 +36772,24 @@ const kOnDestroyed = Symbol('onDestroyed')
 const kOnClosed = Symbol('onClosed')
 
 class DispatcherBase extends Dispatcher {
-  constructor () {
-    super()
+  /** @type {boolean} */
+  [kDestroyed] = false;
 
-    this[kDestroyed] = false
-    this[kOnDestroyed] = null
-    this[kClosed] = false
-    this[kOnClosed] = []
-  }
+  /** @type {Array|null} */
+  [kOnDestroyed] = null;
 
+  /** @type {boolean} */
+  [kClosed] = false;
+
+  /** @type {Array} */
+  [kOnClosed] = []
+
+  /** @returns {boolean} */
   get destroyed () {
     return this[kDestroyed]
   }
 
+  /** @returns {boolean} */
   get closed () {
     return this[kClosed]
   }
@@ -36755,24 +37035,20 @@ class EnvHttpProxyAgent extends DispatcherBase {
     return agent.dispatch(opts, handler)
   }
 
-  async [kClose] () {
-    await this[kNoProxyAgent].close()
-    if (!this[kHttpProxyAgent][kClosed]) {
-      await this[kHttpProxyAgent].close()
-    }
-    if (!this[kHttpsProxyAgent][kClosed]) {
-      await this[kHttpsProxyAgent].close()
-    }
+  [kClose] () {
+    return Promise.all([
+      this[kNoProxyAgent].close(),
+      !this[kHttpProxyAgent][kClosed] && this[kHttpProxyAgent].close(),
+      !this[kHttpsProxyAgent][kClosed] && this[kHttpsProxyAgent].close()
+    ])
   }
 
-  async [kDestroy] (err) {
-    await this[kNoProxyAgent].destroy(err)
-    if (!this[kHttpProxyAgent][kDestroyed]) {
-      await this[kHttpProxyAgent].destroy(err)
-    }
-    if (!this[kHttpsProxyAgent][kDestroyed]) {
-      await this[kHttpsProxyAgent].destroy(err)
-    }
+  [kDestroy] (err) {
+    return Promise.all([
+      this[kNoProxyAgent].destroy(err),
+      !this[kHttpProxyAgent][kDestroyed] && this[kHttpProxyAgent].destroy(err),
+      !this[kHttpsProxyAgent][kDestroyed] && this[kHttpsProxyAgent].destroy(err)
+    ])
   }
 
   #getProxyAgentForUrl (url) {
@@ -36927,35 +37203,21 @@ const kMask = kSize - 1
  * @template T
  */
 class FixedCircularBuffer {
-  constructor () {
-    /**
-     * @type {number}
-     */
-    this.bottom = 0
-    /**
-     * @type {number}
-     */
-    this.top = 0
-    /**
-     * @type {Array<T|undefined>}
-     */
-    this.list = new Array(kSize).fill(undefined)
-    /**
-     * @type {T|null}
-     */
-    this.next = null
-  }
+  /** @type {number} */
+  bottom = 0
+  /** @type {number} */
+  top = 0
+  /** @type {Array<T|undefined>} */
+  list = new Array(kSize).fill(undefined)
+  /** @type {T|null} */
+  next = null
 
-  /**
-   * @returns {boolean}
-   */
+  /** @returns {boolean} */
   isEmpty () {
     return this.top === this.bottom
   }
 
-  /**
-   * @returns {boolean}
-   */
+  /** @returns {boolean} */
   isFull () {
     return ((this.top + 1) & kMask) === this.bottom
   }
@@ -36969,9 +37231,7 @@ class FixedCircularBuffer {
     this.top = (this.top + 1) & kMask
   }
 
-  /**
-   * @returns {T|null}
-   */
+  /** @returns {T|null} */
   shift () {
     const nextItem = this.list[this.bottom]
     if (nextItem === undefined) { return null }
@@ -36986,22 +37246,16 @@ class FixedCircularBuffer {
  */
 module.exports = class FixedQueue {
   constructor () {
-    /**
-     * @type {FixedCircularBuffer<T>}
-     */
+    /** @type {FixedCircularBuffer<T>} */
     this.head = this.tail = new FixedCircularBuffer()
   }
 
-  /**
-   * @returns {boolean}
-   */
+  /** @returns {boolean} */
   isEmpty () {
     return this.head.isEmpty()
   }
 
-  /**
-   * @param {T} data
-   */
+  /** @param {T} data */
   push (data) {
     if (this.head.isFull()) {
       // Head is full: Creates a new queue, sets the old queue's `.next` to it,
@@ -37011,9 +37265,7 @@ module.exports = class FixedQueue {
     this.head.push(data)
   }
 
-  /**
-   * @returns {T|null}
-   */
+  /** @returns {T|null} */
   shift () {
     const tail = this.tail
     const next = tail.shift()
@@ -37047,8 +37299,6 @@ class H2CClient extends DispatcherBase {
   #client = null
 
   constructor (origin, clientOpts) {
-    super()
-
     if (typeof origin === 'string') {
       origin = new URL(origin)
     }
@@ -37081,6 +37331,8 @@ class H2CClient extends DispatcherBase {
         'h2c-client: pipelining cannot be greater than maxConcurrentStreams'
       )
     }
+
+    super()
 
     this.#client = new Client(origin, {
       ...opts,
@@ -37145,12 +37397,12 @@ class H2CClient extends DispatcherBase {
     return this.#client.dispatch(opts, handler)
   }
 
-  async [kClose] () {
-    await this.#client.close()
+  [kClose] () {
+    return this.#client.close()
   }
 
-  async [kDestroy] () {
-    await this.#client.destroy()
+  [kDestroy] () {
+    return this.#client.destroy()
   }
 }
 
@@ -37183,54 +37435,55 @@ const kAddClient = Symbol('add client')
 const kRemoveClient = Symbol('remove client')
 
 class PoolBase extends DispatcherBase {
-  constructor () {
-    super()
+  [kQueue] = new FixedQueue();
 
-    this[kQueue] = new FixedQueue()
-    this[kClients] = []
-    this[kQueued] = 0
+  [kQueued] = 0;
 
-    const pool = this
+  [kClients] = [];
 
-    this[kOnDrain] = function onDrain (origin, targets) {
-      const queue = pool[kQueue]
+  [kNeedDrain] = false;
 
-      let needDrain = false
+  [kOnDrain] (client, origin, targets) {
+    const queue = this[kQueue]
 
-      while (!needDrain) {
-        const item = queue.shift()
-        if (!item) {
-          break
-        }
-        pool[kQueued]--
-        needDrain = !this.dispatch(item.opts, item.handler)
+    let needDrain = false
+
+    while (!needDrain) {
+      const item = queue.shift()
+      if (!item) {
+        break
       }
+      this[kQueued]--
+      needDrain = !client.dispatch(item.opts, item.handler)
+    }
 
-      this[kNeedDrain] = needDrain
+    client[kNeedDrain] = needDrain
 
-      if (!this[kNeedDrain] && pool[kNeedDrain]) {
-        pool[kNeedDrain] = false
-        pool.emit('drain', origin, [pool, ...targets])
+    if (!needDrain && this[kNeedDrain]) {
+      this[kNeedDrain] = false
+      this.emit('drain', origin, [this, ...targets])
+    }
+
+    if (this[kClosedResolve] && queue.isEmpty()) {
+      const closeAll = new Array(this[kClients].length)
+      for (let i = 0; i < this[kClients].length; i++) {
+        closeAll[i] = this[kClients][i].close()
       }
-
-      if (pool[kClosedResolve] && queue.isEmpty()) {
-        Promise
-          .all(pool[kClients].map(c => c.close()))
-          .then(pool[kClosedResolve])
-      }
+      Promise.all(closeAll)
+        .then(this[kClosedResolve])
     }
+  }
 
-    this[kOnConnect] = (origin, targets) => {
-      pool.emit('connect', origin, [pool, ...targets])
-    }
+  [kOnConnect] = (origin, targets) => {
+    this.emit('connect', origin, [this, ...targets])
+  };
 
-    this[kOnDisconnect] = (origin, targets, err) => {
-      pool.emit('disconnect', origin, [pool, ...targets], err)
-    }
+  [kOnDisconnect] = (origin, targets, err) => {
+    this.emit('disconnect', origin, [this, ...targets], err)
+  };
 
-    this[kOnConnectionError] = (origin, targets, err) => {
-      pool.emit('connectionError', origin, [pool, ...targets], err)
-    }
+  [kOnConnectionError] = (origin, targets, err) => {
+    this.emit('connectionError', origin, [this, ...targets], err)
   }
 
   get [kBusy] () {
@@ -37238,11 +37491,19 @@ class PoolBase extends DispatcherBase {
   }
 
   get [kConnected] () {
-    return this[kClients].filter(client => client[kConnected]).length
+    let ret = 0
+    for (const { [kConnected]: connected } of this[kClients]) {
+      ret += connected
+    }
+    return ret
   }
 
   get [kFree] () {
-    return this[kClients].filter(client => client[kConnected] && !client[kNeedDrain]).length
+    let ret = 0
+    for (const { [kConnected]: connected, [kNeedDrain]: needDrain } of this[kClients]) {
+      ret += connected && !needDrain
+    }
+    return ret
   }
 
   get [kPending] () {
@@ -37273,17 +37534,21 @@ class PoolBase extends DispatcherBase {
     return new PoolStats(this)
   }
 
-  async [kClose] () {
+  [kClose] () {
     if (this[kQueue].isEmpty()) {
-      await Promise.all(this[kClients].map(c => c.close()))
+      const closeAll = new Array(this[kClients].length)
+      for (let i = 0; i < this[kClients].length; i++) {
+        closeAll[i] = this[kClients][i].close()
+      }
+      return Promise.all(closeAll)
     } else {
-      await new Promise((resolve) => {
+      return new Promise((resolve) => {
         this[kClosedResolve] = resolve
       })
     }
   }
 
-  async [kDestroy] (err) {
+  [kDestroy] (err) {
     while (true) {
       const item = this[kQueue].shift()
       if (!item) {
@@ -37292,7 +37557,11 @@ class PoolBase extends DispatcherBase {
       item.handler.onError(err)
     }
 
-    await Promise.all(this[kClients].map(c => c.destroy(err)))
+    const destroyAll = new Array(this[kClients].length)
+    for (let i = 0; i < this[kClients].length; i++) {
+      destroyAll[i] = this[kClients][i].destroy(err)
+    }
+    return Promise.all(destroyAll)
   }
 
   [kDispatch] (opts, handler) {
@@ -37312,7 +37581,7 @@ class PoolBase extends DispatcherBase {
 
   [kAddClient] (client) {
     client
-      .on('drain', this[kOnDrain])
+      .on('drain', this[kOnDrain].bind(this, client))
       .on('connect', this[kOnConnect])
       .on('disconnect', this[kOnDisconnect])
       .on('connectionError', this[kOnConnectionError])
@@ -37322,7 +37591,7 @@ class PoolBase extends DispatcherBase {
     if (this[kNeedDrain]) {
       queueMicrotask(() => {
         if (this[kNeedDrain]) {
-          this[kOnDrain](client[kUrl], [this, client])
+          this[kOnDrain](client, client[kUrl], [client, this])
         }
       })
     }
@@ -37415,8 +37684,6 @@ class Pool extends PoolBase {
       throw new InvalidArgumentError('connect must be a function or an object')
     }
 
-    super()
-
     if (typeof connect !== 'function') {
       connect = buildConnector({
         ...tls,
@@ -37428,6 +37695,8 @@ class Pool extends PoolBase {
         ...connect
       })
     }
+
+    super()
 
     this[kConnections] = connections || null
     this[kUrl] = util.parseOrigin(origin)
@@ -37527,10 +37796,11 @@ class Http1ProxyWrapper extends DispatcherBase {
   #client
 
   constructor (proxyUrl, { headers = {}, connect, factory }) {
-    super()
     if (!proxyUrl) {
       throw new InvalidArgumentError('Proxy URL is mandatory')
     }
+
+    super()
 
     this[kProxyHeaders] = headers
     if (factory) {
@@ -37570,11 +37840,11 @@ class Http1ProxyWrapper extends DispatcherBase {
     return this.#client[kDispatch](opts, handler)
   }
 
-  async [kClose] () {
+  [kClose] () {
     return this.#client.close()
   }
 
-  async [kDestroy] (err) {
+  [kDestroy] (err) {
     return this.#client.destroy(err)
   }
 }
@@ -37710,14 +37980,18 @@ class ProxyAgent extends DispatcherBase {
     }
   }
 
-  async [kClose] () {
-    await this[kAgent].close()
-    await this[kClient].close()
+  [kClose] () {
+    return Promise.all([
+      this[kAgent].close(),
+      this[kClient].close()
+    ])
   }
 
-  async [kDestroy] () {
-    await this[kAgent].destroy()
-    await this[kClient].destroy()
+  [kDestroy] () {
+    return Promise.all([
+      this[kAgent].destroy(),
+      this[kClient].destroy()
+    ])
   }
 }
 
@@ -37838,9 +38112,27 @@ function getGlobalDispatcher () {
   return globalThis[globalDispatcher]
 }
 
+// These are the globals that can be installed by undici.install().
+// Not exported by index.js to avoid use outside of this module.
+const installedExports = /** @type {const} */ (
+  [
+    'fetch',
+    'Headers',
+    'Response',
+    'Request',
+    'FormData',
+    'WebSocket',
+    'CloseEvent',
+    'ErrorEvent',
+    'MessageEvent',
+    'EventSource'
+  ]
+)
+
 module.exports = {
   setGlobalDispatcher,
-  getGlobalDispatcher
+  getGlobalDispatcher,
+  installedExports
 }
 
 
@@ -39449,6 +39741,22 @@ function needsRevalidation (result, cacheControlDirectives) {
 }
 
 /**
+ * Check if we're within the stale-while-revalidate window for a stale response
+ * @param {import('../../types/cache-interceptor.d.ts').default.GetResult} result
+ * @returns {boolean}
+ */
+function withinStaleWhileRevalidateWindow (result) {
+  const staleWhileRevalidate = result.cacheControlDirectives?.['stale-while-revalidate']
+  if (!staleWhileRevalidate) {
+    return false
+  }
+
+  const now = Date.now()
+  const staleWhileRevalidateExpiry = result.staleAt + (staleWhileRevalidate * 1000)
+  return now <= staleWhileRevalidateExpiry
+}
+
+/**
  * @param {DispatchFn} dispatch
  * @param {import('../../types/cache-interceptor.d.ts').default.CacheHandlerOptions} globalOpts
  * @param {import('../../types/cache-interceptor.d.ts').default.CacheKey} cacheKey
@@ -39621,6 +39929,51 @@ function handleResult (
       // If body is a stream we can't revalidate...
       // TODO (fix): This could be less strict...
       return dispatch(opts, new CacheHandler(globalOpts, cacheKey, handler))
+    }
+
+    // RFC 5861: If we're within stale-while-revalidate window, serve stale immediately
+    // and revalidate in background
+    if (withinStaleWhileRevalidateWindow(result)) {
+      // Serve stale response immediately
+      sendCachedValue(handler, opts, result, age, null, true)
+
+      // Start background revalidation (fire-and-forget)
+      queueMicrotask(() => {
+        let headers = {
+          ...opts.headers,
+          'if-modified-since': new Date(result.cachedAt).toUTCString()
+        }
+
+        if (result.etag) {
+          headers['if-none-match'] = result.etag
+        }
+
+        if (result.vary) {
+          headers = {
+            ...headers,
+            ...result.vary
+          }
+        }
+
+        // Background revalidation - update cache if we get new data
+        dispatch(
+          {
+            ...opts,
+            headers
+          },
+          new CacheHandler(globalOpts, cacheKey, {
+            // Silent handler that just updates the cache
+            onRequestStart () {},
+            onRequestUpgrade () {},
+            onResponseStart () {},
+            onResponseData () {},
+            onResponseEnd () {},
+            onResponseError () {}
+          })
+        )
+      })
+
+      return true
     }
 
     let withinStaleIfErrorThreshold = false
@@ -41388,16 +41741,16 @@ const PendingInterceptorsFormatter = __nccwpck_require__(6142)
 const { MockCallHistory } = __nccwpck_require__(431)
 
 class MockAgent extends Dispatcher {
-  constructor (opts) {
+  constructor (opts = {}) {
     super(opts)
 
     const mockOptions = buildAndValidateMockOptions(opts)
 
     this[kNetConnect] = true
     this[kIsMockActive] = true
-    this[kMockAgentIsCallHistoryEnabled] = mockOptions?.enableCallHistory ?? false
-    this[kMockAgentAcceptsNonStandardSearchParameters] = mockOptions?.acceptNonStandardSearchParameters ?? false
-    this[kIgnoreTrailingSlash] = mockOptions?.ignoreTrailingSlash ?? false
+    this[kMockAgentIsCallHistoryEnabled] = mockOptions.enableCallHistory ?? false
+    this[kMockAgentAcceptsNonStandardSearchParameters] = mockOptions.acceptNonStandardSearchParameters ?? false
+    this[kIgnoreTrailingSlash] = mockOptions.ignoreTrailingSlash ?? false
 
     // Instantiate Agent and encapsulate
     if (opts?.agent && typeof opts.agent.dispatch !== 'function') {
@@ -41931,6 +42284,8 @@ module.exports = MockClient
 
 const { UndiciError } = __nccwpck_require__(8707)
 
+const kMockNotMatchedError = Symbol.for('undici.error.UND_MOCK_ERR_MOCK_NOT_MATCHED')
+
 /**
  * The request does not match any registered mock dispatches.
  */
@@ -41940,6 +42295,14 @@ class MockNotMatchedError extends UndiciError {
     this.name = 'MockNotMatchedError'
     this.message = message || 'The request does not match any registered mock dispatches'
     this.code = 'UND_MOCK_ERR_MOCK_NOT_MATCHED'
+  }
+
+  static [Symbol.hasInstance] (instance) {
+    return instance && instance[kMockNotMatchedError] === true
+  }
+
+  get [kMockNotMatchedError] () {
+    return true
   }
 }
 
@@ -42655,7 +43018,7 @@ function buildMockDispatch () {
       try {
         mockDispatch.call(this, opts, handler)
       } catch (error) {
-        if (error instanceof MockNotMatchedError) {
+        if (error.code === 'UND_MOCK_ERR_MOCK_NOT_MATCHED') {
           const netConnect = agent[kGetNetConnect]()
           if (netConnect === false) {
             throw new MockNotMatchedError(`${error.message}: subsequent request to origin ${origin} was not allowed (net.connect disabled)`)
@@ -42686,19 +43049,21 @@ function checkNetConnect (netConnect, origin) {
 }
 
 function buildAndValidateMockOptions (opts) {
-  if (opts) {
-    const { agent, ...mockOptions } = opts
+  const { agent, ...mockOptions } = opts
 
-    if ('enableCallHistory' in mockOptions && typeof mockOptions.enableCallHistory !== 'boolean') {
-      throw new InvalidArgumentError('options.enableCallHistory must to be a boolean')
-    }
-
-    if ('acceptNonStandardSearchParameters' in mockOptions && typeof mockOptions.acceptNonStandardSearchParameters !== 'boolean') {
-      throw new InvalidArgumentError('options.acceptNonStandardSearchParameters must to be a boolean')
-    }
-
-    return mockOptions
+  if ('enableCallHistory' in mockOptions && typeof mockOptions.enableCallHistory !== 'boolean') {
+    throw new InvalidArgumentError('options.enableCallHistory must to be a boolean')
   }
+
+  if ('acceptNonStandardSearchParameters' in mockOptions && typeof mockOptions.acceptNonStandardSearchParameters !== 'boolean') {
+    throw new InvalidArgumentError('options.acceptNonStandardSearchParameters must to be a boolean')
+  }
+
+  if ('ignoreTrailingSlash' in mockOptions && typeof mockOptions.ignoreTrailingSlash !== 'boolean') {
+    throw new InvalidArgumentError('options.ignoreTrailingSlash must to be a boolean')
+  }
+
+  return mockOptions
 }
 
 module.exports = {
@@ -44274,33 +44639,21 @@ module.exports = {
 "use strict";
 
 
-const IMF_DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
-const IMF_SPACES = [4, 7, 11, 16, 25]
-const IMF_MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
-const IMF_COLONS = [19, 22]
-
-const ASCTIME_SPACES = [3, 7, 10, 19]
-
-const RFC850_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-
 /**
  * @see https://www.rfc-editor.org/rfc/rfc9110.html#name-date-time-formats
  *
  * @param {string} date
- * @param {Date} [now]
  * @returns {Date | undefined}
  */
-function parseHttpDate (date, now) {
+function parseHttpDate (date) {
   // Sun, 06 Nov 1994 08:49:37 GMT    ; IMF-fixdate
   // Sun Nov  6 08:49:37 1994         ; ANSI C's asctime() format
   // Sunday, 06-Nov-94 08:49:37 GMT   ; obsolete RFC 850 format
 
-  date = date.toLowerCase()
-
   switch (date[3]) {
     case ',': return parseImfDate(date)
     case ' ': return parseAscTimeDate(date)
-    default: return parseRfc850Date(date, now)
+    default: return parseRfc850Date(date)
   }
 }
 
@@ -44311,69 +44664,207 @@ function parseHttpDate (date, now) {
  * @returns {Date | undefined}
  */
 function parseImfDate (date) {
-  if (date.length !== 29) {
+  if (
+    date.length !== 29 ||
+    date[4] !== ' ' ||
+    date[7] !== ' ' ||
+    date[11] !== ' ' ||
+    date[16] !== ' ' ||
+    date[19] !== ':' ||
+    date[22] !== ':' ||
+    date[25] !== ' ' ||
+    date[26] !== 'G' ||
+    date[27] !== 'M' ||
+    date[28] !== 'T'
+  ) {
     return undefined
   }
 
-  if (!date.endsWith('gmt')) {
-    // Unsupported timezone
-    return undefined
+  let weekday = -1
+  if (date[0] === 'S' && date[1] === 'u' && date[2] === 'n') { // Sunday
+    weekday = 0
+  } else if (date[0] === 'M' && date[1] === 'o' && date[2] === 'n') { // Monday
+    weekday = 1
+  } else if (date[0] === 'T' && date[1] === 'u' && date[2] === 'e') { // Tuesday
+    weekday = 2
+  } else if (date[0] === 'W' && date[1] === 'e' && date[2] === 'd') { // Wednesday
+    weekday = 3
+  } else if (date[0] === 'T' && date[1] === 'h' && date[2] === 'u') { // Thursday
+    weekday = 4
+  } else if (date[0] === 'F' && date[1] === 'r' && date[2] === 'i') { // Friday
+    weekday = 5
+  } else if (date[0] === 'S' && date[1] === 'a' && date[2] === 't') { // Saturday
+    weekday = 6
+  } else {
+    return undefined // Not a valid day of the week
   }
 
-  for (const spaceInx of IMF_SPACES) {
-    if (date[spaceInx] !== ' ') {
-      return undefined
+  let day = 0
+  if (date[5] === '0') {
+    // Single digit day, e.g. "Sun Nov 6 08:49:37 1994"
+    const code = date.charCodeAt(6)
+    if (code < 49 || code > 57) {
+      return undefined // Not a digit
     }
-  }
-
-  for (const colonIdx of IMF_COLONS) {
-    if (date[colonIdx] !== ':') {
-      return undefined
+    day = code - 48 // Convert ASCII code to number
+  } else {
+    const code1 = date.charCodeAt(5)
+    if (code1 < 49 || code1 > 51) {
+      return undefined // Not a digit between 1 and 3
     }
+    const code2 = date.charCodeAt(6)
+    if (code2 < 48 || code2 > 57) {
+      return undefined // Not a digit
+    }
+    day = (code1 - 48) * 10 + (code2 - 48) // Convert ASCII codes to number
   }
 
-  const dayName = date.substring(0, 3)
-  if (!IMF_DAYS.includes(dayName)) {
+  let monthIdx = -1
+  if (
+    (date[8] === 'J' && date[9] === 'a' && date[10] === 'n')
+  ) {
+    monthIdx = 0 // Jan
+  } else if (
+    (date[8] === 'F' && date[9] === 'e' && date[10] === 'b')
+  ) {
+    monthIdx = 1 // Feb
+  } else if (
+    (date[8] === 'M' && date[9] === 'a')
+  ) {
+    if (date[10] === 'r') {
+      monthIdx = 2 // Mar
+    } else if (date[10] === 'y') {
+      monthIdx = 4 // May
+    } else {
+      return undefined // Invalid month
+    }
+  } else if (
+    (date[8] === 'J')
+  ) {
+    if (date[9] === 'a' && date[10] === 'n') {
+      monthIdx = 0 // Jan
+    } else if (date[9] === 'u') {
+      if (date[10] === 'n') {
+        monthIdx = 5 // Jun
+      } else if (date[10] === 'l') {
+        monthIdx = 6 // Jul
+      } else {
+        return undefined // Invalid month
+      }
+    } else {
+      return undefined // Invalid month
+    }
+  } else if (
+    (date[8] === 'A')
+  ) {
+    if (date[9] === 'p' && date[10] === 'r') {
+      monthIdx = 3 // Apr
+    } else if (date[9] === 'u' && date[10] === 'g') {
+      monthIdx = 7 // Aug
+    } else {
+      return undefined // Invalid month
+    }
+  } else if (
+    (date[8] === 'S' && date[9] === 'e' && date[10] === 'p')
+  ) {
+    monthIdx = 8 // Sep
+  } else if (
+    (date[8] === 'O' && date[9] === 'c' && date[10] === 't')
+  ) {
+    monthIdx = 9 // Oct
+  } else if (
+    (date[8] === 'N' && date[9] === 'o' && date[10] === 'v')
+  ) {
+    monthIdx = 10 // Nov
+  } else if (
+    (date[8] === 'D' && date[9] === 'e' && date[10] === 'c')
+  ) {
+    monthIdx = 11 // Dec
+  } else {
+    // Not a valid month
     return undefined
   }
 
-  const dayString = date.substring(5, 7)
-  const day = Number.parseInt(dayString)
-  if (isNaN(day) || (day < 10 && dayString[0] !== '0')) {
-    // Not a number, 0, or it's less than 10 and didn't start with a 0
-    return undefined
+  const yearDigit1 = date.charCodeAt(12)
+  if (yearDigit1 < 48 || yearDigit1 > 57) {
+    return undefined // Not a digit
+  }
+  const yearDigit2 = date.charCodeAt(13)
+  if (yearDigit2 < 48 || yearDigit2 > 57) {
+    return undefined // Not a digit
+  }
+  const yearDigit3 = date.charCodeAt(14)
+  if (yearDigit3 < 48 || yearDigit3 > 57) {
+    return undefined // Not a digit
+  }
+  const yearDigit4 = date.charCodeAt(15)
+  if (yearDigit4 < 48 || yearDigit4 > 57) {
+    return undefined // Not a digit
+  }
+  const year = (yearDigit1 - 48) * 1000 + (yearDigit2 - 48) * 100 + (yearDigit3 - 48) * 10 + (yearDigit4 - 48)
+
+  let hour = 0
+  if (date[17] === '0') {
+    const code = date.charCodeAt(18)
+    if (code < 48 || code > 57) {
+      return undefined // Not a digit
+    }
+    hour = code - 48 // Convert ASCII code to number
+  } else {
+    const code1 = date.charCodeAt(17)
+    if (code1 < 48 || code1 > 50) {
+      return undefined // Not a digit between 0 and 2
+    }
+    const code2 = date.charCodeAt(18)
+    if (code2 < 48 || code2 > 57) {
+      return undefined // Not a digit
+    }
+    if (code1 === 50 && code2 > 51) {
+      return undefined // Hour cannot be greater than 23
+    }
+    hour = (code1 - 48) * 10 + (code2 - 48) // Convert ASCII codes to number
   }
 
-  const month = date.substring(8, 11)
-  const monthIdx = IMF_MONTHS.indexOf(month)
-  if (monthIdx === -1) {
-    return undefined
+  let minute = 0
+  if (date[20] === '0') {
+    const code = date.charCodeAt(21)
+    if (code < 48 || code > 57) {
+      return undefined // Not a digit
+    }
+    minute = code - 48 // Convert ASCII code to number
+  } else {
+    const code1 = date.charCodeAt(20)
+    if (code1 < 48 || code1 > 53) {
+      return undefined // Not a digit between 0 and 5
+    }
+    const code2 = date.charCodeAt(21)
+    if (code2 < 48 || code2 > 57) {
+      return undefined // Not a digit
+    }
+    minute = (code1 - 48) * 10 + (code2 - 48) // Convert ASCII codes to number
   }
 
-  const year = Number.parseInt(date.substring(12, 16))
-  if (isNaN(year)) {
-    return undefined
+  let second = 0
+  if (date[23] === '0') {
+    const code = date.charCodeAt(24)
+    if (code < 48 || code > 57) {
+      return undefined // Not a digit
+    }
+    second = code - 48 // Convert ASCII code to number
+  } else {
+    const code1 = date.charCodeAt(23)
+    if (code1 < 48 || code1 > 53) {
+      return undefined // Not a digit between 0 and 5
+    }
+    const code2 = date.charCodeAt(24)
+    if (code2 < 48 || code2 > 57) {
+      return undefined // Not a digit
+    }
+    second = (code1 - 48) * 10 + (code2 - 48) // Convert ASCII codes to number
   }
 
-  const hourString = date.substring(17, 19)
-  const hour = Number.parseInt(hourString)
-  if (isNaN(hour) || (hour < 10 && hourString[0] !== '0')) {
-    return undefined
-  }
-
-  const minuteString = date.substring(20, 22)
-  const minute = Number.parseInt(minuteString)
-  if (isNaN(minute) || (minute < 10 && minuteString[0] !== '0')) {
-    return undefined
-  }
-
-  const secondString = date.substring(23, 25)
-  const second = Number.parseInt(secondString)
-  if (isNaN(second) || (second < 10 && secondString[0] !== '0')) {
-    return undefined
-  }
-
-  return new Date(Date.UTC(year, monthIdx, day, hour, minute, second))
+  const result = new Date(Date.UTC(year, monthIdx, day, hour, minute, second))
+  return result.getUTCDay() === weekday ? result : undefined
 }
 
 /**
@@ -44385,147 +44876,415 @@ function parseImfDate (date) {
 function parseAscTimeDate (date) {
   // This is assumed to be in UTC
 
-  if (date.length !== 24) {
+  if (
+    date.length !== 24 ||
+    date[7] !== ' ' ||
+    date[10] !== ' ' ||
+    date[19] !== ' '
+  ) {
     return undefined
   }
 
-  for (const spaceIdx of ASCTIME_SPACES) {
-    if (date[spaceIdx] !== ' ') {
-      return undefined
+  let weekday = -1
+  if (date[0] === 'S' && date[1] === 'u' && date[2] === 'n') { // Sunday
+    weekday = 0
+  } else if (date[0] === 'M' && date[1] === 'o' && date[2] === 'n') { // Monday
+    weekday = 1
+  } else if (date[0] === 'T' && date[1] === 'u' && date[2] === 'e') { // Tuesday
+    weekday = 2
+  } else if (date[0] === 'W' && date[1] === 'e' && date[2] === 'd') { // Wednesday
+    weekday = 3
+  } else if (date[0] === 'T' && date[1] === 'h' && date[2] === 'u') { // Thursday
+    weekday = 4
+  } else if (date[0] === 'F' && date[1] === 'r' && date[2] === 'i') { // Friday
+    weekday = 5
+  } else if (date[0] === 'S' && date[1] === 'a' && date[2] === 't') { // Saturday
+    weekday = 6
+  } else {
+    return undefined // Not a valid day of the week
+  }
+
+  let monthIdx = -1
+  if (
+    (date[4] === 'J' && date[5] === 'a' && date[6] === 'n')
+  ) {
+    monthIdx = 0 // Jan
+  } else if (
+    (date[4] === 'F' && date[5] === 'e' && date[6] === 'b')
+  ) {
+    monthIdx = 1 // Feb
+  } else if (
+    (date[4] === 'M' && date[5] === 'a')
+  ) {
+    if (date[6] === 'r') {
+      monthIdx = 2 // Mar
+    } else if (date[6] === 'y') {
+      monthIdx = 4 // May
+    } else {
+      return undefined // Invalid month
     }
-  }
-
-  const dayName = date.substring(0, 3)
-  if (!IMF_DAYS.includes(dayName)) {
+  } else if (
+    (date[4] === 'J')
+  ) {
+    if (date[5] === 'a' && date[6] === 'n') {
+      monthIdx = 0 // Jan
+    } else if (date[5] === 'u') {
+      if (date[6] === 'n') {
+        monthIdx = 5 // Jun
+      } else if (date[6] === 'l') {
+        monthIdx = 6 // Jul
+      } else {
+        return undefined // Invalid month
+      }
+    } else {
+      return undefined // Invalid month
+    }
+  } else if (
+    (date[4] === 'A')
+  ) {
+    if (date[5] === 'p' && date[6] === 'r') {
+      monthIdx = 3 // Apr
+    } else if (date[5] === 'u' && date[6] === 'g') {
+      monthIdx = 7 // Aug
+    } else {
+      return undefined // Invalid month
+    }
+  } else if (
+    (date[4] === 'S' && date[5] === 'e' && date[6] === 'p')
+  ) {
+    monthIdx = 8 // Sep
+  } else if (
+    (date[4] === 'O' && date[5] === 'c' && date[6] === 't')
+  ) {
+    monthIdx = 9 // Oct
+  } else if (
+    (date[4] === 'N' && date[5] === 'o' && date[6] === 'v')
+  ) {
+    monthIdx = 10 // Nov
+  } else if (
+    (date[4] === 'D' && date[5] === 'e' && date[6] === 'c')
+  ) {
+    monthIdx = 11 // Dec
+  } else {
+    // Not a valid month
     return undefined
   }
 
-  const month = date.substring(4, 7)
-  const monthIdx = IMF_MONTHS.indexOf(month)
-  if (monthIdx === -1) {
-    return undefined
+  let day = 0
+  if (date[8] === ' ') {
+    // Single digit day, e.g. "Sun Nov 6 08:49:37 1994"
+    const code = date.charCodeAt(9)
+    if (code < 49 || code > 57) {
+      return undefined // Not a digit
+    }
+    day = code - 48 // Convert ASCII code to number
+  } else {
+    const code1 = date.charCodeAt(8)
+    if (code1 < 49 || code1 > 51) {
+      return undefined // Not a digit between 1 and 3
+    }
+    const code2 = date.charCodeAt(9)
+    if (code2 < 48 || code2 > 57) {
+      return undefined // Not a digit
+    }
+    day = (code1 - 48) * 10 + (code2 - 48) // Convert ASCII codes to number
   }
 
-  const dayString = date.substring(8, 10)
-  const day = Number.parseInt(dayString)
-  if (isNaN(day) || (day < 10 && dayString[0] !== ' ')) {
-    return undefined
+  let hour = 0
+  if (date[11] === '0') {
+    const code = date.charCodeAt(12)
+    if (code < 48 || code > 57) {
+      return undefined // Not a digit
+    }
+    hour = code - 48 // Convert ASCII code to number
+  } else {
+    const code1 = date.charCodeAt(11)
+    if (code1 < 48 || code1 > 50) {
+      return undefined // Not a digit between 0 and 2
+    }
+    const code2 = date.charCodeAt(12)
+    if (code2 < 48 || code2 > 57) {
+      return undefined // Not a digit
+    }
+    if (code1 === 50 && code2 > 51) {
+      return undefined // Hour cannot be greater than 23
+    }
+    hour = (code1 - 48) * 10 + (code2 - 48) // Convert ASCII codes to number
   }
 
-  const hourString = date.substring(11, 13)
-  const hour = Number.parseInt(hourString)
-  if (isNaN(hour) || (hour < 10 && hourString[0] !== '0')) {
-    return undefined
+  let minute = 0
+  if (date[14] === '0') {
+    const code = date.charCodeAt(15)
+    if (code < 48 || code > 57) {
+      return undefined // Not a digit
+    }
+    minute = code - 48 // Convert ASCII code to number
+  } else {
+    const code1 = date.charCodeAt(14)
+    if (code1 < 48 || code1 > 53) {
+      return undefined // Not a digit between 0 and 5
+    }
+    const code2 = date.charCodeAt(15)
+    if (code2 < 48 || code2 > 57) {
+      return undefined // Not a digit
+    }
+    minute = (code1 - 48) * 10 + (code2 - 48) // Convert ASCII codes to number
   }
 
-  const minuteString = date.substring(14, 16)
-  const minute = Number.parseInt(minuteString)
-  if (isNaN(minute) || (minute < 10 && minuteString[0] !== '0')) {
-    return undefined
+  let second = 0
+  if (date[17] === '0') {
+    const code = date.charCodeAt(18)
+    if (code < 48 || code > 57) {
+      return undefined // Not a digit
+    }
+    second = code - 48 // Convert ASCII code to number
+  } else {
+    const code1 = date.charCodeAt(17)
+    if (code1 < 48 || code1 > 53) {
+      return undefined // Not a digit between 0 and 5
+    }
+    const code2 = date.charCodeAt(18)
+    if (code2 < 48 || code2 > 57) {
+      return undefined // Not a digit
+    }
+    second = (code1 - 48) * 10 + (code2 - 48) // Convert ASCII codes to number
   }
 
-  const secondString = date.substring(17, 19)
-  const second = Number.parseInt(secondString)
-  if (isNaN(second) || (second < 10 && secondString[0] !== '0')) {
-    return undefined
+  const yearDigit1 = date.charCodeAt(20)
+  if (yearDigit1 < 48 || yearDigit1 > 57) {
+    return undefined // Not a digit
   }
-
-  const year = Number.parseInt(date.substring(20, 24))
-  if (isNaN(year)) {
-    return undefined
+  const yearDigit2 = date.charCodeAt(21)
+  if (yearDigit2 < 48 || yearDigit2 > 57) {
+    return undefined // Not a digit
   }
+  const yearDigit3 = date.charCodeAt(22)
+  if (yearDigit3 < 48 || yearDigit3 > 57) {
+    return undefined // Not a digit
+  }
+  const yearDigit4 = date.charCodeAt(23)
+  if (yearDigit4 < 48 || yearDigit4 > 57) {
+    return undefined // Not a digit
+  }
+  const year = (yearDigit1 - 48) * 1000 + (yearDigit2 - 48) * 100 + (yearDigit3 - 48) * 10 + (yearDigit4 - 48)
 
-  return new Date(Date.UTC(year, monthIdx, day, hour, minute, second))
+  const result = new Date(Date.UTC(year, monthIdx, day, hour, minute, second))
+  return result.getUTCDay() === weekday ? result : undefined
 }
 
 /**
  * @see https://httpwg.org/specs/rfc9110.html#obsolete.date.formats
  *
  * @param {string} date
- * @param {Date} [now]
  * @returns {Date | undefined}
  */
-function parseRfc850Date (date, now = new Date()) {
-  if (!date.endsWith('gmt')) {
-    // Unsupported timezone
-    return undefined
-  }
+function parseRfc850Date (date) {
+  let commaIndex = -1
 
-  const commaIndex = date.indexOf(',')
-  if (commaIndex === -1) {
-    return undefined
-  }
-
-  if ((date.length - commaIndex - 1) !== 23) {
-    return undefined
-  }
-
-  const dayName = date.substring(0, commaIndex)
-  if (!RFC850_DAYS.includes(dayName)) {
+  let weekday = -1
+  if (date[0] === 'S') {
+    if (date[1] === 'u' && date[2] === 'n' && date[3] === 'd' && date[4] === 'a' && date[5] === 'y') {
+      weekday = 0 // Sunday
+      commaIndex = 6
+    } else if (date[1] === 'a' && date[2] === 't' && date[3] === 'u' && date[4] === 'r' && date[5] === 'd' && date[6] === 'a' && date[7] === 'y') {
+      weekday = 6 // Saturday
+      commaIndex = 8
+    }
+  } else if (date[0] === 'M' && date[1] === 'o' && date[2] === 'n' && date[3] === 'd' && date[4] === 'a' && date[5] === 'y') {
+    weekday = 1 // Monday
+    commaIndex = 6
+  } else if (date[0] === 'T') {
+    if (date[1] === 'u' && date[2] === 'e' && date[3] === 's' && date[4] === 'd' && date[5] === 'a' && date[6] === 'y') {
+      weekday = 2 // Tuesday
+      commaIndex = 7
+    } else if (date[1] === 'h' && date[2] === 'u' && date[3] === 'r' && date[4] === 's' && date[5] === 'd' && date[6] === 'a' && date[7] === 'y') {
+      weekday = 4 // Thursday
+      commaIndex = 8
+    }
+  } else if (date[0] === 'W' && date[1] === 'e' && date[2] === 'd' && date[3] === 'n' && date[4] === 'e' && date[5] === 's' && date[6] === 'd' && date[7] === 'a' && date[8] === 'y') {
+    weekday = 3 // Wednesday
+    commaIndex = 9
+  } else if (date[0] === 'F' && date[1] === 'r' && date[2] === 'i' && date[3] === 'd' && date[4] === 'a' && date[5] === 'y') {
+    weekday = 5 // Friday
+    commaIndex = 6
+  } else {
+    // Not a valid day name
     return undefined
   }
 
   if (
+    date[commaIndex] !== ',' ||
+    (date.length - commaIndex - 1) !== 23 ||
     date[commaIndex + 1] !== ' ' ||
     date[commaIndex + 4] !== '-' ||
     date[commaIndex + 8] !== '-' ||
     date[commaIndex + 11] !== ' ' ||
     date[commaIndex + 14] !== ':' ||
     date[commaIndex + 17] !== ':' ||
-    date[commaIndex + 20] !== ' '
+    date[commaIndex + 20] !== ' ' ||
+    date[commaIndex + 21] !== 'G' ||
+    date[commaIndex + 22] !== 'M' ||
+    date[commaIndex + 23] !== 'T'
   ) {
     return undefined
   }
 
-  const dayString = date.substring(commaIndex + 2, commaIndex + 4)
-  const day = Number.parseInt(dayString)
-  if (isNaN(day) || (day < 10 && dayString[0] !== '0')) {
-    // Not a number, or it's less than 10 and didn't start with a 0
-    return undefined
-  }
-
-  const month = date.substring(commaIndex + 5, commaIndex + 8)
-  const monthIdx = IMF_MONTHS.indexOf(month)
-  if (monthIdx === -1) {
-    return undefined
-  }
-
-  // As of this point year is just the decade (i.e. 94)
-  let year = Number.parseInt(date.substring(commaIndex + 9, commaIndex + 11))
-  if (isNaN(year)) {
-    return undefined
-  }
-
-  const currentYear = now.getUTCFullYear()
-  const currentDecade = currentYear % 100
-  const currentCentury = Math.floor(currentYear / 100)
-
-  if (year > currentDecade && year - currentDecade >= 50) {
-    // Over 50 years in future, go to previous century
-    year += (currentCentury - 1) * 100
+  let day = 0
+  if (date[commaIndex + 2] === '0') {
+    // Single digit day, e.g. "Sun Nov 6 08:49:37 1994"
+    const code = date.charCodeAt(commaIndex + 3)
+    if (code < 49 || code > 57) {
+      return undefined // Not a digit
+    }
+    day = code - 48 // Convert ASCII code to number
   } else {
-    year += currentCentury * 100
+    const code1 = date.charCodeAt(commaIndex + 2)
+    if (code1 < 49 || code1 > 51) {
+      return undefined // Not a digit between 1 and 3
+    }
+    const code2 = date.charCodeAt(commaIndex + 3)
+    if (code2 < 48 || code2 > 57) {
+      return undefined // Not a digit
+    }
+    day = (code1 - 48) * 10 + (code2 - 48) // Convert ASCII codes to number
   }
 
-  const hourString = date.substring(commaIndex + 12, commaIndex + 14)
-  const hour = Number.parseInt(hourString)
-  if (isNaN(hour) || (hour < 10 && hourString[0] !== '0')) {
+  let monthIdx = -1
+  if (
+    (date[commaIndex + 5] === 'J' && date[commaIndex + 6] === 'a' && date[commaIndex + 7] === 'n')
+  ) {
+    monthIdx = 0 // Jan
+  } else if (
+    (date[commaIndex + 5] === 'F' && date[commaIndex + 6] === 'e' && date[commaIndex + 7] === 'b')
+  ) {
+    monthIdx = 1 // Feb
+  } else if (
+    (date[commaIndex + 5] === 'M' && date[commaIndex + 6] === 'a' && date[commaIndex + 7] === 'r')
+  ) {
+    monthIdx = 2 // Mar
+  } else if (
+    (date[commaIndex + 5] === 'A' && date[commaIndex + 6] === 'p' && date[commaIndex + 7] === 'r')
+  ) {
+    monthIdx = 3 // Apr
+  } else if (
+    (date[commaIndex + 5] === 'M' && date[commaIndex + 6] === 'a' && date[commaIndex + 7] === 'y')
+  ) {
+    monthIdx = 4 // May
+  } else if (
+    (date[commaIndex + 5] === 'J' && date[commaIndex + 6] === 'u' && date[commaIndex + 7] === 'n')
+  ) {
+    monthIdx = 5 // Jun
+  } else if (
+    (date[commaIndex + 5] === 'J' && date[commaIndex + 6] === 'u' && date[commaIndex + 7] === 'l')
+  ) {
+    monthIdx = 6 // Jul
+  } else if (
+    (date[commaIndex + 5] === 'A' && date[commaIndex + 6] === 'u' && date[commaIndex + 7] === 'g')
+  ) {
+    monthIdx = 7 // Aug
+  } else if (
+    (date[commaIndex + 5] === 'S' && date[commaIndex + 6] === 'e' && date[commaIndex + 7] === 'p')
+  ) {
+    monthIdx = 8 // Sep
+  } else if (
+    (date[commaIndex + 5] === 'O' && date[commaIndex + 6] === 'c' && date[commaIndex + 7] === 't')
+  ) {
+    monthIdx = 9 // Oct
+  } else if (
+    (date[commaIndex + 5] === 'N' && date[commaIndex + 6] === 'o' && date[commaIndex + 7] === 'v')
+  ) {
+    monthIdx = 10 // Nov
+  } else if (
+    (date[commaIndex + 5] === 'D' && date[commaIndex + 6] === 'e' && date[commaIndex + 7] === 'c')
+  ) {
+    monthIdx = 11 // Dec
+  } else {
+    // Not a valid month
     return undefined
   }
 
-  const minuteString = date.substring(commaIndex + 15, commaIndex + 17)
-  const minute = Number.parseInt(minuteString)
-  if (isNaN(minute) || (minute < 10 && minuteString[0] !== '0')) {
-    return undefined
+  const yearDigit1 = date.charCodeAt(commaIndex + 9)
+  if (yearDigit1 < 48 || yearDigit1 > 57) {
+    return undefined // Not a digit
+  }
+  const yearDigit2 = date.charCodeAt(commaIndex + 10)
+  if (yearDigit2 < 48 || yearDigit2 > 57) {
+    return undefined // Not a digit
   }
 
-  const secondString = date.substring(commaIndex + 18, commaIndex + 20)
-  const second = Number.parseInt(secondString)
-  if (isNaN(second) || (second < 10 && secondString[0] !== '0')) {
-    return undefined
+  let year = (yearDigit1 - 48) * 10 + (yearDigit2 - 48) // Convert ASCII codes to number
+
+  // RFC 6265 states that the year is in the range 1970-2069.
+  // @see https://datatracker.ietf.org/doc/html/rfc6265#section-5.1.1
+  //
+  // 3. If the year-value is greater than or equal to 70 and less than or
+  //    equal to 99, increment the year-value by 1900.
+  // 4. If the year-value is greater than or equal to 0 and less than or
+  //    equal to 69, increment the year-value by 2000.
+  year += year < 70 ? 2000 : 1900
+
+  let hour = 0
+  if (date[commaIndex + 12] === '0') {
+    const code = date.charCodeAt(commaIndex + 13)
+    if (code < 48 || code > 57) {
+      return undefined // Not a digit
+    }
+    hour = code - 48 // Convert ASCII code to number
+  } else {
+    const code1 = date.charCodeAt(commaIndex + 12)
+    if (code1 < 48 || code1 > 50) {
+      return undefined // Not a digit between 0 and 2
+    }
+    const code2 = date.charCodeAt(commaIndex + 13)
+    if (code2 < 48 || code2 > 57) {
+      return undefined // Not a digit
+    }
+    if (code1 === 50 && code2 > 51) {
+      return undefined // Hour cannot be greater than 23
+    }
+    hour = (code1 - 48) * 10 + (code2 - 48) // Convert ASCII codes to number
   }
 
-  return new Date(Date.UTC(year, monthIdx, day, hour, minute, second))
+  let minute = 0
+  if (date[commaIndex + 15] === '0') {
+    const code = date.charCodeAt(commaIndex + 16)
+    if (code < 48 || code > 57) {
+      return undefined // Not a digit
+    }
+    minute = code - 48 // Convert ASCII code to number
+  } else {
+    const code1 = date.charCodeAt(commaIndex + 15)
+    if (code1 < 48 || code1 > 53) {
+      return undefined // Not a digit between 0 and 5
+    }
+    const code2 = date.charCodeAt(commaIndex + 16)
+    if (code2 < 48 || code2 > 57) {
+      return undefined // Not a digit
+    }
+    minute = (code1 - 48) * 10 + (code2 - 48) // Convert ASCII codes to number
+  }
+
+  let second = 0
+  if (date[commaIndex + 18] === '0') {
+    const code = date.charCodeAt(commaIndex + 19)
+    if (code < 48 || code > 57) {
+      return undefined // Not a digit
+    }
+    second = code - 48 // Convert ASCII code to number
+  } else {
+    const code1 = date.charCodeAt(commaIndex + 18)
+    if (code1 < 48 || code1 > 53) {
+      return undefined // Not a digit between 0 and 5
+    }
+    const code2 = date.charCodeAt(commaIndex + 19)
+    if (code2 < 48 || code2 > 57) {
+      return undefined // Not a digit
+    }
+    second = (code1 - 48) * 10 + (code2 - 48) // Convert ASCII codes to number
+  }
+
+  const result = new Date(Date.UTC(year, monthIdx, day, hour, minute, second))
+  return result.getUTCDay() === weekday ? result : undefined
 }
 
 module.exports = {
@@ -46341,7 +47100,7 @@ webidl.converters.Cookie = webidl.dictionaryConverter([
   {
     converter: webidl.sequenceConverter(webidl.converters.DOMString),
     key: 'unparsed',
-    defaultValue: () => new Array(0)
+    defaultValue: () => []
   }
 ])
 
@@ -47218,7 +47977,7 @@ class EventSourceStream extends Transform {
           this.buffer = this.buffer.subarray(this.pos + 1)
           this.pos = 0
           if (
-            this.event.data !== undefined || this.event.event || this.event.id || this.event.retry) {
+            this.event.data !== undefined || this.event.event || this.event.id !== undefined || this.event.retry) {
             this.processEvent(this.event)
           }
           this.clearEvent()
@@ -47349,7 +48108,7 @@ class EventSourceStream extends Transform {
       this.state.reconnectionTime = parseInt(event.retry, 10)
     }
 
-    if (event.id && isValidLastEventId(event.id)) {
+    if (event.id !== undefined && isValidLastEventId(event.id)) {
       this.state.lastEventId = event.id
     }
 
@@ -47397,7 +48156,6 @@ const { EventSourceStream } = __nccwpck_require__(4031)
 const { parseMIMEType } = __nccwpck_require__(1900)
 const { createFastMessageEvent } = __nccwpck_require__(5188)
 const { isNetworkError } = __nccwpck_require__(9051)
-const { delay } = __nccwpck_require__(4811)
 const { kEnumerableProperty } = __nccwpck_require__(3440)
 const { environmentSettingsObject } = __nccwpck_require__(3168)
 
@@ -47707,9 +48465,9 @@ class EventSource extends EventTarget {
 
   /**
    * @see https://html.spec.whatwg.org/multipage/server-sent-events.html#sse-processing-model
-   * @returns {Promise<void>}
+   * @returns {void}
    */
-  async #reconnect () {
+  #reconnect () {
     // When a user agent is to reestablish the connection, the user agent must
     // run the following steps. These steps are run in parallel, not as part of
     // a task. (The tasks that it queues, of course, are run like normal tasks
@@ -47727,27 +48485,27 @@ class EventSource extends EventTarget {
     this.dispatchEvent(new Event('error'))
 
     // 2. Wait a delay equal to the reconnection time of the event source.
-    await delay(this.#state.reconnectionTime)
+    setTimeout(() => {
+      // 5. Queue a task to run the following steps:
 
-    // 5. Queue a task to run the following steps:
+      //   1. If the EventSource object's readyState attribute is not set to
+      //      CONNECTING, then return.
+      if (this.#readyState !== CONNECTING) return
 
-    //   1. If the EventSource object's readyState attribute is not set to
-    //      CONNECTING, then return.
-    if (this.#readyState !== CONNECTING) return
+      //   2. Let request be the EventSource object's request.
+      //   3. If the EventSource object's last event ID string is not the empty
+      //      string, then:
+      //      1. Let lastEventIDValue be the EventSource object's last event ID
+      //         string, encoded as UTF-8.
+      //      2. Set (`Last-Event-ID`, lastEventIDValue) in request's header
+      //         list.
+      if (this.#state.lastEventId.length) {
+        this.#request.headersList.set('last-event-id', this.#state.lastEventId, true)
+      }
 
-    //   2. Let request be the EventSource object's request.
-    //   3. If the EventSource object's last event ID string is not the empty
-    //      string, then:
-    //      1. Let lastEventIDValue be the EventSource object's last event ID
-    //         string, encoded as UTF-8.
-    //      2. Set (`Last-Event-ID`, lastEventIDValue) in request's header
-    //         list.
-    if (this.#state.lastEventId.length) {
-      this.#request.headersList.set('last-event-id', this.#state.lastEventId, true)
-    }
-
-    //   4. Fetch request and process the response obtained in this fashion, if any, as described earlier in this section.
-    this.#connect()
+      //   4. Fetch request and process the response obtained in this fashion, if any, as described earlier in this section.
+      this.#connect()
+    }, this.#state.reconnectionTime)?.unref()
   }
 
   /**
@@ -47772,9 +48530,11 @@ class EventSource extends EventTarget {
       this.removeEventListener('open', this.#events.open)
     }
 
-    if (typeof fn === 'function') {
+    const listener = webidl.converters.EventHandlerNonNull(fn)
+
+    if (listener !== null) {
+      this.addEventListener('open', listener)
       this.#events.open = fn
-      this.addEventListener('open', fn)
     } else {
       this.#events.open = null
     }
@@ -47789,9 +48549,11 @@ class EventSource extends EventTarget {
       this.removeEventListener('message', this.#events.message)
     }
 
-    if (typeof fn === 'function') {
+    const listener = webidl.converters.EventHandlerNonNull(fn)
+
+    if (listener !== null) {
+      this.addEventListener('message', listener)
       this.#events.message = fn
-      this.addEventListener('message', fn)
     } else {
       this.#events.message = null
     }
@@ -47806,9 +48568,11 @@ class EventSource extends EventTarget {
       this.removeEventListener('error', this.#events.error)
     }
 
-    if (typeof fn === 'function') {
+    const listener = webidl.converters.EventHandlerNonNull(fn)
+
+    if (listener !== null) {
+      this.addEventListener('error', listener)
       this.#events.error = fn
-      this.addEventListener('error', fn)
     } else {
       this.#events.error = null
     }
@@ -47916,17 +48680,9 @@ function isASCIINumber (value) {
   return true
 }
 
-// https://github.com/nodejs/undici/issues/2664
-function delay (ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms)
-  })
-}
-
 module.exports = {
   isValidLastEventId,
-  isASCIINumber,
-  delay
+  isASCIINumber
 }
 
 
@@ -47998,7 +48754,7 @@ function extractBody (object, keepalive = false) {
     // 4. Otherwise, set stream to a new ReadableStream object, and set
     //    up stream with byte reading support.
     stream = new ReadableStream({
-      async pull (controller) {
+      pull (controller) {
         const buffer = typeof source === 'string' ? textEncoder.encode(source) : source
 
         if (buffer.byteLength) {
@@ -48048,16 +48804,10 @@ function extractBody (object, keepalive = false) {
 
     // Set type to `application/x-www-form-urlencoded;charset=UTF-8`.
     type = 'application/x-www-form-urlencoded;charset=UTF-8'
-  } else if (isArrayBuffer(object)) {
-    // BufferSource/ArrayBuffer
-
-    // Set source to a copy of the bytes held by object.
-    source = new Uint8Array(object.slice())
-  } else if (ArrayBuffer.isView(object)) {
-    // BufferSource/ArrayBufferView
-
-    // Set source to a copy of the bytes held by object.
-    source = new Uint8Array(object.buffer.slice(object.byteOffset, object.byteOffset + object.byteLength))
+  } else if (webidl.is.BufferSource(object)) {
+    source = isArrayBuffer(object)
+      ? new Uint8Array(object.slice())
+      : new Uint8Array(object.buffer.slice(object.byteOffset, object.byteOffset + object.byteLength))
   } else if (webidl.is.FormData(object)) {
     const boundary = `----formdata-undici-0${`${random(1e11)}`.padStart(11, '0')}`
     const prefix = `--${boundary}\r\nContent-Disposition: form-data`
@@ -48258,12 +49008,6 @@ function cloneBody (body) {
   }
 }
 
-function throwIfAborted (state) {
-  if (state.aborted) {
-    throw new DOMException('The operation was aborted.', 'AbortError')
-  }
-}
-
 function bodyMixinMethods (instance, getInternalState) {
   const methods = {
     blob () {
@@ -48381,24 +49125,30 @@ function mixinBody (prototype, getInternalState) {
  * @param {any} instance
  * @param {(target: any) => any} getInternalState
  */
-async function consumeBody (object, convertBytesToJSValue, instance, getInternalState) {
-  webidl.brandCheck(object, instance)
+function consumeBody (object, convertBytesToJSValue, instance, getInternalState) {
+  try {
+    webidl.brandCheck(object, instance)
+  } catch (e) {
+    return Promise.reject(e)
+  }
 
   const state = getInternalState(object)
 
   // 1. If object is unusable, then return a promise rejected
   //    with a TypeError.
   if (bodyUnusable(state)) {
-    throw new TypeError('Body is unusable: Body has already been read')
+    return Promise.reject(new TypeError('Body is unusable: Body has already been read'))
   }
 
-  throwIfAborted(state)
+  if (state.aborted) {
+    return Promise.reject(new DOMException('The operation was aborted.', 'AbortError'))
+  }
 
   // 2. Let promise be a new promise.
   const promise = createDeferredPromise()
 
   // 3. Let errorSteps given error be to reject promise with error.
-  const errorSteps = (error) => promise.reject(error)
+  const errorSteps = promise.reject
 
   // 4. Let successSteps given a byte sequence data be to resolve
   //    promise with the result of running convertBytesToJSValue
@@ -50991,6 +51741,9 @@ const { webidl } = __nccwpck_require__(7879)
 const { STATUS_CODES } = __nccwpck_require__(7067)
 const { bytesMatch } = __nccwpck_require__(5082)
 const { createDeferredPromise } = __nccwpck_require__(6436)
+
+const hasZstd = typeof zlib.createZstdDecompress === 'function'
+
 const GET_OR_HEAD = ['GET', 'HEAD']
 
 const defaultUserAgent = typeof __UNDICI_IS_NODE__ !== 'undefined' || typeof esbuildDetection !== 'undefined'
@@ -53032,33 +53785,29 @@ async function httpNetworkFetch (
             return false
           }
 
-          /** @type {string[]} */
-          let codings = []
-
           const headersList = new HeadersList()
 
           for (let i = 0; i < rawHeaders.length; i += 2) {
             headersList.append(bufferToLowerCasedHeaderName(rawHeaders[i]), rawHeaders[i + 1].toString('latin1'), true)
           }
-          const contentEncoding = headersList.get('content-encoding', true)
-          if (contentEncoding) {
-            // https://www.rfc-editor.org/rfc/rfc7231#section-3.1.2.1
-            // "All content-coding values are case-insensitive..."
-            codings = contentEncoding.toLowerCase().split(',').map((x) => x.trim())
-          }
           const location = headersList.get('location', true)
 
           this.body = new Readable({ read: resume })
 
-          const decoders = []
-
           const willFollow = location && request.redirect === 'follow' &&
             redirectStatusSet.has(status)
 
+          const decoders = []
+
           // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Encoding
-          if (codings.length !== 0 && request.method !== 'HEAD' && request.method !== 'CONNECT' && !nullBodyStatus.includes(status) && !willFollow) {
+          if (request.method !== 'HEAD' && request.method !== 'CONNECT' && !nullBodyStatus.includes(status) && !willFollow) {
+            // https://www.rfc-editor.org/rfc/rfc7231#section-3.1.2.1
+            const contentEncoding = headersList.get('content-encoding', true)
+            // "All content-coding values are case-insensitive..."
+            /** @type {string[]} */
+            const codings = contentEncoding ? contentEncoding.toLowerCase().split(',') : []
             for (let i = codings.length - 1; i >= 0; --i) {
-              const coding = codings[i]
+              const coding = codings[i].trim()
               // https://www.rfc-editor.org/rfc/rfc9112.html#section-7.2
               if (coding === 'x-gzip' || coding === 'gzip') {
                 decoders.push(zlib.createGunzip({
@@ -53079,8 +53828,8 @@ async function httpNetworkFetch (
                   flush: zlib.constants.BROTLI_OPERATION_FLUSH,
                   finishFlush: zlib.constants.BROTLI_OPERATION_FLUSH
                 }))
-              } else if (coding === 'zstd' && typeof zlib.createZstdDecompress === 'function') {
-                // Node.js v23.8.0+ and v22.15.0+ supports Zstandard
+              } else if (coding === 'zstd' && hasZstd) {
+              // Node.js v23.8.0+ and v22.15.0+ supports Zstandard
                 decoders.push(zlib.createZstdDecompress({
                   flush: zlib.constants.ZSTD_e_continue,
                   finishFlush: zlib.constants.ZSTD_e_end
@@ -54334,8 +55083,6 @@ const { URLSerializer } = __nccwpck_require__(1900)
 const { kConstruct } = __nccwpck_require__(6443)
 const assert = __nccwpck_require__(4589)
 
-const { isArrayBuffer } = nodeUtil.types
-
 const textEncoder = new TextEncoder('utf-8')
 
 // https://fetch.spec.whatwg.org/#response-class
@@ -54431,7 +55178,7 @@ class Response {
     }
 
     if (body !== null) {
-      body = webidl.converters.BodyInit(body)
+      body = webidl.converters.BodyInit(body, 'Response', 'body')
     }
 
     init = webidl.converters.ResponseInit(init)
@@ -54891,7 +55638,7 @@ webidl.converters.XMLHttpRequestBodyInit = function (V, prefix, name) {
     return V
   }
 
-  if (ArrayBuffer.isView(V) || isArrayBuffer(V)) {
+  if (webidl.is.BufferSource(V)) {
     return V
   }
 
@@ -55463,8 +56210,8 @@ function determineRequestsReferrer (request) {
       if (isURLPotentiallyTrustworthy(referrerURL) && !isURLPotentiallyTrustworthy(currentURL)) {
         return 'no-referrer'
       }
-      // 2. Return referrerOrigin
-      return referrerOrigin
+      // 2. Return referrerURL.
+      return referrerURL
     }
   }
 }
@@ -55515,17 +56262,11 @@ function stripURLForReferrer (url, originOnly = false) {
   return url
 }
 
-const potentialleTrustworthyIPv4RegExp = new RegExp('^(?:' +
-  '(?:127\\.)' +
-  '(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\\.){2}' +
-  '(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[1-9])' +
-')$')
+const isPotentialleTrustworthyIPv4 = RegExp.prototype.test
+  .bind(/^127\.(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)\.){2}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)$/)
 
-const potentialleTrustworthyIPv6RegExp = new RegExp('^(?:' +
-  '(?:(?:0{1,4}):){7}(?:(?:0{0,3}1))|' +
-  '(?:(?:0{1,4}):){1,6}(?::(?:0{0,3}1))|' +
-  '(?:::(?:0{0,3}1))|' +
-')$')
+const isPotentiallyTrustworthyIPv6 = RegExp.prototype.test
+  .bind(/^(?:(?:0{1,4}:){7}|(?:0{1,4}:){1,6}:|::)0{0,3}1$/)
 
 /**
  * Check if host matches one of the CIDR notations 127.0.0.0/8 or ::1/128.
@@ -55540,11 +56281,11 @@ function isOriginIPPotentiallyTrustworthy (origin) {
     if (origin[0] === '[' && origin[origin.length - 1] === ']') {
       origin = origin.slice(1, -1)
     }
-    return potentialleTrustworthyIPv6RegExp.test(origin)
+    return isPotentiallyTrustworthyIPv6(origin)
   }
 
   // IPv4
-  return potentialleTrustworthyIPv4RegExp.test(origin)
+  return isPotentialleTrustworthyIPv4(origin)
 }
 
 /**
@@ -57007,7 +57748,7 @@ webidl.util.TypeValueToString = function (o) {
 webidl.util.markAsUncloneable = markAsUncloneable || (() => {})
 
 // https://webidl.spec.whatwg.org/#abstract-opdef-converttoint
-webidl.util.ConvertToInt = function (V, bitLength, signedness, opts) {
+webidl.util.ConvertToInt = function (V, bitLength, signedness, flags) {
   let upperBound
   let lowerBound
 
@@ -57051,7 +57792,7 @@ webidl.util.ConvertToInt = function (V, bitLength, signedness, opts) {
 
   // 6. If the conversion is to an IDL type associated
   //    with the [EnforceRange] extended attribute, then:
-  if (opts?.enforceRange === true) {
+  if (webidl.util.HasFlag(flags, webidl.attributes.EnforceRange)) {
     // 1. If x is NaN, +∞, or −∞, then throw a TypeError.
     if (
       Number.isNaN(x) ||
@@ -57083,7 +57824,7 @@ webidl.util.ConvertToInt = function (V, bitLength, signedness, opts) {
   // 7. If x is not NaN and the conversion is to an IDL
   //    type associated with the [Clamp] extended
   //    attribute, then:
-  if (!Number.isNaN(x) && opts?.clamp === true) {
+  if (!Number.isNaN(x) && webidl.util.HasFlag(flags, webidl.attributes.Clamp)) {
     // 1. Set x to min(max(x, lowerBound), upperBound).
     x = Math.min(Math.max(x, lowerBound), upperBound)
 
@@ -57155,6 +57896,25 @@ webidl.util.Stringify = function (V) {
     default:
       return `${V}`
   }
+}
+
+webidl.util.IsResizableArrayBuffer = function (V) {
+  if (types.isArrayBuffer(V)) {
+    return V.resizable
+  }
+
+  if (types.isSharedArrayBuffer(V)) {
+    return V.growable
+  }
+
+  throw webidl.errors.exception({
+    header: 'IsResizableArrayBuffer',
+    message: `"${webidl.util.Stringify(V)}" is not an array buffer.`
+  })
+}
+
+webidl.util.HasFlag = function (flags, attributes) {
+  return typeof flags === 'number' && (flags & attributes) === attributes
 }
 
 // https://webidl.spec.whatwg.org/#es-sequence
@@ -57361,13 +58121,20 @@ webidl.is.URL = webidl.util.MakeTypeAssertion(URL)
 webidl.is.AbortSignal = webidl.util.MakeTypeAssertion(AbortSignal)
 webidl.is.MessagePort = webidl.util.MakeTypeAssertion(MessagePort)
 
+webidl.is.BufferSource = function (V) {
+  return types.isArrayBuffer(V) || (
+    ArrayBuffer.isView(V) &&
+    types.isArrayBuffer(V.buffer)
+  )
+}
+
 // https://webidl.spec.whatwg.org/#es-DOMString
-webidl.converters.DOMString = function (V, prefix, argument, opts) {
+webidl.converters.DOMString = function (V, prefix, argument, flags) {
   // 1. If V is null and the conversion is to an IDL type
   //    associated with the [LegacyNullToEmptyString]
   //    extended attribute, then return the DOMString value
   //    that represents the empty string.
-  if (V === null && opts?.legacyNullToEmptyString) {
+  if (V === null && webidl.util.HasFlag(flags, webidl.attributes.LegacyNullToEmptyString)) {
     return ''
   }
 
@@ -57446,7 +58213,7 @@ webidl.converters.any = function (V) {
 // https://webidl.spec.whatwg.org/#es-long-long
 webidl.converters['long long'] = function (V, prefix, argument) {
   // 1. Let x be ? ConvertToInt(V, 64, "signed").
-  const x = webidl.util.ConvertToInt(V, 64, 'signed', undefined, prefix, argument)
+  const x = webidl.util.ConvertToInt(V, 64, 'signed', 0, prefix, argument)
 
   // 2. Return the IDL long long value that represents
   //    the same numeric value as x.
@@ -57456,7 +58223,7 @@ webidl.converters['long long'] = function (V, prefix, argument) {
 // https://webidl.spec.whatwg.org/#es-unsigned-long-long
 webidl.converters['unsigned long long'] = function (V, prefix, argument) {
   // 1. Let x be ? ConvertToInt(V, 64, "unsigned").
-  const x = webidl.util.ConvertToInt(V, 64, 'unsigned', undefined, prefix, argument)
+  const x = webidl.util.ConvertToInt(V, 64, 'unsigned', 0, prefix, argument)
 
   // 2. Return the IDL unsigned long long value that
   //    represents the same numeric value as x.
@@ -57466,7 +58233,7 @@ webidl.converters['unsigned long long'] = function (V, prefix, argument) {
 // https://webidl.spec.whatwg.org/#es-unsigned-long
 webidl.converters['unsigned long'] = function (V, prefix, argument) {
   // 1. Let x be ? ConvertToInt(V, 32, "unsigned").
-  const x = webidl.util.ConvertToInt(V, 32, 'unsigned', undefined, prefix, argument)
+  const x = webidl.util.ConvertToInt(V, 32, 'unsigned', 0, prefix, argument)
 
   // 2. Return the IDL unsigned long value that
   //    represents the same numeric value as x.
@@ -57474,9 +58241,9 @@ webidl.converters['unsigned long'] = function (V, prefix, argument) {
 }
 
 // https://webidl.spec.whatwg.org/#es-unsigned-short
-webidl.converters['unsigned short'] = function (V, prefix, argument, opts) {
+webidl.converters['unsigned short'] = function (V, prefix, argument, flags) {
   // 1. Let x be ? ConvertToInt(V, 16, "unsigned").
-  const x = webidl.util.ConvertToInt(V, 16, 'unsigned', opts, prefix, argument)
+  const x = webidl.util.ConvertToInt(V, 16, 'unsigned', flags, prefix, argument)
 
   // 2. Return the IDL unsigned short value that represents
   //    the same numeric value as x.
@@ -57484,15 +58251,16 @@ webidl.converters['unsigned short'] = function (V, prefix, argument, opts) {
 }
 
 // https://webidl.spec.whatwg.org/#idl-ArrayBuffer
-webidl.converters.ArrayBuffer = function (V, prefix, argument, opts) {
-  // 1. If Type(V) is not Object, or V does not have an
+webidl.converters.ArrayBuffer = function (V, prefix, argument, flags) {
+  // 1. If V is not an Object, or V does not have an
   //    [[ArrayBufferData]] internal slot, then throw a
   //    TypeError.
+  // 2. If IsSharedArrayBuffer(V) is true, then throw a
+  //    TypeError.
   // see: https://tc39.es/ecma262/#sec-properties-of-the-arraybuffer-instances
-  // see: https://tc39.es/ecma262/#sec-properties-of-the-sharedarraybuffer-instances
   if (
     webidl.util.Type(V) !== OBJECT ||
-    !types.isAnyArrayBuffer(V)
+    !types.isArrayBuffer(V)
   ) {
     throw webidl.errors.conversionFailed({
       prefix,
@@ -57501,25 +58269,14 @@ webidl.converters.ArrayBuffer = function (V, prefix, argument, opts) {
     })
   }
 
-  // 2. If the conversion is not to an IDL type associated
-  //    with the [AllowShared] extended attribute, and
-  //    IsSharedArrayBuffer(V) is true, then throw a
-  //    TypeError.
-  if (opts?.allowShared === false && types.isSharedArrayBuffer(V)) {
-    throw webidl.errors.exception({
-      header: 'ArrayBuffer',
-      message: 'SharedArrayBuffer is not allowed.'
-    })
-  }
-
   // 3. If the conversion is not to an IDL type associated
   //    with the [AllowResizable] extended attribute, and
   //    IsResizableArrayBuffer(V) is true, then throw a
   //    TypeError.
-  if (V.resizable || V.growable) {
+  if (!webidl.util.HasFlag(flags, webidl.attributes.AllowResizable) && webidl.util.IsResizableArrayBuffer(V)) {
     throw webidl.errors.exception({
-      header: 'ArrayBuffer',
-      message: 'Received a resizable ArrayBuffer.'
+      header: prefix,
+      message: `${argument} cannot be a resizable ArrayBuffer.`
     })
   }
 
@@ -57528,7 +58285,43 @@ webidl.converters.ArrayBuffer = function (V, prefix, argument, opts) {
   return V
 }
 
-webidl.converters.TypedArray = function (V, T, prefix, name, opts) {
+// https://webidl.spec.whatwg.org/#idl-SharedArrayBuffer
+webidl.converters.SharedArrayBuffer = function (V, prefix, argument, flags) {
+  // 1. If V is not an Object, or V does not have an
+  //    [[ArrayBufferData]] internal slot, then throw a
+  //    TypeError.
+  // 2. If IsSharedArrayBuffer(V) is false, then throw a
+  //    TypeError.
+  // see: https://tc39.es/ecma262/#sec-properties-of-the-sharedarraybuffer-instances
+  if (
+    webidl.util.Type(V) !== OBJECT ||
+    !types.isSharedArrayBuffer(V)
+  ) {
+    throw webidl.errors.conversionFailed({
+      prefix,
+      argument: `${argument} ("${webidl.util.Stringify(V)}")`,
+      types: ['SharedArrayBuffer']
+    })
+  }
+
+  // 3. If the conversion is not to an IDL type associated
+  //    with the [AllowResizable] extended attribute, and
+  //    IsResizableArrayBuffer(V) is true, then throw a
+  //    TypeError.
+  if (!webidl.util.HasFlag(flags, webidl.attributes.AllowResizable) && webidl.util.IsResizableArrayBuffer(V)) {
+    throw webidl.errors.exception({
+      header: prefix,
+      message: `${argument} cannot be a resizable SharedArrayBuffer.`
+    })
+  }
+
+  // 4. Return the IDL SharedArrayBuffer value that is a
+  //    reference to the same object as V.
+  return V
+}
+
+// https://webidl.spec.whatwg.org/#dfn-typed-array-type
+webidl.converters.TypedArray = function (V, T, prefix, argument, flags) {
   // 1. Let T be the IDL type V is being converted to.
 
   // 2. If Type(V) is not Object, or V does not have a
@@ -57541,7 +58334,7 @@ webidl.converters.TypedArray = function (V, T, prefix, name, opts) {
   ) {
     throw webidl.errors.conversionFailed({
       prefix,
-      argument: `${name} ("${webidl.util.Stringify(V)}")`,
+      argument: `${argument} ("${webidl.util.Stringify(V)}")`,
       types: [T.name]
     })
   }
@@ -57550,10 +58343,10 @@ webidl.converters.TypedArray = function (V, T, prefix, name, opts) {
   //    with the [AllowShared] extended attribute, and
   //    IsSharedArrayBuffer(V.[[ViewedArrayBuffer]]) is
   //    true, then throw a TypeError.
-  if (opts?.allowShared === false && types.isSharedArrayBuffer(V.buffer)) {
+  if (!webidl.util.HasFlag(flags, webidl.attributes.AllowShared) && types.isSharedArrayBuffer(V.buffer)) {
     throw webidl.errors.exception({
-      header: 'ArrayBuffer',
-      message: 'SharedArrayBuffer is not allowed.'
+      header: prefix,
+      message: `${argument} cannot be a view on a shared array buffer.`
     })
   }
 
@@ -57561,10 +58354,10 @@ webidl.converters.TypedArray = function (V, T, prefix, name, opts) {
   //    with the [AllowResizable] extended attribute, and
   //    IsResizableArrayBuffer(V.[[ViewedArrayBuffer]]) is
   //    true, then throw a TypeError.
-  if (V.buffer.resizable || V.buffer.growable) {
+  if (!webidl.util.HasFlag(flags, webidl.attributes.AllowResizable) && webidl.util.IsResizableArrayBuffer(V.buffer)) {
     throw webidl.errors.exception({
-      header: 'ArrayBuffer',
-      message: 'Received a resizable ArrayBuffer.'
+      header: prefix,
+      message: `${argument} cannot be a view on a resizable array buffer.`
     })
   }
 
@@ -57573,13 +58366,15 @@ webidl.converters.TypedArray = function (V, T, prefix, name, opts) {
   return V
 }
 
-webidl.converters.DataView = function (V, prefix, name, opts) {
+// https://webidl.spec.whatwg.org/#idl-DataView
+webidl.converters.DataView = function (V, prefix, argument, flags) {
   // 1. If Type(V) is not Object, or V does not have a
   //    [[DataView]] internal slot, then throw a TypeError.
   if (webidl.util.Type(V) !== OBJECT || !types.isDataView(V)) {
-    throw webidl.errors.exception({
-      header: prefix,
-      message: `${name} is not a DataView.`
+    throw webidl.errors.conversionFailed({
+      prefix,
+      argument: `${argument} ("${webidl.util.Stringify(V)}")`,
+      types: ['DataView']
     })
   }
 
@@ -57587,10 +58382,10 @@ webidl.converters.DataView = function (V, prefix, name, opts) {
   //    with the [AllowShared] extended attribute, and
   //    IsSharedArrayBuffer(V.[[ViewedArrayBuffer]]) is true,
   //    then throw a TypeError.
-  if (opts?.allowShared === false && types.isSharedArrayBuffer(V.buffer)) {
+  if (!webidl.util.HasFlag(flags, webidl.attributes.AllowShared) && types.isSharedArrayBuffer(V.buffer)) {
     throw webidl.errors.exception({
-      header: 'ArrayBuffer',
-      message: 'SharedArrayBuffer is not allowed.'
+      header: prefix,
+      message: `${argument} cannot be a view on a shared array buffer.`
     })
   }
 
@@ -57598,16 +58393,95 @@ webidl.converters.DataView = function (V, prefix, name, opts) {
   //    with the [AllowResizable] extended attribute, and
   //    IsResizableArrayBuffer(V.[[ViewedArrayBuffer]]) is
   //    true, then throw a TypeError.
-  if (V.buffer.resizable || V.buffer.growable) {
+  if (!webidl.util.HasFlag(flags, webidl.attributes.AllowResizable) && webidl.util.IsResizableArrayBuffer(V.buffer)) {
     throw webidl.errors.exception({
-      header: 'ArrayBuffer',
-      message: 'Received a resizable ArrayBuffer.'
+      header: prefix,
+      message: `${argument} cannot be a view on a resizable array buffer.`
     })
   }
 
   // 4. Return the IDL DataView value that is a reference
   //    to the same object as V.
   return V
+}
+
+// https://webidl.spec.whatwg.org/#ArrayBufferView
+webidl.converters.ArrayBufferView = function (V, prefix, argument, flags) {
+  if (
+    webidl.util.Type(V) !== OBJECT ||
+    !types.isArrayBufferView(V)
+  ) {
+    throw webidl.errors.conversionFailed({
+      prefix,
+      argument: `${argument} ("${webidl.util.Stringify(V)}")`,
+      types: ['ArrayBufferView']
+    })
+  }
+
+  if (!webidl.util.HasFlag(flags, webidl.attributes.AllowShared) && types.isSharedArrayBuffer(V.buffer)) {
+    throw webidl.errors.exception({
+      header: prefix,
+      message: `${argument} cannot be a view on a shared array buffer.`
+    })
+  }
+
+  if (!webidl.util.HasFlag(flags, webidl.attributes.AllowResizable) && webidl.util.IsResizableArrayBuffer(V.buffer)) {
+    throw webidl.errors.exception({
+      header: prefix,
+      message: `${argument} cannot be a view on a resizable array buffer.`
+    })
+  }
+
+  return V
+}
+
+// https://webidl.spec.whatwg.org/#BufferSource
+webidl.converters.BufferSource = function (V, prefix, argument, flags) {
+  if (types.isArrayBuffer(V)) {
+    return webidl.converters.ArrayBuffer(V, prefix, argument, flags)
+  }
+
+  if (types.isArrayBufferView(V)) {
+    flags &= ~webidl.attributes.AllowShared
+
+    return webidl.converters.ArrayBufferView(V, prefix, argument, flags)
+  }
+
+  // Make this explicit for easier debugging
+  if (types.isSharedArrayBuffer(V)) {
+    throw webidl.errors.exception({
+      header: prefix,
+      message: `${argument} cannot be a SharedArrayBuffer.`
+    })
+  }
+
+  throw webidl.errors.conversionFailed({
+    prefix,
+    argument: `${argument} ("${webidl.util.Stringify(V)}")`,
+    types: ['ArrayBuffer', 'ArrayBufferView']
+  })
+}
+
+// https://webidl.spec.whatwg.org/#AllowSharedBufferSource
+webidl.converters.AllowSharedBufferSource = function (V, prefix, argument, flags) {
+  if (types.isArrayBuffer(V)) {
+    return webidl.converters.ArrayBuffer(V, prefix, argument, flags)
+  }
+
+  if (types.isSharedArrayBuffer(V)) {
+    return webidl.converters.SharedArrayBuffer(V, prefix, argument, flags)
+  }
+
+  if (types.isArrayBufferView(V)) {
+    flags |= webidl.attributes.AllowShared
+    return webidl.converters.ArrayBufferView(V, prefix, argument, flags)
+  }
+
+  throw webidl.errors.conversionFailed({
+    prefix,
+    argument: `${argument} ("${webidl.util.Stringify(V)}")`,
+    types: ['ArrayBuffer', 'SharedArrayBuffer', 'ArrayBufferView']
+  })
 }
 
 webidl.converters['sequence<ByteString>'] = webidl.sequenceConverter(
@@ -57629,6 +58503,34 @@ webidl.converters.AbortSignal = webidl.interfaceConverter(
   webidl.is.AbortSignal,
   'AbortSignal'
 )
+
+/**
+ * [LegacyTreatNonObjectAsNull]
+ * callback EventHandlerNonNull = any (Event event);
+ * typedef EventHandlerNonNull? EventHandler;
+ * @param {*} V
+ */
+webidl.converters.EventHandlerNonNull = function (V) {
+  if (webidl.util.Type(V) !== OBJECT) {
+    return null
+  }
+
+  // [I]f the value is not an object, it will be converted to null, and if the value is not callable,
+  // it will be converted to a callback function value that does nothing when called.
+  if (typeof V === 'function') {
+    return V
+  }
+
+  return () => {}
+}
+
+webidl.attributes = {
+  Clamp: 1 << 0,
+  EnforceRange: 1 << 1,
+  AllowShared: 1 << 2,
+  AllowResizable: 1 << 3,
+  LegacyNullToEmptyString: 1 << 4
+}
 
 module.exports = {
   webidl
@@ -57946,11 +58848,12 @@ function failWebsocketConnection (handler, code, reason, cause) {
 
   handler.controller.abort()
 
-  if (handler.socket?.destroyed === false) {
+  if (!handler.socket) {
+    // If the connection was not established, we must still emit an 'error' and 'close' events
+    handler.onSocketClose()
+  } else if (handler.socket.destroyed === false) {
     handler.socket.destroy()
   }
-
-  handler.onFail(code, reason, cause)
 }
 
 module.exports = {
@@ -58374,7 +59277,7 @@ webidl.converters.MessageEventInit = webidl.dictionaryConverter([
   {
     key: 'ports',
     converter: webidl.converters['sequence<MessagePort>'],
-    defaultValue: () => new Array(0)
+    defaultValue: () => []
   }
 ])
 
@@ -59240,7 +60143,28 @@ const { validateCloseCodeAndReason } = __nccwpck_require__(8625)
 const { kConstruct } = __nccwpck_require__(6443)
 const { kEnumerableProperty } = __nccwpck_require__(3440)
 
-class WebSocketError extends DOMException {
+function createInheritableDOMException () {
+  // https://github.com/nodejs/node/issues/59677
+  class Test extends DOMException {
+    get reason () {
+      return ''
+    }
+  }
+
+  if (new Test().reason !== undefined) {
+    return DOMException
+  }
+
+  return new Proxy(DOMException, {
+    construct (target, args, newTarget) {
+      const instance = Reflect.construct(target, args, target)
+      Object.setPrototypeOf(instance, newTarget.prototype)
+      return instance
+    }
+  })
+}
+
+class WebSocketError extends createInheritableDOMException() {
   #closeCode
   #reason
 
@@ -59332,7 +60256,6 @@ const { states, opcodes, sentCloseFrameState } = __nccwpck_require__(736)
 const { webidl } = __nccwpck_require__(7879)
 const { getURLRecord, isValidSubprotocol, isEstablished, utf8Decode } = __nccwpck_require__(8625)
 const { establishWebSocketConnection, failWebsocketConnection, closeWebSocketConnection } = __nccwpck_require__(6897)
-const { isArrayBuffer } = __nccwpck_require__(3429)
 const { channels } = __nccwpck_require__(2414)
 const { WebsocketFrameSend } = __nccwpck_require__(3264)
 const { ByteParser } = __nccwpck_require__(1652)
@@ -59372,7 +60295,6 @@ class WebSocketStream {
   #handler = {
     // https://whatpr.org/websockets/48/7b748d3...d5570f3.html#feedback-to-websocket-stream-from-the-protocol
     onConnectionEstablished: (response, extensions) => this.#onConnectionEstablished(response, extensions),
-    onFail: (_code, _reason) => {},
     onMessage: (opcode, data) => this.#onMessage(opcode, data),
     onParserError: (err) => failWebsocketConnection(this.#handler, null, err.message),
     onParserDrain: () => this.#handler.socket.resume(),
@@ -59526,6 +60448,9 @@ class WebSocketStream {
   }
 
   #write (chunk) {
+    // See /websockets/stream/tentative/write.any.html
+    chunk = webidl.converters.WebSocketStreamWrite(chunk)
+
     // 1. Let promise be a new promise created in stream ’s relevant realm .
     const promise = createDeferredPromise()
 
@@ -59536,9 +60461,9 @@ class WebSocketStream {
     let opcode = null
 
     // 4. If chunk is a BufferSource ,
-    if (ArrayBuffer.isView(chunk) || isArrayBuffer(chunk)) {
+    if (webidl.is.BufferSource(chunk)) {
       // 4.1. Set data to a copy of the bytes given chunk .
-      data = new Uint8Array(ArrayBuffer.isView(chunk) ? new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength) : chunk)
+      data = new Uint8Array(ArrayBuffer.isView(chunk) ? new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength) : chunk.slice())
 
       // 4.2. Set opcode to a binary frame opcode.
       opcode = opcodes.BINARY
@@ -59553,7 +60478,7 @@ class WebSocketStream {
         string = webidl.converters.DOMString(chunk)
       } catch (e) {
         promise.reject(e)
-        return
+        return promise.promise
       }
 
       // 5.2. Set data to the result of UTF-8 encoding string .
@@ -59576,7 +60501,7 @@ class WebSocketStream {
     }
 
     // 6.3. Queue a global task on the WebSocket task source given stream ’s relevant global object to resolve promise with undefined.
-    return promise
+    return promise.promise
   }
 
   /** @type {import('../websocket').Handler['onConnectionEstablished']} */
@@ -59802,7 +60727,7 @@ webidl.converters.WebSocketStreamOptions = webidl.dictionaryConverter([
 webidl.converters.WebSocketCloseInfo = webidl.dictionaryConverter([
   {
     key: 'closeCode',
-    converter: (V) => webidl.converters['unsigned short'](V, { enforceRange: true })
+    converter: (V) => webidl.converters['unsigned short'](V, webidl.attributes.EnforceRange)
   },
   {
     key: 'reason',
@@ -59810,6 +60735,14 @@ webidl.converters.WebSocketCloseInfo = webidl.dictionaryConverter([
     defaultValue: () => ''
   }
 ])
+
+webidl.converters.WebSocketStreamWrite = function (V) {
+  if (typeof V === 'string') {
+    return webidl.converters.USVString(V)
+  }
+
+  return webidl.converters.BufferSource(V)
+}
 
 module.exports = { WebSocketStream }
 
@@ -60196,7 +61129,6 @@ const { channels } = __nccwpck_require__(2414)
 /**
  * @typedef {object} Handler
  * @property {(response: any, extensions?: string[]) => void} onConnectionEstablished
- * @property {(code: number, reason: any) => void} onFail
  * @property {(opcode: number, data: Buffer) => void} onMessage
  * @property {(error: Error) => void} onParserError
  * @property {() => void} onParserDrain
@@ -60232,7 +61164,6 @@ class WebSocket extends EventTarget {
   /** @type {Handler} */
   #handler = {
     onConnectionEstablished: (response, extensions) => this.#onConnectionEstablished(response, extensions),
-    onFail: (code, reason, cause) => this.#onFail(code, reason, cause),
     onMessage: (opcode, data) => this.#onMessage(opcode, data),
     onParserError: (err) => failWebsocketConnection(this.#handler, null, err.message),
     onParserDrain: () => this.#onParserDrain(),
@@ -60363,7 +61294,7 @@ class WebSocket extends EventTarget {
     const prefix = 'WebSocket.close'
 
     if (code !== undefined) {
-      code = webidl.converters['unsigned short'](code, prefix, 'code', { clamp: true })
+      code = webidl.converters['unsigned short'](code, prefix, 'code', webidl.attributes.Clamp)
     }
 
     if (reason !== undefined) {
@@ -60523,9 +61454,11 @@ class WebSocket extends EventTarget {
       this.removeEventListener('open', this.#events.open)
     }
 
-    if (typeof fn === 'function') {
+    const listener = webidl.converters.EventHandlerNonNull(fn)
+
+    if (listener !== null) {
+      this.addEventListener('open', listener)
       this.#events.open = fn
-      this.addEventListener('open', fn)
     } else {
       this.#events.open = null
     }
@@ -60544,9 +61477,11 @@ class WebSocket extends EventTarget {
       this.removeEventListener('error', this.#events.error)
     }
 
-    if (typeof fn === 'function') {
+    const listener = webidl.converters.EventHandlerNonNull(fn)
+
+    if (listener !== null) {
+      this.addEventListener('error', listener)
       this.#events.error = fn
-      this.addEventListener('error', fn)
     } else {
       this.#events.error = null
     }
@@ -60565,9 +61500,11 @@ class WebSocket extends EventTarget {
       this.removeEventListener('close', this.#events.close)
     }
 
-    if (typeof fn === 'function') {
+    const listener = webidl.converters.EventHandlerNonNull(fn)
+
+    if (listener !== null) {
+      this.addEventListener('close', listener)
       this.#events.close = fn
-      this.addEventListener('close', fn)
     } else {
       this.#events.close = null
     }
@@ -60586,9 +61523,11 @@ class WebSocket extends EventTarget {
       this.removeEventListener('message', this.#events.message)
     }
 
-    if (typeof fn === 'function') {
+    const listener = webidl.converters.EventHandlerNonNull(fn)
+
+    if (listener !== null) {
+      this.addEventListener('message', listener)
       this.#events.message = fn
-      this.addEventListener('message', fn)
     } else {
       this.#events.message = null
     }
@@ -60666,26 +61605,6 @@ class WebSocket extends EventTarget {
     }
   }
 
-  #onFail (code, reason, cause) {
-    if (reason) {
-      // TODO: process.nextTick
-      fireEvent('error', this, (type, init) => new ErrorEvent(type, init), {
-        error: new Error(reason, cause ? { cause } : undefined),
-        message: reason
-      })
-    }
-
-    if (!this.#handler.wasEverConnected) {
-      this.#handler.readyState = states.CLOSED
-
-      // If the WebSocket connection could not be established, it is also said
-      // that _The WebSocket Connection is Closed_, but not _cleanly_.
-      fireEvent('close', this, (type, init) => new CloseEvent(type, init), {
-        wasClean: false, code, reason
-      })
-    }
-  }
-
   #onMessage (type, data) {
     // 1. If ready state is not OPEN (1), then return.
     if (this.#handler.readyState !== states.OPEN) {
@@ -60746,18 +61665,11 @@ class WebSocket extends EventTarget {
     let code = 1005
     let reason = ''
 
-    const result = this.#parser.closingInfo
+    const result = this.#parser?.closingInfo
 
     if (result && !result.error) {
       code = result.code ?? 1005
       reason = result.reason
-    } else if (!this.#handler.closeState.has(sentCloseFrameState.RECEIVED)) {
-      // If _The WebSocket
-      // Connection is Closed_ and no Close control frame was received by the
-      // endpoint (such as could occur if the underlying transport connection
-      // is lost), _The WebSocket Connection Close Code_ is considered to be
-      // 1006.
-      code = 1006
     }
 
     // 1. Change the ready state to CLOSED (3).
@@ -60767,7 +61679,18 @@ class WebSocket extends EventTarget {
     //    connection, or if the WebSocket connection was closed
     //    after being flagged as full, fire an event named error
     //    at the WebSocket object.
-    // TODO
+    if (!this.#handler.closeState.has(sentCloseFrameState.RECEIVED)) {
+      // If _The WebSocket
+      // Connection is Closed_ and no Close control frame was received by the
+      // endpoint (such as could occur if the underlying transport connection
+      // is lost), _The WebSocket Connection Close Code_ is considered to be
+      // 1006.
+      code = 1006
+
+      fireEvent('error', this, (type, init) => new ErrorEvent(type, init), {
+        error: new TypeError(reason)
+      })
+    }
 
     // 3. Fire an event named close at the WebSocket object,
     //    using CloseEvent, with the wasClean attribute
@@ -60876,7 +61799,7 @@ webidl.converters.WebSocketInit = webidl.dictionaryConverter([
   {
     key: 'protocols',
     converter: webidl.converters['DOMString or sequence<DOMString>'],
-    defaultValue: () => new Array(0)
+    defaultValue: () => []
   },
   {
     key: 'dispatcher',
@@ -60903,7 +61826,7 @@ webidl.converters.WebSocketSendData = function (V) {
       return V
     }
 
-    if (ArrayBuffer.isView(V) || isArrayBuffer(V)) {
+    if (webidl.is.BufferSource(V)) {
       return V
     }
   }
