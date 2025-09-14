@@ -457,7 +457,7 @@ jobs:
         working-directory: __tests__/fixtures/requirements-txt-project
   test-restore-cache-requirements-txt:
     runs-on: ubuntu-latest
-    needs: test-setup-cache
+    needs: test-setup-cache-requirements-txt
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
@@ -517,6 +517,78 @@ jobs:
             **/pyproject.toml
           cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-dependency-glob
           ignore-nothing-to-cache: true
+      - name: Cache was not hit
+        run: |
+          if [ "$CACHE_HIT" == "true" ]; then
+            exit 1
+          fi
+        env:
+          CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
+
+  test-setup-cache-save-cache-false:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Setup with cache
+        uses: ./
+        with:
+          enable-cache: true
+          save-cache: false
+          cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-save-cache-false
+      - run: uv sync
+        working-directory: __tests__/fixtures/uv-project
+        shell: bash
+  test-restore-cache-save-cache-false:
+    runs-on: ubuntu-latest
+    needs: test-setup-cache-save-cache-false
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Restore with cache
+        id: restore
+        uses: ./
+        with:
+          enable-cache: true
+          cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-save-cache-false
+      - name: Cache was not hit
+        run: |
+          if [ "$CACHE_HIT" == "true" ]; then
+            exit 1
+          fi
+        env:
+          CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
+
+  test-setup-cache-restore-cache-false:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Setup with cache
+        uses: ./
+        with:
+          enable-cache: true
+          cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-restore-cache-false
+      - run: uv sync
+        working-directory: __tests__/fixtures/uv-project
+        shell: bash
+  test-restore-cache-restore-cache-false:
+    runs-on: ubuntu-latest
+    needs: test-setup-cache-restore-cache-false
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Restore with cache
+        id: restore
+        uses: ./
+        with:
+          enable-cache: true
+          restore-cache: false
+          cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-restore-cache-false
       - name: Cache was not hit
         run: |
           if [ "$CACHE_HIT" == "true" ]; then
@@ -747,6 +819,10 @@ jobs:
       - test-restore-cache-requirements-txt
       - test-setup-cache-dependency-glob
       - test-restore-cache-dependency-glob
+      - test-setup-cache-save-cache-false
+      - test-restore-cache-save-cache-false
+      - test-setup-cache-restore-cache-false
+      - test-restore-cache-restore-cache-false
       - test-setup-cache-local
       - test-restore-cache-local
       - test-tilde-expansion-cache-local-path

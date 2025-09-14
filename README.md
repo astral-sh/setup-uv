@@ -22,6 +22,8 @@ Set up your GitHub Actions workflow with a specific version of [uv](https://docs
   - [Validate checksum](#validate-checksum)
   - [Enable Caching](#enable-caching)
     - [Cache dependency glob](#cache-dependency-glob)
+    - [Restore cache](#restore-cache)
+    - [Save cache](#save-cache)
   - [Local cache path](#local-cache-path)
   - [Disable cache pruning](#disable-cache-pruning)
   - [Ignore nothing to cache](#ignore-nothing-to-cache)
@@ -282,6 +284,33 @@ changes. If you use relative paths, they are relative to the repository root.
   with:
     enable-cache: true
     cache-dependency-glob: ""
+```
+
+#### Restore cache
+
+Restoring an existing cache can be enabled or disabled with the `restore-cache` input.
+By default, the cache will be restored.
+
+```yaml
+- name: Don't restore an existing cache
+  uses: astral-sh/setup-uv@v6
+  with:
+    enable-cache: true
+    restore-cache: false
+```
+
+#### Save cache
+
+You can also disable saving the cache after the run with the `save-cache` input.
+This can be useful to save cache storage when you know you will not use the cache of the run again.
+By default, the cache will be saved.
+
+```yaml
+- name: Don't save the cache after the run
+  uses: astral-sh/setup-uv@v6
+  with:
+    enable-cache: true
+    save-cache: false
 ```
 
 ### Local cache path

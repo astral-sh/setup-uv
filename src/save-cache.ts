@@ -11,12 +11,17 @@ import {
   enableCache,
   ignoreNothingToCache,
   pruneCache as shouldPruneCache,
+  saveCache as shouldSaveCache,
 } from "./utils/inputs";
 
 export async function run(): Promise<void> {
   try {
     if (enableCache) {
-      await saveCache();
+      if (shouldSaveCache) {
+        await saveCache();
+      } else {
+        core.info("save-cache is false. Skipping save cache step.");
+      }
       // node will stay alive if any promises are not resolved,
       // which is a possibility if HTTP requests are dangling
       // due to retries or timeouts. We know that if we got here
