@@ -90021,21 +90021,25 @@ const exec = __importStar(__nccwpck_require__(5236));
 const restore_cache_1 = __nccwpck_require__(5391);
 const inputs_1 = __nccwpck_require__(9612);
 async function run() {
+    if (!inputs_1.enableCache) {
+        return;
+    }
+    if (!inputs_1.saveCache) {
+        core.info("save-cache is false. Skipping save cache step.");
+        return;
+    }
+    if (process.env.SETUP_UV_SAVE_CACHE === "false") {
+        core.info("Environment variable SETUP_UV_SAVE_CACHE is set to false. Skipping save cache step.");
+        return;
+    }
     try {
-        if (inputs_1.enableCache) {
-            if (inputs_1.saveCache) {
-                await saveCache();
-            }
-            else {
-                core.info("save-cache is false. Skipping save cache step.");
-            }
-            // node will stay alive if any promises are not resolved,
-            // which is a possibility if HTTP requests are dangling
-            // due to retries or timeouts. We know that if we got here
-            // that all promises that we care about have successfully
-            // resolved, so simply exit with success.
-            process.exit(0);
-        }
+        await saveCache();
+        // node will stay alive if any promises are not resolved,
+        // which is a possibility if HTTP requests are dangling
+        // due to retries or timeouts. We know that if we got here
+        // that all promises that we care about have successfully
+        // resolved, so simply exit with success.
+        process.exit(0);
     }
     catch (error) {
         const err = error;
