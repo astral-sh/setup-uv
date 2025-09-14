@@ -8,6 +8,8 @@ export const pythonVersion = core.getInput("python-version");
 export const activateEnvironment = core.getBooleanInput("activate-environment");
 export const checkSum = core.getInput("checksum");
 export const enableCache = getEnableCache();
+export const restoreCache = core.getInput("restore-cache") === "true";
+export const saveCache = core.getInput("save-cache") === "true";
 export const cacheSuffix = core.getInput("cache-suffix") || "";
 export const cacheLocalPath = getCacheLocalPath();
 export const cacheDependencyGlob = getCacheDependencyGlob();

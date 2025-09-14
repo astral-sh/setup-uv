@@ -8,6 +8,7 @@ import {
   cacheSuffix,
   pruneCache,
   pythonVersion as pythonVersionInput,
+  restoreCache as shouldRestoreCache,
   workingDirectory,
 } from "../utils/inputs";
 import { getArch, getPlatform } from "../utils/platforms";
@@ -18,6 +19,12 @@ const CACHE_VERSION = "1";
 
 export async function restoreCache(): Promise<void> {
   const cacheKey = await computeKeys();
+  core.saveState(STATE_CACHE_KEY, cacheKey);
+
+  if (!shouldRestoreCache) {
+    core.info("restore-cache is false. Skipping restore cache step.");
+    return;
+  }
 
   let matchedKey: string | undefined;
   core.info(
@@ -31,8 +38,6 @@ export async function restoreCache(): Promise<void> {
     core.setOutput("cache-hit", false);
     return;
   }
-
-  core.saveState(STATE_CACHE_KEY, cacheKey);
 
   handleMatchResult(matchedKey, cacheKey);
 }

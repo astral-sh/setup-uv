@@ -89809,6 +89809,11 @@ exports.STATE_CACHE_MATCHED_KEY = "cache-matched-key";
 const CACHE_VERSION = "1";
 async function restoreCache() {
     const cacheKey = await computeKeys();
+    core.saveState(exports.STATE_CACHE_KEY, cacheKey);
+    if (!inputs_1.restoreCache) {
+        core.info("restore-cache is false. Skipping restore cache step.");
+        return;
+    }
     let matchedKey;
     core.info(`Trying to restore uv cache from GitHub Actions cache with key: ${cacheKey}`);
     try {
@@ -89820,7 +89825,6 @@ async function restoreCache() {
         core.setOutput("cache-hit", false);
         return;
     }
-    core.saveState(exports.STATE_CACHE_KEY, cacheKey);
     handleMatchResult(matchedKey, cacheKey);
 }
 async function computeKeys() {
@@ -90019,7 +90023,12 @@ const inputs_1 = __nccwpck_require__(9612);
 async function run() {
     try {
         if (inputs_1.enableCache) {
-            await saveCache();
+            if (inputs_1.saveCache) {
+                await saveCache();
+            }
+            else {
+                core.info("save-cache is false. Skipping save cache step.");
+            }
             // node will stay alive if any promises are not resolved,
             // which is a possibility if HTTP requests are dangling
             // due to retries or timeouts. We know that if we got here
@@ -90121,7 +90130,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.addProblemMatchers = exports.manifestFile = exports.githubToken = exports.serverUrl = exports.toolDir = exports.toolBinDir = exports.ignoreEmptyWorkdir = exports.ignoreNothingToCache = exports.pruneCache = exports.cacheDependencyGlob = exports.cacheLocalPath = exports.cacheSuffix = exports.enableCache = exports.checkSum = exports.activateEnvironment = exports.pythonVersion = exports.versionFile = exports.version = exports.workingDirectory = void 0;
+exports.addProblemMatchers = exports.manifestFile = exports.githubToken = exports.serverUrl = exports.toolDir = exports.toolBinDir = exports.ignoreEmptyWorkdir = exports.ignoreNothingToCache = exports.pruneCache = exports.cacheDependencyGlob = exports.cacheLocalPath = exports.cacheSuffix = exports.saveCache = exports.restoreCache = exports.enableCache = exports.checkSum = exports.activateEnvironment = exports.pythonVersion = exports.versionFile = exports.version = exports.workingDirectory = void 0;
 const node_path_1 = __importDefault(__nccwpck_require__(6760));
 const core = __importStar(__nccwpck_require__(7484));
 exports.workingDirectory = core.getInput("working-directory");
@@ -90131,6 +90140,8 @@ exports.pythonVersion = core.getInput("python-version");
 exports.activateEnvironment = core.getBooleanInput("activate-environment");
 exports.checkSum = core.getInput("checksum");
 exports.enableCache = getEnableCache();
+exports.restoreCache = core.getInput("restore-cache") === "true";
+exports.saveCache = core.getInput("save-cache") === "true";
 exports.cacheSuffix = core.getInput("cache-suffix") || "";
 exports.cacheLocalPath = getCacheLocalPath();
 exports.cacheDependencyGlob = getCacheDependencyGlob();

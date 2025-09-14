@@ -44,6 +44,12 @@ inputs:
       **/*constraints*.in
       **/pyproject.toml
       **/uv.lock
+  restore-cache:
+    description: "Whether to restore the cache if found."
+    default: "true"
+  save-cache:
+    description: "Whether to save the cache after the run."
+    default: "true"
   cache-suffix:
     description: "Suffix for the cache key"
     required: false
