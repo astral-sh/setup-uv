@@ -125,7 +125,7 @@ This will override any python version specifications in `pyproject.toml` and `.p
 - run: uv pip install --python=3.13t pip
 ```
 
-You can combine this with a matrix to test multiple python versions:
+You can combine this with a matrix to test multiple Python versions:
 
 ```yaml
 jobs:
@@ -133,9 +133,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install the latest version of uv and set the python version
         uses: astral-sh/setup-uv@v6
         with:
