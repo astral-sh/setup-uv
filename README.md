@@ -250,6 +250,7 @@ changes. If you use relative paths, they are relative to the repository root.
 >   **/*constraints*.in
 >   **/pyproject.toml
 >   **/uv.lock
+>   **/*.py.lock
 > ```
 
 ```yaml
