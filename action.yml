@@ -44,6 +44,7 @@ inputs:
       **/*constraints*.in
       **/pyproject.toml
       **/uv.lock
+      **/*.py.lock
   restore-cache:
     description: "Whether to restore the cache if found."
     default: "true"
