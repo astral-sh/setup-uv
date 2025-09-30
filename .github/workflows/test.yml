@@ -76,78 +76,110 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        uv-version: ["0.3.0", "0.3.2", "0.3", "0.3.x", ">=0.3.0"]
+        input:
+          - version-input: "0.3.0"
+            expected-version: "0.3.0"
+          - version-input: "0.3.2"
+            expected-version: "0.3.2"
+          - version-input: "0.3"
+            expected-version: "0.3.5"
+          - version-input: "0.3.x"
+            expected-version: "0.3.5"
+          - version-input: ">=0.4.25,<0.5"
+            expected-version: "0.4.30"
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
-      - name: Install version ${{ matrix.uv-version }}
-        uses: ./
-        with:
-          version: ${{ matrix.uv-version }}
-      - run: uv sync
-        working-directory: __tests__/fixtures/uv-project
-
-  test-semver-range:
-    strategy:
-      matrix:
-        os: [ ubuntu-latest, selfhosted-ubuntu-arm64 ]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          persist-credentials: false
-      - name: Install version 0.3
+      - name: Install version ${{ matrix.input.version-input }}
         id: setup-uv
         uses: ./
         with:
-          version: "0.3"
+          version: ${{ matrix.input.version-input }}
       - name: Correct version gets installed
         run: |
-          if [ "$(uv --version)" != "uv 0.3.5" ]; then
+          if [ "$(uv --version)" != "uv ${{ matrix.input.expected-version }}" ]; then
             echo "Wrong uv version: $(uv --version)"
             exit 1
           fi
       - name: Output has correct version
         run: |
-          if [ "$UV_VERSION" != "0.3.5" ]; then
+          if [ "$UV_VERSION" != "${{ matrix.input.expected-version }}" ]; then
             exit 1
           fi
         env:
           UV_VERSION: ${{ steps.setup-uv.outputs.uv-version }}
 
-  test-pep440-version:
+  test-latest-version:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        version-input: ["latest", ">=0.8"]
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
-      - name: Install version 0.4.30
-        id: setup-uv
+      - name: Install version ${{ matrix.version-input }}
         uses: ./
         with:
-          version: ">=0.4.25,<0.5"
+          version: ${{ matrix.version-input }}
+      - name: Latest version gets installed
+        run: |
+          LATEST_VERSION=$(gh api -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /repos/astral-sh/uv/releases/latest | jq -r '.tag_name')
+          echo "Latest version is $LATEST_VERSION"
+          if [ "$(uv --version)" != "uv $LATEST_VERSION" ]; then
+              echo "Wrong uv version: $(uv --version)"
+              exit 1
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  test-from-working-directory-version:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        input:
+          - working-directory: "__tests__/fixtures/pyproject-toml-project"
+            expected-version: "0.5.14"
+          - working-directory: "__tests__/fixtures/uv-toml-project"
+            expected-version: "0.5.15"
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Install version from ${{ matrix.input.working-directory }}
+        uses: ./
+        with:
+          working-directory: ${{ matrix.input.working-directory }}
       - name: Correct version gets installed
         run: |
-          if [ "$(uv --version)" != "uv 0.4.30" ]; then
+          if [ "$(uv --version)" != "uv ${{ matrix.input.expected-version }}" ]; then
             echo "Wrong uv version: $(uv --version)"
             exit 1
           fi
 
-  test-pyproject-file-version:
+  test-version-file-version:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        input:
+          - version-file: "__tests__/fixtures/uv-in-requirements-txt-project/requirements.txt"
+            expected-version: "0.6.17"
+          - version-file: "__tests__/fixtures/uv-in-requirements-hash-txt-project/requirements.txt"
+            expected-version: "0.8.3"
+          - version-file: "__tests__/fixtures/.tool-versions"
+            expected-version: "0.5.15"
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
-      - name: Install version 0.5.14
-        id: setup-uv
+      - name: Install version from ${{ matrix.input.version-file }}
         uses: ./
         with:
-          working-directory: "__tests__/fixtures/pyproject-toml-project"
+          version-file: ${{ matrix.input.version-file }}
       - name: Correct version gets installed
         run: |
-          if [ "$(uv --version)" != "uv 0.5.14" ]; then
+          if [ "$(uv --version)" != "uv ${{ matrix.input.expected-version }}" ]; then
             echo "Wrong uv version: $(uv --version)"
             exit 1
           fi
@@ -164,78 +196,6 @@ jobs:
         with:
           working-directory: "__tests__/fixtures/malformed-pyproject-toml-project"
       - run: uv --help
-
-  test-uv-file-version:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          persist-credentials: false
-      - name: Install version 0.5.15
-        id: setup-uv
-        uses: ./
-        with:
-          working-directory: "__tests__/fixtures/uv-toml-project"
-      - name: Correct version gets installed
-        run: |
-          if [ "$(uv --version)" != "uv 0.5.15" ]; then
-            echo "Wrong uv version: $(uv --version)"
-            exit 1
-          fi
-
-  test-version-file-version:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          persist-credentials: false
-      - name: Install from requirements file
-        id: setup-uv
-        uses: ./
-        with:
-          version-file: "__tests__/fixtures/uv-in-requirements-txt-project/requirements.txt"
-      - name: Correct version gets installed
-        run: |
-          if [ "$(uv --version)" != "uv 0.6.17" ]; then
-            echo "Wrong uv version: $(uv --version)"
-            exit 1
-          fi
-
-  test-version-file-hash-version:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          persist-credentials: false
-      - name: Install from requirements file
-        id: setup-uv
-        uses: ./
-        with:
-          version-file: "__tests__/fixtures/uv-in-requirements-hash-txt-project/requirements.txt"
-      - name: Correct version gets installed
-        run: |
-          if [ "$(uv --version)" != "uv 0.8.3" ]; then
-            echo "Wrong uv version: $(uv --version)"
-            exit 1
-          fi
-
-  test-tool-versions-file-version:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          persist-credentials: false
-      - name: Install from .tools-versions file
-        id: setup-uv
-        uses: ./
-        with:
-          version-file: "__tests__/fixtures/.tool-versions"
-      - name: Correct version gets installed
-        run: |
-          if [ "$(uv --version)" != "uv 0.5.15" ]; then
-            echo "Wrong uv version: $(uv --version)"
-            exit 1
-          fi
 
   test-checksum:
     runs-on: ${{ matrix.inputs.os }}
@@ -796,14 +756,10 @@ jobs:
       - lint
       - test-default-version
       - test-specific-version
-      - test-semver-range
-      - test-pep440-version
-      - test-pyproject-file-version
+      - test-latest-version
+      - test-from-working-directory-version
       - test-malformed-pyproject-file-fallback
-      - test-uv-file-version
       - test-version-file-version
-      - test-version-file-hash-version
-      - test-tool-versions-file-version
       - test-checksum
       - test-with-explicit-token
       - test-uvx
