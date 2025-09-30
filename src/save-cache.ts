@@ -78,7 +78,7 @@ async function saveCache(): Promise<void> {
 
 async function pruneCache(): Promise<void> {
   const options: exec.ExecOptions = {
-    silent: !core.isDebug(),
+    silent: false,
   };
   const execArgs = ["cache", "prune", "--ci"];
 
