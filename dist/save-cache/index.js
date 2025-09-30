@@ -90077,7 +90077,7 @@ async function saveCache() {
 }
 async function pruneCache() {
     const options = {
-        silent: !core.isDebug(),
+        silent: false,
     };
     const execArgs = ["cache", "prune", "--ci"];
     core.info("Pruning cache...");
