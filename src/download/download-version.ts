@@ -135,19 +135,29 @@ export async function resolveVersion(
 ): Promise<string> {
   core.debug(`Resolving version: ${versionInput}`);
   let version: string;
+  const isSimpleMinimumVersionSpecifier =
+    versionInput.includes(">") && !versionInput.includes(",");
+  if (isSimpleMinimumVersionSpecifier) {
+    core.info("Found minimum version specifier, using latest version");
+  }
   if (manifestFile) {
     version =
-      versionInput === "latest"
+      versionInput === "latest" || isSimpleMinimumVersionSpecifier
         ? await getLatestVersionInManifest(manifestFile)
         : versionInput;
   } else {
     version =
-      versionInput === "latest"
+      versionInput === "latest" || isSimpleMinimumVersionSpecifier
         ? await getLatestVersion(githubToken)
         : versionInput;
   }
   if (tc.isExplicitVersion(version)) {
     core.debug(`Version ${version} is an explicit version.`);
+    if (isSimpleMinimumVersionSpecifier) {
+      if (!pep440.satisfies(version, versionInput)) {
+        throw new Error(`No version found for ${versionInput}`);
+      }
+    }
     return version;
   }
   const availableVersions = await getAvailableVersions(githubToken);
