@@ -55,9 +55,6 @@ async function saveCache(): Promise<void> {
   // Check if UV_CACHE_DIR has been changed externally from this action
   let actualCachePath = cacheLocalPath;
   if (process.env.UV_CACHE_DIR !== cacheLocalPath) {
-    // Don't need to check for unset UV_CACHE_DIR because:
-    // 1. We set the UV_CACHE_DIR earlier on in this action
-    // 2. Once an environment variable is set in GitHub Actions, it cannot be unset.
     core.warning(
       `The environment variable UV_CACHE_DIR has been changed to "${process.env.UV_CACHE_DIR}", by an action or step running after astral-sh/setup-uv. This can lead to unexpected behavior. If you expected this to happen set the cache-local-path input to "${process.env.UV_CACHE_DIR}" instead of "${cacheLocalPath}".`,
     );
