@@ -6,6 +6,7 @@ import {
   STATE_CACHE_KEY,
   STATE_CACHE_MATCHED_KEY,
 } from "./cache/restore-cache";
+import { STATE_UV_PATH } from "./utils/constants";
 import {
   cacheLocalPath,
   enableCache,
@@ -83,7 +84,8 @@ async function pruneCache(): Promise<void> {
   const execArgs = ["cache", "prune", "--ci"];
 
   core.info("Pruning cache...");
-  await exec.exec("uv", execArgs, options);
+  const uvPath = core.getState(STATE_UV_PATH);
+  await exec.exec(uvPath, execArgs, options);
 }
 
 run();

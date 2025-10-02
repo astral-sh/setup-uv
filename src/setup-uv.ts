@@ -9,6 +9,7 @@ import {
   resolveVersion,
   tryGetFromToolCache,
 } from "./download/download-version";
+import { STATE_UV_PATH } from "./utils/constants";
 import {
   activateEnvironment as activateEnvironmentInput,
   addProblemMatchers,
@@ -163,18 +164,31 @@ async function determineVersion(
 
 function addUvToPathAndOutput(cachedPath: string): void {
   core.setOutput("uv-path", `${cachedPath}${path.sep}uv`);
+  core.saveState(STATE_UV_PATH, `${cachedPath}${path.sep}uv`);
   core.setOutput("uvx-path", `${cachedPath}${path.sep}uvx`);
-  core.addPath(cachedPath);
-  core.info(`Added ${cachedPath} to the path`);
+  if (process.env.UV_NO_MODIFY_PATH !== undefined) {
+    core.info("UV_NO_MODIFY_PATH is set, not modifying PATH");
+  } else {
+    core.addPath(cachedPath);
+    core.info(`Added ${cachedPath} to the path`);
+  }
 }
 
 function addToolBinToPath(): void {
   if (toolBinDir !== undefined) {
     core.exportVariable("UV_TOOL_BIN_DIR", toolBinDir);
     core.info(`Set UV_TOOL_BIN_DIR to ${toolBinDir}`);
-    core.addPath(toolBinDir);
-    core.info(`Added ${toolBinDir} to the path`);
+    if (process.env.UV_NO_MODIFY_PATH !== undefined) {
+      core.info(`UV_NO_MODIFY_PATH is set, not adding ${toolBinDir} to path`);
+    } else {
+      core.addPath(toolBinDir);
+      core.info(`Added ${toolBinDir} to the path`);
+    }
   } else {
+    if (process.env.UV_NO_MODIFY_PATH !== undefined) {
+      core.info("UV_NO_MODIFY_PATH is set, not adding user local bin to path");
+      return;
+    }
     if (process.env.XDG_BIN_HOME !== undefined) {
       core.addPath(process.env.XDG_BIN_HOME);
       core.info(`Added ${process.env.XDG_BIN_HOME} to the path`);
@@ -204,6 +218,11 @@ function setupPython(): void {
 
 async function activateEnvironment(): Promise<void> {
   if (activateEnvironmentInput) {
+    if (process.env.UV_NO_MODIFY_PATH !== undefined) {
+      throw new Error(
+        "UV_NO_MODIFY_PATH and activate-environment cannot be used together.",
+      );
+    }
     const execArgs = ["venv", ".venv", "--directory", workingDirectory];
 
     core.info("Activating python venv...");
