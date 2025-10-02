@@ -52,7 +52,6 @@ async function saveCache(): Promise<void> {
     await pruneCache();
   }
 
-  // Check if UV_CACHE_DIR has been changed externally from this action
   let actualCachePath = cacheLocalPath;
   if (process.env.UV_CACHE_DIR !== cacheLocalPath) {
     core.warning(
