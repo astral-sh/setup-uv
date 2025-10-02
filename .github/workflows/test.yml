@@ -72,6 +72,29 @@ jobs:
         env:
           UVX_PATH: ${{ steps.setup-uv.outputs.uvx-path }}
 
+  test-uv-no-modify-path:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Install with UV_NO_MODIFY_PATH set
+        id: setup-uv
+        uses: ./
+        env:
+          UV_NO_MODIFY_PATH: true
+      - run: "${UV_PATH}" sync
+        working-directory: __tests__/fixtures/uv-project
+        shell: bash
+        env:
+          UV_PATH: ${{ steps.setup-uv.outputs.uv-path }}
+      - name: uv is not on PATH
+        run: |
+          if command -v uv; then
+              echo "uv should not be on PATH"
+              exit 1
+          fi
+
   test-specific-version:
     runs-on: ubuntu-latest
     strategy:
@@ -755,6 +778,7 @@ jobs:
     needs:
       - lint
       - test-default-version
+      - test-uv-no-modify-path
       - test-specific-version
       - test-latest-version
       - test-from-working-directory-version

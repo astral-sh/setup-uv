@@ -90019,6 +90019,7 @@ const cache = __importStar(__nccwpck_require__(5116));
 const core = __importStar(__nccwpck_require__(7484));
 const exec = __importStar(__nccwpck_require__(5236));
 const restore_cache_1 = __nccwpck_require__(5391);
+const constants_1 = __nccwpck_require__(6156);
 const inputs_1 = __nccwpck_require__(9612);
 async function run() {
     try {
@@ -90086,9 +90087,25 @@ async function pruneCache() {
     };
     const execArgs = ["cache", "prune", "--ci"];
     core.info("Pruning cache...");
-    await exec.exec("uv", execArgs, options);
+    const uvPath = core.getState(constants_1.STATE_UV_PATH);
+    await exec.exec(uvPath, execArgs, options);
 }
 run();
+
+
+/***/ }),
+
+/***/ 6156:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.STATE_UV_PATH = exports.TOOL_CACHE_NAME = exports.OWNER = exports.REPO = void 0;
+exports.REPO = "uv";
+exports.OWNER = "astral-sh";
+exports.TOOL_CACHE_NAME = "uv";
+exports.STATE_UV_PATH = "uv-path";
 
 
 /***/ }),
