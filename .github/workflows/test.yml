@@ -82,8 +82,9 @@ jobs:
         id: setup-uv
         uses: ./
         env:
-          UV_NO_MODIFY_PATH: true
-      - run: "${UV_PATH}" sync
+          UV_NO_MODIFY_PATH: 1
+      - run: |
+          "${UV_PATH}" sync
         working-directory: __tests__/fixtures/uv-project
         shell: bash
         env:
