@@ -52,14 +52,22 @@ async function saveCache(): Promise<void> {
     await pruneCache();
   }
 
-  core.info(`Saving cache path: ${cacheLocalPath}`);
-  if (!fs.existsSync(cacheLocalPath) && !ignoreNothingToCache) {
+  let actualCachePath = cacheLocalPath;
+  if (process.env.UV_CACHE_DIR && process.env.UV_CACHE_DIR !== cacheLocalPath) {
+    core.warning(
+      `The environment variable UV_CACHE_DIR has been changed to "${process.env.UV_CACHE_DIR}", by an action or step running after astral-sh/setup-uv. This can lead to unexpected behavior. If you expected this to happen set the cache-local-path input to "${process.env.UV_CACHE_DIR}" instead of "${cacheLocalPath}".`,
+    );
+    actualCachePath = process.env.UV_CACHE_DIR;
+  }
+
+  core.info(`Saving cache path: ${actualCachePath}`);
+  if (!fs.existsSync(actualCachePath) && !ignoreNothingToCache) {
     throw new Error(
-      `Cache path ${cacheLocalPath} does not exist on disk. This likely indicates that there are no dependencies to cache. Consider disabling the cache input if it is not needed.`,
+      `Cache path ${actualCachePath} does not exist on disk. This likely indicates that there are no dependencies to cache. Consider disabling the cache input if it is not needed.`,
     );
   }
   try {
-    await cache.saveCache([cacheLocalPath], cacheKey);
+    await cache.saveCache([actualCachePath], cacheKey);
     core.info(`cache saved with the key: ${cacheKey}`);
   } catch (e) {
     if (
