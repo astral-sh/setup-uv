@@ -2,6 +2,7 @@ import { promises as fs } from "node:fs";
 import * as path from "node:path";
 import * as core from "@actions/core";
 import * as tc from "@actions/tool-cache";
+import type { Endpoints } from "@octokit/types";
 import * as pep440 from "@renovatebot/pep440";
 import { OWNER, REPO, TOOL_CACHE_NAME } from "../utils/constants";
 import { Octokit } from "../utils/octokit";
@@ -11,6 +12,9 @@ import {
   getDownloadUrl,
   getLatestKnownVersion as getLatestVersionInManifest,
 } from "./version-manifest";
+
+type Release =
+  Endpoints["GET /repos/{owner}/{repo}/releases"]["response"]["data"][number];
 
 export function tryGetFromToolCache(
   arch: Architecture,
@@ -186,13 +190,14 @@ async function getAvailableVersions(githubToken: string): Promise<string[]> {
   }
 }
 
-async function getReleaseTagNames(
-  octokit: InstanceType<typeof Octokit>,
-): Promise<string[]> {
-  const response = await octokit.paginate(octokit.rest.repos.listReleases, {
-    owner: OWNER,
-    repo: REPO,
-  });
+async function getReleaseTagNames(octokit: Octokit): Promise<string[]> {
+  const response: Release[] = await octokit.paginate(
+    octokit.rest.repos.listReleases,
+    {
+      owner: OWNER,
+      repo: REPO,
+    },
+  );
   const releaseTagNames = response.map((release) => release.tag_name);
   if (releaseTagNames.length === 0) {
     throw Error(
@@ -233,7 +238,7 @@ async function getLatestVersion(githubToken: string) {
   return latestRelease.tag_name;
 }
 
-async function getLatestRelease(octokit: InstanceType<typeof Octokit>) {
+async function getLatestRelease(octokit: Octokit) {
   const { data: latestRelease } = await octokit.rest.repos.getLatestRelease({
     owner: OWNER,
     repo: REPO,

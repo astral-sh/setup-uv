@@ -1,8 +1,5 @@
+import type { OctokitOptions } from "@octokit/core";
 import { Octokit as Core } from "@octokit/core";
-import type {
-  Constructor,
-  OctokitOptions,
-} from "@octokit/core/dist-types/types";
 import {
   type PaginateInterface,
   paginateRest,
@@ -17,22 +14,21 @@ const DEFAULTS = {
   userAgent: "setup-uv",
 };
 
-export const Octokit: typeof Core &
-  Constructor<
-    {
-      paginate: PaginateInterface;
-    } & ReturnType<typeof legacyRestEndpointMethods>
-  > = Core.plugin(paginateRest, legacyRestEndpointMethods).defaults(
-  function buildDefaults(options: OctokitOptions): OctokitOptions {
-    return {
-      ...DEFAULTS,
-      ...options,
-      request: {
-        fetch: customFetch,
-        ...options.request,
-      },
-    };
-  },
-);
+const OctokitWithPlugins = Core.plugin(paginateRest, legacyRestEndpointMethods);
 
-export type Octokit = InstanceType<typeof Octokit>;
+export const Octokit = OctokitWithPlugins.defaults(function buildDefaults(
+  options: OctokitOptions,
+): OctokitOptions {
+  return {
+    ...DEFAULTS,
+    ...options,
+    request: {
+      fetch: customFetch,
+      ...options.request,
+    },
+  };
+});
+
+export type Octokit = InstanceType<typeof OctokitWithPlugins> & {
+  paginate: PaginateInterface;
+};
