@@ -21,10 +21,6 @@ inputs:
   checksum:
     description: "The checksum of the uv version to install"
     required: false
-  server-url:
-    description: "(Deprecated) The server url to use when downloading uv"
-    required: false
-    default: "https://github.com"
   github-token:
     description:
       "Used to increase the rate limit when retrieving versions and downloading uv."

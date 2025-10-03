@@ -28,7 +28,6 @@ export function tryGetFromToolCache(
 }
 
 export async function downloadVersionFromGithub(
-  serverUrl: string,
   platform: Platform,
   arch: Architecture,
   version: string,
@@ -37,7 +36,7 @@ export async function downloadVersionFromGithub(
 ): Promise<{ version: string; cachedToolDir: string }> {
   const artifact = `uv-${arch}-${platform}`;
   const extension = getExtension(platform);
-  const downloadUrl = `${serverUrl}/${OWNER}/${REPO}/releases/download/${version}/${artifact}${extension}`;
+  const downloadUrl = `https://github.com/${OWNER}/${REPO}/releases/download/${version}/${artifact}${extension}`;
   return await downloadVersion(
     downloadUrl,
     artifact,
@@ -68,7 +67,6 @@ export async function downloadVersionFromManifest(
       `manifest-file does not contain version ${version}, arch ${arch}, platform ${platform}. Falling back to GitHub releases.`,
     );
     return await downloadVersionFromGithub(
-      "https://github.com",
       platform,
       arch,
       version,
