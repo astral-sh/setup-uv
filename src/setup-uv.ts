@@ -4,7 +4,6 @@ import * as core from "@actions/core";
 import * as exec from "@actions/exec";
 import { restoreCache } from "./cache/restore-cache";
 import {
-  downloadVersionFromGithub,
   downloadVersionFromManifest,
   resolveVersion,
   tryGetFromToolCache,
@@ -20,7 +19,6 @@ import {
   ignoreEmptyWorkdir,
   manifestFile,
   pythonVersion,
-  serverUrl,
   toolBinDir,
   toolDir,
   versionFile as versionFileInput,
@@ -99,29 +97,14 @@ async function setupUv(
     };
   }
 
-  let downloadVersionResult: { version: string; cachedToolDir: string };
-  if (serverUrl !== "https://github.com") {
-    core.warning(
-      "The input server-url is deprecated. Please use manifest-file instead.",
-    );
-    downloadVersionResult = await downloadVersionFromGithub(
-      serverUrl,
-      platform,
-      arch,
-      resolvedVersion,
-      checkSum,
-      githubToken,
-    );
-  } else {
-    downloadVersionResult = await downloadVersionFromManifest(
-      manifestFile,
-      platform,
-      arch,
-      resolvedVersion,
-      checkSum,
-      githubToken,
-    );
-  }
+  const downloadVersionResult = await downloadVersionFromManifest(
+    manifestFile,
+    platform,
+    arch,
+    resolvedVersion,
+    checkSum,
+    githubToken,
+  );
 
   return {
     uvDir: downloadVersionResult.cachedToolDir,
