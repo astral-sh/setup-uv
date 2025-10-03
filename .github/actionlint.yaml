@@ -7,3 +7,7 @@ self-hosted-runner:
 # organization. `null` means disabling configuration variables check.
 # Empty array means no configuration variable is allowed.
 config-variables: null
+paths:
+  .github/workflows/test.yml:
+    ignore:
+      - 'invalid runner name.+'
