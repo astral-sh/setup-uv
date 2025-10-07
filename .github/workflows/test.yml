@@ -599,10 +599,30 @@ jobs:
       - name: Setup with cache
         uses: ./
         with:
+          enable-cache: true
           cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-cache-local
       - run: |
           if [ "$UV_CACHE_DIR" != "${{ matrix.inputs.expected-cache-dir }}" ]; then
             echo "UV_CACHE_DIR is not set to the expected value: $UV_CACHE_DIR"
+            exit 1
+          fi
+        shell: bash
+
+  test-cache-local-cache-disabled:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Setup without cache
+        uses: ./
+        with:
+          enable-cache: false
+
+      - name: Check UV_CACHE_DIR is not set
+        run: |
+          if [ -n "$UV_CACHE_DIR" ]; then
+            echo "UV_CACHE_DIR should not be set when cache is disabled: $UV_CACHE_DIR"
             exit 1
           fi
         shell: bash
@@ -791,6 +811,31 @@ jobs:
       - run: uv run long-running.py &
         working-directory: __tests__/fixtures/uv-project
 
+  test-cache-dir-from-file:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Verify uv cache dir is not populated
+        run: |
+          if [ -f "/tmp/pyproject-toml-defined-cache-path/CACHEDIR.TAG" ]; then
+            echo "Cache dir should not exist"
+            exit 1
+          fi
+      - name: Setup uv
+        uses: ./
+        with:
+          working-directory: __tests__/fixtures/cache-dir-defined-project
+      - run: uv sync
+        working-directory: __tests__/fixtures/cache-dir-defined-project
+      - name: Verify uv cache dir is populated
+        run: |
+          if [ ! -f "/tmp/pyproject-toml-defined-cache-path/CACHEDIR.TAG" ]; then
+            echo "Cache dir should exist"
+            exit 1
+          fi
+
   all-tests-passed:
     runs-on: ubuntu-latest
     needs:
@@ -811,6 +856,7 @@ jobs:
       - test-activate-environment
       - test-musl
       - test-cache-local
+      - test-cache-local-cache-disabled
       - test-setup-cache
       - test-restore-cache
       - test-setup-cache-requirements-txt
@@ -831,6 +877,7 @@ jobs:
       - test-absolute-path
       - test-relative-path
       - test-cache-prune-force
+      - test-cache-dir-from-file
     if: always()
     steps:
       - name: All tests passed
