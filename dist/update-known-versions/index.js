@@ -65801,7 +65801,8 @@ const DEFAULTS = {
     baseUrl: "https://api.github.com",
     userAgent: "setup-uv",
 };
-exports.Octokit = core_1.Octokit.plugin(plugin_paginate_rest_1.paginateRest, plugin_rest_endpoint_methods_1.legacyRestEndpointMethods).defaults(function buildDefaults(options) {
+const OctokitWithPlugins = core_1.Octokit.plugin(plugin_paginate_rest_1.paginateRest, plugin_rest_endpoint_methods_1.legacyRestEndpointMethods);
+exports.Octokit = OctokitWithPlugins.defaults(function buildDefaults(options) {
     return {
         ...DEFAULTS,
         ...options,

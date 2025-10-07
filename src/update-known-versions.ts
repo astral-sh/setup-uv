@@ -1,4 +1,5 @@
 import * as core from "@actions/core";
+import type { Endpoints } from "@octokit/types";
 import * as semver from "semver";
 import { updateChecksums } from "./download/checksum/update-known-checksums";
 import {
@@ -7,6 +8,9 @@ import {
 } from "./download/version-manifest";
 import { OWNER, REPO } from "./utils/constants";
 import { Octokit } from "./utils/octokit";
+
+type Release =
+  Endpoints["GET /repos/{owner}/{repo}/releases"]["response"]["data"][number];
 
 async function run(): Promise<void> {
   const checksumFilePath = process.argv.slice(2)[0];
@@ -31,10 +35,13 @@ async function run(): Promise<void> {
     return;
   }
 
-  const releases = await octokit.paginate(octokit.rest.repos.listReleases, {
-    owner: OWNER,
-    repo: REPO,
-  });
+  const releases: Release[] = await octokit.paginate(
+    octokit.rest.repos.listReleases,
+    {
+      owner: OWNER,
+      repo: REPO,
+    },
+  );
   const checksumDownloadUrls: string[] = releases.flatMap((release) =>
     release.assets
       .filter((asset) => asset.name.endsWith(".sha256"))
