@@ -2,11 +2,12 @@ import * as fs from "node:fs";
 import * as cache from "@actions/cache";
 import * as core from "@actions/core";
 import * as exec from "@actions/exec";
+import * as pep440 from "@renovatebot/pep440";
 import {
   STATE_CACHE_KEY,
   STATE_CACHE_MATCHED_KEY,
 } from "./cache/restore-cache";
-import { STATE_UV_PATH } from "./utils/constants";
+import { STATE_UV_PATH, STATE_UV_VERSION } from "./utils/constants";
 import {
   cacheLocalPath,
   enableCache,
@@ -86,10 +87,15 @@ async function saveCache(): Promise<void> {
 }
 
 async function pruneCache(): Promise<void> {
+  const forceSupported = pep440.gte(core.getState(STATE_UV_VERSION), "0.8.24");
+
   const options: exec.ExecOptions = {
     silent: false,
   };
   const execArgs = ["cache", "prune", "--ci"];
+  if (forceSupported) {
+    execArgs.push("--force");
+  }
 
   core.info("Pruning cache...");
   const uvPath = core.getState(STATE_UV_PATH);

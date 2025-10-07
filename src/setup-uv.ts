@@ -8,7 +8,7 @@ import {
   resolveVersion,
   tryGetFromToolCache,
 } from "./download/download-version";
-import { STATE_UV_PATH } from "./utils/constants";
+import { STATE_UV_PATH, STATE_UV_VERSION } from "./utils/constants";
 import {
   activateEnvironment as activateEnvironmentInput,
   addProblemMatchers,
@@ -56,6 +56,7 @@ async function run(): Promise<void> {
     setCacheDir(cacheLocalPath);
 
     core.setOutput("uv-version", setupResult.version);
+    core.saveState(STATE_UV_VERSION, setupResult.version);
     core.info(`Successfully installed uv version ${setupResult.version}`);
 
     if (enableCache) {

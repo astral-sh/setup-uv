@@ -75777,6 +75777,783 @@ exports.ReflectionTypeCheck = ReflectionTypeCheck;
 
 /***/ }),
 
+/***/ 3297:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+const { valid, clean, explain, parse } = __nccwpck_require__(9961);
+
+const { lt, le, eq, ne, ge, gt, compare, rcompare } = __nccwpck_require__(9469);
+
+const {
+  filter,
+  maxSatisfying,
+  minSatisfying,
+  RANGE_PATTERN,
+  satisfies,
+  validRange,
+} = __nccwpck_require__(3185);
+
+const { major, minor, patch, inc } = __nccwpck_require__(6829);
+
+module.exports = {
+  // version
+  valid,
+  clean,
+  explain,
+  parse,
+
+  // operator
+  lt,
+  le,
+  lte: le,
+  eq,
+  ne,
+  neq: ne,
+  ge,
+  gte: ge,
+  gt,
+  compare,
+  rcompare,
+
+  // range
+  filter,
+  maxSatisfying,
+  minSatisfying,
+  RANGE_PATTERN,
+  satisfies,
+  validRange,
+
+  // semantic
+  major,
+  minor,
+  patch,
+  inc,
+};
+
+
+/***/ }),
+
+/***/ 9469:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+const { parse } = __nccwpck_require__(9961);
+
+module.exports = {
+  compare,
+  rcompare,
+  lt,
+  le,
+  eq,
+  ne,
+  ge,
+  gt,
+  '<': lt,
+  '<=': le,
+  '==': eq,
+  '!=': ne,
+  '>=': ge,
+  '>': gt,
+  '===': arbitrary,
+};
+
+function lt(version, other) {
+  return compare(version, other) < 0;
+}
+
+function le(version, other) {
+  return compare(version, other) <= 0;
+}
+
+function eq(version, other) {
+  return compare(version, other) === 0;
+}
+
+function ne(version, other) {
+  return compare(version, other) !== 0;
+}
+
+function ge(version, other) {
+  return compare(version, other) >= 0;
+}
+
+function gt(version, other) {
+  return compare(version, other) > 0;
+}
+
+function arbitrary(version, other) {
+  return version.toLowerCase() === other.toLowerCase();
+}
+
+function compare(version, other) {
+  const parsedVersion = parse(version);
+  const parsedOther = parse(other);
+
+  const keyVersion = calculateKey(parsedVersion);
+  const keyOther = calculateKey(parsedOther);
+
+  return pyCompare(keyVersion, keyOther);
+}
+
+function rcompare(version, other) {
+  return -compare(version, other);
+}
+
+// this logic is buitin in python, but we need to port it to js
+// see https://stackoverflow.com/a/5292332/1438522
+function pyCompare(elemIn, otherIn) {
+  let elem = elemIn;
+  let other = otherIn;
+  if (elem === other) {
+    return 0;
+  }
+  if (Array.isArray(elem) !== Array.isArray(other)) {
+    elem = Array.isArray(elem) ? elem : [elem];
+    other = Array.isArray(other) ? other : [other];
+  }
+  if (Array.isArray(elem)) {
+    const len = Math.min(elem.length, other.length);
+    for (let i = 0; i < len; i += 1) {
+      const res = pyCompare(elem[i], other[i]);
+      if (res !== 0) {
+        return res;
+      }
+    }
+    return elem.length - other.length;
+  }
+  if (elem === -Infinity || other === Infinity) {
+    return -1;
+  }
+  if (elem === Infinity || other === -Infinity) {
+    return 1;
+  }
+  return elem < other ? -1 : 1;
+}
+
+function calculateKey(input) {
+  const { epoch } = input;
+  let { release, pre, post, local, dev } = input;
+  // When we compare a release version, we want to compare it with all of the
+  // trailing zeros removed. So we'll use a reverse the list, drop all the now
+  // leading zeros until we come to something non zero, then take the rest
+  // re-reverse it back into the correct order and make it a tuple and use
+  // that for our sorting key.
+  release = release.concat();
+  release.reverse();
+  while (release.length && release[0] === 0) {
+    release.shift();
+  }
+  release.reverse();
+
+  // We need to "trick" the sorting algorithm to put 1.0.dev0 before 1.0a0.
+  // We'll do this by abusing the pre segment, but we _only_ want to do this
+  // if there is !a pre or a post segment. If we have one of those then
+  // the normal sorting rules will handle this case correctly.
+  if (!pre && !post && dev) pre = -Infinity;
+  // Versions without a pre-release (except as noted above) should sort after
+  // those with one.
+  else if (!pre) pre = Infinity;
+
+  // Versions without a post segment should sort before those with one.
+  if (!post) post = -Infinity;
+
+  // Versions without a development segment should sort after those with one.
+  if (!dev) dev = Infinity;
+
+  if (!local) {
+    // Versions without a local segment should sort before those with one.
+    local = -Infinity;
+  } else {
+    // Versions with a local segment need that segment parsed to implement
+    // the sorting rules in PEP440.
+    // - Alpha numeric segments sort before numeric segments
+    // - Alpha numeric segments sort lexicographically
+    // - Numeric segments sort numerically
+    // - Shorter versions sort before longer versions when the prefixes
+    //   match exactly
+    local = local.map((i) =>
+      Number.isNaN(Number(i)) ? [-Infinity, i] : [Number(i), ''],
+    );
+  }
+
+  return [epoch, release, pre, post, dev, local];
+}
+
+
+/***/ }),
+
+/***/ 6829:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+const { explain, parse, stringify } = __nccwpck_require__(9961);
+
+// those notation are borrowed from semver
+module.exports = {
+  major,
+  minor,
+  patch,
+  inc,
+};
+
+function major(input) {
+  const version = explain(input);
+  if (!version) {
+    throw new TypeError('Invalid Version: ' + input);
+  }
+  return version.release[0];
+}
+
+function minor(input) {
+  const version = explain(input);
+  if (!version) {
+    throw new TypeError('Invalid Version: ' + input);
+  }
+  if (version.release.length < 2) {
+    return 0;
+  }
+  return version.release[1];
+}
+
+function patch(input) {
+  const version = explain(input);
+  if (!version) {
+    throw new TypeError('Invalid Version: ' + input);
+  }
+  if (version.release.length < 3) {
+    return 0;
+  }
+  return version.release[2];
+}
+
+function inc(input, release, preReleaseIdentifier) {
+  let identifier = preReleaseIdentifier || `a`;
+  const version = parse(input);
+
+  if (!version) {
+    return null;
+  }
+
+  if (
+    !['a', 'b', 'c', 'rc', 'alpha', 'beta', 'pre', 'preview'].includes(
+      identifier,
+    )
+  ) {
+    return null;
+  }
+
+  switch (release) {
+    case 'premajor':
+      {
+        const [majorVersion] = version.release;
+        version.release.fill(0);
+        version.release[0] = majorVersion + 1;
+      }
+      version.pre = [identifier, 0];
+      delete version.post;
+      delete version.dev;
+      delete version.local;
+      break;
+    case 'preminor':
+      {
+        const [majorVersion, minorVersion = 0] = version.release;
+        version.release.fill(0);
+        version.release[0] = majorVersion;
+        version.release[1] = minorVersion + 1;
+      }
+      version.pre = [identifier, 0];
+      delete version.post;
+      delete version.dev;
+      delete version.local;
+      break;
+    case 'prepatch':
+      {
+        const [majorVersion, minorVersion = 0, patchVersion = 0] =
+          version.release;
+        version.release.fill(0);
+        version.release[0] = majorVersion;
+        version.release[1] = minorVersion;
+        version.release[2] = patchVersion + 1;
+      }
+      version.pre = [identifier, 0];
+      delete version.post;
+      delete version.dev;
+      delete version.local;
+      break;
+    case 'prerelease':
+      if (version.pre === null) {
+        const [majorVersion, minorVersion = 0, patchVersion = 0] =
+          version.release;
+        version.release.fill(0);
+        version.release[0] = majorVersion;
+        version.release[1] = minorVersion;
+        version.release[2] = patchVersion + 1;
+        version.pre = [identifier, 0];
+      } else {
+        if (preReleaseIdentifier === undefined && version.pre !== null) {
+          [identifier] = version.pre;
+        }
+
+        const [letter, number] = version.pre;
+        if (letter === identifier) {
+          version.pre = [letter, number + 1];
+        } else {
+          version.pre = [identifier, 0];
+        }
+      }
+
+      delete version.post;
+      delete version.dev;
+      delete version.local;
+      break;
+    case 'major':
+      if (
+        version.release.slice(1).some((value) => value !== 0) ||
+        version.pre === null
+      ) {
+        const [majorVersion] = version.release;
+        version.release.fill(0);
+        version.release[0] = majorVersion + 1;
+      }
+      delete version.pre;
+      delete version.post;
+      delete version.dev;
+      delete version.local;
+      break;
+    case 'minor':
+      if (
+        version.release.slice(2).some((value) => value !== 0) ||
+        version.pre === null
+      ) {
+        const [majorVersion, minorVersion = 0] = version.release;
+        version.release.fill(0);
+        version.release[0] = majorVersion;
+        version.release[1] = minorVersion + 1;
+      }
+      delete version.pre;
+      delete version.post;
+      delete version.dev;
+      delete version.local;
+      break;
+    case 'patch':
+      if (
+        version.release.slice(3).some((value) => value !== 0) ||
+        version.pre === null
+      ) {
+        const [majorVersion, minorVersion = 0, patchVersion = 0] =
+          version.release;
+        version.release.fill(0);
+        version.release[0] = majorVersion;
+        version.release[1] = minorVersion;
+        version.release[2] = patchVersion + 1;
+      }
+      delete version.pre;
+      delete version.post;
+      delete version.dev;
+      delete version.local;
+      break;
+    default:
+      return null;
+  }
+
+  return stringify(version);
+}
+
+
+/***/ }),
+
+/***/ 3185:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+// This file is dual licensed under the terms of the Apache License, Version
+// 2.0, and the BSD License. See the LICENSE file in the root of this repository
+// for complete details.
+
+const { VERSION_PATTERN, explain: explainVersion } = __nccwpck_require__(9961);
+
+const Operator = __nccwpck_require__(9469);
+
+const RANGE_PATTERN = [
+  '(?<operator>(===|~=|==|!=|<=|>=|<|>))',
+  '\\s*',
+  '(',
+  /*  */ '(?<version>(?:' + VERSION_PATTERN.replace(/\?<\w+>/g, '?:') + '))',
+  /*  */ '(?<prefix>\\.\\*)?',
+  /*  */ '|',
+  /*  */ '(?<legacy>[^,;\\s)]+)',
+  ')',
+].join('');
+
+module.exports = {
+  RANGE_PATTERN,
+  parse,
+  satisfies,
+  filter,
+  validRange,
+  maxSatisfying,
+  minSatisfying,
+};
+
+const isEqualityOperator = (op) => ['==', '!=', '==='].includes(op);
+
+const rangeRegex = new RegExp('^' + RANGE_PATTERN + '$', 'i');
+
+function parse(ranges) {
+  if (!ranges.trim()) {
+    return [];
+  }
+
+  const specifiers = ranges
+    .split(',')
+    .map((range) => rangeRegex.exec(range.trim()) || {})
+    .map(({ groups }) => {
+      if (!groups) {
+        return null;
+      }
+
+      let { ...spec } = groups;
+      const { operator, version, prefix, legacy } = groups;
+
+      if (version) {
+        spec = { ...spec, ...explainVersion(version) };
+        if (operator === '~=') {
+          if (spec.release.length < 2) {
+            return null;
+          }
+        }
+        if (!isEqualityOperator(operator) && spec.local) {
+          return null;
+        }
+
+        if (prefix) {
+          if (!isEqualityOperator(operator) || spec.dev || spec.local) {
+            return null;
+          }
+        }
+      }
+      if (legacy && operator !== '===') {
+        return null;
+      }
+
+      return spec;
+    });
+
+  if (specifiers.filter(Boolean).length !== specifiers.length) {
+    return null;
+  }
+
+  return specifiers;
+}
+
+function filter(versions, specifier, options = {}) {
+  const filtered = pick(versions, specifier, options);
+  if (filtered.length === 0 && options.prereleases === undefined) {
+    return pick(versions, specifier, { prereleases: true });
+  }
+  return filtered;
+}
+
+function maxSatisfying(versions, range, options) {
+  const found = filter(versions, range, options).sort(Operator.compare);
+  return found.length === 0 ? null : found[found.length - 1];
+}
+
+function minSatisfying(versions, range, options) {
+  const found = filter(versions, range, options).sort(Operator.compare);
+  return found.length === 0 ? null : found[0];
+}
+
+function pick(versions, specifier, options) {
+  const parsed = parse(specifier);
+
+  if (!parsed) {
+    return [];
+  }
+
+  return versions.filter((version) => {
+    const explained = explainVersion(version);
+
+    if (!parsed.length) {
+      return explained && !(explained.is_prerelease && !options.prereleases);
+    }
+
+    return parsed.reduce((pass, spec) => {
+      if (!pass) {
+        return false;
+      }
+      return contains({ ...spec, ...options }, { version, explained });
+    }, true);
+  });
+}
+
+function satisfies(version, specifier, options = {}) {
+  const filtered = pick([version], specifier, options);
+
+  return filtered.length === 1;
+}
+
+function arrayStartsWith(array, prefix) {
+  if (prefix.length > array.length) {
+    return false;
+  }
+
+  for (let i = 0; i < prefix.length; i += 1) {
+    if (prefix[i] !== array[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function contains(specifier, input) {
+  const { explained } = input;
+  let { version } = input;
+  const { ...spec } = specifier;
+
+  if (spec.prereleases === undefined) {
+    spec.prereleases = spec.is_prerelease;
+  }
+
+  if (explained && explained.is_prerelease && !spec.prereleases) {
+    return false;
+  }
+
+  if (spec.operator === '~=') {
+    let compatiblePrefix = spec.release.slice(0, -1).concat('*').join('.');
+    if (spec.epoch) {
+      compatiblePrefix = spec.epoch + '!' + compatiblePrefix;
+    }
+    return satisfies(version, `>=${spec.version}, ==${compatiblePrefix}`);
+  }
+
+  if (spec.prefix) {
+    const isMatching =
+      explained.epoch === spec.epoch &&
+      arrayStartsWith(explained.release, spec.release);
+    const isEquality = spec.operator !== '!=';
+    return isEquality ? isMatching : !isMatching;
+  }
+
+  if (explained)
+    if (explained.local && spec.version) {
+      version = explained.public;
+      spec.version = explainVersion(spec.version).public;
+    }
+
+  if (spec.operator === '<' || spec.operator === '>') {
+    // simplified version of https://www.python.org/dev/peps/pep-0440/#exclusive-ordered-comparison
+    if (Operator.eq(spec.release.join('.'), explained.release.join('.'))) {
+      return false;
+    }
+  }
+
+  const op = Operator[spec.operator];
+  return op(version, spec.version || spec.legacy);
+}
+
+function validRange(specifier) {
+  return Boolean(parse(specifier));
+}
+
+
+/***/ }),
+
+/***/ 9961:
+/***/ ((module) => {
+
+const VERSION_PATTERN = [
+  'v?',
+  '(?:',
+  /* */ '(?:(?<epoch>[0-9]+)!)?', // epoch
+  /* */ '(?<release>[0-9]+(?:\\.[0-9]+)*)', // release segment
+  /* */ '(?<pre>', // pre-release
+  /*    */ '[-_\\.]?',
+  /*    */ '(?<pre_l>(a|b|c|rc|alpha|beta|pre|preview))',
+  /*    */ '[-_\\.]?',
+  /*    */ '(?<pre_n>[0-9]+)?',
+  /* */ ')?',
+  /* */ '(?<post>', // post release
+  /*    */ '(?:-(?<post_n1>[0-9]+))',
+  /*    */ '|',
+  /*    */ '(?:',
+  /*        */ '[-_\\.]?',
+  /*        */ '(?<post_l>post|rev|r)',
+  /*        */ '[-_\\.]?',
+  /*        */ '(?<post_n2>[0-9]+)?',
+  /*    */ ')',
+  /* */ ')?',
+  /* */ '(?<dev>', // dev release
+  /*    */ '[-_\\.]?',
+  /*    */ '(?<dev_l>dev)',
+  /*    */ '[-_\\.]?',
+  /*    */ '(?<dev_n>[0-9]+)?',
+  /* */ ')?',
+  ')',
+  '(?:\\+(?<local>[a-z0-9]+(?:[-_\\.][a-z0-9]+)*))?', // local version
+].join('');
+
+module.exports = {
+  VERSION_PATTERN,
+  valid,
+  clean,
+  explain,
+  parse,
+  stringify,
+};
+
+const validRegex = new RegExp('^' + VERSION_PATTERN + '$', 'i');
+
+function valid(version) {
+  return validRegex.test(version) ? version : null;
+}
+
+const cleanRegex = new RegExp('^\\s*' + VERSION_PATTERN + '\\s*$', 'i');
+function clean(version) {
+  return stringify(parse(version, cleanRegex));
+}
+
+function parse(version, regex) {
+  // Validate the version and parse it into pieces
+  const { groups } = (regex || validRegex).exec(version) || {};
+  if (!groups) {
+    return null;
+  }
+
+  // Store the parsed out pieces of the version
+  const parsed = {
+    epoch: Number(groups.epoch ? groups.epoch : 0),
+    release: groups.release.split('.').map(Number),
+    pre: normalize_letter_version(groups.pre_l, groups.pre_n),
+    post: normalize_letter_version(
+      groups.post_l,
+      groups.post_n1 || groups.post_n2,
+    ),
+    dev: normalize_letter_version(groups.dev_l, groups.dev_n),
+    local: parse_local_version(groups.local),
+  };
+
+  return parsed;
+}
+
+function stringify(parsed) {
+  if (!parsed) {
+    return null;
+  }
+  const { epoch, release, pre, post, dev, local } = parsed;
+  const parts = [];
+
+  // Epoch
+  if (epoch !== 0) {
+    parts.push(`${epoch}!`);
+  }
+  // Release segment
+  parts.push(release.join('.'));
+
+  // Pre-release
+  if (pre) {
+    parts.push(pre.join(''));
+  }
+  // Post-release
+  if (post) {
+    parts.push('.' + post.join(''));
+  }
+  // Development release
+  if (dev) {
+    parts.push('.' + dev.join(''));
+  }
+  // Local version segment
+  if (local) {
+    parts.push(`+${local}`);
+  }
+  return parts.join('');
+}
+
+function normalize_letter_version(letterIn, numberIn) {
+  let letter = letterIn;
+  let number = numberIn;
+  if (letter) {
+    // We consider there to be an implicit 0 in a pre-release if there is
+    // not a numeral associated with it.
+    if (!number) {
+      number = 0;
+    }
+    // We normalize any letters to their lower case form
+    letter = letter.toLowerCase();
+
+    // We consider some words to be alternate spellings of other words and
+    // in those cases we want to normalize the spellings to our preferred
+    // spelling.
+    if (letter === 'alpha') {
+      letter = 'a';
+    } else if (letter === 'beta') {
+      letter = 'b';
+    } else if (['c', 'pre', 'preview'].includes(letter)) {
+      letter = 'rc';
+    } else if (['rev', 'r'].includes(letter)) {
+      letter = 'post';
+    }
+    return [letter, Number(number)];
+  }
+  if (!letter && number) {
+    // We assume if we are given a number, but we are not given a letter
+    // then this is using the implicit post release syntax (e.g. 1.0-1)
+    letter = 'post';
+
+    return [letter, Number(number)];
+  }
+  return null;
+}
+
+function parse_local_version(local) {
+  /*
+    Takes a string like abc.1.twelve and turns it into("abc", 1, "twelve").
+    */
+  if (local) {
+    return local
+      .split(/[._-]/)
+      .map((part) =>
+        Number.isNaN(Number(part)) ? part.toLowerCase() : Number(part),
+      );
+  }
+  return null;
+}
+
+function explain(version) {
+  const parsed = parse(version);
+  if (!parsed) {
+    return parsed;
+  }
+  const { epoch, release, pre, post, dev, local } = parsed;
+
+  let base_version = '';
+  if (epoch !== 0) {
+    base_version += epoch + '!';
+  }
+  base_version += release.join('.');
+
+  const is_prerelease = Boolean(dev || pre);
+  const is_devrelease = Boolean(dev);
+  const is_postrelease = Boolean(post);
+
+  // return
+
+  return {
+    epoch,
+    release,
+    pre,
+    post: post ? post[1] : post,
+    dev: dev ? dev[1] : dev,
+    local: local ? local.join('.') : local,
+    public: stringify(parsed).split('+', 1)[0],
+    base_version,
+    is_prerelease,
+    is_devrelease,
+    is_postrelease,
+  };
+}
+
+
+/***/ }),
+
 /***/ 1324:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -90018,6 +90795,7 @@ const fs = __importStar(__nccwpck_require__(3024));
 const cache = __importStar(__nccwpck_require__(5116));
 const core = __importStar(__nccwpck_require__(7484));
 const exec = __importStar(__nccwpck_require__(5236));
+const pep440 = __importStar(__nccwpck_require__(3297));
 const restore_cache_1 = __nccwpck_require__(5391);
 const constants_1 = __nccwpck_require__(6156);
 const inputs_1 = __nccwpck_require__(9612);
@@ -90082,10 +90860,14 @@ async function saveCache() {
     }
 }
 async function pruneCache() {
+    const forceSupported = pep440.gte(core.getState(constants_1.STATE_UV_VERSION), "0.8.24");
     const options = {
         silent: false,
     };
     const execArgs = ["cache", "prune", "--ci"];
+    if (forceSupported) {
+        execArgs.push("--force");
+    }
     core.info("Pruning cache...");
     const uvPath = core.getState(constants_1.STATE_UV_PATH);
     await exec.exec(uvPath, execArgs, options);
@@ -90101,11 +90883,12 @@ run();
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.STATE_UV_PATH = exports.TOOL_CACHE_NAME = exports.OWNER = exports.REPO = void 0;
+exports.STATE_UV_VERSION = exports.STATE_UV_PATH = exports.TOOL_CACHE_NAME = exports.OWNER = exports.REPO = void 0;
 exports.REPO = "uv";
 exports.OWNER = "astral-sh";
 exports.TOOL_CACHE_NAME = "uv";
 exports.STATE_UV_PATH = "uv-path";
+exports.STATE_UV_VERSION = "uv-version";
 
 
 /***/ }),
