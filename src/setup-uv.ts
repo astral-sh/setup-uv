@@ -8,6 +8,7 @@ import {
   resolveVersion,
   tryGetFromToolCache,
 } from "./download/download-version";
+import { getConfigValueFromTomlFile } from "./utils/config-file";
 import { STATE_UV_PATH, STATE_UV_VERSION } from "./utils/constants";
 import {
   activateEnvironment as activateEnvironmentInput,
@@ -53,7 +54,7 @@ async function run(): Promise<void> {
     setupPython();
     await activateEnvironment();
     addMatchers();
-    setCacheDir(cacheLocalPath);
+    setCacheDir();
 
     core.setOutput("uv-version", setupResult.version);
     core.saveState(STATE_UV_VERSION, setupResult.version);
@@ -224,9 +225,18 @@ async function activateEnvironment(): Promise<void> {
   }
 }
 
-function setCacheDir(cacheLocalPath: string): void {
-  core.exportVariable("UV_CACHE_DIR", cacheLocalPath);
-  core.info(`Set UV_CACHE_DIR to ${cacheLocalPath}`);
+function setCacheDir(): void {
+  if (enableCache) {
+    const cacheDirFromConfig = getConfigValueFromTomlFile("", "cache-dir");
+    if (cacheDirFromConfig !== undefined) {
+      core.info(
+        "Using cache-dir from uv config file, not modifying UV_CACHE_DIR",
+      );
+      return;
+    }
+    core.exportVariable("UV_CACHE_DIR", cacheLocalPath);
+    core.info(`Set UV_CACHE_DIR to ${cacheLocalPath}`);
+  }
 }
 
 function addMatchers(): void {

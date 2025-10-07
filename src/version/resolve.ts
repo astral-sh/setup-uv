@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import * as core from "@actions/core";
-import { getRequiredVersionFromConfigFile } from "./config-file";
+import { getConfigValueFromTomlFile } from "../utils/config-file";
 import { getUvVersionFromRequirementsFile } from "./requirements-file";
 import { getUvVersionFromToolVersions } from "./tool-versions-file";
 
@@ -14,7 +14,7 @@ export function getUvVersionFromFile(filePath: string): string | undefined {
   try {
     uvVersion = getUvVersionFromToolVersions(filePath);
     if (uvVersion === undefined) {
-      uvVersion = getRequiredVersionFromConfigFile(filePath);
+      uvVersion = getConfigValueFromTomlFile(filePath, "required-version");
     }
     if (uvVersion === undefined) {
       uvVersion = getUvVersionFromRequirementsFile(filePath);

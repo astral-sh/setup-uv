@@ -1,5 +1,6 @@
 import path from "node:path";
 import * as core from "@actions/core";
+import { getConfigValueFromTomlFile } from "./config-file";
 
 export const workingDirectory = core.getInput("working-directory");
 export const version = core.getInput("version");
@@ -82,6 +83,14 @@ function getCacheLocalPath(): string {
     const tildeExpanded = expandTilde(cacheLocalPathInput);
     return resolveRelativePath(tildeExpanded);
   }
+  const cacheDirFromConfig = getCacheDirFromConfig();
+  if (cacheDirFromConfig !== undefined) {
+    return cacheDirFromConfig;
+  }
+  if (process.env.UV_CACHE_DIR !== undefined) {
+    core.info(`UV_CACHE_DIR is already set to ${process.env.UV_CACHE_DIR}`);
+    return process.env.UV_CACHE_DIR;
+  }
   if (process.env.RUNNER_ENVIRONMENT === "github-hosted") {
     if (process.env.RUNNER_TEMP !== undefined) {
       return `${process.env.RUNNER_TEMP}${path.sep}setup-uv-cache`;
@@ -94,6 +103,24 @@ function getCacheLocalPath(): string {
     return `${process.env.APPDATA}${path.sep}uv${path.sep}cache`;
   }
   return `${process.env.HOME}${path.sep}.cache${path.sep}uv`;
+}
+
+function getCacheDirFromConfig(): string | undefined {
+  for (const filePath of [versionFile, "uv.toml", "pyproject.toml"]) {
+    const resolvedPath = resolveRelativePath(filePath);
+    try {
+      const cacheDir = getConfigValueFromTomlFile(resolvedPath, "cache-dir");
+      if (cacheDir !== undefined) {
+        core.info(`Found cache-dir in ${resolvedPath}: ${cacheDir}`);
+        return cacheDir;
+      }
+    } catch (err) {
+      const message = (err as Error).message;
+      core.warning(`Error while parsing ${filePath}: ${message}`);
+      return undefined;
+    }
+  }
+  return undefined;
 }
 
 function getCacheDependencyGlob(): string {

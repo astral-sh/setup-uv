@@ -316,10 +316,17 @@ By default, the cache will be saved.
 
 ### Local cache path
 
-This action controls where uv stores its cache on the runner's filesystem by setting `UV_CACHE_DIR`.
+If caching is enabled, this action controls where uv stores its cache on the runner's filesystem
+by setting `UV_CACHE_DIR`.
+
 It defaults to `setup-uv-cache` in the `TMP` dir, `D:\a\_temp\uv-tool-dir` on Windows and
 `/tmp/setup-uv-cache` on Linux/macOS. You can change the default by specifying the path with the
 `cache-local-path` input.
+
+> [!NOTE]
+> If the environment variable `UV_CACHE_DIR` is already set this action will not override it.
+> If you configured [cache-dir](https://docs.astral.sh/uv/reference/settings/#cache-dir) in your
+> config file then it is also respected and this action will not set `UV_CACHE_DIR`.
 
 ```yaml
 - name: Define a custom uv cache path
