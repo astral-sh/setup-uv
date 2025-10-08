@@ -10,7 +10,9 @@ import {
 import { STATE_UV_PATH, STATE_UV_VERSION } from "./utils/constants";
 import {
   cacheLocalPath,
+  cachePython,
   enableCache,
+  getUvPythonDir,
   ignoreNothingToCache,
   pruneCache as shouldPruneCache,
   saveCache as shouldSaveCache,
@@ -68,8 +70,22 @@ async function saveCache(): Promise<void> {
       `Cache path ${actualCachePath} does not exist on disk. This likely indicates that there are no dependencies to cache. Consider disabling the cache input if it is not needed.`,
     );
   }
+
+  const cachePaths = [actualCachePath];
+  if (cachePython) {
+    const pythonDir = await getUvPythonDir();
+    core.info(`Including Python cache path: ${pythonDir}`);
+    if (!fs.existsSync(pythonDir) && !ignoreNothingToCache) {
+      throw new Error(
+        `Python cache path ${pythonDir} does not exist on disk. This likely indicates that there are no dependencies to cache. Consider disabling the cache input if it is not needed.`,
+      );
+    }
+    cachePaths.push(pythonDir);
+  }
+
+  core.info(`Final cache paths: ${cachePaths.join(", ")}`);
   try {
-    await cache.saveCache([actualCachePath], cacheKey);
+    await cache.saveCache(cachePaths, cacheKey);
     core.info(`cache saved with the key: ${cacheKey}`);
   } catch (e) {
     if (
