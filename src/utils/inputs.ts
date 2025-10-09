@@ -1,5 +1,6 @@
 import path from "node:path";
 import * as core from "@actions/core";
+import * as exec from "@actions/exec";
 import { getConfigValueFromTomlFile } from "./config-file";
 
 export const workingDirectory = core.getInput("working-directory");
@@ -15,6 +16,7 @@ export const cacheSuffix = core.getInput("cache-suffix") || "";
 export const cacheLocalPath = getCacheLocalPath();
 export const cacheDependencyGlob = getCacheDependencyGlob();
 export const pruneCache = core.getInput("prune-cache") === "true";
+export const cachePython = core.getInput("cache-python") === "true";
 export const ignoreNothingToCache =
   core.getInput("ignore-nothing-to-cache") === "true";
 export const ignoreEmptyWorkdir =
@@ -121,6 +123,25 @@ function getCacheDirFromConfig(): string | undefined {
     }
   }
   return undefined;
+}
+
+export async function getUvPythonDir(): Promise<string> {
+  if (process.env.UV_PYTHON_INSTALL_DIR !== undefined) {
+    core.info(
+      `Using UV_PYTHON_INSTALL_DIR from environment: ${process.env.UV_PYTHON_INSTALL_DIR}`,
+    );
+    return process.env.UV_PYTHON_INSTALL_DIR;
+  }
+  core.info("Determining uv python dir using `uv python dir`...");
+  const result = await exec.getExecOutput("uv", ["python", "dir"]);
+  if (result.exitCode !== 0) {
+    throw new Error(
+      `Failed to get uv python dir: ${result.stderr || result.stdout}`,
+    );
+  }
+  const dir = result.stdout.trim();
+  core.info(`Determined uv python dir: ${dir}`);
+  return dir;
 }
 
 function getCacheDependencyGlob(): string {

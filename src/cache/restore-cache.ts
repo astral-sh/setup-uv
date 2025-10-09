@@ -5,7 +5,9 @@ import { hashFiles } from "../hash/hash-files";
 import {
   cacheDependencyGlob,
   cacheLocalPath,
+  cachePython,
   cacheSuffix,
+  getUvPythonDir,
   pruneCache,
   pythonVersion as pythonVersionInput,
   restoreCache as shouldRestoreCache,
@@ -30,8 +32,12 @@ export async function restoreCache(): Promise<void> {
   core.info(
     `Trying to restore uv cache from GitHub Actions cache with key: ${cacheKey}`,
   );
+  const cachePaths = [cacheLocalPath];
+  if (cachePython) {
+    cachePaths.push(await getUvPythonDir());
+  }
   try {
-    matchedKey = await cache.restoreCache([cacheLocalPath], cacheKey);
+    matchedKey = await cache.restoreCache(cachePaths, cacheKey);
   } catch (err) {
     const message = (err as Error).message;
     core.warning(message);
@@ -62,7 +68,8 @@ async function computeKeys(): Promise<string> {
   const pythonVersion = await getPythonVersion();
   const platform = await getPlatform();
   const pruned = pruneCache ? "-pruned" : "";
-  return `setup-uv-${CACHE_VERSION}-${getArch()}-${platform}-${pythonVersion}${pruned}${cacheDependencyPathHash}${suffix}`;
+  const python = cachePython ? "-py" : "";
+  return `setup-uv-${CACHE_VERSION}-${getArch()}-${platform}-${pythonVersion}${pruned}${python}${cacheDependencyPathHash}${suffix}`;
 }
 
 async function getPythonVersion(): Promise<string> {

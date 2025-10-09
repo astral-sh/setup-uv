@@ -26,6 +26,7 @@ Set up your GitHub Actions workflow with a specific version of [uv](https://docs
     - [Save cache](#save-cache)
   - [Local cache path](#local-cache-path)
   - [Disable cache pruning](#disable-cache-pruning)
+  - [Cache Python installs](#cache-python-installs)
   - [Ignore nothing to cache](#ignore-nothing-to-cache)
   - [GitHub authentication token](#github-authentication-token)
   - [UV_TOOL_DIR](#uv_tool_dir)
@@ -353,6 +354,20 @@ input.
   with:
     enable-cache: true
     prune-cache: false
+```
+
+### Cache Python installs
+
+By default, the Python install dir (`uv python dir` / `UV_PYTHON_INSTALL_DIR`) is not cached,
+for the same reason that the dependency cache is pruned.
+If you want to cache Python installs along with your dependencies, set the `cache-python` input to `true`.
+
+```yaml
+- name: Cache Python installs
+  uses: astral-sh/setup-uv@v6
+  with:
+    enable-cache: true
+    cache-python: true
 ```
 
 ### Ignore nothing to cache

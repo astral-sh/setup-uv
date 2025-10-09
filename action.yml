@@ -56,6 +56,9 @@ inputs:
   prune-cache:
     description: "Prune cache before saving."
     default: "true"
+  cache-python:
+    description: "Upload managed Python installations to the Github Actions cache."
+    default: "false"
   ignore-nothing-to-cache:
     description: "Ignore when nothing is found to cache."
     default: "false"
