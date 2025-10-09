@@ -91129,13 +91129,13 @@ async function getUvPythonDir() {
         core.info(`Using UV_PYTHON_INSTALL_DIR from environment: ${process.env.UV_PYTHON_INSTALL_DIR}`);
         return process.env.UV_PYTHON_INSTALL_DIR;
     }
-    core.info("Determining UV_PYTHON_INSTALL_DIR using `uv python dir`...");
+    core.info("Determining uv python dir using `uv python dir`...");
     const result = await exec.getExecOutput("uv", ["python", "dir"]);
     if (result.exitCode !== 0) {
         throw new Error(`Failed to get uv python dir: ${result.stderr || result.stdout}`);
     }
     const dir = result.stdout.trim();
-    core.info(`Determined UV_PYTHON_INSTALL_DIR: ${dir}`);
+    core.info(`Determined uv python dir: ${dir}`);
     return dir;
 }
 function getCacheDependencyGlob() {
