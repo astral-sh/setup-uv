@@ -866,7 +866,7 @@ jobs:
       - name: Verify Python install dir does not exist
         run: |
           if [ -d ~/.local/share/uv/python ]; then
-            echo "Python install dir should exist"
+            echo "Python install dir should not exist"
             exit 1
           fi
       - name: Restore with cache
