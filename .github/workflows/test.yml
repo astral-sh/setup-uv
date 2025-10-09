@@ -25,7 +25,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Actionlint
-        uses: eifinger/actionlint-action@23c85443d840cd73bbecb9cddfc933cc21649a38  # v1.9.1
+        uses: eifinger/actionlint-action@23c85443d840cd73bbecb9cddfc933cc21649a38 # v1.9.1
       - name: Run zizmor
         uses: zizmorcore/zizmor-action@e673c3917a1aef3c65c972347ed84ccd013ecda4 # v0.2.0
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
@@ -269,13 +269,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os:
-          [
-            ubuntu-latest,
-            macos-latest,
-            macos-14,
-            windows-latest,
-          ]
+        os: [ubuntu-latest, macos-latest, macos-14, windows-latest]
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
@@ -334,7 +328,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
@@ -371,8 +365,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        enable-cache: [ "true", "false", "auto" ]
-        os: [ "ubuntu-latest", "selfhosted-ubuntu-arm64", "windows-latest" ]
+        enable-cache: ["true", "false", "auto"]
+        os: ["ubuntu-latest", "selfhosted-ubuntu-arm64", "windows-latest"]
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
@@ -389,8 +383,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        enable-cache: [ "true", "false", "auto" ]
-        os: [ "ubuntu-latest", "selfhosted-ubuntu-arm64", "windows-latest" ]
+        enable-cache: ["true", "false", "auto"]
+        os: ["ubuntu-latest", "selfhosted-ubuntu-arm64", "windows-latest"]
     needs: test-setup-cache
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -833,6 +827,47 @@ jobs:
         run: |
           if [ ! -f "/tmp/pyproject-toml-defined-cache-path/CACHEDIR.TAG" ]; then
             echo "Cache dir should exist"
+            exit 1
+          fi
+
+  test-cache-python-installs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Verify Python install dir is not populated
+        run: |
+          if [ -d ~/.local/share/uv/python ]; then
+            echo "Python install dir should not exist"
+            exit 1
+          fi
+      - name: Setup uv with cache
+        uses: ./
+        with:
+          enable-cache: true
+          cache-python: true
+      - run: uv sync --verbose
+        working-directory: __tests__/fixtures/uv-project-pinned-python
+      - name: Verify the correct Python version is installed
+        run: |
+          PYTHON_VERSION=$(./.venv/bin/python -c "import sys; print(sys.version)")
+          if [[ "$PYTHON_VERSION" != 3.13.3* ]]; then
+            echo "Python version is not correct: $PYTHON_VERSION"
+            exit 1
+          fi
+        shell: bash
+        working-directory: __tests__/fixtures/uv-project-pinned-python
+      - name: Verify Python install dir exists
+        run: |
+          if [ ! -d ~/.local/share/uv/python ]; then
+            echo "Python install dir should exist"
+            exit 1
+          fi
+      - name: Verify Python is installed in install dir
+        run: |
+          if [ ! -f ~/.local/share/uv/python/cpython-3.13.3-linux-x86_64-gnu/bin/python3.13 ]; then
+            echo "Python binary does not exist"
             exit 1
           fi
 
