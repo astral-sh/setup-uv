@@ -132,7 +132,7 @@ export async function getUvPythonDir(): Promise<string> {
     );
     return process.env.UV_PYTHON_INSTALL_DIR;
   }
-  core.info("Determining UV_PYTHON_INSTALL_DIR using `uv python dir`...");
+  core.info("Determining uv python dir using `uv python dir`...");
   const result = await exec.getExecOutput("uv", ["python", "dir"]);
   if (result.exitCode !== 0) {
     throw new Error(
@@ -140,7 +140,7 @@ export async function getUvPythonDir(): Promise<string> {
     );
   }
   const dir = result.stdout.trim();
-  core.info(`Determined UV_PYTHON_INSTALL_DIR: ${dir}`);
+  core.info(`Determined uv python dir: ${dir}`);
   return dir;
 }
 
