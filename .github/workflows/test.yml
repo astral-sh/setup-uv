@@ -848,17 +848,8 @@ jobs:
           enable-cache: true
           cache-python: true
           cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-cache-python-installs
-      - run: uv sync --verbose
-        working-directory: __tests__/fixtures/uv-project-pinned-python
-      - name: Verify the correct Python version is installed
-        run: |
-          PYTHON_VERSION=$(./.venv/bin/python -c "import sys; print(sys.version)")
-          if [[ "$PYTHON_VERSION" != 3.13.3* ]]; then
-            echo "Python version is not correct: $PYTHON_VERSION"
-            exit 1
-          fi
-        shell: bash
-        working-directory: __tests__/fixtures/uv-project-pinned-python
+      - run: uv sync --managed-python
+        working-directory: __tests__/fixtures/uv-project
       - name: Verify Python install dir exists
         run: |
           if [ ! -d ~/.local/share/uv/python ]; then
@@ -872,6 +863,12 @@ jobs:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
+      - name: Verify Python install dir does not exist
+        run: |
+          if [ -d ~/.local/share/uv/python ]; then
+            echo "Python install dir should exist"
+            exit 1
+          fi
       - name: Restore with cache
         id: restore
         uses: ./
@@ -879,6 +876,12 @@ jobs:
           enable-cache: true
           cache-python: true
           cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-cache-python-installs
+      - name: Verify Python install dir exists
+        run: |
+          if [ ! -d ~/.local/share/uv/python ]; then
+            echo "Python install dir should exist"
+            exit 1
+          fi
       - name: Cache was hit
         run: |
           if [ "$CACHE_HIT" != "true" ]; then
@@ -886,8 +889,8 @@ jobs:
           fi
         env:
           CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
-      - run: uv sync
-        working-directory: __tests__/fixtures/uv-project-pinned-python
+      - run: uv sync --managed-python
+        working-directory: __tests__/fixtures/uv-project
 
   all-tests-passed:
     runs-on: ubuntu-latest
