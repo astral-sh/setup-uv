@@ -100,3 +100,6 @@ lib/**/*
 
 # Idea IDEs (PyCharm, WebStorm, IntelliJ, etc)
 .idea/
+
+# Compiled scripts
+.github/scripts/*.js
