@@ -86,6 +86,8 @@ outputs:
     description: "The path to the installed uvx binary."
   cache-hit:
     description: "A boolean value to indicate a cache entry was found"
+  venv:
+    description: "Path to the activated venv if activate-environment is true"
 runs:
   using: "node24"
   main: "dist/setup/index.js"
