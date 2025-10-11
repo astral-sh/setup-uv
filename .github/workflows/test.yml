@@ -111,15 +111,25 @@ jobs:
             expected-version: "0.3.5"
           - version-input: ">=0.4.25,<0.5"
             expected-version: "0.4.30"
+          - version-input: ">=0.4.25,<0.5"
+            expected-version: "0.4.25"
+            resolution-strategy: "lowest"
+          - version-input: ">=0.1.0,<0.2"
+            expected-version: "0.1.19"
+            resolution-strategy: "highest"
+          - version-input: ">=0.1.0,<0.2"
+            expected-version: "0.1.0"
+            resolution-strategy: "lowest"
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
-      - name: Install version ${{ matrix.input.version-input }}
+      - name: Install version ${{ matrix.input.version-input }} with strategy ${{ matrix.input.resolution-strategy || 'highest' }}
         id: setup-uv
         uses: ./
         with:
           version: ${{ matrix.input.version-input }}
+          resolution-strategy: ${{ matrix.input.resolution-strategy || 'highest' }}
       - name: Correct version gets installed
         run: |
           if [ "$(uv --version)" != "uv ${{ matrix.input.expected-version }}" ]; then
