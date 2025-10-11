@@ -213,15 +213,14 @@ async function activateEnvironment(): Promise<void> {
     core.info("Activating python venv...");
     await exec.exec("uv", execArgs);
 
-    let venvBinPath = `${workingDirectory}${path.sep}.venv${path.sep}bin`;
+    const venvPath = path.resolve(`${workingDirectory}${path.sep}.venv`);
+    let venvBinPath = `${venvPath}${path.sep}bin`;
     if (process.platform === "win32") {
-      venvBinPath = `${workingDirectory}${path.sep}.venv${path.sep}Scripts`;
+      venvBinPath = `${venvPath}${path.sep}Scripts`;
     }
     core.addPath(path.resolve(venvBinPath));
-    core.exportVariable(
-      "VIRTUAL_ENV",
-      path.resolve(`${workingDirectory}${path.sep}.venv`),
-    );
+    core.exportVariable("VIRTUAL_ENV", venvPath);
+    core.setOutput("venv", venvPath);
   }
 }
 

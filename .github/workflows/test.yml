@@ -334,6 +334,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install latest version
+        id: setup-uv
         uses: ./
         with:
           python-version: 3.13.1t
@@ -348,6 +349,19 @@ jobs:
             exit 1
           fi
         shell: bash
+      - name: Verify output venv is set
+        run: |
+          if [ -z "$UV_VENV" ]; then
+            echo "output venv is not set"
+            exit 1
+          fi
+          if [ ! -d "$UV_VENV" ]; then
+            echo "output venv not point to a directory: $UV_VENV"
+            exit 1
+          fi
+        shell: bash
+        env:
+          UV_VENV: ${{ steps.setup-uv.outputs.venv }}
 
   test-musl:
     runs-on: ubuntu-latest
