@@ -852,7 +852,7 @@ jobs:
           persist-credentials: false
       - name: Verify Python install dir is not populated
         run: |
-          if [ -d ~/.local/share/uv/python ]; then
+          if [ -d /home/runner/work/_temp/uv-python-dir ]; then
             echo "Python install dir should not exist"
             exit 1
           fi
@@ -866,7 +866,7 @@ jobs:
         working-directory: __tests__/fixtures/uv-project
       - name: Verify Python install dir exists
         run: |
-          if [ ! -d ~/.local/share/uv/python ]; then
+          if [ ! -d /home/runner/work/_temp/uv-python-dir ]; then
             echo "Python install dir should exist"
             exit 1
           fi
@@ -879,7 +879,7 @@ jobs:
           persist-credentials: false
       - name: Verify Python install dir does not exist
         run: |
-          if [ -d ~/.local/share/uv/python ]; then
+          if [ -d /home/runner/work/_temp/uv-python-dir ]; then
             echo "Python install dir should not exist"
             exit 1
           fi
@@ -892,7 +892,7 @@ jobs:
           cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-cache-python-installs
       - name: Verify Python install dir exists
         run: |
-          if [ ! -d ~/.local/share/uv/python ]; then
+          if [ ! -d /home/runner/work/_temp/uv-python-dir ]; then
             echo "Python install dir should exist"
             exit 1
           fi
@@ -905,6 +905,34 @@ jobs:
           CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
       - run: uv sync --managed-python
         working-directory: __tests__/fixtures/uv-project
+
+  test-python-install-dir:
+    strategy:
+      matrix:
+        inputs:
+          - os: ubuntu-latest
+            expected-python-dir: "/home/runner/work/_temp/uv-python-dir"
+          - os: windows-latest
+            expected-python-dir: "D:\\a\\_temp\\uv-python-dir"
+          - os: selfhosted-ubuntu-arm64
+            expected-python-dir: "/home/ubuntu/.local/share/uv/python"
+    runs-on: ${{ matrix.inputs.os }}
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Install latest version
+        id: setup-uv
+        uses: ./
+      - name: Check Python dir is expected dir
+        run: |
+          if [ "$UV_PYTHON_INSTALL_DIR" != "${{ matrix.inputs.expected-python-dir }}" ]; then
+            echo "Wrong UV_PYTHON_INSTALL_DIR: UV_PYTHON_INSTALL_DIR"
+            exit 1
+          fi
+        shell: bash
+      - name: Install python works
+        run: uv python install
 
   all-tests-passed:
     runs-on: ubuntu-latest
@@ -950,6 +978,7 @@ jobs:
       - test-cache-dir-from-file
       - test-cache-python-installs
       - test-restore-python-installs
+      - test-python-install-dir
     if: always()
     steps:
       - name: All tests passed

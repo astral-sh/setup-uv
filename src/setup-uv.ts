@@ -19,6 +19,7 @@ import {
   githubToken,
   ignoreEmptyWorkdir,
   manifestFile,
+  pythonDir,
   pythonVersion,
   toolBinDir,
   toolDir,
@@ -51,6 +52,7 @@ async function run(): Promise<void> {
     addToolBinToPath();
     addUvToPathAndOutput(setupResult.uvDir);
     setToolDir();
+    addPythonDirToPath();
     setupPython();
     await activateEnvironment();
     addMatchers();
@@ -191,6 +193,17 @@ function setToolDir(): void {
   if (toolDir !== undefined) {
     core.exportVariable("UV_TOOL_DIR", toolDir);
     core.info(`Set UV_TOOL_DIR to ${toolDir}`);
+  }
+}
+
+function addPythonDirToPath(): void {
+  core.exportVariable("UV_PYTHON_INSTALL_DIR", pythonDir);
+  core.info(`Set UV_PYTHON_INSTALL_DIR to ${pythonDir}`);
+  if (process.env.UV_NO_MODIFY_PATH !== undefined) {
+    core.info("UV_NO_MODIFY_PATH is set, not adding python dir to path");
+  } else {
+    core.addPath(pythonDir);
+    core.info(`Added ${pythonDir} to the path`);
   }
 }
 

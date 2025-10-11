@@ -12,8 +12,8 @@ import {
   cacheLocalPath,
   cachePython,
   enableCache,
-  getUvPythonDir,
   ignoreNothingToCache,
+  pythonDir,
   pruneCache as shouldPruneCache,
   saveCache as shouldSaveCache,
 } from "./utils/inputs";
@@ -73,7 +73,6 @@ async function saveCache(): Promise<void> {
 
   const cachePaths = [actualCachePath];
   if (cachePython) {
-    const pythonDir = await getUvPythonDir();
     core.info(`Including Python cache path: ${pythonDir}`);
     if (!fs.existsSync(pythonDir) && !ignoreNothingToCache) {
       throw new Error(

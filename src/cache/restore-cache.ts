@@ -7,8 +7,8 @@ import {
   cacheLocalPath,
   cachePython,
   cacheSuffix,
-  getUvPythonDir,
   pruneCache,
+  pythonDir,
   pythonVersion as pythonVersionInput,
   restoreCache as shouldRestoreCache,
   workingDirectory,
@@ -34,7 +34,7 @@ export async function restoreCache(): Promise<void> {
   );
   const cachePaths = [cacheLocalPath];
   if (cachePython) {
-    cachePaths.push(await getUvPythonDir());
+    cachePaths.push(pythonDir);
   }
   try {
     matchedKey = await cache.restoreCache(cachePaths, cacheKey);

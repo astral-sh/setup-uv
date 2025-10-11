@@ -90595,7 +90595,7 @@ async function restoreCache() {
     core.info(`Trying to restore uv cache from GitHub Actions cache with key: ${cacheKey}`);
     const cachePaths = [inputs_1.cacheLocalPath];
     if (inputs_1.cachePython) {
-        cachePaths.push(await (0, inputs_1.getUvPythonDir)());
+        cachePaths.push(inputs_1.pythonDir);
     }
     try {
         matchedKey = await cache.restoreCache(cachePaths, cacheKey);
@@ -90851,12 +90851,11 @@ async function saveCache() {
     }
     const cachePaths = [actualCachePath];
     if (inputs_1.cachePython) {
-        const pythonDir = await (0, inputs_1.getUvPythonDir)();
-        core.info(`Including Python cache path: ${pythonDir}`);
-        if (!fs.existsSync(pythonDir) && !inputs_1.ignoreNothingToCache) {
-            throw new Error(`Python cache path ${pythonDir} does not exist on disk. This likely indicates that there are no dependencies to cache. Consider disabling the cache input if it is not needed.`);
+        core.info(`Including Python cache path: ${inputs_1.pythonDir}`);
+        if (!fs.existsSync(inputs_1.pythonDir) && !inputs_1.ignoreNothingToCache) {
+            throw new Error(`Python cache path ${inputs_1.pythonDir} does not exist on disk. This likely indicates that there are no dependencies to cache. Consider disabling the cache input if it is not needed.`);
         }
-        cachePaths.push(pythonDir);
+        cachePaths.push(inputs_1.pythonDir);
     }
     core.info(`Final cache paths: ${cachePaths.join(", ")}`);
     try {
@@ -91011,11 +91010,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.addProblemMatchers = exports.manifestFile = exports.githubToken = exports.toolDir = exports.toolBinDir = exports.ignoreEmptyWorkdir = exports.ignoreNothingToCache = exports.cachePython = exports.pruneCache = exports.cacheDependencyGlob = exports.cacheLocalPath = exports.cacheSuffix = exports.saveCache = exports.restoreCache = exports.enableCache = exports.checkSum = exports.activateEnvironment = exports.pythonVersion = exports.versionFile = exports.version = exports.workingDirectory = void 0;
+exports.addProblemMatchers = exports.manifestFile = exports.githubToken = exports.pythonDir = exports.toolDir = exports.toolBinDir = exports.ignoreEmptyWorkdir = exports.ignoreNothingToCache = exports.cachePython = exports.pruneCache = exports.cacheDependencyGlob = exports.cacheLocalPath = exports.cacheSuffix = exports.saveCache = exports.restoreCache = exports.enableCache = exports.checkSum = exports.activateEnvironment = exports.pythonVersion = exports.versionFile = exports.version = exports.workingDirectory = void 0;
 exports.getUvPythonDir = getUvPythonDir;
 const node_path_1 = __importDefault(__nccwpck_require__(6760));
 const core = __importStar(__nccwpck_require__(7484));
-const exec = __importStar(__nccwpck_require__(5236));
 const config_file_1 = __nccwpck_require__(5465);
 exports.workingDirectory = core.getInput("working-directory");
 exports.version = core.getInput("version");
@@ -91035,6 +91033,7 @@ exports.ignoreNothingToCache = core.getInput("ignore-nothing-to-cache") === "tru
 exports.ignoreEmptyWorkdir = core.getInput("ignore-empty-workdir") === "true";
 exports.toolBinDir = getToolBinDir();
 exports.toolDir = getToolDir();
+exports.pythonDir = getUvPythonDir();
 exports.githubToken = core.getInput("github-token");
 exports.manifestFile = getManifestFile();
 exports.addProblemMatchers = core.getInput("add-problem-matchers") === "true";
@@ -91124,19 +91123,23 @@ function getCacheDirFromConfig() {
     }
     return undefined;
 }
-async function getUvPythonDir() {
+function getUvPythonDir() {
     if (process.env.UV_PYTHON_INSTALL_DIR !== undefined) {
-        core.info(`Using UV_PYTHON_INSTALL_DIR from environment: ${process.env.UV_PYTHON_INSTALL_DIR}`);
+        core.info(`UV_PYTHON_INSTALL_DIR is already set to  ${process.env.UV_PYTHON_INSTALL_DIR}`);
         return process.env.UV_PYTHON_INSTALL_DIR;
     }
-    core.info("Determining uv python dir using `uv python dir`...");
-    const result = await exec.getExecOutput("uv", ["python", "dir"]);
-    if (result.exitCode !== 0) {
-        throw new Error(`Failed to get uv python dir: ${result.stderr || result.stdout}`);
+    if (process.env.RUNNER_ENVIRONMENT !== "github-hosted") {
+        if (process.platform === "win32") {
+            return `${process.env.APPDATA}${node_path_1.default.sep}uv${node_path_1.default.sep}python`;
+        }
+        else {
+            return `${process.env.HOME}${node_path_1.default.sep}.local${node_path_1.default.sep}share${node_path_1.default.sep}uv${node_path_1.default.sep}python`;
+        }
     }
-    const dir = result.stdout.trim();
-    core.info(`Determined uv python dir: ${dir}`);
-    return dir;
+    if (process.env.RUNNER_TEMP !== undefined) {
+        return `${process.env.RUNNER_TEMP}${node_path_1.default.sep}uv-python-dir`;
+    }
+    throw Error("Could not determine UV_PYTHON_INSTALL_DIR. Please make sure RUNNER_TEMP is set or provide the UV_PYTHON_INSTALL_DIR environment variable");
 }
 function getCacheDependencyGlob() {
     const cacheDependencyGlobInput = core.getInput("cache-dependency-glob");
