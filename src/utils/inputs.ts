@@ -27,6 +27,7 @@ export const githubToken = core.getInput("github-token");
 export const manifestFile = getManifestFile();
 export const addProblemMatchers =
   core.getInput("add-problem-matchers") === "true";
+export const resolutionStrategy = getResolutionStrategy();
 
 function getVersionFile(): string {
   const versionFileInput = core.getInput("version-file");
@@ -185,4 +186,17 @@ function getManifestFile(): string | undefined {
     return manifestFileInput;
   }
   return undefined;
+}
+
+function getResolutionStrategy(): "highest" | "lowest" {
+  const resolutionStrategyInput = core.getInput("resolution-strategy");
+  if (resolutionStrategyInput === "lowest") {
+    return "lowest";
+  }
+  if (resolutionStrategyInput === "highest" || resolutionStrategyInput === "") {
+    return "highest";
+  }
+  throw new Error(
+    `Invalid resolution-strategy: ${resolutionStrategyInput}. Must be 'highest' or 'lowest'.`,
+  );
 }

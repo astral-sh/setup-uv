@@ -4,6 +4,7 @@ import * as core from "@actions/core";
 import * as tc from "@actions/tool-cache";
 import type { Endpoints } from "@octokit/types";
 import * as pep440 from "@renovatebot/pep440";
+import * as semver from "semver";
 import { OWNER, REPO, TOOL_CACHE_NAME } from "../utils/constants";
 import { Octokit } from "../utils/octokit";
 import type { Architecture, Platform } from "../utils/platforms";
@@ -134,6 +135,7 @@ export async function resolveVersion(
   versionInput: string,
   manifestFile: string | undefined,
   githubToken: string,
+  resolutionStrategy: "highest" | "lowest" = "highest",
 ): Promise<string> {
   core.debug(`Resolving version: ${versionInput}`);
   let version: string;
@@ -164,7 +166,10 @@ export async function resolveVersion(
   }
   const availableVersions = await getAvailableVersions(githubToken);
   core.debug(`Available versions: ${availableVersions}`);
-  const resolvedVersion = maxSatisfying(availableVersions, version);
+  const resolvedVersion =
+    resolutionStrategy === "lowest"
+      ? minSatisfying(availableVersions, version)
+      : maxSatisfying(availableVersions, version);
   if (resolvedVersion === undefined) {
     throw new Error(`No version found for ${version}`);
   }
@@ -261,6 +266,27 @@ function maxSatisfying(
       `Found a version that satisfies the pep440 specifier: ${maxPep440}`,
     );
     return maxPep440;
+  }
+  return undefined;
+}
+
+function minSatisfying(
+  versions: string[],
+  version: string,
+): string | undefined {
+  // For semver, we need to use a different approach since tc.evaluateVersions only returns max
+  // Let's use semver directly for min satisfying
+  const minSemver = semver.minSatisfying(versions, version);
+  if (minSemver !== null) {
+    core.debug(`Found a version that satisfies the semver range: ${minSemver}`);
+    return minSemver;
+  }
+  const minPep440 = pep440.minSatisfying(versions, version);
+  if (minPep440 !== null) {
+    core.debug(
+      `Found a version that satisfies the pep440 specifier: ${minPep440}`,
+    );
+    return minPep440;
   }
   return undefined;
 }

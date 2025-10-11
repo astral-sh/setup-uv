@@ -91010,7 +91010,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.addProblemMatchers = exports.manifestFile = exports.githubToken = exports.pythonDir = exports.toolDir = exports.toolBinDir = exports.ignoreEmptyWorkdir = exports.ignoreNothingToCache = exports.cachePython = exports.pruneCache = exports.cacheDependencyGlob = exports.cacheLocalPath = exports.cacheSuffix = exports.saveCache = exports.restoreCache = exports.enableCache = exports.checkSum = exports.activateEnvironment = exports.pythonVersion = exports.versionFile = exports.version = exports.workingDirectory = void 0;
+exports.resolutionStrategy = exports.addProblemMatchers = exports.manifestFile = exports.githubToken = exports.pythonDir = exports.toolDir = exports.toolBinDir = exports.ignoreEmptyWorkdir = exports.ignoreNothingToCache = exports.cachePython = exports.pruneCache = exports.cacheDependencyGlob = exports.cacheLocalPath = exports.cacheSuffix = exports.saveCache = exports.restoreCache = exports.enableCache = exports.checkSum = exports.activateEnvironment = exports.pythonVersion = exports.versionFile = exports.version = exports.workingDirectory = void 0;
 exports.getUvPythonDir = getUvPythonDir;
 const node_path_1 = __importDefault(__nccwpck_require__(6760));
 const core = __importStar(__nccwpck_require__(7484));
@@ -91037,6 +91037,7 @@ exports.pythonDir = getUvPythonDir();
 exports.githubToken = core.getInput("github-token");
 exports.manifestFile = getManifestFile();
 exports.addProblemMatchers = core.getInput("add-problem-matchers") === "true";
+exports.resolutionStrategy = getResolutionStrategy();
 function getVersionFile() {
     const versionFileInput = core.getInput("version-file");
     if (versionFileInput !== "") {
@@ -91172,6 +91173,16 @@ function getManifestFile() {
         return manifestFileInput;
     }
     return undefined;
+}
+function getResolutionStrategy() {
+    const resolutionStrategyInput = core.getInput("resolution-strategy");
+    if (resolutionStrategyInput === "lowest") {
+        return "lowest";
+    }
+    if (resolutionStrategyInput === "highest" || resolutionStrategyInput === "") {
+        return "highest";
+    }
+    throw new Error(`Invalid resolution-strategy: ${resolutionStrategyInput}. Must be 'highest' or 'lowest'.`);
 }
 
 
