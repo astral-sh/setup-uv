@@ -77,6 +77,9 @@ inputs:
   add-problem-matchers:
     description: "Add problem matchers."
     default: "true"
+  resolution-strategy:
+    description: "Resolution strategy to use when resolving version ranges. 'highest' uses the latest compatible version, 'lowest' uses the oldest compatible version."
+    default: "highest"
 outputs:
   uv-version:
     description: "The installed uv version. Useful when using latest."

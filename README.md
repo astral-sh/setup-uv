@@ -15,6 +15,7 @@ Set up your GitHub Actions workflow with a specific version of [uv](https://docs
   - [Install the latest version](#install-the-latest-version)
   - [Install a specific version](#install-a-specific-version)
   - [Install a version by supplying a semver range or pep440 specifier](#install-a-version-by-supplying-a-semver-range-or-pep440-specifier)
+  - [Resolution strategy](#resolution-strategy)
   - [Install a version defined in a requirements or config file](#install-a-version-defined-in-a-requirements-or-config-file)
   - [Python version](#python-version)
   - [Activate environment](#activate-environment)
@@ -96,6 +97,25 @@ to install the latest version that satisfies the range.
   with:
     version: ">=0.4.25,<0.5"
 ```
+
+### Resolution strategy
+
+By default, when resolving version ranges, setup-uv will install the highest compatible version.
+You can change this behavior using the `resolution-strategy` input:
+
+```yaml
+- name: Install the lowest compatible version of uv
+  uses: astral-sh/setup-uv@v6
+  with:
+    version: ">=0.4.0"
+    resolution-strategy: "lowest"
+```
+
+The supported resolution strategies are:
+- `highest` (default): Install the latest version that satisfies the constraints
+- `lowest`: Install the oldest version that satisfies the constraints
+
+This can be useful for testing compatibility with older versions of uv, similar to uv's own `--resolution-strategy` option.
 
 ### Install a version defined in a requirements or config file
 

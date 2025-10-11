@@ -21,6 +21,7 @@ import {
   manifestFile,
   pythonDir,
   pythonVersion,
+  resolutionStrategy,
   toolBinDir,
   toolDir,
   versionFile as versionFileInput,
@@ -120,7 +121,12 @@ async function determineVersion(
   manifestFile: string | undefined,
 ): Promise<string> {
   if (versionInput !== "") {
-    return await resolveVersion(versionInput, manifestFile, githubToken);
+    return await resolveVersion(
+      versionInput,
+      manifestFile,
+      githubToken,
+      resolutionStrategy,
+    );
   }
   if (versionFileInput !== "") {
     const versionFromFile = getUvVersionFromFile(versionFileInput);
@@ -129,7 +135,12 @@ async function determineVersion(
         `Could not determine uv version from file: ${versionFileInput}`,
       );
     }
-    return await resolveVersion(versionFromFile, manifestFile, githubToken);
+    return await resolveVersion(
+      versionFromFile,
+      manifestFile,
+      githubToken,
+      resolutionStrategy,
+    );
   }
   const versionFromUvToml = getUvVersionFromFile(
     `${workingDirectory}${path.sep}uv.toml`,
@@ -146,6 +157,7 @@ async function determineVersion(
     versionFromUvToml || versionFromPyproject || "latest",
     manifestFile,
     githubToken,
+    resolutionStrategy,
   );
 }
 
