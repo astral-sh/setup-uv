@@ -1,6 +1,5 @@
 import path from "node:path";
 import * as core from "@actions/core";
-import * as exec from "@actions/exec";
 import { getConfigValueFromTomlFile } from "./config-file";
 
 export const workingDirectory = core.getInput("working-directory");
@@ -23,6 +22,7 @@ export const ignoreEmptyWorkdir =
   core.getInput("ignore-empty-workdir") === "true";
 export const toolBinDir = getToolBinDir();
 export const toolDir = getToolDir();
+export const pythonDir = getUvPythonDir();
 export const githubToken = core.getInput("github-token");
 export const manifestFile = getManifestFile();
 export const addProblemMatchers =
@@ -125,23 +125,26 @@ function getCacheDirFromConfig(): string | undefined {
   return undefined;
 }
 
-export async function getUvPythonDir(): Promise<string> {
+export function getUvPythonDir(): string {
   if (process.env.UV_PYTHON_INSTALL_DIR !== undefined) {
     core.info(
-      `Using UV_PYTHON_INSTALL_DIR from environment: ${process.env.UV_PYTHON_INSTALL_DIR}`,
+      `UV_PYTHON_INSTALL_DIR is already set to  ${process.env.UV_PYTHON_INSTALL_DIR}`,
     );
     return process.env.UV_PYTHON_INSTALL_DIR;
   }
-  core.info("Determining uv python dir using `uv python dir`...");
-  const result = await exec.getExecOutput("uv", ["python", "dir"]);
-  if (result.exitCode !== 0) {
-    throw new Error(
-      `Failed to get uv python dir: ${result.stderr || result.stdout}`,
-    );
+  if (process.env.RUNNER_ENVIRONMENT !== "github-hosted") {
+    if (process.platform === "win32") {
+      return `${process.env.APPDATA}${path.sep}uv${path.sep}python`;
+    } else {
+      return `${process.env.HOME}${path.sep}.local${path.sep}share${path.sep}uv${path.sep}python`;
+    }
   }
-  const dir = result.stdout.trim();
-  core.info(`Determined uv python dir: ${dir}`);
-  return dir;
+  if (process.env.RUNNER_TEMP !== undefined) {
+    return `${process.env.RUNNER_TEMP}${path.sep}uv-python-dir`;
+  }
+  throw Error(
+    "Could not determine UV_PYTHON_INSTALL_DIR. Please make sure RUNNER_TEMP is set or provide the UV_PYTHON_INSTALL_DIR environment variable",
+  );
 }
 
 function getCacheDependencyGlob(): string {
