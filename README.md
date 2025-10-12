@@ -12,29 +12,11 @@ Set up your GitHub Actions workflow with a specific version of [uv](https://docs
 
 - [Usage](#usage)
   - [Install a required-version or latest (default)](#install-a-required-version-or-latest-default)
-  - [Install the latest version](#install-the-latest-version)
-  - [Install a specific version](#install-a-specific-version)
-  - [Install a version by supplying a semver range or pep440 specifier](#install-a-version-by-supplying-a-semver-range-or-pep440-specifier)
-  - [Resolution strategy](#resolution-strategy)
-  - [Install a version defined in a requirements or config file](#install-a-version-defined-in-a-requirements-or-config-file)
+  - [Inputs](#inputs)
+  - [Outputs](#outputs)
   - [Python version](#python-version)
-  - [Activate environment](#activate-environment)
   - [Working directory](#working-directory)
-  - [Validate checksum](#validate-checksum)
-  - [Enable Caching](#enable-caching)
-    - [Cache dependency glob](#cache-dependency-glob)
-    - [Restore cache](#restore-cache)
-    - [Save cache](#save-cache)
-  - [Local cache path](#local-cache-path)
-  - [Disable cache pruning](#disable-cache-pruning)
-  - [Cache Python installs](#cache-python-installs)
-  - [Ignore nothing to cache](#ignore-nothing-to-cache)
-  - [GitHub authentication token](#github-authentication-token)
-  - [UV_TOOL_DIR](#uv_tool_dir)
-  - [UV_TOOL_BIN_DIR](#uv_tool_bin_dir)
-  - [Tilde Expansion](#tilde-expansion)
-  - [Manifest file](#manifest-file)
-  - [Add problem matchers](#add-problem-matchers)
+- [Advanced Configuration](#advanced-configuration)
 - [How it works](#how-it-works)
 - [FAQ](#faq)
 
@@ -53,84 +35,96 @@ in a `uv.toml` or `pyproject.toml` file in the repository root. If none is found
 For an example workflow, see
 [here](https://github.com/charliermarsh/autobot/blob/e42c66659bf97b90ca9ff305a19cc99952d0d43f/.github/workflows/ci.yaml).
 
-### Install the latest version
+### Inputs
+
+All inputs and their defaults.
+Have a look under [Advanced Configuration](#advanced-configuration) for detailed documentation on most of them.
 
 ```yaml
-- name: Install the latest version of uv
+- name: Install uv with all available options
   uses: astral-sh/setup-uv@v6
   with:
-    version: "latest"
+    # The version of uv to install (default: searches for version in config files, then latest)
+    version: ""
+
+    # Path to a file containing the version of uv to install (default: searches uv.toml then pyproject.toml)
+    version-file: ""
+
+    # Resolution strategy when resolving version ranges: 'highest' or 'lowest'
+    resolution-strategy: "highest"
+
+    # The version of Python to set UV_PYTHON to
+    python-version: ""
+
+    # Use uv venv to activate a venv ready to be used by later steps
+    activate-environment: "false"
+
+    # The directory to execute all commands in and look for files such as pyproject.toml
+    working-directory: ""
+
+    # The checksum of the uv version to install
+    checksum: ""
+
+    # Used to increase the rate limit when retrieving versions and downloading uv
+    github-token: ${{ github.token }}
+
+    # Enable uploading of the uv cache: true, false, or auto (enabled on GitHub-hosted runners, disabled on self-hosted runners)
+    enable-cache: "auto"
+
+    # Glob pattern to match files relative to the repository root to control the cache
+    cache-dependency-glob: |
+      **/*requirements*.txt
+      **/*requirements*.in
+      **/*constraints*.txt
+      **/*constraints*.in
+      **/pyproject.toml
+      **/uv.lock
+      **/*.py.lock
+
+    # Whether to restore the cache if found
+    restore-cache: "true"
+
+    # Whether to save the cache after the run
+    save-cache: "true"
+
+    # Suffix for the cache key
+    cache-suffix: ""
+
+    # Local path to store the cache (default: "" - uses system temp directory)
+    cache-local-path: ""
+
+    # Prune cache before saving
+    prune-cache: "true"
+
+    # Upload managed Python installations to the GitHub Actions cache
+    cache-python: "false"
+
+    # Ignore when nothing is found to cache
+    ignore-nothing-to-cache: "false"
+
+    # Ignore when the working directory is empty
+    ignore-empty-workdir: "false"
+
+    # Custom path to set UV_TOOL_DIR to
+    tool-dir: ""
+
+    # Custom path to set UV_TOOL_BIN_DIR to
+    tool-bin-dir: ""
+
+    # URL to the manifest file containing available versions and download URLs
+    manifest-file: ""
+
+    # Add problem matchers
+    add-problem-matchers: "true"
 ```
 
-### Install a specific version
+### Outputs
 
-```yaml
-- name: Install a specific version of uv
-  uses: astral-sh/setup-uv@v6
-  with:
-    version: "0.4.4"
-```
-
-### Install a version by supplying a semver range or pep440 specifier
-
-You can specify a [semver range](https://github.com/npm/node-semver?tab=readme-ov-file#ranges)
-or [pep440 specifier](https://peps.python.org/pep-0440/#version-specifiers)
-to install the latest version that satisfies the range.
-
-```yaml
-- name: Install a semver range of uv
-  uses: astral-sh/setup-uv@v6
-  with:
-    version: ">=0.4.0"
-```
-
-```yaml
-- name: Pinning a minor version of uv
-  uses: astral-sh/setup-uv@v6
-  with:
-    version: "0.4.x"
-```
-
-```yaml
-- name: Install a pep440-specifier-satisfying version of uv
-  uses: astral-sh/setup-uv@v6
-  with:
-    version: ">=0.4.25,<0.5"
-```
-
-### Resolution strategy
-
-By default, when resolving version ranges, setup-uv will install the highest compatible version.
-You can change this behavior using the `resolution-strategy` input:
-
-```yaml
-- name: Install the lowest compatible version of uv
-  uses: astral-sh/setup-uv@v6
-  with:
-    version: ">=0.4.0"
-    resolution-strategy: "lowest"
-```
-
-The supported resolution strategies are:
-- `highest` (default): Install the latest version that satisfies the constraints
-- `lowest`: Install the oldest version that satisfies the constraints
-
-This can be useful for testing compatibility with older versions of uv, similar to uv's own `--resolution-strategy` option.
-
-### Install a version defined in a requirements or config file
-
-You can use the `version-file` input to specify a file that contains the version of uv to install.
-This can either be a `pyproject.toml` or `uv.toml` file which defines a `required-version` or
-uv defined as a dependency in `pyproject.toml` or `requirements.txt`.
-
-[asdf](https://asdf-vm.com/) `.tool-versions` is also supported, but without the `ref` syntax.
-
-```yaml
-- name: Install uv based on the version defined in pyproject.toml
-  uses: astral-sh/setup-uv@v6
-  with:
-    version-file: "pyproject.toml"
-```
+- `uv-version`: The installed uv version. Useful when using latest.
+- `uv-path`: The path to the installed uv binary.
+- `uvx-path`: The path to the installed uvx binary.
+- `cache-hit`: A boolean value to indicate a cache entry was found.
+- `venv`: Path to the activated venv if activate-environment is true.
 
 ### Python version
 
@@ -165,29 +159,6 @@ jobs:
         run: uv run --frozen pytest
 ```
 
-### Activate environment
-
-You can set `activate-environment` to `true` to automatically activate a venv.
-This allows directly using it in later steps:
-
-```yaml
-- name: Install the latest version of uv and activate the environment
-  uses: astral-sh/setup-uv@v6
-  with:
-    activate-environment: true
-- run: uv pip install pip
-```
-
-> [!WARNING]
->
-> Activating the environment adds your dependencies to the `PATH`, which could break some workflows.
-> For example, if you have a dependency which requires uv, e.g., `hatch`, activating the
-> environment will shadow the `uv` binary installed by this action and may result in a different uv
-> version being used.
->
-> We do not recommend using this setting for most use-cases. Instead, use `uv run` to execute
-> commands in the environment.
-
 ### Working directory
 
 You can set the working directory with the `working-directory` input.
@@ -203,346 +174,14 @@ It also controls where [the venv gets created](#activate-environment).
     working-directory: my/subproject/dir
 ```
 
-### Validate checksum
+## Advanced Configuration
 
-You can specify a checksum to validate the downloaded executable. Checksums up to the default version
-are automatically verified by this action. The sha256 hashes can be found on the
-[releases page](https://github.com/astral-sh/uv/releases) of the uv repo.
+For more advanced configuration options, see our detailed documentation:
 
-```yaml
-- name: Install a specific version and validate the checksum
-  uses: astral-sh/setup-uv@v6
-  with:
-    version: "0.3.1"
-    checksum: "e11b01402ab645392c7ad6044db63d37e4fd1e745e015306993b07695ea5f9f8"
-```
-
-### Enable caching
-
-> [!NOTE]
-> The cache is pruned before it is uploaded to the GitHub Actions cache. This can lead to
-> a small or empty cache. See [Disable cache pruning](#disable-cache-pruning) for more details.
-
-If you enable caching, the [uv cache](https://docs.astral.sh/uv/concepts/cache/) will be uploaded to
-the GitHub Actions cache. This can speed up runs that reuse the cache by several minutes.
-Caching is enabled by default on GitHub-hosted runners.
-
-> [!TIP]
->
-> On self-hosted runners this is usually not needed since the cache generated by uv on the runner's
-> filesystem is not removed after a run. For more details see [Local cache path](#local-cache-path).
-
-You can optionally define a custom cache key suffix.
-
-```yaml
-- name: Enable caching and define a custom cache key suffix
-  id: setup-uv
-  uses: astral-sh/setup-uv@v6
-  with:
-    enable-cache: true
-    cache-suffix: "optional-suffix"
-```
-
-When the cache was successfully restored, the output `cache-hit` will be set to `true` and you can
-use it in subsequent steps. For example, to use the cache in the above case:
-
-```yaml
-- name: Do something if the cache was restored
-  if: steps.setup-uv.outputs.cache-hit == 'true'
-  run: echo "Cache was restored"
-```
-
-#### Cache dependency glob
-
-If you want to control when the GitHub Actions cache is invalidated, specify a glob pattern with the
-`cache-dependency-glob` input. The GitHub Actions cache will be invalidated if any file matching the glob pattern
-changes. If you use relative paths, they are relative to the repository root.
-
-> [!NOTE]
->
-> You can look up supported patterns [here](https://github.com/actions/toolkit/tree/main/packages/glob#patterns)
->
-> The default is
-> ```yaml
-> cache-dependency-glob: |
->   **/*requirements*.txt
->   **/*requirements*.in
->   **/*constraints*.txt
->   **/*constraints*.in
->   **/pyproject.toml
->   **/uv.lock
->   **/*.py.lock
-> ```
-
-```yaml
-- name: Define a cache dependency glob
-  uses: astral-sh/setup-uv@v6
-  with:
-    enable-cache: true
-    cache-dependency-glob: "**/pyproject.toml"
-```
-
-```yaml
-- name: Define a list of cache dependency globs
-  uses: astral-sh/setup-uv@v6
-  with:
-    enable-cache: true
-    cache-dependency-glob: |
-      **/requirements*.txt
-      **/pyproject.toml
-```
-
-```yaml
-- name: Define an absolute cache dependency glob
-  uses: astral-sh/setup-uv@v6
-  with:
-    enable-cache: true
-    cache-dependency-glob: "/tmp/my-folder/requirements*.txt"
-```
-
-```yaml
-- name: Never invalidate the cache
-  uses: astral-sh/setup-uv@v6
-  with:
-    enable-cache: true
-    cache-dependency-glob: ""
-```
-
-#### Restore cache
-
-Restoring an existing cache can be enabled or disabled with the `restore-cache` input.
-By default, the cache will be restored.
-
-```yaml
-- name: Don't restore an existing cache
-  uses: astral-sh/setup-uv@v6
-  with:
-    enable-cache: true
-    restore-cache: false
-```
-
-#### Save cache
-
-You can also disable saving the cache after the run with the `save-cache` input.
-This can be useful to save cache storage when you know you will not use the cache of the run again.
-By default, the cache will be saved.
-
-```yaml
-- name: Don't save the cache after the run
-  uses: astral-sh/setup-uv@v6
-  with:
-    enable-cache: true
-    save-cache: false
-```
-
-### Local cache path
-
-If caching is enabled, this action controls where uv stores its cache on the runner's filesystem
-by setting `UV_CACHE_DIR`.
-
-It defaults to `setup-uv-cache` in the `TMP` dir, `D:\a\_temp\uv-tool-dir` on Windows and
-`/tmp/setup-uv-cache` on Linux/macOS. You can change the default by specifying the path with the
-`cache-local-path` input.
-
-> [!NOTE]
-> If the environment variable `UV_CACHE_DIR` is already set this action will not override it.
-> If you configured [cache-dir](https://docs.astral.sh/uv/reference/settings/#cache-dir) in your
-> config file then it is also respected and this action will not set `UV_CACHE_DIR`.
-
-```yaml
-- name: Define a custom uv cache path
-  uses: astral-sh/setup-uv@v6
-  with:
-    cache-local-path: "/path/to/cache"
-```
-
-### Disable cache pruning
-
-By default, the uv cache is pruned after every run, removing pre-built wheels, but retaining any
-wheels that were built from source. On GitHub-hosted runners, it's typically faster to omit those
-pre-built wheels from the cache (and instead re-download them from the registry on each run).
-However, on self-hosted or local runners, preserving the cache may be more efficient. See
-the [documentation](https://docs.astral.sh/uv/concepts/cache/#caching-in-continuous-integration) for
-more information.
-
-If you want to persist the entire cache across runs, disable cache pruning with the `prune-cache`
-input.
-
-```yaml
-- name: Don't prune the cache before saving it
-  uses: astral-sh/setup-uv@v6
-  with:
-    enable-cache: true
-    prune-cache: false
-```
-
-### Cache Python installs
-
-By default, the Python install dir (`uv python dir` / `UV_PYTHON_INSTALL_DIR`) is not cached,
-for the same reason that the dependency cache is pruned.
-If you want to cache Python installs along with your dependencies, set the `cache-python` input to `true`.
-
-```yaml
-- name: Cache Python installs
-  uses: astral-sh/setup-uv@v6
-  with:
-    enable-cache: true
-    cache-python: true
-```
-
-### Ignore nothing to cache
-
-By default, the action will fail if caching is enabled but there is nothing to upload (the uv cache directory does not exist).
-If you want to ignore this, set the `ignore-nothing-to-cache` input to `true`.
-
-```yaml
-- name: Ignore nothing to cache
-  uses: astral-sh/setup-uv@v6
-  with:
-    enable-cache: true
-    ignore-nothing-to-cache: true
-```
-
-### Ignore empty workdir
-
-By default, the action will warn if the workdir is empty, because this is usually the case when
-`actions/checkout` is configured to run after `setup-uv`, which is not supported.
-
-If you want to ignore this, set the `ignore-empty-workdir` input to `true`.
-
-```yaml
-- name: Ignore empty workdir
-  uses: astral-sh/setup-uv@v6
-  with:
-    ignore-empty-workdir: true
-```
-
-### GitHub authentication token
-
-This action uses the GitHub API to fetch the uv release artifacts. To avoid hitting the GitHub API
-rate limit too quickly, an authentication token can be provided via the `github-token` input. By
-default, the `GITHUB_TOKEN` secret is used, which is automatically provided by GitHub Actions.
-
-If the default
-[permissions for the GitHub token](https://docs.github.com/en/actions/security-for-github-actions/security-guides/automatic-token-authentication#permissions-for-the-github_token)
-are not sufficient, you can provide a custom GitHub token with the necessary permissions.
-
-```yaml
-- name: Install the latest version of uv with a custom GitHub token
-  uses: astral-sh/setup-uv@v6
-  with:
-    github-token: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
-```
-
-### UV_TOOL_DIR
-
-On Windows `UV_TOOL_DIR` is set to `uv-tool-dir` in the `TMP` dir (e.g. `D:\a\_temp\uv-tool-dir`).
-On GitHub hosted runners this is on the much faster `D:` drive.
-
-On all other platforms the tool environments are placed in the
-[default location](https://docs.astral.sh/uv/concepts/tools/#tools-directory).
-
-If you want to change this behaviour (especially on self-hosted runners) you can use the `tool-dir`
-input:
-
-```yaml
-- name: Install the latest version of uv with a custom tool dir
-  uses: astral-sh/setup-uv@v6
-  with:
-    tool-dir: "/path/to/tool/dir"
-```
-
-### UV_TOOL_BIN_DIR
-
-On Windows `UV_TOOL_BIN_DIR` is set to `uv-tool-bin-dir` in the `TMP` dir (e.g.
-`D:\a\_temp\uv-tool-bin-dir`). On GitHub hosted runners this is on the much faster `D:` drive. This
-path is also automatically added to the PATH.
-
-On all other platforms the tool binaries get installed to the
-[default location](https://docs.astral.sh/uv/concepts/tools/#the-bin-directory).
-
-If you want to change this behaviour (especially on self-hosted runners) you can use the
-`tool-bin-dir` input:
-
-```yaml
-- name: Install the latest version of uv with a custom tool bin dir
-  uses: astral-sh/setup-uv@v6
-  with:
-    tool-bin-dir: "/path/to/tool-bin/dir"
-```
-
-### Tilde Expansion
-
-This action supports expanding the `~` character to the user's home directory for the following inputs:
-
-- `version-file`
-- `cache-local-path`
-- `tool-dir`
-- `tool-bin-dir`
-- `cache-dependency-glob`
-
-```yaml
-- name: Expand the tilde character
-  uses: astral-sh/setup-uv@v6
-  with:
-    cache-local-path: "~/path/to/cache"
-    tool-dir: "~/path/to/tool/dir"
-    tool-bin-dir: "~/path/to/tool-bin/dir"
-    cache-dependency-glob: "~/my-cache-buster"
-```
-
-### Manifest file
-
-The `manifest-file` input allows you to specify a JSON manifest that lists available uv versions,
-architectures, and their download URLs. By default, this action uses the manifest file contained
-in this repository, which is automatically updated with each release of uv.
-
-The manifest file contains an array of objects, each describing a version,
-architecture, platform, and the corresponding download URL. For example:
-
-```json
-[
-  {
-    "version": "0.7.13",
-    "artifactName": "uv-aarch64-apple-darwin.tar.gz",
-    "arch": "aarch64",
-    "platform": "apple-darwin",
-    "downloadUrl": "https://github.com/astral-sh/uv/releases/download/0.7.13/uv-aarch64-apple-darwin.tar.gz"
-  },
-  ...
-]
-```
-
-You can supply a custom manifest file URL to define additional versions,
-architectures, or different download URLs.
-This is useful if you maintain your own uv builds or want to override the default sources.
-
-```yaml
-- name: Use a custom manifest file
-  uses: astral-sh/setup-uv@v6
-  with:
-    manifest-file: "https://example.com/my-custom-manifest.json"
-```
-
-> [!NOTE]
-> When you use a custom manifest file and do not set the `version` input, its default value is `latest`.
-> This means the action will install the latest version available in the custom manifest file.
-> This is different from the default behavior of installing the latest version from the official uv releases.
-
-### Add problem matchers
-
-This action automatically adds
-[problem matchers](https://github.com/actions/toolkit/blob/main/docs/problem-matchers.md)
-for python errors.
-
-You can disable this by setting the `add-problem-matchers` input to `false`.
-
-```yaml
-- name: Install the latest version of uv without problem matchers
-  uses: astral-sh/setup-uv@v6
-  with:
-    add-problem-matchers: false
-```
+- **[Advanced Version Configuration](docs/advanced-version-configuration.md)** - Resolution strategies and version files
+- **[Caching](docs/caching.md)** - Complete guide to caching configuration
+- **[Environment and Tools](docs/environment-and-tools.md)** - Environment activation, tool directories, authentication, and environment variables
+- **[Customization](docs/customization.md)** - Checksum validation, custom manifests, and problem matchers
 
 ## How it works
 
@@ -609,14 +248,13 @@ output:
 
 **Yes!**
 
-The cache key gets computed by using the [cache-dependency-glob](#cache-dependency-glob).
+The cache key gets computed by using the cache-dependency-glob (see [Caching documentation](docs/caching.md)).
 
-If you
-have jobs which use the same dependency definitions from `requirements.txt` or
+If you have jobs which use the same dependency definitions from `requirements.txt` or
 `pyproject.toml` but different
 [resolution strategies](https://docs.astral.sh/uv/concepts/resolution/#resolution-strategy),
 each job will have different dependencies or dependency versions.
-But if you do not add the resolution strategy as a [cache-suffix](#enable-caching),
+But if you do not add the resolution strategy as a cache-suffix (see [Caching documentation](docs/caching.md)),
 they will have the same cache key.
 
 This means the first job which starts uploading its cache will win and all other job will fail
@@ -629,15 +267,15 @@ You might see errors like
 ### Why do I see warnings like `No GitHub Actions cache found for key`
 
 When a workflow runs for the first time on a branch and has a new cache key, because the
-[cache-dependency-glob](#cache-dependency-glob) found changed files (changed dependencies),
+cache-dependency-glob (see [Caching documentation](docs/caching.md)) found changed files (changed dependencies),
 the cache will not be found and the warning `No GitHub Actions cache found for key` will be printed.
 
 While this might be irritating at first, it is expected behaviour and the cache will be created
 and reused in later workflows.
 
 The reason for the warning is, that we have to way to know if this is the first run of a new
-cache key or the user accidentally misconfigured the [cache-dependency-glob](#cache-dependency-glob)
-or [cache-suffix](#enable-caching) and the cache never gets used.
+cache key or the user accidentally misconfigured the cache-dependency-glob
+or cache-suffix (see [Caching documentation](docs/caching.md)) and the cache never gets used.
 
 ### Do I have to run `actions/checkout` before or after `setup-uv`?
 
@@ -662,11 +300,11 @@ if an uploaded cache exists for this key.
 If yes (e.g. contents of `uv.lock` did not change since last run) the dependencies in the cache
 are up to date and the cache will be downloaded and used.
 
-Details on determining which files will lead to different caches can be read under
-[cache-dependency-glob](#cache-dependency-glob)
+Details on determining which files will lead to different caches can be read in the
+[Caching documentation](docs/caching.md).
 
 Some dependencies will never be uploaded to the cache and will be downloaded again on each run
-as described in [disable-cache-pruning](#disable-cache-pruning)
+as described in the [Caching documentation](docs/caching.md).
 
 ## Acknowledgements
 
