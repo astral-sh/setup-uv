@@ -73,7 +73,8 @@ async function run(): Promise<void> {
 }
 
 function detectEmptyWorkdir(): void {
-  if (fs.readdirSync(".").length === 0) {
+  const dirToCheck = workingDirectory || ".";
+  if (fs.readdirSync(dirToCheck).length === 0) {
     if (ignoreEmptyWorkdir) {
       core.info(
         "Empty workdir detected. Ignoring because ignore-empty-workdir is enabled",
