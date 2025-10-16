@@ -10,7 +10,7 @@ are automatically verified by this action. The sha256 hashes can be found on the
 
 ```yaml
 - name: Install a specific version and validate the checksum
-  uses: astral-sh/setup-uv@v6
+  uses: astral-sh/setup-uv@v7
   with:
     version: "0.3.1"
     checksum: "e11b01402ab645392c7ad6044db63d37e4fd1e745e015306993b07695ea5f9f8"
@@ -44,7 +44,7 @@ This is useful if you maintain your own uv builds or want to override the defaul
 
 ```yaml
 - name: Use a custom manifest file
-  uses: astral-sh/setup-uv@v6
+  uses: astral-sh/setup-uv@v7
   with:
     manifest-file: "https://example.com/my-custom-manifest.json"
 ```
@@ -64,7 +64,7 @@ You can disable this by setting the `add-problem-matchers` input to `false`.
 
 ```yaml
 - name: Install the latest version of uv without problem matchers
-  uses: astral-sh/setup-uv@v6
+  uses: astral-sh/setup-uv@v7
   with:
     add-problem-matchers: false
 ```
