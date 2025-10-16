@@ -141,23 +141,25 @@ export async function resolveVersion(
   let version: string;
   const isSimpleMinimumVersionSpecifier =
     versionInput.includes(">") && !versionInput.includes(",");
-  if (isSimpleMinimumVersionSpecifier) {
+  const resolveVersionSpecifierToLatest =
+    isSimpleMinimumVersionSpecifier && resolutionStrategy === "highest";
+  if (resolveVersionSpecifierToLatest) {
     core.info("Found minimum version specifier, using latest version");
   }
   if (manifestFile) {
     version =
-      versionInput === "latest" || isSimpleMinimumVersionSpecifier
+      versionInput === "latest" || resolveVersionSpecifierToLatest
         ? await getLatestVersionInManifest(manifestFile)
         : versionInput;
   } else {
     version =
-      versionInput === "latest" || isSimpleMinimumVersionSpecifier
+      versionInput === "latest" || resolveVersionSpecifierToLatest
         ? await getLatestVersion(githubToken)
         : versionInput;
   }
   if (tc.isExplicitVersion(version)) {
     core.debug(`Version ${version} is an explicit version.`);
-    if (isSimpleMinimumVersionSpecifier) {
+    if (resolveVersionSpecifierToLatest) {
       if (!pep440.satisfies(version, versionInput)) {
         throw new Error(`No version found for ${versionInput}`);
       }
