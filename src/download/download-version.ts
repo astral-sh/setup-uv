@@ -110,7 +110,19 @@ async function downloadVersion(
   let uvDir: string;
   if (platform === "pc-windows-msvc") {
     // On windows extracting the zip does not create an intermediate directory
-    uvDir = await tc.extractTar(downloadPath, undefined, "x");
+    try {
+      // Try tar first as it's much faster, but only bsdtar supports zip files,
+      // so this my fail if another tar, like gnu tar, ends up being used.
+      uvDir = await tc.extractTar(downloadPath, undefined, "x");
+    } catch (err) {
+      core.info(
+        `Extracting with tar failed, falling back to zip extraction: ${(err as Error).message}`,
+      );
+      const extension = getExtension(platform);
+      const fullPathWithExtension = `${downloadPath}${extension}`;
+      await fs.copyFile(downloadPath, fullPathWithExtension);
+      uvDir = await tc.extractZip(fullPathWithExtension);
+    }
   } else {
     const extractedDir = await tc.extractTar(downloadPath);
     uvDir = path.join(extractedDir, artifactName);
