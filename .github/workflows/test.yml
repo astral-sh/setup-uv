@@ -761,7 +761,7 @@ jobs:
       - name: Install from custom manifest file
         uses: ./
         with:
-          manifest-file: "https://raw.githubusercontent.com/astral-sh/setup-uv/${{ github.ref }}/__tests__/download/custom-manifest.json"
+          manifest-file: "https://raw.githubusercontent.com/astral-sh/setup-uv/main/__tests__/download/custom-manifest.json"
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
       - name: Correct version gets installed
