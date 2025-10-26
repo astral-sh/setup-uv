@@ -69730,7 +69730,7 @@ __nccwpck_require__.d(__webpack_exports__, {
 });
 
 ;// CONCATENATED MODULE: ./node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
-const VERSION = "16.1.0";
+const VERSION = "16.1.1";
 
 //# sourceMappingURL=version.js.map
 
