@@ -41,7 +41,7 @@ use it in subsequent steps. For example, to use the cache in the above case:
 
 If you want to control when the GitHub Actions cache is invalidated, specify a glob pattern with the
 `cache-dependency-glob` input. The GitHub Actions cache will be invalidated if any file matching the glob pattern
-changes. If you use relative paths, they are relative to the repository root.
+changes. If you use relative paths, they are relative to the working directory.
 
 > [!NOTE]
 >
