@@ -31,7 +31,7 @@ inputs:
     default: "auto"
   cache-dependency-glob:
     description:
-      "Glob pattern to match files relative to the repository root to control
+      "Glob pattern to match files relative to the working directory to control
       the cache."
     default: |
       **/*requirements*.txt
