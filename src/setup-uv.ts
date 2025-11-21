@@ -66,6 +66,8 @@ async function run(): Promise<void> {
     if (enableCache) {
       await restoreCache();
     }
+    // https://github.com/nodejs/node/issues/56645#issuecomment-3077594952
+    await new Promise((resolve) => setTimeout(resolve, 50));
     process.exit(0);
   } catch (err) {
     core.setFailed((err as Error).message);

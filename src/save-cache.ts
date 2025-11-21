@@ -26,6 +26,9 @@ export async function run(): Promise<void> {
       } else {
         core.info("save-cache is false. Skipping save cache step.");
       }
+      // https://github.com/nodejs/node/issues/56645#issuecomment-3077594952
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
       // node will stay alive if any promises are not resolved,
       // which is a possibility if HTTP requests are dangling
       // due to retries or timeouts. We know that if we got here
