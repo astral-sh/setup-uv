@@ -9,6 +9,7 @@ import { OWNER, REPO, TOOL_CACHE_NAME } from "../utils/constants";
 import { Octokit } from "../utils/octokit";
 import type { Architecture, Platform } from "../utils/platforms";
 import { validateChecksum } from "./checksum/checksum";
+import { downloadToolWithResume } from "./resumable-download";
 import {
   getDownloadUrl,
   getLatestKnownVersion as getLatestVersionInManifest,
@@ -100,11 +101,16 @@ async function downloadVersion(
   githubToken: string,
 ): Promise<{ version: string; cachedToolDir: string }> {
   core.info(`Downloading uv from "${downloadUrl}" ...`);
-  const downloadPath = await tc.downloadTool(
-    downloadUrl,
-    undefined,
-    githubToken,
-  );
+
+  // Use resumable download with retry and progress tracking
+  const downloadPath = await downloadToolWithResume(downloadUrl, undefined, {
+    maxRetries: 5,
+    socketTimeout: 60000, // 60 seconds
+    initialRetryDelay: 10000, // 10 seconds
+    maxRetryDelay: 120000, // 2 minutes
+    auth: githubToken ? `Bearer ${githubToken}` : undefined,
+  });
+
   await validateChecksum(checkSum, downloadPath, arch, platform, version);
 
   let uvDir: string;
