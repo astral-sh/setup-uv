@@ -59,7 +59,7 @@ src/
 #### 1. Install Dependencies
 
 ```bash
-npm install
+npm ci --ignore-scripts
 ```
 
 **Timing**: ~20-30 seconds
@@ -236,7 +236,7 @@ This file is the authoritative source for understanding available action paramet
 
 ### Build Failures
 
-- **"Module not found"**: Run `npm install` to ensure dependencies are installed
+- **"Module not found"**: Run `npm ci --ignore-scripts` to ensure dependencies are installed
 - **TypeScript errors**: Check `tsconfig.json` and ensure all imports are valid
 - **Test failures**: Check if test fixtures have been modified or if logic changes broke assumptions
 

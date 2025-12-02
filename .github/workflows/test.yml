@@ -33,7 +33,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: |
-          npm install
+          npm ci --ignore-scripts
       - run: |
           npm run all
       - name: Check all jobs are in all-tests-passed.needs

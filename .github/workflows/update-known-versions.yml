@@ -39,7 +39,7 @@ jobs:
           fi
       - name: Compile changes
         if: ${{ steps.changes-exist.outputs.changes-exist == 'true' }}
-        run: npm ci && npm run all
+        run: npm ci --ignore-scripts && npm run all
       - name: Commit and push changes
         if: ${{ steps.changes-exist.outputs.changes-exist == 'true' }}
         id: commit-and-push
