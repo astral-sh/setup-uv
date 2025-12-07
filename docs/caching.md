@@ -134,6 +134,10 @@ It defaults to `setup-uv-cache` in the `TMP` dir, `D:\a\_temp\setup-uv-cache` on
 > If you configured [cache-dir](https://docs.astral.sh/uv/reference/settings/#cache-dir) in your
 > config file then it is also respected and this action will not set `UV_CACHE_DIR`.
 
+> [!NOTE]
+> If caching is disabled, you can still use `cache-local-path` so this action sets `UV_CACHE_DIR`
+> to your desired path.
+
 ```yaml
 - name: Define a custom uv cache path
   uses: astral-sh/setup-uv@v7

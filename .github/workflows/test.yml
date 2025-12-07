@@ -649,6 +649,26 @@ jobs:
           fi
         shell: bash
 
+  test-cache-local-cache-disabled-but-explicit-path:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Setup without cache
+        uses: ./
+        with:
+          enable-cache: false
+          cache-local-path: /tmp/uv-cache-disabled
+
+      - name: Check UV_CACHE_DIR is set
+        run: |
+          if [ "$UV_CACHE_DIR" != "/tmp/uv-cache-disabled" ]; then
+            echo "UV_CACHE_DIR should be set when cache is disabled but explicit path is provided"
+            exit 1
+          fi
+        shell: bash
+
   test-setup-cache-local:
     runs-on: selfhosted-ubuntu-arm64
     steps:
@@ -984,6 +1004,7 @@ jobs:
       - test-musl
       - test-cache-local
       - test-cache-local-cache-disabled
+      - test-cache-local-cache-disabled-but-explicit-path
       - test-setup-cache
       - test-restore-cache
       - test-setup-cache-requirements-txt

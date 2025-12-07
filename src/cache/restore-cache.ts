@@ -32,7 +32,12 @@ export async function restoreCache(): Promise<void> {
   core.info(
     `Trying to restore uv cache from GitHub Actions cache with key: ${cacheKey}`,
   );
-  const cachePaths = [cacheLocalPath];
+  if (cacheLocalPath === undefined) {
+    throw new Error(
+      "cache-local-path is not set. Cannot restore cache without a valid cache path.",
+    );
+  }
+  const cachePaths = [cacheLocalPath.path];
   if (cachePython) {
     cachePaths.push(pythonDir);
   }
