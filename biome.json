@@ -18,7 +18,8 @@
       "!**/node_modules",
       "!**/package*.json",
       "!**/known-checksums.*"
-    ]
+    ],
+    "maxSize": 2097152
   },
   "formatter": {
     "enabled": true,
