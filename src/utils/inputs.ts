@@ -2,6 +2,13 @@ import path from "node:path";
 import * as core from "@actions/core";
 import { getConfigValueFromTomlFile } from "./config-file";
 
+export enum CacheLocalSource {
+  Input,
+  Config,
+  Env,
+  Default,
+}
+
 export const workingDirectory = core.getInput("working-directory");
 export const version = core.getInput("version");
 export const versionFile = getVersionFile();
@@ -80,32 +87,51 @@ function getToolDir(): string | undefined {
   return undefined;
 }
 
-function getCacheLocalPath(): string {
+function getCacheLocalPath():
+  | {
+      path: string;
+      source: CacheLocalSource;
+    }
+  | undefined {
   const cacheLocalPathInput = core.getInput("cache-local-path");
   if (cacheLocalPathInput !== "") {
     const tildeExpanded = expandTilde(cacheLocalPathInput);
-    return resolveRelativePath(tildeExpanded);
+    return {
+      path: resolveRelativePath(tildeExpanded),
+      source: CacheLocalSource.Input,
+    };
   }
   const cacheDirFromConfig = getCacheDirFromConfig();
   if (cacheDirFromConfig !== undefined) {
-    return cacheDirFromConfig;
+    return { path: cacheDirFromConfig, source: CacheLocalSource.Config };
   }
   if (process.env.UV_CACHE_DIR !== undefined) {
     core.info(`UV_CACHE_DIR is already set to ${process.env.UV_CACHE_DIR}`);
-    return process.env.UV_CACHE_DIR;
+    return { path: process.env.UV_CACHE_DIR, source: CacheLocalSource.Env };
   }
-  if (process.env.RUNNER_ENVIRONMENT === "github-hosted") {
-    if (process.env.RUNNER_TEMP !== undefined) {
-      return `${process.env.RUNNER_TEMP}${path.sep}setup-uv-cache`;
+  if (getEnableCache()) {
+    if (process.env.RUNNER_ENVIRONMENT === "github-hosted") {
+      if (process.env.RUNNER_TEMP !== undefined) {
+        return {
+          path: `${process.env.RUNNER_TEMP}${path.sep}setup-uv-cache`,
+          source: CacheLocalSource.Default,
+        };
+      }
+      throw Error(
+        "Could not determine UV_CACHE_DIR. Please make sure RUNNER_TEMP is set or provide the cache-local-path input",
+      );
     }
-    throw Error(
-      "Could not determine UV_CACHE_DIR. Please make sure RUNNER_TEMP is set or provide the cache-local-path input",
-    );
+    if (process.platform === "win32") {
+      return {
+        path: `${process.env.APPDATA}${path.sep}uv${path.sep}cache`,
+        source: CacheLocalSource.Default,
+      };
+    }
+    return {
+      path: `${process.env.HOME}${path.sep}.cache${path.sep}uv`,
+      source: CacheLocalSource.Default,
+    };
   }
-  if (process.platform === "win32") {
-    return `${process.env.APPDATA}${path.sep}uv${path.sep}cache`;
-  }
-  return `${process.env.HOME}${path.sep}.cache${path.sep}uv`;
 }
 
 function getCacheDirFromConfig(): string | undefined {

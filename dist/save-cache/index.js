@@ -90619,7 +90619,10 @@ async function restoreCache() {
     }
     let matchedKey;
     core.info(`Trying to restore uv cache from GitHub Actions cache with key: ${cacheKey}`);
-    const cachePaths = [inputs_1.cacheLocalPath];
+    if (inputs_1.cacheLocalPath === undefined) {
+        throw new Error("cache-local-path is not set. Cannot restore cache without a valid cache path.");
+    }
+    const cachePaths = [inputs_1.cacheLocalPath.path];
     if (inputs_1.cachePython) {
         cachePaths.push(inputs_1.pythonDir);
     }
@@ -90868,9 +90871,13 @@ async function saveCache() {
     if (inputs_1.pruneCache) {
         await pruneCache();
     }
-    let actualCachePath = inputs_1.cacheLocalPath;
-    if (process.env.UV_CACHE_DIR && process.env.UV_CACHE_DIR !== inputs_1.cacheLocalPath) {
-        core.warning(`The environment variable UV_CACHE_DIR has been changed to "${process.env.UV_CACHE_DIR}", by an action or step running after astral-sh/setup-uv. This can lead to unexpected behavior. If you expected this to happen set the cache-local-path input to "${process.env.UV_CACHE_DIR}" instead of "${inputs_1.cacheLocalPath}".`);
+    if (inputs_1.cacheLocalPath === undefined) {
+        throw new Error("cache-local-path is not set. Cannot save cache without a valid cache path.");
+    }
+    let actualCachePath = inputs_1.cacheLocalPath.path;
+    if (process.env.UV_CACHE_DIR &&
+        process.env.UV_CACHE_DIR !== inputs_1.cacheLocalPath.path) {
+        core.warning(`The environment variable UV_CACHE_DIR has been changed to "${process.env.UV_CACHE_DIR}", by an action or step running after astral-sh/setup-uv. This can lead to unexpected behavior. If you expected this to happen set the cache-local-path input to "${process.env.UV_CACHE_DIR}" instead of "${inputs_1.cacheLocalPath.path}".`);
         actualCachePath = process.env.UV_CACHE_DIR;
     }
     core.info(`Saving cache path: ${actualCachePath}`);
@@ -91038,11 +91045,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.resolutionStrategy = exports.addProblemMatchers = exports.manifestFile = exports.githubToken = exports.pythonDir = exports.toolDir = exports.toolBinDir = exports.ignoreEmptyWorkdir = exports.ignoreNothingToCache = exports.cachePython = exports.pruneCache = exports.cacheDependencyGlob = exports.cacheLocalPath = exports.cacheSuffix = exports.saveCache = exports.restoreCache = exports.enableCache = exports.checkSum = exports.activateEnvironment = exports.pythonVersion = exports.versionFile = exports.version = exports.workingDirectory = void 0;
+exports.resolutionStrategy = exports.addProblemMatchers = exports.manifestFile = exports.githubToken = exports.pythonDir = exports.toolDir = exports.toolBinDir = exports.ignoreEmptyWorkdir = exports.ignoreNothingToCache = exports.cachePython = exports.pruneCache = exports.cacheDependencyGlob = exports.cacheLocalPath = exports.cacheSuffix = exports.saveCache = exports.restoreCache = exports.enableCache = exports.checkSum = exports.activateEnvironment = exports.pythonVersion = exports.versionFile = exports.version = exports.workingDirectory = exports.CacheLocalSource = void 0;
 exports.getUvPythonDir = getUvPythonDir;
 const node_path_1 = __importDefault(__nccwpck_require__(6760));
 const core = __importStar(__nccwpck_require__(7484));
 const config_file_1 = __nccwpck_require__(7846);
+var CacheLocalSource;
+(function (CacheLocalSource) {
+    CacheLocalSource[CacheLocalSource["Input"] = 0] = "Input";
+    CacheLocalSource[CacheLocalSource["Config"] = 1] = "Config";
+    CacheLocalSource[CacheLocalSource["Env"] = 2] = "Env";
+    CacheLocalSource[CacheLocalSource["Default"] = 3] = "Default";
+})(CacheLocalSource || (exports.CacheLocalSource = CacheLocalSource = {}));
 exports.workingDirectory = core.getInput("working-directory");
 exports.version = core.getInput("version");
 exports.versionFile = getVersionFile();
@@ -91113,26 +91127,40 @@ function getCacheLocalPath() {
     const cacheLocalPathInput = core.getInput("cache-local-path");
     if (cacheLocalPathInput !== "") {
         const tildeExpanded = expandTilde(cacheLocalPathInput);
-        return resolveRelativePath(tildeExpanded);
+        return {
+            path: resolveRelativePath(tildeExpanded),
+            source: CacheLocalSource.Input,
+        };
     }
     const cacheDirFromConfig = getCacheDirFromConfig();
     if (cacheDirFromConfig !== undefined) {
-        return cacheDirFromConfig;
+        return { path: cacheDirFromConfig, source: CacheLocalSource.Config };
     }
     if (process.env.UV_CACHE_DIR !== undefined) {
         core.info(`UV_CACHE_DIR is already set to ${process.env.UV_CACHE_DIR}`);
-        return process.env.UV_CACHE_DIR;
+        return { path: process.env.UV_CACHE_DIR, source: CacheLocalSource.Env };
     }
-    if (process.env.RUNNER_ENVIRONMENT === "github-hosted") {
-        if (process.env.RUNNER_TEMP !== undefined) {
-            return `${process.env.RUNNER_TEMP}${node_path_1.default.sep}setup-uv-cache`;
+    if (getEnableCache()) {
+        if (process.env.RUNNER_ENVIRONMENT === "github-hosted") {
+            if (process.env.RUNNER_TEMP !== undefined) {
+                return {
+                    path: `${process.env.RUNNER_TEMP}${node_path_1.default.sep}setup-uv-cache`,
+                    source: CacheLocalSource.Default,
+                };
+            }
+            throw Error("Could not determine UV_CACHE_DIR. Please make sure RUNNER_TEMP is set or provide the cache-local-path input");
         }
-        throw Error("Could not determine UV_CACHE_DIR. Please make sure RUNNER_TEMP is set or provide the cache-local-path input");
+        if (process.platform === "win32") {
+            return {
+                path: `${process.env.APPDATA}${node_path_1.default.sep}uv${node_path_1.default.sep}cache`,
+                source: CacheLocalSource.Default,
+            };
+        }
+        return {
+            path: `${process.env.HOME}${node_path_1.default.sep}.cache${node_path_1.default.sep}uv`,
+            source: CacheLocalSource.Default,
+        };
     }
-    if (process.platform === "win32") {
-        return `${process.env.APPDATA}${node_path_1.default.sep}uv${node_path_1.default.sep}cache`;
-    }
-    return `${process.env.HOME}${node_path_1.default.sep}.cache${node_path_1.default.sep}uv`;
 }
 function getCacheDirFromConfig() {
     for (const filePath of [exports.versionFile, "uv.toml", "pyproject.toml"]) {

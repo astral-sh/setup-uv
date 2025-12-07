@@ -8,11 +8,11 @@ import {
   resolveVersion,
   tryGetFromToolCache,
 } from "./download/download-version";
-import { getConfigValueFromTomlFile } from "./utils/config-file";
 import { STATE_UV_PATH, STATE_UV_VERSION } from "./utils/constants";
 import {
   activateEnvironment as activateEnvironmentInput,
   addProblemMatchers,
+  CacheLocalSource,
   cacheLocalPath,
   checkSum,
   enableCache,
@@ -252,16 +252,15 @@ async function activateEnvironment(): Promise<void> {
 }
 
 function setCacheDir(): void {
-  if (enableCache) {
-    const cacheDirFromConfig = getConfigValueFromTomlFile("", "cache-dir");
-    if (cacheDirFromConfig !== undefined) {
+  if (cacheLocalPath !== undefined) {
+    if (cacheLocalPath.source === CacheLocalSource.Config) {
       core.info(
         "Using cache-dir from uv config file, not modifying UV_CACHE_DIR",
       );
       return;
     }
-    core.exportVariable("UV_CACHE_DIR", cacheLocalPath);
-    core.info(`Set UV_CACHE_DIR to ${cacheLocalPath}`);
+    core.exportVariable("UV_CACHE_DIR", cacheLocalPath.path);
+    core.info(`Set UV_CACHE_DIR to ${cacheLocalPath.path}`);
   }
 }
 
