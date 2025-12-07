@@ -29,9 +29,9 @@ it.each<KnownVersionFixture>([
     known: false,
     version: "0.0.15",
   },
-])(
-  "isknownVersion should return $known for version $version",
-  ({ version, known }) => {
-    expect(isknownVersion(version)).toBe(known);
-  },
-);
+])("isknownVersion should return $known for version $version", ({
+  version,
+  known,
+}) => {
+  expect(isknownVersion(version)).toBe(known);
+});
