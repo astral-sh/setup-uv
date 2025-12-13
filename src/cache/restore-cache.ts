@@ -13,15 +13,16 @@ import {
   restoreCache as shouldRestoreCache,
   workingDirectory,
 } from "../utils/inputs";
-import { getArch, getPlatform } from "../utils/platforms";
+import { getArch, getOSNameVersion, getPlatform } from "../utils/platforms";
 
 export const STATE_CACHE_KEY = "cache-key";
 export const STATE_CACHE_MATCHED_KEY = "cache-matched-key";
-const CACHE_VERSION = "1";
+const CACHE_VERSION = "2";
 
 export async function restoreCache(): Promise<void> {
   const cacheKey = await computeKeys();
   core.saveState(STATE_CACHE_KEY, cacheKey);
+  core.setOutput("cache-key", cacheKey);
 
   if (!shouldRestoreCache) {
     core.info("restore-cache is false. Skipping restore cache step.");
@@ -72,9 +73,10 @@ async function computeKeys(): Promise<string> {
   const suffix = cacheSuffix ? `-${cacheSuffix}` : "";
   const pythonVersion = await getPythonVersion();
   const platform = await getPlatform();
+  const osNameVersion = getOSNameVersion();
   const pruned = pruneCache ? "-pruned" : "";
   const python = cachePython ? "-py" : "";
-  return `setup-uv-${CACHE_VERSION}-${getArch()}-${platform}-${pythonVersion}${pruned}${python}${cacheDependencyPathHash}${suffix}`;
+  return `setup-uv-${CACHE_VERSION}-${getArch()}-${platform}-${osNameVersion}-${pythonVersion}${pruned}${python}${cacheDependencyPathHash}${suffix}`;
 }
 
 async function getPythonVersion(): Promise<string> {
