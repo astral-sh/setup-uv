@@ -411,8 +411,6 @@ jobs:
             expected-os: "ubuntu-22.04"
           - os: ubuntu-24.04
             expected-os: "ubuntu-24.04"
-          - os: macos-13
-            expected-os: "macos-13"
           - os: macos-14
             expected-os: "macos-14"
           - os: macos-15
