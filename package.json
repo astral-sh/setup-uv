@@ -36,7 +36,7 @@
     "@octokit/plugin-paginate-rest": "^14.0.0",
     "@octokit/plugin-rest-endpoint-methods": "^17.0.0",
     "@renovatebot/pep440": "^4.2.1",
-    "smol-toml": "^1.4.2",
+    "smol-toml": "^1.5.2",
     "undici": "5.28.5"
   },
   "devDependencies": {
