@@ -2,6 +2,34 @@
 
 This document covers all caching-related configuration options for setup-uv.
 
+## Cache key
+
+The cache key is automatically generated based on:
+
+- **Architecture**: CPU architecture (e.g., `x86_64`, `aarch64`)
+- **Platform**: OS platform type (e.g., `unknown-linux-gnu`, `unknown-linux-musl`, `apple-darwin`,
+  `pc-windows-msvc`)
+- **OS version**: OS name and version (e.g., `ubuntu-22.04`, `macos-14`, `windows-2022`)
+- **Python version**: The Python version in use
+- **Cache options**: Whether pruning and Python caching are enabled
+- **Dependency hash**: Hash of files matching `cache-dependency-glob`
+- **Suffix**: Optional `cache-suffix` if provided
+
+Including the OS version ensures that caches are not shared between different OS versions,
+preventing binary incompatibility issues when runner images change.
+
+The computed cache key is available as the `cache-key` output:
+
+```yaml
+- name: Setup uv
+  id: setup-uv
+  uses: astral-sh/setup-uv@v7
+  with:
+    enable-cache: true
+- name: Print cache key
+  run: echo "Cache key: ${{ steps.setup-uv.outputs.cache-key }}"
+```
+
 ## Enable caching
 
 > [!NOTE]

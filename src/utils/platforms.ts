@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import os from "node:os";
 import * as core from "@actions/core";
 import * as exec from "@actions/exec";
 export type Platform =
@@ -73,4 +75,72 @@ async function isMuslOs(): Promise<boolean> {
     );
     return false;
   }
+}
+
+/**
+ * Returns OS name and version for cache key differentiation.
+ * Examples: "ubuntu-22.04", "macos-14", "windows-2022"
+ * Throws if OS detection fails.
+ */
+export function getOSNameVersion(): string {
+  const platform = process.platform;
+
+  if (platform === "linux") {
+    return getLinuxOSNameVersion();
+  }
+  if (platform === "darwin") {
+    return getMacOSNameVersion();
+  }
+  if (platform === "win32") {
+    return getWindowsNameVersion();
+  }
+
+  throw new Error(`Unsupported platform: ${platform}`);
+}
+
+function getLinuxOSNameVersion(): string {
+  const files = ["/etc/os-release", "/usr/lib/os-release"];
+
+  for (const file of files) {
+    try {
+      const content = fs.readFileSync(file, "utf8");
+      const id = parseOsReleaseValue(content, "ID");
+      const versionId = parseOsReleaseValue(content, "VERSION_ID");
+
+      if (id && versionId) {
+        return `${id}-${versionId}`;
+      }
+    } catch {
+      // Try next file
+    }
+  }
+
+  throw new Error(
+    "Failed to determine Linux distribution. " +
+      "Could not read /etc/os-release or /usr/lib/os-release",
+  );
+}
+
+function parseOsReleaseValue(content: string, key: string): string | undefined {
+  const regex = new RegExp(`^${key}=["']?([^"'\\n]*)["']?$`, "m");
+  const match = content.match(regex);
+  return match?.[1];
+}
+
+function getMacOSNameVersion(): string {
+  const darwinVersion = Number.parseInt(os.release().split(".")[0], 10);
+  if (Number.isNaN(darwinVersion)) {
+    throw new Error(`Failed to parse macOS version from: ${os.release()}`);
+  }
+  const macosVersion = darwinVersion - 9;
+  return `macos-${macosVersion}`;
+}
+
+function getWindowsNameVersion(): string {
+  const version = os.version();
+  const match = version.match(/Windows(?: Server)? (\d+)/);
+  if (!match) {
+    throw new Error(`Failed to parse Windows version from: ${version}`);
+  }
+  return `windows-${match[1]}`;
 }

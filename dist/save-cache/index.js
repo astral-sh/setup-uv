@@ -90609,10 +90609,11 @@ const inputs_1 = __nccwpck_require__(9612);
 const platforms_1 = __nccwpck_require__(8361);
 exports.STATE_CACHE_KEY = "cache-key";
 exports.STATE_CACHE_MATCHED_KEY = "cache-matched-key";
-const CACHE_VERSION = "1";
+const CACHE_VERSION = "2";
 async function restoreCache() {
     const cacheKey = await computeKeys();
     core.saveState(exports.STATE_CACHE_KEY, cacheKey);
+    core.setOutput("cache-key", cacheKey);
     if (!inputs_1.restoreCache) {
         core.info("restore-cache is false. Skipping restore cache step.");
         return;
@@ -90652,9 +90653,10 @@ async function computeKeys() {
     const suffix = inputs_1.cacheSuffix ? `-${inputs_1.cacheSuffix}` : "";
     const pythonVersion = await getPythonVersion();
     const platform = await (0, platforms_1.getPlatform)();
+    const osNameVersion = (0, platforms_1.getOSNameVersion)();
     const pruned = inputs_1.pruneCache ? "-pruned" : "";
     const python = inputs_1.cachePython ? "-py" : "";
-    return `setup-uv-${CACHE_VERSION}-${(0, platforms_1.getArch)()}-${platform}-${pythonVersion}${pruned}${python}${cacheDependencyPathHash}${suffix}`;
+    return `setup-uv-${CACHE_VERSION}-${(0, platforms_1.getArch)()}-${platform}-${osNameVersion}-${pythonVersion}${pruned}${python}${cacheDependencyPathHash}${suffix}`;
 }
 async function getPythonVersion() {
     if (inputs_1.pythonVersion !== "") {
@@ -91282,9 +91284,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getArch = getArch;
 exports.getPlatform = getPlatform;
+exports.getOSNameVersion = getOSNameVersion;
+const node_fs_1 = __importDefault(__nccwpck_require__(3024));
+const node_os_1 = __importDefault(__nccwpck_require__(8161));
 const core = __importStar(__nccwpck_require__(7484));
 const exec = __importStar(__nccwpck_require__(5236));
 function getArch() {
@@ -91341,6 +91349,63 @@ async function isMuslOs() {
         core.warning(`Failed to determine glibc or musl. Falling back to glibc. Error: ${err.message}`);
         return false;
     }
+}
+/**
+ * Returns OS name and version for cache key differentiation.
+ * Examples: "ubuntu-22.04", "macos-14", "windows-2022"
+ * Throws if OS detection fails.
+ */
+function getOSNameVersion() {
+    const platform = process.platform;
+    if (platform === "linux") {
+        return getLinuxOSNameVersion();
+    }
+    if (platform === "darwin") {
+        return getMacOSNameVersion();
+    }
+    if (platform === "win32") {
+        return getWindowsNameVersion();
+    }
+    throw new Error(`Unsupported platform: ${platform}`);
+}
+function getLinuxOSNameVersion() {
+    const files = ["/etc/os-release", "/usr/lib/os-release"];
+    for (const file of files) {
+        try {
+            const content = node_fs_1.default.readFileSync(file, "utf8");
+            const id = parseOsReleaseValue(content, "ID");
+            const versionId = parseOsReleaseValue(content, "VERSION_ID");
+            if (id && versionId) {
+                return `${id}-${versionId}`;
+            }
+        }
+        catch {
+            // Try next file
+        }
+    }
+    throw new Error("Failed to determine Linux distribution. " +
+        "Could not read /etc/os-release or /usr/lib/os-release");
+}
+function parseOsReleaseValue(content, key) {
+    const regex = new RegExp(`^${key}=["']?([^"'\\n]*)["']?$`, "m");
+    const match = content.match(regex);
+    return match?.[1];
+}
+function getMacOSNameVersion() {
+    const darwinVersion = Number.parseInt(node_os_1.default.release().split(".")[0], 10);
+    if (Number.isNaN(darwinVersion)) {
+        throw new Error(`Failed to parse macOS version from: ${node_os_1.default.release()}`);
+    }
+    const macosVersion = darwinVersion - 9;
+    return `macos-${macosVersion}`;
+}
+function getWindowsNameVersion() {
+    const version = node_os_1.default.version();
+    const match = version.match(/Windows(?: Server)? (\d+)/);
+    if (!match) {
+        throw new Error(`Failed to parse Windows version from: ${version}`);
+    }
+    return `windows-${match[1]}`;
 }
 
 
@@ -91479,6 +91544,14 @@ module.exports = require("node:events");
 
 "use strict";
 module.exports = require("node:fs");
+
+/***/ }),
+
+/***/ 8161:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:os");
 
 /***/ }),
 

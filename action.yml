@@ -89,6 +89,8 @@ outputs:
     description: "The path to the installed uvx binary."
   cache-hit:
     description: "A boolean value to indicate a cache entry was found"
+  cache-key:
+    description: "The cache key used for storing/restoring the cache"
   venv:
     description: "Path to the activated venv if activate-environment is true"
 runs:
