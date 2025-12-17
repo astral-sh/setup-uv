@@ -91184,7 +91184,7 @@ function getCacheDirFromConfig() {
 }
 function getUvPythonDir() {
     if (process.env.UV_PYTHON_INSTALL_DIR !== undefined) {
-        core.info(`UV_PYTHON_INSTALL_DIR is already set to  ${process.env.UV_PYTHON_INSTALL_DIR}`);
+        core.info(`UV_PYTHON_INSTALL_DIR is already set to ${process.env.UV_PYTHON_INSTALL_DIR}`);
         return process.env.UV_PYTHON_INSTALL_DIR;
     }
     if (process.env.RUNNER_ENVIRONMENT !== "github-hosted") {
