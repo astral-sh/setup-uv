@@ -155,7 +155,7 @@ function getCacheDirFromConfig(): string | undefined {
 export function getUvPythonDir(): string {
   if (process.env.UV_PYTHON_INSTALL_DIR !== undefined) {
     core.info(
-      `UV_PYTHON_INSTALL_DIR is already set to  ${process.env.UV_PYTHON_INSTALL_DIR}`,
+      `UV_PYTHON_INSTALL_DIR is already set to ${process.env.UV_PYTHON_INSTALL_DIR}`,
     );
     return process.env.UV_PYTHON_INSTALL_DIR;
   }
