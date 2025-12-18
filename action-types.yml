@@ -46,7 +46,7 @@ inputs:
     type: string
   tool-bin-dir:
     type: string
-  mainfest-file:
+  manifest-file:
     type: string
   add-problem-matchers:
     type: boolean
