@@ -1033,6 +1033,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
+  validate-typings:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
+      - name: Validate typings
+        uses: typesafegithub/github-actions-typing@184d97003b1300f6a10e286eb98c191e416ff02b # v2.2.1
+
   all-tests-passed:
     runs-on: ubuntu-latest
     needs:
@@ -1081,6 +1090,7 @@ jobs:
       - test-restore-python-installs
       - test-python-install-dir
       - test-act
+      - validate-typings
     if: always()
     steps:
       - name: All tests passed

@@ -1,0 +1,71 @@
+# See https://github.com/typesafegithub/github-actions-typing
+
+inputs:
+  version:
+    type: string
+  version-file:
+    type: string
+  python-version:
+    type: string
+  activate-environment:
+    type: boolean
+  working-directory:
+    type: string
+  checksum:
+    type: string
+  github-token:
+    type: string
+  enable-cache:
+    type: enum
+    allowed-values:
+      - "true"
+      - "false"
+      - auto
+  cache-dependency-glob:
+    type: list
+    separator: "\n"
+    list-item:
+      type: string
+  restore-cache:
+    type: boolean
+  save-cache:
+    type: boolean
+  cache-suffix:
+    type: string
+  cache-local-path:
+    type: string
+  prune-cache:
+    type: boolean
+  cache-python:
+    type: boolean
+  ignore-nothing-to-cache:
+    type: boolean
+  ignore-empty-workdir:
+    type: boolean
+  tool-dir:
+    type: string
+  tool-bin-dir:
+    type: string
+  manifest-file:
+    type: string
+  add-problem-matchers:
+    type: boolean
+  resolution-strategy:
+    type: enum
+    allowed-values:
+      - highest
+      - lowest
+
+outputs:
+  uv-version:
+    type: string
+  uv-path:
+    type: string
+  uvx-path:
+    type: string
+  cache-hit:
+    type: boolean
+  cache-key:
+    type: string
+  venv:
+    type: string
