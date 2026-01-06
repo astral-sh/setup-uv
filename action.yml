@@ -93,6 +93,10 @@ outputs:
     description: "The cache key used for storing/restoring the cache"
   venv:
     description: "Path to the activated venv if activate-environment is true"
+  python-version:
+    description: "The Python version that was set."
+  python-cache-hit:
+    description: "A boolean value to indicate the Python cache entry was found"
 runs:
   using: "node24"
   main: "dist/setup/index.js"

@@ -325,6 +325,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install latest version
+        id: setup-uv
         uses: ./
         with:
           python-version: 3.13.1t
@@ -335,6 +336,14 @@ jobs:
             exit 1
           fi
         shell: bash
+      - name: Verify output python-version is correct
+        run: |
+          if [ "$PYTHON_VERSION" != "3.13.1t" ]; then
+            exit 1
+          fi
+        shell: bash
+        env:
+          PYTHON_VERSION: ${{ steps.setup-uv.outputs.python-version }}
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
 
@@ -986,7 +995,7 @@ jobs:
             exit 1
           fi
         env:
-          CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
+          CACHE_HIT: ${{ steps.restore.outputs.python-cache-hit }}
       - run: uv sync --managed-python
         working-directory: __tests__/fixtures/uv-project
 

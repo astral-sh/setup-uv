@@ -90599,46 +90599,52 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.STATE_CACHE_MATCHED_KEY = exports.STATE_CACHE_KEY = void 0;
+exports.STATE_PYTHON_CACHE_MATCHED_KEY = exports.STATE_CACHE_MATCHED_KEY = exports.STATE_CACHE_KEY = void 0;
 exports.restoreCache = restoreCache;
 const cache = __importStar(__nccwpck_require__(5116));
 const core = __importStar(__nccwpck_require__(7484));
-const exec = __importStar(__nccwpck_require__(5236));
 const hash_files_1 = __nccwpck_require__(9660);
 const inputs_1 = __nccwpck_require__(9612);
 const platforms_1 = __nccwpck_require__(8361);
 exports.STATE_CACHE_KEY = "cache-key";
 exports.STATE_CACHE_MATCHED_KEY = "cache-matched-key";
+exports.STATE_PYTHON_CACHE_MATCHED_KEY = "python-cache-matched-key";
 const CACHE_VERSION = "2";
-async function restoreCache() {
-    const cacheKey = await computeKeys();
+async function restoreCache(pythonVersion) {
+    const cacheKey = await computeKeys(pythonVersion);
     core.saveState(exports.STATE_CACHE_KEY, cacheKey);
     core.setOutput("cache-key", cacheKey);
     if (!inputs_1.restoreCache) {
         core.info("restore-cache is false. Skipping restore cache step.");
+        core.setOutput("python-cache-hit", false);
         return;
     }
-    let matchedKey;
-    core.info(`Trying to restore uv cache from GitHub Actions cache with key: ${cacheKey}`);
     if (inputs_1.cacheLocalPath === undefined) {
         throw new Error("cache-local-path is not set. Cannot restore cache without a valid cache path.");
     }
-    const cachePaths = [inputs_1.cacheLocalPath.path];
+    await restoreCacheFromKey(cacheKey, inputs_1.cacheLocalPath.path, exports.STATE_CACHE_MATCHED_KEY, "cache-hit");
     if (inputs_1.cachePython) {
-        cachePaths.push(inputs_1.pythonDir);
+        await restoreCacheFromKey(`${cacheKey}-python`, inputs_1.pythonDir, exports.STATE_PYTHON_CACHE_MATCHED_KEY, "python-cache-hit");
     }
+    else {
+        core.setOutput("python-cache-hit", false);
+    }
+}
+async function restoreCacheFromKey(cacheKey, cachePath, stateKey, outputKey) {
+    core.info(`Trying to restore cache from GitHub Actions cache with key: ${cacheKey}`);
+    let matchedKey;
     try {
-        matchedKey = await cache.restoreCache(cachePaths, cacheKey);
+        matchedKey = await cache.restoreCache([cachePath], cacheKey);
     }
     catch (err) {
         const message = err.message;
         core.warning(message);
-        core.setOutput("cache-hit", false);
+        core.setOutput(outputKey, false);
         return;
     }
-    handleMatchResult(matchedKey, cacheKey);
+    handleMatchResult(matchedKey, cacheKey, stateKey, outputKey);
 }
-async function computeKeys() {
+async function computeKeys(pythonVersion) {
     let cacheDependencyPathHash = "-";
     if (inputs_1.cacheDependencyGlob !== "") {
         core.info(`Searching files using cache dependency glob: ${inputs_1.cacheDependencyGlob.split("\n").join(",")}`);
@@ -90651,50 +90657,22 @@ async function computeKeys() {
         cacheDependencyPathHash = "-no-dependency-glob";
     }
     const suffix = inputs_1.cacheSuffix ? `-${inputs_1.cacheSuffix}` : "";
-    const pythonVersion = await getPythonVersion();
+    const version = pythonVersion ?? "unknown";
     const platform = await (0, platforms_1.getPlatform)();
     const osNameVersion = (0, platforms_1.getOSNameVersion)();
     const pruned = inputs_1.pruneCache ? "-pruned" : "";
     const python = inputs_1.cachePython ? "-py" : "";
-    return `setup-uv-${CACHE_VERSION}-${(0, platforms_1.getArch)()}-${platform}-${osNameVersion}-${pythonVersion}${pruned}${python}${cacheDependencyPathHash}${suffix}`;
+    return `setup-uv-${CACHE_VERSION}-${(0, platforms_1.getArch)()}-${platform}-${osNameVersion}-${version}${pruned}${python}${cacheDependencyPathHash}${suffix}`;
 }
-async function getPythonVersion() {
-    if (inputs_1.pythonVersion !== "") {
-        return inputs_1.pythonVersion;
-    }
-    let output = "";
-    const options = {
-        listeners: {
-            stdout: (data) => {
-                output += data.toString();
-            },
-        },
-        silent: !core.isDebug(),
-    };
-    try {
-        const execArgs = ["python", "find", "--directory", inputs_1.workingDirectory];
-        await exec.exec("uv", execArgs, options);
-        const pythonPath = output.trim();
-        output = "";
-        await exec.exec(pythonPath, ["--version"], options);
-        // output is like "Python 3.8.10"
-        return output.split(" ")[1].trim();
-    }
-    catch (error) {
-        const err = error;
-        core.debug(`Failed to get python version from uv. Error: ${err.message}`);
-        return "unknown";
-    }
-}
-function handleMatchResult(matchedKey, primaryKey) {
+function handleMatchResult(matchedKey, primaryKey, stateKey, outputKey) {
     if (!matchedKey) {
         core.info(`No GitHub Actions cache found for key: ${primaryKey}`);
-        core.setOutput("cache-hit", false);
+        core.setOutput(outputKey, false);
         return;
     }
-    core.saveState(exports.STATE_CACHE_MATCHED_KEY, matchedKey);
-    core.info(`uv cache restored from GitHub Actions cache with key: ${matchedKey}`);
-    core.setOutput("cache-hit", true);
+    core.saveState(stateKey, matchedKey);
+    core.info(`cache restored from GitHub Actions cache with key: ${matchedKey}`);
+    core.setOutput(outputKey, true);
 }
 
 
@@ -90868,46 +90846,17 @@ async function saveCache() {
     }
     if (matchedKey === cacheKey) {
         core.info(`Cache hit occurred on key ${cacheKey}, not saving cache.`);
-        return;
     }
-    if (inputs_1.pruneCache) {
-        await pruneCache();
+    else {
+        if (inputs_1.pruneCache) {
+            await pruneCache();
+        }
+        const actualCachePath = getUvCachePath();
+        await saveCacheToKey(cacheKey, actualCachePath, restore_cache_1.STATE_CACHE_MATCHED_KEY, "uv cache", `Cache path ${actualCachePath} does not exist on disk. This likely indicates that there are no dependencies to cache. Consider disabling the cache input if it is not needed.`);
     }
-    if (inputs_1.cacheLocalPath === undefined) {
-        throw new Error("cache-local-path is not set. Cannot save cache without a valid cache path.");
-    }
-    let actualCachePath = inputs_1.cacheLocalPath.path;
-    if (process.env.UV_CACHE_DIR &&
-        process.env.UV_CACHE_DIR !== inputs_1.cacheLocalPath.path) {
-        core.warning(`The environment variable UV_CACHE_DIR has been changed to "${process.env.UV_CACHE_DIR}", by an action or step running after astral-sh/setup-uv. This can lead to unexpected behavior. If you expected this to happen set the cache-local-path input to "${process.env.UV_CACHE_DIR}" instead of "${inputs_1.cacheLocalPath.path}".`);
-        actualCachePath = process.env.UV_CACHE_DIR;
-    }
-    core.info(`Saving cache path: ${actualCachePath}`);
-    if (!fs.existsSync(actualCachePath) && !inputs_1.ignoreNothingToCache) {
-        throw new Error(`Cache path ${actualCachePath} does not exist on disk. This likely indicates that there are no dependencies to cache. Consider disabling the cache input if it is not needed.`);
-    }
-    const cachePaths = [actualCachePath];
     if (inputs_1.cachePython) {
-        core.info(`Including Python cache path: ${inputs_1.pythonDir}`);
-        if (!fs.existsSync(inputs_1.pythonDir) && !inputs_1.ignoreNothingToCache) {
-            throw new Error(`Python cache path ${inputs_1.pythonDir} does not exist on disk. This likely indicates that there are no dependencies to cache. Consider disabling the cache input if it is not needed.`);
-        }
-        cachePaths.push(inputs_1.pythonDir);
-    }
-    core.info(`Final cache paths: ${cachePaths.join(", ")}`);
-    try {
-        await cache.saveCache(cachePaths, cacheKey);
-        core.info(`cache saved with the key: ${cacheKey}`);
-    }
-    catch (e) {
-        if (e instanceof Error &&
-            e.message ===
-                "Path Validation Error: Path(s) specified in the action for caching do(es) not exist, hence no cache is being saved.") {
-            core.info("No cacheable paths were found. Ignoring because ignore-nothing-to-save is enabled.");
-        }
-        else {
-            throw e;
-        }
+        const pythonCacheKey = `${cacheKey}-python`;
+        await saveCacheToKey(pythonCacheKey, inputs_1.pythonDir, restore_cache_1.STATE_PYTHON_CACHE_MATCHED_KEY, "Python cache", `Python cache path ${inputs_1.pythonDir} does not exist on disk. This likely indicates that there are no Python installations to cache. Consider disabling the cache input if it is not needed.`);
     }
 }
 async function pruneCache() {
@@ -90922,6 +90871,42 @@ async function pruneCache() {
     core.info("Pruning cache...");
     const uvPath = core.getState(constants_1.STATE_UV_PATH);
     await exec.exec(uvPath, execArgs, options);
+}
+function getUvCachePath() {
+    if (inputs_1.cacheLocalPath === undefined) {
+        throw new Error("cache-local-path is not set. Cannot save cache without a valid cache path.");
+    }
+    if (process.env.UV_CACHE_DIR &&
+        process.env.UV_CACHE_DIR !== inputs_1.cacheLocalPath.path) {
+        core.warning(`The environment variable UV_CACHE_DIR has been changed to "${process.env.UV_CACHE_DIR}", by an action or step running after astral-sh/setup-uv. This can lead to unexpected behavior. If you expected this to happen set the cache-local-path input to "${process.env.UV_CACHE_DIR}" instead of "${inputs_1.cacheLocalPath.path}".`);
+        return process.env.UV_CACHE_DIR;
+    }
+    return inputs_1.cacheLocalPath.path;
+}
+async function saveCacheToKey(cacheKey, cachePath, stateKey, cacheName, pathNotExistErrorMessage) {
+    const matchedKey = core.getState(stateKey);
+    if (matchedKey === cacheKey) {
+        core.info(`${cacheName} hit occurred on key ${cacheKey}, not saving cache.`);
+        return;
+    }
+    core.info(`Including ${cacheName} path: ${cachePath}`);
+    if (!fs.existsSync(cachePath) && !inputs_1.ignoreNothingToCache) {
+        throw new Error(pathNotExistErrorMessage);
+    }
+    try {
+        await cache.saveCache([cachePath], cacheKey);
+        core.info(`${cacheName} saved with key: ${cacheKey}`);
+    }
+    catch (e) {
+        if (e instanceof Error &&
+            e.message ===
+                "Path Validation Error: Path(s) specified in the action for caching do(es) not exist, hence no cache is being saved.") {
+            core.info(`No cacheable ${cacheName} paths were found. Ignoring because ignore-nothing-to-save is enabled.`);
+        }
+        else {
+            throw e;
+        }
+    }
 }
 run();
 
