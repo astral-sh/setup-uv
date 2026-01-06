@@ -6,6 +6,7 @@ import * as pep440 from "@renovatebot/pep440";
 import {
   STATE_CACHE_KEY,
   STATE_CACHE_MATCHED_KEY,
+  STATE_PYTHON_CACHE_MATCHED_KEY,
 } from "./cache/restore-cache";
 import { STATE_UV_PATH, STATE_UV_VERSION } from "./utils/constants";
 import {
@@ -52,63 +53,30 @@ async function saveCache(): Promise<void> {
   }
   if (matchedKey === cacheKey) {
     core.info(`Cache hit occurred on key ${cacheKey}, not saving cache.`);
-    return;
-  }
+  } else {
+    if (shouldPruneCache) {
+      await pruneCache();
+    }
 
-  if (shouldPruneCache) {
-    await pruneCache();
-  }
-
-  if (cacheLocalPath === undefined) {
-    throw new Error(
-      "cache-local-path is not set. Cannot save cache without a valid cache path.",
-    );
-  }
-  let actualCachePath = cacheLocalPath.path;
-  if (
-    process.env.UV_CACHE_DIR &&
-    process.env.UV_CACHE_DIR !== cacheLocalPath.path
-  ) {
-    core.warning(
-      `The environment variable UV_CACHE_DIR has been changed to "${process.env.UV_CACHE_DIR}", by an action or step running after astral-sh/setup-uv. This can lead to unexpected behavior. If you expected this to happen set the cache-local-path input to "${process.env.UV_CACHE_DIR}" instead of "${cacheLocalPath.path}".`,
-    );
-    actualCachePath = process.env.UV_CACHE_DIR;
-  }
-
-  core.info(`Saving cache path: ${actualCachePath}`);
-  if (!fs.existsSync(actualCachePath) && !ignoreNothingToCache) {
-    throw new Error(
+    const actualCachePath = getUvCachePath();
+    await saveCacheToKey(
+      cacheKey,
+      actualCachePath,
+      STATE_CACHE_MATCHED_KEY,
+      "uv cache",
       `Cache path ${actualCachePath} does not exist on disk. This likely indicates that there are no dependencies to cache. Consider disabling the cache input if it is not needed.`,
     );
   }
 
-  const cachePaths = [actualCachePath];
   if (cachePython) {
-    core.info(`Including Python cache path: ${pythonDir}`);
-    if (!fs.existsSync(pythonDir) && !ignoreNothingToCache) {
-      throw new Error(
-        `Python cache path ${pythonDir} does not exist on disk. This likely indicates that there are no dependencies to cache. Consider disabling the cache input if it is not needed.`,
-      );
-    }
-    cachePaths.push(pythonDir);
-  }
-
-  core.info(`Final cache paths: ${cachePaths.join(", ")}`);
-  try {
-    await cache.saveCache(cachePaths, cacheKey);
-    core.info(`cache saved with the key: ${cacheKey}`);
-  } catch (e) {
-    if (
-      e instanceof Error &&
-      e.message ===
-        "Path Validation Error: Path(s) specified in the action for caching do(es) not exist, hence no cache is being saved."
-    ) {
-      core.info(
-        "No cacheable paths were found. Ignoring because ignore-nothing-to-save is enabled.",
-      );
-    } else {
-      throw e;
-    }
+    const pythonCacheKey = `${cacheKey}-python`;
+    await saveCacheToKey(
+      pythonCacheKey,
+      pythonDir,
+      STATE_PYTHON_CACHE_MATCHED_KEY,
+      "Python cache",
+      `Python cache path ${pythonDir} does not exist on disk. This likely indicates that there are no Python installations to cache. Consider disabling the cache input if it is not needed.`,
+    );
   }
 }
 
@@ -126,6 +94,63 @@ async function pruneCache(): Promise<void> {
   core.info("Pruning cache...");
   const uvPath = core.getState(STATE_UV_PATH);
   await exec.exec(uvPath, execArgs, options);
+}
+
+function getUvCachePath(): string {
+  if (cacheLocalPath === undefined) {
+    throw new Error(
+      "cache-local-path is not set. Cannot save cache without a valid cache path.",
+    );
+  }
+  if (
+    process.env.UV_CACHE_DIR &&
+    process.env.UV_CACHE_DIR !== cacheLocalPath.path
+  ) {
+    core.warning(
+      `The environment variable UV_CACHE_DIR has been changed to "${process.env.UV_CACHE_DIR}", by an action or step running after astral-sh/setup-uv. This can lead to unexpected behavior. If you expected this to happen set the cache-local-path input to "${process.env.UV_CACHE_DIR}" instead of "${cacheLocalPath.path}".`,
+    );
+    return process.env.UV_CACHE_DIR;
+  }
+  return cacheLocalPath.path;
+}
+
+async function saveCacheToKey(
+  cacheKey: string,
+  cachePath: string,
+  stateKey: string,
+  cacheName: string,
+  pathNotExistErrorMessage: string,
+): Promise<void> {
+  const matchedKey = core.getState(stateKey);
+
+  if (matchedKey === cacheKey) {
+    core.info(
+      `${cacheName} hit occurred on key ${cacheKey}, not saving cache.`,
+    );
+    return;
+  }
+
+  core.info(`Including ${cacheName} path: ${cachePath}`);
+  if (!fs.existsSync(cachePath) && !ignoreNothingToCache) {
+    throw new Error(pathNotExistErrorMessage);
+  }
+
+  try {
+    await cache.saveCache([cachePath], cacheKey);
+    core.info(`${cacheName} saved with key: ${cacheKey}`);
+  } catch (e) {
+    if (
+      e instanceof Error &&
+      e.message ===
+        "Path Validation Error: Path(s) specified in the action for caching do(es) not exist, hence no cache is being saved."
+    ) {
+      core.info(
+        `No cacheable ${cacheName} paths were found. Ignoring because ignore-nothing-to-save is enabled.`,
+      );
+    } else {
+      throw e;
+    }
+  }
 }
 
 run();

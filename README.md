@@ -125,6 +125,8 @@ Have a look under [Advanced Configuration](#advanced-configuration) for detailed
 - `uvx-path`: The path to the installed uvx binary.
 - `cache-hit`: A boolean value to indicate a cache entry was found.
 - `venv`: Path to the activated venv if activate-environment is true.
+- `python-version`: The Python version that was set.
+- `python-cache-hit`: A boolean value to indicate the Python cache entry was found.
 
 ### Python version
 

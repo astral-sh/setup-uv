@@ -36,6 +36,37 @@ import {
 } from "./utils/platforms";
 import { getUvVersionFromFile } from "./version/resolve";
 
+async function getPythonVersion(): Promise<string> {
+  if (pythonVersion !== "") {
+    return pythonVersion;
+  }
+
+  let output = "";
+  const options: exec.ExecOptions = {
+    listeners: {
+      stdout: (data: Buffer) => {
+        output += data.toString();
+      },
+    },
+    silent: !core.isDebug(),
+  };
+
+  try {
+    const execArgs = ["python", "find", "--directory", workingDirectory];
+    await exec.exec("uv", execArgs, options);
+    const pythonPath = output.trim();
+
+    output = "";
+    await exec.exec(pythonPath, ["--version"], options);
+    // output is like "Python 3.8.10"
+    return output.split(" ")[1].trim();
+  } catch (error) {
+    const err = error as Error;
+    core.debug(`Failed to get python version from uv. Error: ${err.message}`);
+    return "unknown";
+  }
+}
+
 async function run(): Promise<void> {
   detectEmptyWorkdir();
   const platform = await getPlatform();
@@ -63,8 +94,11 @@ async function run(): Promise<void> {
     core.saveState(STATE_UV_VERSION, setupResult.version);
     core.info(`Successfully installed uv version ${setupResult.version}`);
 
+    const pythonVersion = await getPythonVersion();
+    core.setOutput("python-version", pythonVersion);
+
     if (enableCache) {
-      await restoreCache();
+      await restoreCache(pythonVersion);
     }
     // https://github.com/nodejs/node/issues/56645#issuecomment-3077594952
     await new Promise((resolve) => setTimeout(resolve, 50));

@@ -69,3 +69,7 @@ outputs:
     type: string
   venv:
     type: string
+  python-version:
+    type: string
+  python-cache-hit:
+    type: boolean
