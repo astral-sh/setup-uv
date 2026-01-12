@@ -202,7 +202,8 @@ by name (`uv`).
 With `setup-uv`, you can install a specific version of Python using `uv python install` rather than
 relying on `actions/setup-python`.
 
-Using `actions/setup-python` can be faster, because GitHub caches the Python versions alongside the runner.
+Using `actions/setup-python` can be faster (~1s), because GitHub includes several Python versions in the runner image
+which are available to get activated by `actions/setup-python` without having to download them.
 
 For example:
 
