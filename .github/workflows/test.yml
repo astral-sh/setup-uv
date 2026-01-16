@@ -25,7 +25,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Actionlint
-        uses: eifinger/actionlint-action@213860089b7cf97d640aa67567898fabeb132746 # v1.9.3
+        uses: eifinger/actionlint-action@447fbfe7533062b7a9ea55f790f2396fba6d052a # v1.10.0
       - name: Run zizmor
         uses: zizmorcore/zizmor-action@e639db99335bc9038abc0e066dfcd72e23d26fb4 # v0.3.0
       - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
