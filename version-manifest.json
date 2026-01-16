@@ -2,6 +2,132 @@
   {
     "arch": "aarch64",
     "artifactName": "uv-aarch64-apple-darwin.tar.gz",
+    "downloadUrl": "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-aarch64-apple-darwin.tar.gz",
+    "platform": "apple-darwin",
+    "version": "0.9.26"
+  },
+  {
+    "arch": "aarch64",
+    "artifactName": "uv-aarch64-pc-windows-msvc.zip",
+    "downloadUrl": "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-aarch64-pc-windows-msvc.zip",
+    "platform": "pc-windows-msvc",
+    "version": "0.9.26"
+  },
+  {
+    "arch": "aarch64",
+    "artifactName": "uv-aarch64-unknown-linux-gnu.tar.gz",
+    "downloadUrl": "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-aarch64-unknown-linux-gnu.tar.gz",
+    "platform": "unknown-linux-gnu",
+    "version": "0.9.26"
+  },
+  {
+    "arch": "aarch64",
+    "artifactName": "uv-aarch64-unknown-linux-musl.tar.gz",
+    "downloadUrl": "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-aarch64-unknown-linux-musl.tar.gz",
+    "platform": "unknown-linux-musl",
+    "version": "0.9.26"
+  },
+  {
+    "arch": "arm",
+    "artifactName": "uv-arm-unknown-linux-musleabihf.tar.gz",
+    "downloadUrl": "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-arm-unknown-linux-musleabihf.tar.gz",
+    "platform": "unknown-linux-musleabihf",
+    "version": "0.9.26"
+  },
+  {
+    "arch": "armv7",
+    "artifactName": "uv-armv7-unknown-linux-gnueabihf.tar.gz",
+    "downloadUrl": "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-armv7-unknown-linux-gnueabihf.tar.gz",
+    "platform": "unknown-linux-gnueabihf",
+    "version": "0.9.26"
+  },
+  {
+    "arch": "armv7",
+    "artifactName": "uv-armv7-unknown-linux-musleabihf.tar.gz",
+    "downloadUrl": "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-armv7-unknown-linux-musleabihf.tar.gz",
+    "platform": "unknown-linux-musleabihf",
+    "version": "0.9.26"
+  },
+  {
+    "arch": "i686",
+    "artifactName": "uv-i686-pc-windows-msvc.zip",
+    "downloadUrl": "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-i686-pc-windows-msvc.zip",
+    "platform": "pc-windows-msvc",
+    "version": "0.9.26"
+  },
+  {
+    "arch": "i686",
+    "artifactName": "uv-i686-unknown-linux-gnu.tar.gz",
+    "downloadUrl": "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-i686-unknown-linux-gnu.tar.gz",
+    "platform": "unknown-linux-gnu",
+    "version": "0.9.26"
+  },
+  {
+    "arch": "i686",
+    "artifactName": "uv-i686-unknown-linux-musl.tar.gz",
+    "downloadUrl": "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-i686-unknown-linux-musl.tar.gz",
+    "platform": "unknown-linux-musl",
+    "version": "0.9.26"
+  },
+  {
+    "arch": "powerpc64",
+    "artifactName": "uv-powerpc64-unknown-linux-gnu.tar.gz",
+    "downloadUrl": "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-powerpc64-unknown-linux-gnu.tar.gz",
+    "platform": "unknown-linux-gnu",
+    "version": "0.9.26"
+  },
+  {
+    "arch": "powerpc64le",
+    "artifactName": "uv-powerpc64le-unknown-linux-gnu.tar.gz",
+    "downloadUrl": "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-powerpc64le-unknown-linux-gnu.tar.gz",
+    "platform": "unknown-linux-gnu",
+    "version": "0.9.26"
+  },
+  {
+    "arch": "riscv64gc",
+    "artifactName": "uv-riscv64gc-unknown-linux-gnu.tar.gz",
+    "downloadUrl": "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-riscv64gc-unknown-linux-gnu.tar.gz",
+    "platform": "unknown-linux-gnu",
+    "version": "0.9.26"
+  },
+  {
+    "arch": "s390x",
+    "artifactName": "uv-s390x-unknown-linux-gnu.tar.gz",
+    "downloadUrl": "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-s390x-unknown-linux-gnu.tar.gz",
+    "platform": "unknown-linux-gnu",
+    "version": "0.9.26"
+  },
+  {
+    "arch": "x86_64",
+    "artifactName": "uv-x86_64-apple-darwin.tar.gz",
+    "downloadUrl": "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-x86_64-apple-darwin.tar.gz",
+    "platform": "apple-darwin",
+    "version": "0.9.26"
+  },
+  {
+    "arch": "x86_64",
+    "artifactName": "uv-x86_64-pc-windows-msvc.zip",
+    "downloadUrl": "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-x86_64-pc-windows-msvc.zip",
+    "platform": "pc-windows-msvc",
+    "version": "0.9.26"
+  },
+  {
+    "arch": "x86_64",
+    "artifactName": "uv-x86_64-unknown-linux-gnu.tar.gz",
+    "downloadUrl": "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-x86_64-unknown-linux-gnu.tar.gz",
+    "platform": "unknown-linux-gnu",
+    "version": "0.9.26"
+  },
+  {
+    "arch": "x86_64",
+    "artifactName": "uv-x86_64-unknown-linux-musl.tar.gz",
+    "downloadUrl": "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-x86_64-unknown-linux-musl.tar.gz",
+    "platform": "unknown-linux-musl",
+    "version": "0.9.26"
+  },
+  {
+    "arch": "aarch64",
+    "artifactName": "uv-aarch64-apple-darwin.tar.gz",
     "downloadUrl": "https://github.com/astral-sh/uv/releases/download/0.9.25/uv-aarch64-apple-darwin.tar.gz",
     "platform": "apple-darwin",
     "version": "0.9.25"
