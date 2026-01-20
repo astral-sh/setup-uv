@@ -386,6 +386,50 @@ jobs:
         env:
           UV_VENV: ${{ steps.setup-uv.outputs.venv }}
 
+  test-activate-environment-custom-path:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
+      - name: Install latest version
+        id: setup-uv
+        uses: ./
+        with:
+          python-version: 3.13.1t
+          activate-environment: true
+          venv-path: ${{ runner.temp }}/custom-venv
+      - name: Verify VIRTUAL_ENV points to custom path
+        run: |
+          if [[ "$VIRTUAL_ENV" != "${{ runner.temp }}/custom-venv" ]]; then
+            echo "VIRTUAL_ENV is not set to custom path: $VIRTUAL_ENV"
+            exit 1
+          fi
+        shell: bash
+      - name: Verify packages can be installed
+        run: uv pip install pip
+        shell: bash
+      - name: Verify python runs from custom venv
+        run: |
+          PYTHON_PATH=$(which python)
+          if [[ "$PYTHON_PATH" != *"custom-venv"* ]]; then
+            echo "Python is not running from custom venv: $PYTHON_PATH"
+            exit 1
+          fi
+        shell: bash
+      - name: Verify output venv matches custom path
+        run: |
+          if [ "$UV_VENV" != "${{ runner.temp }}/custom-venv" ]; then
+            echo "output venv does not match custom path: $UV_VENV"
+            exit 1
+          fi
+        shell: bash
+        env:
+          UV_VENV: ${{ steps.setup-uv.outputs.venv }}
+
   test-musl:
     runs-on: ubuntu-latest
     container: alpine
@@ -1069,6 +1113,7 @@ jobs:
       - test-tilde-expansion-tool-dirs
       - test-python-version
       - test-activate-environment
+      - test-activate-environment-custom-path
       - test-musl
       - test-cache-key-os-version
       - test-cache-local

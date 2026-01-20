@@ -14,6 +14,7 @@ export const version = core.getInput("version");
 export const versionFile = getVersionFile();
 export const pythonVersion = core.getInput("python-version");
 export const activateEnvironment = core.getBooleanInput("activate-environment");
+export const venvPath = getVenvPath();
 export const checkSum = core.getInput("checksum");
 export const enableCache = getEnableCache();
 export const restoreCache = core.getInput("restore-cache") === "true";
@@ -43,6 +44,15 @@ function getVersionFile(): string {
     return resolveRelativePath(tildeExpanded);
   }
   return versionFileInput;
+}
+
+function getVenvPath(): string | undefined {
+  const venvPathInput = core.getInput("venv-path");
+  if (venvPathInput !== "") {
+    const tildeExpanded = expandTilde(venvPathInput);
+    return resolveRelativePath(tildeExpanded);
+  }
+  return undefined;
 }
 
 function getEnableCache(): boolean {
