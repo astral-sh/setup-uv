@@ -90980,12 +90980,13 @@ function getConfigValueFromTomlFile(filePath, key) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.STATE_UV_VERSION = exports.STATE_UV_PATH = exports.TOOL_CACHE_NAME = exports.OWNER = exports.REPO = void 0;
+exports.VERSIONS_NDJSON_URL = exports.STATE_UV_VERSION = exports.STATE_UV_PATH = exports.TOOL_CACHE_NAME = exports.OWNER = exports.REPO = void 0;
 exports.REPO = "uv";
 exports.OWNER = "astral-sh";
 exports.TOOL_CACHE_NAME = "uv";
 exports.STATE_UV_PATH = "uv-path";
 exports.STATE_UV_VERSION = "uv-version";
+exports.VERSIONS_NDJSON_URL = "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson";
 
 
 /***/ }),

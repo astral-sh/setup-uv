@@ -11,24 +11,35 @@ export async function validateChecksum(
   arch: Architecture,
   platform: Platform,
   version: string,
+  ndjsonChecksum?: string,
 ): Promise<void> {
   let isValid: boolean | undefined;
+  let checksumUsed: string | undefined;
+
+  // Priority: user-provided checksum > KNOWN_CHECKSUMS > NDJSON fallback
   if (checkSum !== undefined && checkSum !== "") {
+    checksumUsed = checkSum;
+    core.debug("Using user-provided checksum.");
     isValid = await validateFileCheckSum(downloadPath, checkSum);
   } else {
-    core.debug("Checksum not provided. Checking known checksums.");
     const key = `${arch}-${platform}-${version}`;
     if (key in KNOWN_CHECKSUMS) {
-      const knownChecksum = KNOWN_CHECKSUMS[`${arch}-${platform}-${version}`];
-      core.debug(`Checking checksum for ${arch}-${platform}-${version}.`);
-      isValid = await validateFileCheckSum(downloadPath, knownChecksum);
+      checksumUsed = KNOWN_CHECKSUMS[key];
+      core.debug(`Using known checksum for ${key}.`);
+      isValid = await validateFileCheckSum(downloadPath, checksumUsed);
+    } else if (ndjsonChecksum !== undefined && ndjsonChecksum !== "") {
+      checksumUsed = ndjsonChecksum;
+      core.debug("Using checksum from NDJSON version data.");
+      isValid = await validateFileCheckSum(downloadPath, ndjsonChecksum);
     } else {
-      core.debug(`No known checksum found for ${key}.`);
+      core.debug(`No checksum found for ${key}.`);
     }
   }
 
   if (isValid === false) {
-    throw new Error(`Checksum for ${downloadPath} did not match ${checkSum}.`);
+    throw new Error(
+      `Checksum for ${downloadPath} did not match ${checksumUsed}.`,
+    );
   }
   if (isValid === true) {
     core.debug(`Checksum for ${downloadPath} is valid.`);

@@ -23,7 +23,7 @@ and configures the environment for subsequent workflow steps.
 **Size**: Small-medium repository (~50 source files, ~400 total files including dependencies)
 **Languages**: TypeScript (primary), JavaScript (compiled output), JSON (configuration)
 **Runtime**: Node.js 24 (GitHub Actions runtime)
-**Key Dependencies**: @actions/core, @actions/cache, @actions/tool-cache, @octokit/core
+**Key Dependencies**: @actions/core, @actions/cache, @actions/tool-cache
 
 ### Core Architecture
 
