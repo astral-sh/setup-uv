@@ -263,6 +263,11 @@ function setupPython(): void {
   }
 }
 
+function getVenvPath(): string {
+  // Use custom venv path if provided, otherwise default to .venv in working directory
+  return venvPathInput ?? path.resolve(`${workingDirectory}${path.sep}.venv`);
+}
+
 async function activateEnvironment(): Promise<void> {
   if (activateEnvironmentInput) {
     if (process.env.UV_NO_MODIFY_PATH !== undefined) {
@@ -271,9 +276,7 @@ async function activateEnvironment(): Promise<void> {
       );
     }
 
-    // Use custom venv path if provided, otherwise default to .venv in working directory
-    const venvPath =
-      venvPathInput ?? path.resolve(`${workingDirectory}${path.sep}.venv`);
+    const venvPath = getVenvPath();
 
     core.info(`Activating python venv at ${venvPath}...`);
     await exec.exec("uv", ["venv", venvPath]);
