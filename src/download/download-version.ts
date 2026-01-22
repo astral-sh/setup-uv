@@ -10,8 +10,10 @@ import { Octokit } from "../utils/octokit";
 import type { Architecture, Platform } from "../utils/platforms";
 import { validateChecksum } from "./checksum/checksum";
 import {
+  getAvailableVersionsFromManifest,
   getDownloadUrl,
   getLatestKnownVersion as getLatestVersionInManifest,
+  REMOTE_MANIFEST_URL,
 } from "./version-manifest";
 
 type Release =
@@ -61,27 +63,36 @@ export async function downloadVersionFromManifest(
   checkSum: string | undefined,
   githubToken: string,
 ): Promise<{ version: string; cachedToolDir: string }> {
-  const downloadUrl = await getDownloadUrl(
-    manifestUrl,
-    version,
-    arch,
-    platform,
-  );
-  if (!downloadUrl) {
-    core.info(
-      `manifest-file does not contain version ${version}, arch ${arch}, platform ${platform}. Falling back to GitHub releases.`,
-    );
-    return await downloadVersionFromGithub(
-      platform,
-      arch,
-      version,
-      checkSum,
-      githubToken,
-    );
+  // If no user-provided manifest, try remote manifest first (will use cache if already fetched)
+  // then fall back to bundled manifest
+  const manifestSources =
+    manifestUrl !== undefined
+      ? [manifestUrl]
+      : [REMOTE_MANIFEST_URL, undefined];
+
+  for (const source of manifestSources) {
+    try {
+      const downloadUrl = await getDownloadUrl(source, version, arch, platform);
+      if (downloadUrl) {
+        return await downloadVersion(
+          downloadUrl,
+          `uv-${arch}-${platform}`,
+          platform,
+          arch,
+          version,
+          checkSum,
+          githubToken,
+        );
+      }
+    } catch (err) {
+      core.debug(`Failed to get download URL from manifest ${source}: ${err}`);
+    }
   }
-  return await downloadVersion(
-    downloadUrl,
-    `uv-${arch}-${platform}`,
+
+  core.info(
+    `Manifest does not contain version ${version}, arch ${arch}, platform ${platform}. Falling back to GitHub releases.`,
+  );
+  return await downloadVersionFromGithub(
     platform,
     arch,
     version,
@@ -188,6 +199,32 @@ export async function resolveVersion(
 }
 
 async function getAvailableVersions(githubToken: string): Promise<string[]> {
+  // 1. Try remote manifest first (no rate limits, always current)
+  try {
+    core.info("Getting available versions from remote manifest...");
+    const versions =
+      await getAvailableVersionsFromManifest(REMOTE_MANIFEST_URL);
+    core.debug(`Found ${versions.length} versions from remote manifest`);
+    return versions;
+  } catch (err) {
+    core.debug(`Remote manifest lookup failed: ${err}`);
+  }
+
+  // 2. Try GitHub API (rate limited but up-to-date)
+  try {
+    return await getAvailableVersionsFromGitHubApi(githubToken);
+  } catch (err) {
+    core.debug(`GitHub API lookup failed: ${err}`);
+  }
+
+  // 3. Fall back to bundled manifest (no network, may be stale)
+  core.info("Getting available versions from bundled manifest...");
+  return await getAvailableVersionsFromManifest(undefined);
+}
+
+async function getAvailableVersionsFromGitHubApi(
+  githubToken: string,
+): Promise<string[]> {
   core.info("Getting available versions from GitHub API...");
   try {
     const octokit = new Octokit({
@@ -224,7 +261,32 @@ async function getReleaseTagNames(octokit: Octokit): Promise<string[]> {
 }
 
 async function getLatestVersion(githubToken: string) {
-  core.info("Getting latest version from GitHub API...");
+  // 1. Try remote manifest first (no rate limits, always current)
+  try {
+    core.info("Getting latest version from remote manifest...");
+    const version = await getLatestVersionInManifest(REMOTE_MANIFEST_URL);
+    core.debug(`Latest version from remote manifest: ${version}`);
+    return version;
+  } catch (err) {
+    core.debug(`Remote manifest lookup failed: ${err}`);
+  }
+
+  // 2. Try GitHub API (rate limited but up-to-date)
+  try {
+    core.info("Getting latest version from GitHub API...");
+    return await getLatestVersionFromGitHubApi(githubToken);
+  } catch (err) {
+    core.debug(`GitHub API lookup failed: ${err}`);
+  }
+
+  // 3. Fall back to bundled manifest (no network, may be stale)
+  core.info("Getting latest version from bundled manifest...");
+  return await getLatestVersionInManifest(undefined);
+}
+
+async function getLatestVersionFromGitHubApi(
+  githubToken: string,
+): Promise<string> {
   const octokit = new Octokit({
     auth: githubToken,
   });
