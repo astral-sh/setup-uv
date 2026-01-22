@@ -32529,7 +32529,7 @@ async function getManifestEntries(manifestUrl) {
         data = await response.text();
     }
     else {
-        core.debug("Reading manifest from local bundled file.");
+        core.info("manifest-file not provided, reading from local file.");
         const fileContent = await node_fs_1.promises.readFile(localManifestFile);
         data = fileContent.toString();
     }
