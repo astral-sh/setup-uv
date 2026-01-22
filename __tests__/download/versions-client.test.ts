@@ -23,13 +23,12 @@ function createMockResponse(
   statusText: string,
   data: string,
 ) {
-  const encoder = new TextEncoder();
-  const body = {
-    async *[Symbol.asyncIterator]() {
-      yield encoder.encode(data);
-    },
+  return {
+    ok,
+    status,
+    statusText,
+    text: async () => data,
   };
-  return { body, ok, status, statusText };
 }
 
 describe("versions-client", () => {

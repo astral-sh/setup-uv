@@ -1,3 +1,4 @@
+import { promises as fs } from "node:fs";
 import * as core from "@actions/core";
 import * as semver from "semver";
 import { updateChecksums } from "./download/checksum/update-known-checksums";
@@ -100,8 +101,6 @@ async function updateVersionManifestFromEntries(
   filePath: string,
   entries: ArtifactEntry[],
 ): Promise<void> {
-  const { promises: fs } = await import("node:fs");
-
   const manifest = entries.map((entry) => ({
     arch: entry.arch,
     artifactName: entry.artifactName,

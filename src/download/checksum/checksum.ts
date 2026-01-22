@@ -13,37 +13,34 @@ export async function validateChecksum(
   version: string,
   ndjsonChecksum?: string,
 ): Promise<void> {
-  let isValid: boolean | undefined;
-  let checksumUsed: string | undefined;
-
   // Priority: user-provided checksum > KNOWN_CHECKSUMS > NDJSON fallback
+  const key = `${arch}-${platform}-${version}`;
+  let checksumToUse: string | undefined;
+  let source: string;
+
   if (checkSum !== undefined && checkSum !== "") {
-    checksumUsed = checkSum;
-    core.debug("Using user-provided checksum.");
-    isValid = await validateFileCheckSum(downloadPath, checkSum);
+    checksumToUse = checkSum;
+    source = "user-provided";
+  } else if (key in KNOWN_CHECKSUMS) {
+    checksumToUse = KNOWN_CHECKSUMS[key];
+    source = `known checksum for ${key}`;
+  } else if (ndjsonChecksum !== undefined && ndjsonChecksum !== "") {
+    checksumToUse = ndjsonChecksum;
+    source = "NDJSON version data";
   } else {
-    const key = `${arch}-${platform}-${version}`;
-    if (key in KNOWN_CHECKSUMS) {
-      checksumUsed = KNOWN_CHECKSUMS[key];
-      core.debug(`Using known checksum for ${key}.`);
-      isValid = await validateFileCheckSum(downloadPath, checksumUsed);
-    } else if (ndjsonChecksum !== undefined && ndjsonChecksum !== "") {
-      checksumUsed = ndjsonChecksum;
-      core.debug("Using checksum from NDJSON version data.");
-      isValid = await validateFileCheckSum(downloadPath, ndjsonChecksum);
-    } else {
-      core.debug(`No checksum found for ${key}.`);
-    }
+    core.debug(`No checksum found for ${key}.`);
+    return;
   }
 
-  if (isValid === false) {
+  core.debug(`Using ${source}.`);
+  const isValid = await validateFileCheckSum(downloadPath, checksumToUse);
+
+  if (!isValid) {
     throw new Error(
-      `Checksum for ${downloadPath} did not match ${checksumUsed}.`,
+      `Checksum for ${downloadPath} did not match ${checksumToUse}.`,
     );
   }
-  if (isValid === true) {
-    core.debug(`Checksum for ${downloadPath} is valid.`);
-  }
+  core.debug(`Checksum for ${downloadPath} is valid.`);
 }
 
 async function validateFileCheckSum(

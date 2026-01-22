@@ -8,11 +8,10 @@ import { OWNER, REPO, TOOL_CACHE_NAME } from "../utils/constants";
 import type { Architecture, Platform } from "../utils/platforms";
 import { validateChecksum } from "./checksum/checksum";
 import {
-  getDownloadUrl,
   getLatestKnownVersion as getLatestVersionInManifest,
+  getDownloadUrl as getManifestDownloadUrl,
 } from "./version-manifest";
 import {
-  type ArtifactResult,
   getAllVersions,
   getArtifact,
   getLatestVersion as getLatestVersionFromNdjson,
@@ -33,7 +32,7 @@ export function tryGetFromToolCache(
   return { installedPath, version: resolvedVersion };
 }
 
-export async function downloadVersionFromGithub(
+export async function downloadVersionFromNdjson(
   platform: Platform,
   arch: Architecture,
   version: string,
@@ -43,13 +42,8 @@ export async function downloadVersionFromGithub(
   const artifact = `uv-${arch}-${platform}`;
   const extension = getExtension(platform);
 
-  // Try to get artifact info from NDJSON (includes checksum)
-  let artifactInfo: ArtifactResult | undefined;
-  try {
-    artifactInfo = await getArtifact(version, arch, platform);
-  } catch (err) {
-    core.debug(`Failed to get artifact from NDJSON: ${(err as Error).message}`);
-  }
+  // Get artifact info from NDJSON (includes URL and checksum)
+  const artifactInfo = await getArtifact(version, arch, platform);
 
   const downloadUrl =
     artifactInfo?.url ??
@@ -68,39 +62,23 @@ export async function downloadVersionFromGithub(
 }
 
 export async function downloadVersionFromManifest(
-  manifestUrl: string | undefined,
+  manifestUrl: string,
   platform: Platform,
   arch: Architecture,
   version: string,
   checkSum: string | undefined,
   githubToken: string,
 ): Promise<{ version: string; cachedToolDir: string }> {
-  const downloadUrl = await getDownloadUrl(
+  const downloadUrl = await getManifestDownloadUrl(
     manifestUrl,
     version,
     arch,
     platform,
   );
   if (!downloadUrl) {
-    core.info(
-      `manifest-file does not contain version ${version}, arch ${arch}, platform ${platform}. Falling back to GitHub releases.`,
+    throw new Error(
+      `manifest-file does not contain version ${version}, arch ${arch}, platform ${platform}.`,
     );
-    return await downloadVersionFromGithub(
-      platform,
-      arch,
-      version,
-      checkSum,
-      githubToken,
-    );
-  }
-
-  // Try to get checksum from NDJSON for manifest downloads too
-  let ndjsonChecksum: string | undefined;
-  try {
-    const artifactInfo = await getArtifact(version, arch, platform);
-    ndjsonChecksum = artifactInfo?.sha256;
-  } catch (err) {
-    core.debug(`Failed to get artifact from NDJSON: ${(err as Error).message}`);
   }
 
   return await downloadVersion(
@@ -111,7 +89,7 @@ export async function downloadVersionFromManifest(
     version,
     checkSum,
     githubToken,
-    ndjsonChecksum,
+    undefined, // No NDJSON checksum for manifest downloads
   );
 }
 

@@ -31,46 +31,19 @@ export async function fetchVersionData(): Promise<NdjsonVersion[]> {
     );
   }
 
+  const body = await response.text();
   const versions: NdjsonVersion[] = [];
 
-  if (!response.body) {
-    throw new Error("Response body is null");
-  }
-
-  // Stream and parse NDJSON line by line
-  const decoder = new TextDecoder();
-  let buffer = "";
-
-  for await (const chunk of response.body) {
-    buffer += decoder.decode(chunk, { stream: true });
-
-    // Process complete lines
-    const lines = buffer.split("\n");
-    // Keep the last potentially incomplete line in buffer
-    buffer = lines.pop() ?? "";
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (trimmed === "") {
-        continue;
-      }
-      try {
-        const version = JSON.parse(trimmed) as NdjsonVersion;
-        versions.push(version);
-      } catch {
-        core.debug(`Failed to parse NDJSON line: ${trimmed}`);
-      }
+  for (const line of body.split("\n")) {
+    const trimmed = line.trim();
+    if (trimmed === "") {
+      continue;
     }
-  }
-
-  // Process any remaining content in buffer
-  const remaining = buffer.trim();
-  if (remaining !== "") {
     try {
-      const version = JSON.parse(remaining) as NdjsonVersion;
+      const version = JSON.parse(trimmed) as NdjsonVersion;
       versions.push(version);
     } catch {
-      core.debug(`Failed to parse NDJSON line: ${remaining}`);
+      core.debug(`Failed to parse NDJSON line: ${trimmed}`);
     }
   }
 
