@@ -5,6 +5,7 @@ import * as exec from "@actions/exec";
 import { restoreCache } from "./cache/restore-cache";
 import {
   downloadVersionFromManifest,
+  downloadVersionFromNdjson,
   resolveVersion,
   tryGetFromToolCache,
 } from "./download/download-version";
@@ -138,14 +139,23 @@ async function setupUv(
     };
   }
 
-  const downloadVersionResult = await downloadVersionFromManifest(
-    manifestFile,
-    platform,
-    arch,
-    resolvedVersion,
-    checkSum,
-    githubToken,
-  );
+  // Use the same source for download as we used for version resolution
+  const downloadVersionResult = manifestFile
+    ? await downloadVersionFromManifest(
+        manifestFile,
+        platform,
+        arch,
+        resolvedVersion,
+        checkSum,
+        githubToken,
+      )
+    : await downloadVersionFromNdjson(
+        platform,
+        arch,
+        resolvedVersion,
+        checkSum,
+        githubToken,
+      );
 
   return {
     uvDir: downloadVersionResult.cachedToolDir,
@@ -157,12 +167,7 @@ async function determineVersion(
   manifestFile: string | undefined,
 ): Promise<string> {
   if (versionInput !== "") {
-    return await resolveVersion(
-      versionInput,
-      manifestFile,
-      githubToken,
-      resolutionStrategy,
-    );
+    return await resolveVersion(versionInput, manifestFile, resolutionStrategy);
   }
   if (versionFileInput !== "") {
     const versionFromFile = getUvVersionFromFile(versionFileInput);
@@ -174,7 +179,6 @@ async function determineVersion(
     return await resolveVersion(
       versionFromFile,
       manifestFile,
-      githubToken,
       resolutionStrategy,
     );
   }
@@ -192,7 +196,6 @@ async function determineVersion(
   return await resolveVersion(
     versionFromUvToml || versionFromPyproject || "latest",
     manifestFile,
-    githubToken,
     resolutionStrategy,
   );
 }

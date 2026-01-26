@@ -10,7 +10,7 @@
     "package": "ncc build -o dist/setup src/setup-uv.ts && ncc build -o dist/save-cache src/save-cache.ts && ncc build -o dist/update-known-versions src/update-known-versions.ts",
     "test": "jest",
     "act": "act pull_request -W .github/workflows/test.yml --container-architecture linux/amd64 -s GITHUB_TOKEN=\"$(gh auth token)\"",
-    "update-known-versions": "RUNNER_TEMP=known_versions node dist/update-known-versions/index.js src/download/checksum/known-versions.ts \"$(gh auth token)\"",
+    "update-known-versions": "RUNNER_TEMP=known_versions node dist/update-known-versions/index.js src/download/checksum/known-checksums.ts version-manifest.json",
     "all": "npm run build && npm run check && npm run package && npm test"
   },
   "repository": {
@@ -32,9 +32,6 @@
     "@actions/glob": "^0.5.0",
     "@actions/io": "^1.1.3",
     "@actions/tool-cache": "^2.0.2",
-    "@octokit/core": "^7.0.6",
-    "@octokit/plugin-paginate-rest": "^14.0.0",
-    "@octokit/plugin-rest-endpoint-methods": "^17.0.0",
     "@renovatebot/pep440": "^4.2.1",
     "smol-toml": "^1.4.2",
     "undici": "5.28.5"

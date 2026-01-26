@@ -2,20 +2,20 @@ import { promises as fs } from "node:fs";
 import * as path from "node:path";
 import * as core from "@actions/core";
 import * as tc from "@actions/tool-cache";
-import type { Endpoints } from "@octokit/types";
 import * as pep440 from "@renovatebot/pep440";
 import * as semver from "semver";
 import { OWNER, REPO, TOOL_CACHE_NAME } from "../utils/constants";
-import { Octokit } from "../utils/octokit";
 import type { Architecture, Platform } from "../utils/platforms";
 import { validateChecksum } from "./checksum/checksum";
 import {
-  getDownloadUrl,
   getLatestKnownVersion as getLatestVersionInManifest,
+  getDownloadUrl as getManifestDownloadUrl,
 } from "./version-manifest";
-
-type Release =
-  Endpoints["GET /repos/{owner}/{repo}/releases"]["response"]["data"][number];
+import {
+  getAllVersions,
+  getArtifact,
+  getLatestVersion as getLatestVersionFromNdjson,
+} from "./versions-client";
 
 export function tryGetFromToolCache(
   arch: Architecture,
@@ -32,7 +32,7 @@ export function tryGetFromToolCache(
   return { installedPath, version: resolvedVersion };
 }
 
-export async function downloadVersionFromGithub(
+export async function downloadVersionFromNdjson(
   platform: Platform,
   arch: Architecture,
   version: string,
@@ -41,7 +41,14 @@ export async function downloadVersionFromGithub(
 ): Promise<{ version: string; cachedToolDir: string }> {
   const artifact = `uv-${arch}-${platform}`;
   const extension = getExtension(platform);
-  const downloadUrl = `https://github.com/${OWNER}/${REPO}/releases/download/${version}/${artifact}${extension}`;
+
+  // Get artifact info from NDJSON (includes URL and checksum)
+  const artifactInfo = await getArtifact(version, arch, platform);
+
+  const downloadUrl =
+    artifactInfo?.url ??
+    `https://github.com/${OWNER}/${REPO}/releases/download/${version}/${artifact}${extension}`;
+
   return await downloadVersion(
     downloadUrl,
     artifact,
@@ -50,35 +57,30 @@ export async function downloadVersionFromGithub(
     version,
     checkSum,
     githubToken,
+    artifactInfo?.sha256,
   );
 }
 
 export async function downloadVersionFromManifest(
-  manifestUrl: string | undefined,
+  manifestUrl: string,
   platform: Platform,
   arch: Architecture,
   version: string,
   checkSum: string | undefined,
   githubToken: string,
 ): Promise<{ version: string; cachedToolDir: string }> {
-  const downloadUrl = await getDownloadUrl(
+  const downloadUrl = await getManifestDownloadUrl(
     manifestUrl,
     version,
     arch,
     platform,
   );
   if (!downloadUrl) {
-    core.info(
-      `manifest-file does not contain version ${version}, arch ${arch}, platform ${platform}. Falling back to GitHub releases.`,
-    );
-    return await downloadVersionFromGithub(
-      platform,
-      arch,
-      version,
-      checkSum,
-      githubToken,
+    throw new Error(
+      `manifest-file does not contain version ${version}, arch ${arch}, platform ${platform}.`,
     );
   }
+
   return await downloadVersion(
     downloadUrl,
     `uv-${arch}-${platform}`,
@@ -87,6 +89,7 @@ export async function downloadVersionFromManifest(
     version,
     checkSum,
     githubToken,
+    undefined, // No NDJSON checksum for manifest downloads
   );
 }
 
@@ -98,6 +101,7 @@ async function downloadVersion(
   version: string,
   checkSum: string | undefined,
   githubToken: string,
+  ndjsonChecksum?: string,
 ): Promise<{ version: string; cachedToolDir: string }> {
   core.info(`Downloading uv from "${downloadUrl}" ...`);
   const downloadPath = await tc.downloadTool(
@@ -105,7 +109,14 @@ async function downloadVersion(
     undefined,
     githubToken,
   );
-  await validateChecksum(checkSum, downloadPath, arch, platform, version);
+  await validateChecksum(
+    checkSum,
+    downloadPath,
+    arch,
+    platform,
+    version,
+    ndjsonChecksum,
+  );
 
   let uvDir: string;
   if (platform === "pc-windows-msvc") {
@@ -143,7 +154,6 @@ function getExtension(platform: Platform): string {
 export async function resolveVersion(
   versionInput: string,
   manifestFile: string | undefined,
-  githubToken: string,
   resolutionStrategy: "highest" | "lowest" = "highest",
 ): Promise<string> {
   core.debug(`Resolving version: ${versionInput}`);
@@ -163,7 +173,7 @@ export async function resolveVersion(
   } else {
     version =
       versionInput === "latest" || resolveVersionSpecifierToLatest
-        ? await getLatestVersion(githubToken)
+        ? await getLatestVersionFromNdjson()
         : versionInput;
   }
   if (tc.isExplicitVersion(version)) {
@@ -175,7 +185,7 @@ export async function resolveVersion(
     }
     return version;
   }
-  const availableVersions = await getAvailableVersions(githubToken);
+  const availableVersions = await getAvailableVersions();
   core.debug(`Available versions: ${availableVersions}`);
   const resolvedVersion =
     resolutionStrategy === "lowest"
@@ -187,79 +197,9 @@ export async function resolveVersion(
   return resolvedVersion;
 }
 
-async function getAvailableVersions(githubToken: string): Promise<string[]> {
-  core.info("Getting available versions from GitHub API...");
-  try {
-    const octokit = new Octokit({
-      auth: githubToken,
-    });
-    return await getReleaseTagNames(octokit);
-  } catch (err) {
-    if ((err as Error).message.includes("Bad credentials")) {
-      core.info(
-        "No (valid) GitHub token provided. Falling back to anonymous. Requests might be rate limited.",
-      );
-      const octokit = new Octokit();
-      return await getReleaseTagNames(octokit);
-    }
-    throw err;
-  }
-}
-
-async function getReleaseTagNames(octokit: Octokit): Promise<string[]> {
-  const response: Release[] = await octokit.paginate(
-    octokit.rest.repos.listReleases,
-    {
-      owner: OWNER,
-      repo: REPO,
-    },
-  );
-  const releaseTagNames = response.map((release) => release.tag_name);
-  if (releaseTagNames.length === 0) {
-    throw Error(
-      "Github API request failed while getting releases. Check the GitHub status page for outages. Try again later.",
-    );
-  }
-  return releaseTagNames;
-}
-
-async function getLatestVersion(githubToken: string) {
-  core.info("Getting latest version from GitHub API...");
-  const octokit = new Octokit({
-    auth: githubToken,
-  });
-
-  let latestRelease: { tag_name: string } | undefined;
-  try {
-    latestRelease = await getLatestRelease(octokit);
-  } catch (err) {
-    if ((err as Error).message.includes("Bad credentials")) {
-      core.info(
-        "No (valid) GitHub token provided. Falling back to anonymous. Requests might be rate limited.",
-      );
-      const octokit = new Octokit();
-      latestRelease = await getLatestRelease(octokit);
-    } else {
-      core.error(
-        "Github API request failed while getting latest release. Check the GitHub status page for outages. Try again later.",
-      );
-      throw err;
-    }
-  }
-
-  if (!latestRelease) {
-    throw new Error("Could not determine latest release.");
-  }
-  core.debug(`Latest version: ${latestRelease.tag_name}`);
-  return latestRelease.tag_name;
-}
-
-async function getLatestRelease(octokit: Octokit) {
-  const { data: latestRelease } = await octokit.rest.repos.getLatestRelease({
-    owner: OWNER,
-    repo: REPO,
-  });
-  return latestRelease;
+async function getAvailableVersions(): Promise<string[]> {
+  core.info("Getting available versions from NDJSON...");
+  return await getAllVersions();
 }
 
 function maxSatisfying(

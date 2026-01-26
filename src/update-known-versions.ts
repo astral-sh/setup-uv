@@ -1,63 +1,116 @@
+import { promises as fs } from "node:fs";
 import * as core from "@actions/core";
-import type { Endpoints } from "@octokit/types";
 import * as semver from "semver";
 import { updateChecksums } from "./download/checksum/update-known-checksums";
+import { getLatestKnownVersion } from "./download/version-manifest";
 import {
-  getLatestKnownVersion,
-  updateVersionManifest,
-} from "./download/version-manifest";
-import { OWNER, REPO } from "./utils/constants";
-import { Octokit } from "./utils/octokit";
+  fetchVersionData,
+  getLatestVersion,
+  type NdjsonVersion,
+} from "./download/versions-client";
 
-type Release =
-  Endpoints["GET /repos/{owner}/{repo}/releases"]["response"]["data"][number];
+interface ChecksumEntry {
+  key: string;
+  checksum: string;
+}
+
+interface ArtifactEntry {
+  version: string;
+  artifactName: string;
+  arch: string;
+  platform: string;
+  downloadUrl: string;
+}
+
+function extractChecksumsFromNdjson(
+  versions: NdjsonVersion[],
+): ChecksumEntry[] {
+  const checksums: ChecksumEntry[] = [];
+
+  for (const version of versions) {
+    for (const artifact of version.artifacts) {
+      // The platform field contains the target triple like "x86_64-apple-darwin"
+      const key = `${artifact.platform}-${version.version}`;
+      checksums.push({
+        checksum: artifact.sha256,
+        key,
+      });
+    }
+  }
+
+  return checksums;
+}
+
+function extractArtifactsFromNdjson(
+  versions: NdjsonVersion[],
+): ArtifactEntry[] {
+  const artifacts: ArtifactEntry[] = [];
+
+  for (const version of versions) {
+    for (const artifact of version.artifacts) {
+      // The platform field contains the target triple like "x86_64-apple-darwin"
+      // Split into arch and platform (e.g., "x86_64-apple-darwin" -> ["x86_64", "apple-darwin"])
+      const parts = artifact.platform.split("-");
+      const arch = parts[0];
+      const platform = parts.slice(1).join("-");
+
+      // Construct artifact name from platform and archive format
+      const artifactName = `uv-${artifact.platform}.${artifact.archive_format}`;
+
+      artifacts.push({
+        arch,
+        artifactName,
+        downloadUrl: artifact.url,
+        platform,
+        version: version.version,
+      });
+    }
+  }
+
+  return artifacts;
+}
 
 async function run(): Promise<void> {
   const checksumFilePath = process.argv.slice(2)[0];
   const versionsManifestFile = process.argv.slice(2)[1];
-  const githubToken = process.argv.slice(2)[2];
 
-  const octokit = new Octokit({
-    auth: githubToken,
-  });
-
-  const { data: latestRelease } = await octokit.rest.repos.getLatestRelease({
-    owner: OWNER,
-    repo: REPO,
-  });
-
+  const latestVersion = await getLatestVersion();
   const latestKnownVersion = await getLatestKnownVersion(undefined);
 
-  if (semver.lte(latestRelease.tag_name, latestKnownVersion)) {
+  if (semver.lte(latestVersion, latestKnownVersion)) {
     core.info(
-      `Latest release (${latestRelease.tag_name}) is not newer than the latest known version (${latestKnownVersion}). Skipping update.`,
+      `Latest release (${latestVersion}) is not newer than the latest known version (${latestKnownVersion}). Skipping update.`,
     );
     return;
   }
 
-  const releases: Release[] = await octokit.paginate(
-    octokit.rest.repos.listReleases,
-    {
-      owner: OWNER,
-      repo: REPO,
-    },
-  );
-  const checksumDownloadUrls: string[] = releases.flatMap((release) =>
-    release.assets
-      .filter((asset) => asset.name.endsWith(".sha256"))
-      .map((asset) => asset.browser_download_url),
-  );
-  await updateChecksums(checksumFilePath, checksumDownloadUrls);
+  const versions = await fetchVersionData();
 
-  const artifactDownloadUrls: string[] = releases.flatMap((release) =>
-    release.assets
-      .filter((asset) => !asset.name.endsWith(".sha256"))
-      .map((asset) => asset.browser_download_url),
-  );
+  // Extract checksums from NDJSON
+  const checksumEntries = extractChecksumsFromNdjson(versions);
+  await updateChecksums(checksumFilePath, checksumEntries);
 
-  await updateVersionManifest(versionsManifestFile, artifactDownloadUrls);
+  // Extract artifact URLs for version manifest
+  const artifactEntries = extractArtifactsFromNdjson(versions);
+  await updateVersionManifestFromEntries(versionsManifestFile, artifactEntries);
 
-  core.setOutput("latest-version", latestRelease.tag_name);
+  core.setOutput("latest-version", latestVersion);
+}
+
+async function updateVersionManifestFromEntries(
+  filePath: string,
+  entries: ArtifactEntry[],
+): Promise<void> {
+  const manifest = entries.map((entry) => ({
+    arch: entry.arch,
+    artifactName: entry.artifactName,
+    downloadUrl: entry.downloadUrl,
+    platform: entry.platform,
+    version: entry.version,
+  }));
+
+  core.debug(`Updating manifest-file: ${JSON.stringify(manifest)}`);
+  await fs.writeFile(filePath, JSON.stringify(manifest));
 }
 
 run();
