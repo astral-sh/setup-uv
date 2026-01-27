@@ -24,6 +24,7 @@ import {
   resolutionStrategy,
   toolBinDir,
   toolDir,
+  venvPath as venvPathInput,
   versionFile as versionFileInput,
   version as versionInput,
   workingDirectory,
@@ -262,6 +263,11 @@ function setupPython(): void {
   }
 }
 
+function getVenvPath(): string {
+  // Use custom venv path if provided, otherwise default to .venv in working directory
+  return venvPathInput ?? path.resolve(`${workingDirectory}${path.sep}.venv`);
+}
+
 async function activateEnvironment(): Promise<void> {
   if (activateEnvironmentInput) {
     if (process.env.UV_NO_MODIFY_PATH !== undefined) {
@@ -269,12 +275,12 @@ async function activateEnvironment(): Promise<void> {
         "UV_NO_MODIFY_PATH and activate-environment cannot be used together.",
       );
     }
-    const execArgs = ["venv", ".venv", "--directory", workingDirectory];
 
-    core.info("Activating python venv...");
-    await exec.exec("uv", execArgs);
+    const venvPath = getVenvPath();
 
-    const venvPath = path.resolve(`${workingDirectory}${path.sep}.venv`);
+    core.info(`Activating python venv at ${venvPath}...`);
+    await exec.exec("uv", ["venv", venvPath]);
+
     let venvBinPath = `${venvPath}${path.sep}bin`;
     if (process.platform === "win32") {
       venvBinPath = `${venvPath}${path.sep}Scripts`;

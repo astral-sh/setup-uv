@@ -15,6 +15,9 @@ inputs:
   activate-environment:
     description: "Use uv venv to activate a venv ready to be used by later steps. "
     default: "false"
+  venv-path:
+    description: "Custom path for the virtual environment when using activate-environment. Defaults to '.venv' in the working directory."
+    default: ""
   working-directory:
     description: "The directory to execute all commands in and look for files such as pyproject.toml"
     default: ${{ github.workspace }}
