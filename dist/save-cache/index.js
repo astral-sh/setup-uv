@@ -91079,10 +91079,13 @@ function getVersionFile() {
 function getVenvPath() {
     const venvPathInput = core.getInput("venv-path");
     if (venvPathInput !== "") {
+        if (!exports.activateEnvironment) {
+            core.warning("venv-path is only used when activate-environment is true");
+        }
         const tildeExpanded = expandTilde(venvPathInput);
-        return resolveRelativePath(tildeExpanded);
+        return normalizePath(resolveRelativePath(tildeExpanded));
     }
-    return resolveRelativePath(".venv");
+    return normalizePath(resolveRelativePath(".venv"));
 }
 function getEnableCache() {
     const enableCacheInput = core.getInput("enable-cache");
@@ -91211,6 +91214,16 @@ function expandTilde(input) {
         return `${process.env.HOME}${input.substring(1)}`;
     }
     return input;
+}
+function normalizePath(inputPath) {
+    const normalized = node_path_1.default.normalize(inputPath);
+    const root = node_path_1.default.parse(normalized).root;
+    // Remove any trailing path separators, except when the whole path is the root.
+    let trimmed = normalized;
+    while (trimmed.length > root.length && trimmed.endsWith(node_path_1.default.sep)) {
+        trimmed = trimmed.slice(0, -1);
+    }
+    return trimmed;
 }
 function resolveRelativePath(inputPath) {
     const hasNegation = inputPath.startsWith("!");

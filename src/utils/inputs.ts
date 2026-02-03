@@ -49,10 +49,13 @@ function getVersionFile(): string {
 function getVenvPath(): string {
   const venvPathInput = core.getInput("venv-path");
   if (venvPathInput !== "") {
+    if (!activateEnvironment) {
+      core.warning("venv-path is only used when activate-environment is true");
+    }
     const tildeExpanded = expandTilde(venvPathInput);
-    return resolveRelativePath(tildeExpanded);
+    return normalizePath(resolveRelativePath(tildeExpanded));
   }
-  return resolveRelativePath(".venv");
+  return normalizePath(resolveRelativePath(".venv"));
 }
 
 function getEnableCache(): boolean {
@@ -202,6 +205,19 @@ function expandTilde(input: string): string {
     return `${process.env.HOME}${input.substring(1)}`;
   }
   return input;
+}
+
+function normalizePath(inputPath: string): string {
+  const normalized = path.normalize(inputPath);
+  const root = path.parse(normalized).root;
+
+  // Remove any trailing path separators, except when the whole path is the root.
+  let trimmed = normalized;
+  while (trimmed.length > root.length && trimmed.endsWith(path.sep)) {
+    trimmed = trimmed.slice(0, -1);
+  }
+
+  return trimmed;
 }
 
 function resolveRelativePath(inputPath: string): string {

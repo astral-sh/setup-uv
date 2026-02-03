@@ -271,7 +271,7 @@ async function activateEnvironment(): Promise<void> {
       );
     }
 
-    core.info(`Activating python venv at ${venvPath}...`);
+    core.info(`Creating and activating python venv at ${venvPath}...`);
     await exec.exec("uv", ["venv", venvPath, "--directory", workingDirectory]);
 
     let venvBinPath = `${venvPath}${path.sep}bin`;
