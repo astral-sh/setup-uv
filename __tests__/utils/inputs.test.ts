@@ -84,3 +84,42 @@ describe("cacheDependencyGlob", () => {
     );
   });
 });
+
+describe("venvPath", () => {
+  beforeEach(() => {
+    jest.resetModules();
+    mockInputs = {};
+    process.env.HOME = "/home/testuser";
+  });
+
+  afterEach(() => {
+    process.env.HOME = ORIGINAL_HOME;
+  });
+
+  it("defaults to .venv in the working directory", async () => {
+    mockInputs["working-directory"] = "/workspace";
+    const { venvPath } = await import("../../src/utils/inputs");
+    expect(venvPath).toBe("/workspace/.venv");
+  });
+
+  it("resolves a relative venv-path", async () => {
+    mockInputs["working-directory"] = "/workspace";
+    mockInputs["venv-path"] = "custom-venv";
+    const { venvPath } = await import("../../src/utils/inputs");
+    expect(venvPath).toBe("/workspace/custom-venv");
+  });
+
+  it("keeps an absolute venv-path unchanged", async () => {
+    mockInputs["working-directory"] = "/workspace";
+    mockInputs["venv-path"] = "/tmp/custom-venv";
+    const { venvPath } = await import("../../src/utils/inputs");
+    expect(venvPath).toBe("/tmp/custom-venv");
+  });
+
+  it("expands tilde in venv-path", async () => {
+    mockInputs["working-directory"] = "/workspace";
+    mockInputs["venv-path"] = "~/.venv";
+    const { venvPath } = await import("../../src/utils/inputs");
+    expect(venvPath).toBe("/home/testuser/.venv");
+  });
+});
