@@ -276,7 +276,7 @@ the cache will not be found and the warning `No GitHub Actions cache found for k
 While this might be irritating at first, it is expected behaviour and the cache will be created
 and reused in later workflows.
 
-The reason for the warning is, that we have to way to know if this is the first run of a new
+The reason for the warning is that we have to way to know if this is the first run of a new
 cache key or the user accidentally misconfigured the cache-dependency-glob
 or cache-suffix (see [Caching documentation](docs/caching.md)) and the cache never gets used.
 
@@ -289,7 +289,7 @@ Running `actions/checkout` after `setup-uv` **is not supported**.
 
 ### Does `setup-uv` also install my project or its dependencies automatically?
 
-No, `setup-uv` alone wont install any libraries from your `pyproject.toml` or `requirements.txt`, it only sets up `uv`.
+No, `setup-uv` alone won't install any libraries from your `pyproject.toml` or `requirements.txt`, it only sets up `uv`.
 You should run `uv sync` or `uv pip install .` separately, or use `uv run ...` to ensure necessary dependencies are installed.
 
 ### Why is a changed cache not detected and not the full cache uploaded?
