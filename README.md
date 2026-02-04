@@ -264,8 +264,7 @@ But if you do not add the resolution strategy as a cache-suffix (see [Caching do
 they will have the same cache key.
 
 This means the first job which starts uploading its cache will win and all other job will fail
-uploading the cache,
-because they try to upload with the same cache key.
+uploading the cache, because they try to upload with the same cache key.
 
 You might see errors like
 `Failed to save: Failed to CreateCacheEntry: Received non-retryable error: Failed request: (409) Conflict: cache entry with the same key, version, and scope already exists`
