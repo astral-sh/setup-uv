@@ -386,6 +386,60 @@ jobs:
         env:
           UV_VENV: ${{ steps.setup-uv.outputs.venv }}
 
+  test-activate-environment-custom-path:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
+      - name: Install latest version
+        id: setup-uv
+        uses: ./
+        with:
+          python-version: 3.13.1t
+          activate-environment: true
+          venv-path: ${{ runner.temp }}/custom-venv
+      - name: Verify VIRTUAL_ENV matches output
+        run: |
+          if [ "$VIRTUAL_ENV" != "$UV_VENV" ]; then
+            echo "VIRTUAL_ENV does not match venv output: $VIRTUAL_ENV vs $UV_VENV"
+            exit 1
+          fi
+        shell: bash
+        env:
+          UV_VENV: ${{ steps.setup-uv.outputs.venv }}
+      - name: Verify venv location is runner.temp/custom-venv
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          venv = Path(os.environ["VIRTUAL_ENV"]).resolve()
+          temp = Path(os.environ["RUNNER_TEMP"]).resolve()
+
+          if venv.name != "custom-venv":
+              raise SystemExit(f"Expected venv name 'custom-venv', got: {venv}")
+          if venv.parent != temp:
+              raise SystemExit(f"Expected venv under {temp}, got: {venv}")
+          if not venv.is_dir():
+              raise SystemExit(f"Venv directory does not exist: {venv}")
+          PY
+        shell: bash
+      - name: Verify packages can be installed
+        run: uv pip install pip
+        shell: bash
+      - name: Verify python runs from custom venv
+        run: |
+          python - <<'PY'
+          import sys
+          if "custom-venv" not in sys.executable:
+              raise SystemExit(f"Python is not running from custom venv: {sys.executable}")
+          PY
+        shell: bash
+
   test-musl:
     runs-on: ubuntu-latest
     container: alpine
@@ -1069,6 +1123,7 @@ jobs:
       - test-tilde-expansion-tool-dirs
       - test-python-version
       - test-activate-environment
+      - test-activate-environment-custom-path
       - test-musl
       - test-cache-key-os-version
       - test-cache-local

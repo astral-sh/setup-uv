@@ -5,6 +5,7 @@ jest.mock("@actions/core", () => {
       (name: string) => (mockInputs[name] ?? "") === "true",
     ),
     getInput: jest.fn((name: string) => mockInputs[name] ?? ""),
+    warning: jest.fn(),
   };
 });
 
@@ -24,6 +25,7 @@ const ORIGINAL_HOME = process.env.HOME;
 describe("cacheDependencyGlob", () => {
   beforeEach(() => {
     jest.resetModules();
+    jest.clearAllMocks();
     mockInputs = {};
     process.env.HOME = "/home/testuser";
   });
@@ -81,6 +83,77 @@ describe("cacheDependencyGlob", () => {
     const { cacheDependencyGlob } = await import("../../src/utils/inputs");
     expect(cacheDependencyGlob).toBe(
       ["!/abs/path.lock", "!/workspace/relative.lock"].join("\n"),
+    );
+  });
+});
+
+describe("venvPath", () => {
+  beforeEach(() => {
+    jest.resetModules();
+    jest.clearAllMocks();
+    mockInputs = {};
+    process.env.HOME = "/home/testuser";
+  });
+
+  afterEach(() => {
+    process.env.HOME = ORIGINAL_HOME;
+  });
+
+  it("defaults to .venv in the working directory", async () => {
+    mockInputs["working-directory"] = "/workspace";
+    const { venvPath } = await import("../../src/utils/inputs");
+    expect(venvPath).toBe("/workspace/.venv");
+  });
+
+  it("resolves a relative venv-path", async () => {
+    mockInputs["working-directory"] = "/workspace";
+    mockInputs["activate-environment"] = "true";
+    mockInputs["venv-path"] = "custom-venv";
+    const { venvPath } = await import("../../src/utils/inputs");
+    expect(venvPath).toBe("/workspace/custom-venv");
+  });
+
+  it("normalizes venv-path with trailing slash", async () => {
+    mockInputs["working-directory"] = "/workspace";
+    mockInputs["activate-environment"] = "true";
+    mockInputs["venv-path"] = "custom-venv/";
+    const { venvPath } = await import("../../src/utils/inputs");
+    expect(venvPath).toBe("/workspace/custom-venv");
+  });
+
+  it("keeps an absolute venv-path unchanged", async () => {
+    mockInputs["working-directory"] = "/workspace";
+    mockInputs["activate-environment"] = "true";
+    mockInputs["venv-path"] = "/tmp/custom-venv";
+    const { venvPath } = await import("../../src/utils/inputs");
+    expect(venvPath).toBe("/tmp/custom-venv");
+  });
+
+  it("expands tilde in venv-path", async () => {
+    mockInputs["working-directory"] = "/workspace";
+    mockInputs["activate-environment"] = "true";
+    mockInputs["venv-path"] = "~/.venv";
+    const { venvPath } = await import("../../src/utils/inputs");
+    expect(venvPath).toBe("/home/testuser/.venv");
+  });
+
+  it("warns when venv-path is set but activate-environment is false", async () => {
+    mockInputs["working-directory"] = "/workspace";
+    mockInputs["venv-path"] = "custom-venv";
+
+    const { activateEnvironment, venvPath } = await import(
+      "../../src/utils/inputs"
+    );
+
+    expect(activateEnvironment).toBe(false);
+    expect(venvPath).toBe("/workspace/custom-venv");
+
+    const mockedCore = jest.requireMock("@actions/core") as {
+      warning: jest.Mock;
+    };
+
+    expect(mockedCore.warning).toHaveBeenCalledWith(
+      "venv-path is only used when activate-environment is true",
     );
   });
 });

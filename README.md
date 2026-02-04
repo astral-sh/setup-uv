@@ -59,6 +59,9 @@ Have a look under [Advanced Configuration](#advanced-configuration) for detailed
     # Use uv venv to activate a venv ready to be used by later steps
     activate-environment: "false"
 
+    # Custom path for the virtual environment when using activate-environment (default: .venv in the working directory)
+    venv-path: ""
+
     # The directory to execute all commands in and look for files such as pyproject.toml
     working-directory: ""
 
@@ -167,7 +170,7 @@ You can set the working directory with the `working-directory` input.
 This controls where we look for `pyproject.toml`, `uv.toml` and `.python-version` files
 which are used to determine the version of uv and python to install.
 
-It also controls where [the venv gets created](#activate-environment).
+It also controls where [the venv gets created](#activate-environment), unless `venv-path` is set.
 
 ```yaml
 - name: Install uv based on the config files in the working-directory

@@ -9,6 +9,8 @@ inputs:
     type: string
   activate-environment:
     type: boolean
+  venv-path:
+    type: string
   working-directory:
     type: string
   checksum:

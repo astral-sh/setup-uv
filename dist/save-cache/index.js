@@ -91032,7 +91032,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.resolutionStrategy = exports.addProblemMatchers = exports.manifestFile = exports.githubToken = exports.pythonDir = exports.toolDir = exports.toolBinDir = exports.ignoreEmptyWorkdir = exports.ignoreNothingToCache = exports.cachePython = exports.pruneCache = exports.cacheDependencyGlob = exports.cacheLocalPath = exports.cacheSuffix = exports.saveCache = exports.restoreCache = exports.enableCache = exports.checkSum = exports.activateEnvironment = exports.pythonVersion = exports.versionFile = exports.version = exports.workingDirectory = exports.CacheLocalSource = void 0;
+exports.resolutionStrategy = exports.addProblemMatchers = exports.manifestFile = exports.githubToken = exports.pythonDir = exports.toolDir = exports.toolBinDir = exports.ignoreEmptyWorkdir = exports.ignoreNothingToCache = exports.cachePython = exports.pruneCache = exports.cacheDependencyGlob = exports.cacheLocalPath = exports.cacheSuffix = exports.saveCache = exports.restoreCache = exports.enableCache = exports.checkSum = exports.venvPath = exports.activateEnvironment = exports.pythonVersion = exports.versionFile = exports.version = exports.workingDirectory = exports.CacheLocalSource = void 0;
 exports.getUvPythonDir = getUvPythonDir;
 const node_path_1 = __importDefault(__nccwpck_require__(6760));
 const core = __importStar(__nccwpck_require__(7484));
@@ -91049,6 +91049,7 @@ exports.version = core.getInput("version");
 exports.versionFile = getVersionFile();
 exports.pythonVersion = core.getInput("python-version");
 exports.activateEnvironment = core.getBooleanInput("activate-environment");
+exports.venvPath = getVenvPath();
 exports.checkSum = core.getInput("checksum");
 exports.enableCache = getEnableCache();
 exports.restoreCache = core.getInput("restore-cache") === "true";
@@ -91074,6 +91075,17 @@ function getVersionFile() {
         return resolveRelativePath(tildeExpanded);
     }
     return versionFileInput;
+}
+function getVenvPath() {
+    const venvPathInput = core.getInput("venv-path");
+    if (venvPathInput !== "") {
+        if (!exports.activateEnvironment) {
+            core.warning("venv-path is only used when activate-environment is true");
+        }
+        const tildeExpanded = expandTilde(venvPathInput);
+        return normalizePath(resolveRelativePath(tildeExpanded));
+    }
+    return normalizePath(resolveRelativePath(".venv"));
 }
 function getEnableCache() {
     const enableCacheInput = core.getInput("enable-cache");
@@ -91202,6 +91214,16 @@ function expandTilde(input) {
         return `${process.env.HOME}${input.substring(1)}`;
     }
     return input;
+}
+function normalizePath(inputPath) {
+    const normalized = node_path_1.default.normalize(inputPath);
+    const root = node_path_1.default.parse(normalized).root;
+    // Remove any trailing path separators, except when the whole path is the root.
+    let trimmed = normalized;
+    while (trimmed.length > root.length && trimmed.endsWith(node_path_1.default.sep)) {
+        trimmed = trimmed.slice(0, -1);
+    }
+    return trimmed;
 }
 function resolveRelativePath(inputPath) {
     const hasNegation = inputPath.startsWith("!");

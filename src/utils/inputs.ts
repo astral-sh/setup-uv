@@ -14,6 +14,7 @@ export const version = core.getInput("version");
 export const versionFile = getVersionFile();
 export const pythonVersion = core.getInput("python-version");
 export const activateEnvironment = core.getBooleanInput("activate-environment");
+export const venvPath = getVenvPath();
 export const checkSum = core.getInput("checksum");
 export const enableCache = getEnableCache();
 export const restoreCache = core.getInput("restore-cache") === "true";
@@ -43,6 +44,18 @@ function getVersionFile(): string {
     return resolveRelativePath(tildeExpanded);
   }
   return versionFileInput;
+}
+
+function getVenvPath(): string {
+  const venvPathInput = core.getInput("venv-path");
+  if (venvPathInput !== "") {
+    if (!activateEnvironment) {
+      core.warning("venv-path is only used when activate-environment is true");
+    }
+    const tildeExpanded = expandTilde(venvPathInput);
+    return normalizePath(resolveRelativePath(tildeExpanded));
+  }
+  return normalizePath(resolveRelativePath(".venv"));
 }
 
 function getEnableCache(): boolean {
@@ -192,6 +205,19 @@ function expandTilde(input: string): string {
     return `${process.env.HOME}${input.substring(1)}`;
   }
   return input;
+}
+
+function normalizePath(inputPath: string): string {
+  const normalized = path.normalize(inputPath);
+  const root = path.parse(normalized).root;
+
+  // Remove any trailing path separators, except when the whole path is the root.
+  let trimmed = normalized;
+  while (trimmed.length > root.length && trimmed.endsWith(path.sep)) {
+    trimmed = trimmed.slice(0, -1);
+  }
+
+  return trimmed;
 }
 
 function resolveRelativePath(inputPath: string): string {

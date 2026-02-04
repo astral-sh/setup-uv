@@ -15,6 +15,17 @@ This allows directly using it in later steps:
 - run: uv pip install pip
 ```
 
+By default, the venv is created at `.venv` inside the `working-directory`.
+
+You can customize the venv location with `venv-path`, for example to place it in the runner temp directory:
+
+```yaml
+- uses: astral-sh/setup-uv@v7
+  with:
+    activate-environment: true
+    venv-path: ${{ runner.temp }}/custom-venv
+```
+
 > [!WARNING]
 >
 > Activating the environment adds your dependencies to the `PATH`, which could break some workflows.
