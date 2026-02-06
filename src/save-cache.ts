@@ -59,23 +59,40 @@ async function saveCache(): Promise<void> {
     }
 
     const actualCachePath = getUvCachePath();
-    await saveCacheToKey(
-      cacheKey,
-      actualCachePath,
-      STATE_CACHE_MATCHED_KEY,
-      "uv cache",
-      `Cache path ${actualCachePath} does not exist on disk. This likely indicates that there are no dependencies to cache. Consider disabling the cache input if it is not needed.`,
-    );
+    if (!fs.existsSync(actualCachePath)) {
+      if (ignoreNothingToCache) {
+        core.info(
+          "No cacheable uv cache paths were found. Ignoring because ignore-nothing-to-cache is enabled.",
+        );
+      } else {
+        throw new Error(
+          `Cache path ${actualCachePath} does not exist on disk. This likely indicates that there are no dependencies to cache. Consider disabling the cache input if it is not needed.`,
+        );
+      }
+    } else {
+      await saveCacheToKey(
+        cacheKey,
+        actualCachePath,
+        STATE_CACHE_MATCHED_KEY,
+        "uv cache",
+      );
+    }
   }
 
   if (cachePython) {
+    if (!fs.existsSync(pythonDir)) {
+      core.warning(
+        `Python cache path ${pythonDir} does not exist on disk. Skipping Python cache save because no managed Python installation was found. If you want uv to install managed Python instead of using a system interpreter, set UV_PYTHON_PREFERENCE=only-managed.`,
+      );
+      return;
+    }
+
     const pythonCacheKey = `${cacheKey}-python`;
     await saveCacheToKey(
       pythonCacheKey,
       pythonDir,
       STATE_PYTHON_CACHE_MATCHED_KEY,
       "Python cache",
-      `Python cache path ${pythonDir} does not exist on disk. This likely indicates that there are no Python installations to cache. Consider disabling the cache input if it is not needed.`,
     );
   }
 }
@@ -119,7 +136,6 @@ async function saveCacheToKey(
   cachePath: string,
   stateKey: string,
   cacheName: string,
-  pathNotExistErrorMessage: string,
 ): Promise<void> {
   const matchedKey = core.getState(stateKey);
 
@@ -131,26 +147,8 @@ async function saveCacheToKey(
   }
 
   core.info(`Including ${cacheName} path: ${cachePath}`);
-  if (!fs.existsSync(cachePath) && !ignoreNothingToCache) {
-    throw new Error(pathNotExistErrorMessage);
-  }
-
-  try {
-    await cache.saveCache([cachePath], cacheKey);
-    core.info(`${cacheName} saved with key: ${cacheKey}`);
-  } catch (e) {
-    if (
-      e instanceof Error &&
-      e.message ===
-        "Path Validation Error: Path(s) specified in the action for caching do(es) not exist, hence no cache is being saved."
-    ) {
-      core.info(
-        `No cacheable ${cacheName} paths were found. Ignoring because ignore-nothing-to-save is enabled.`,
-      );
-    } else {
-      throw e;
-    }
-  }
+  await cache.saveCache([cachePath], cacheKey);
+  core.info(`${cacheName} saved with key: ${cacheKey}`);
 }
 
 run();
