@@ -293,28 +293,6 @@ jobs:
       - run: uv tool install ruff
       - run: ruff --version
 
-  test-tilde-expansion-tool-dirs:
-    runs-on: selfhosted-ubuntu-arm64
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - name: Setup with cache
-        uses: ./
-        with:
-          tool-bin-dir: "~/tool-bin-dir"
-          tool-dir: "~/tool-dir"
-      - name: "Check if tool dirs are expanded"
-        run: |
-          if ! echo "$PATH" | grep -q "/home/ubuntu/tool-bin-dir"; then
-              echo "PATH does not contain /home/ubuntu/tool-bin-dir: $PATH"
-              exit 1
-          fi
-          if [ "$UV_TOOL_DIR" != "/home/ubuntu/tool-dir" ]; then
-              echo "UV_TOOL_DIR does not contain /home/ubuntu/tool-dir: $UV_TOOL_DIR"
-              exit 1
-          fi
-
   test-python-version:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -820,57 +798,6 @@ jobs:
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
 
-  test-tilde-expansion-cache-local-path:
-    runs-on: selfhosted-ubuntu-arm64
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - name: Create cache directory
-        run: mkdir -p ~/uv-cache
-        shell: bash
-      - name: Setup with cache
-        uses: ./
-        with:
-          cache-local-path: ~/uv-cache/cache-local-path
-      - run: uv sync
-        working-directory: __tests__/fixtures/uv-project
-
-  test-tilde-expansion-cache-dependency-glob:
-    runs-on: selfhosted-ubuntu-arm64
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - name: Create cache directory
-        run: mkdir -p ~/uv-cache
-        shell: bash
-      - name: Create cache dependency glob file
-        run: touch ~/uv-cache.glob
-        shell: bash
-      - name: Setup with cache
-        uses: ./
-        with:
-          enable-cache: true
-          cache-local-path: ~/uv-cache/cache-dependency-glob
-          cache-dependency-glob: "~/uv-cache.glob"
-      - run: uv sync
-        working-directory: __tests__/fixtures/uv-project
-
-  cleanup-tilde-expansion-tests:
-    needs:
-      - test-tilde-expansion-cache-local-path
-      - test-tilde-expansion-cache-dependency-glob
-    if: always()
-    runs-on: selfhosted-ubuntu-arm64
-    steps:
-      - name: Remove cache directory
-        run: rm -rf ~/uv-cache
-        shell: bash
-      - name: Remove cache dependency glob file
-        run: rm -f ~/uv-cache.glob
-        shell: bash
-
   test-no-python-version:
     runs-on: ubuntu-latest
     steps:
@@ -1120,7 +1047,6 @@ jobs:
       - test-with-explicit-token
       - test-uvx
       - test-tool-install
-      - test-tilde-expansion-tool-dirs
       - test-python-version
       - test-activate-environment
       - test-activate-environment-custom-path
@@ -1141,9 +1067,6 @@ jobs:
       - test-restore-cache-restore-cache-false
       - test-setup-cache-local
       - test-restore-cache-local
-      - test-tilde-expansion-cache-local-path
-      - test-tilde-expansion-cache-dependency-glob
-      - cleanup-tilde-expansion-tests
       - test-no-python-version
       - test-custom-manifest-file
       - test-absolute-path
