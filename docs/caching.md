@@ -199,6 +199,10 @@ By default, the Python install dir (`uv python dir` / `UV_PYTHON_INSTALL_DIR`) i
 for the same reason that the dependency cache is pruned.
 If you want to cache Python installs along with your dependencies, set the `cache-python` input to `true`.
 
+Note that this only caches Python versions that uv actually installs into `UV_PYTHON_INSTALL_DIR`
+(i.e. managed Python installs). If uv uses a system Python, there may be nothing to cache.
+To force managed Python installs, set `UV_PYTHON_PREFERENCE=only-managed`.
+
 ```yaml
 - name: Cache Python installs
   uses: astral-sh/setup-uv@v7

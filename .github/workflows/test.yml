@@ -878,6 +878,29 @@ jobs:
             exit 1
           fi
 
+  test-cache-python-missing-managed-install-dir:
+    runs-on: ubuntu-latest
+    env:
+      UV_PYTHON_INSTALL_DIR: /tmp/missing-uv-python
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Setup uv with cache and python cache enabled
+        uses: ./
+        with:
+          enable-cache: true
+          cache-python: true
+          python-version: "3.12"
+          cache-local-path: /tmp/setup-uv-cache
+          cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-cache-python-missing-managed-install-dir
+      - name: Ensure uv cache dir exists so only python-cache behavior is tested
+        run: uv sync
+        working-directory: __tests__/fixtures/uv-project
+        shell: bash
+      - name: Ensure managed Python install dir does not exist and this does not break caching
+        run: rm -rf "$UV_PYTHON_INSTALL_DIR"
+
   test-cache-python-installs:
     runs-on: ubuntu-latest
     steps:
@@ -1029,6 +1052,7 @@ jobs:
       - test-relative-path
       - test-cache-prune-force
       - test-cache-dir-from-file
+      - test-cache-python-missing-managed-install-dir
       - test-cache-python-installs
       - test-restore-python-installs
       - test-python-install-dir
