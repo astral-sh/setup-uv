@@ -1011,7 +1011,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Validate typings
-        uses: typesafegithub/github-actions-typing@184d97003b1300f6a10e286eb98c191e416ff02b # v2.2.1
+        uses: typesafegithub/github-actions-typing@9ddf35b71a482be7d8922b28e8d00df16b77e315 # v2.2.2
 
   all-tests-passed:
     runs-on: ubuntu-latest
