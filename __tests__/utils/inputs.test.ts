@@ -87,6 +87,57 @@ describe("cacheDependencyGlob", () => {
   });
 });
 
+describe("tool directories", () => {
+  beforeEach(() => {
+    jest.resetModules();
+    jest.clearAllMocks();
+    mockInputs = {};
+    process.env.HOME = "/home/testuser";
+  });
+
+  afterEach(() => {
+    process.env.HOME = ORIGINAL_HOME;
+  });
+
+  it("expands tilde for tool-bin-dir and tool-dir", async () => {
+    mockInputs["working-directory"] = "/workspace";
+    mockInputs["tool-bin-dir"] = "~/tool-bin-dir";
+    mockInputs["tool-dir"] = "~/tool-dir";
+
+    const { toolBinDir, toolDir } = await import("../../src/utils/inputs");
+
+    expect(toolBinDir).toBe("/home/testuser/tool-bin-dir");
+    expect(toolDir).toBe("/home/testuser/tool-dir");
+  });
+});
+
+describe("cacheLocalPath", () => {
+  beforeEach(() => {
+    jest.resetModules();
+    jest.clearAllMocks();
+    mockInputs = {};
+    process.env.HOME = "/home/testuser";
+  });
+
+  afterEach(() => {
+    process.env.HOME = ORIGINAL_HOME;
+  });
+
+  it("expands tilde in cache-local-path", async () => {
+    mockInputs["working-directory"] = "/workspace";
+    mockInputs["cache-local-path"] = "~/uv-cache/cache-local-path";
+
+    const { CacheLocalSource, cacheLocalPath } = await import(
+      "../../src/utils/inputs"
+    );
+
+    expect(cacheLocalPath).toEqual({
+      path: "/home/testuser/uv-cache/cache-local-path",
+      source: CacheLocalSource.Input,
+    });
+  });
+});
+
 describe("venvPath", () => {
   beforeEach(() => {
     jest.resetModules();
