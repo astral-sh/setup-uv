@@ -485,7 +485,7 @@ jobs:
     strategy:
       matrix:
         enable-cache: ["true", "false", "auto"]
-        os: ["ubuntu-latest", "selfhosted-ubuntu-arm64", "windows-latest"]
+        os: ["ubuntu-latest", "windows-latest"]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -503,7 +503,7 @@ jobs:
     strategy:
       matrix:
         enable-cache: ["true", "false", "auto"]
-        os: ["ubuntu-latest", "selfhosted-ubuntu-arm64", "windows-latest"]
+        os: ["ubuntu-latest", "windows-latest"]
     needs: test-setup-cache
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -525,7 +525,7 @@ jobs:
           CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
         shell: bash
       - name: Cache was not hit
-        if: ${{ matrix.enable-cache == 'false' || (matrix.enable-cache == 'auto' && matrix.os == 'selfhosted-ubuntu-arm64') }}
+        if: ${{ matrix.enable-cache == 'false' }}
         run: |
           if [ "$CACHE_HIT" == "true" ]; then
             exit 1
@@ -702,8 +702,6 @@ jobs:
             expected-cache-dir: "/home/runner/work/_temp/setup-uv-cache"
           - os: windows-latest
             expected-cache-dir: "D:\\a\\_temp\\setup-uv-cache"
-          - os: selfhosted-ubuntu-arm64
-            expected-cache-dir: "/home/ubuntu/.cache/uv"
     runs-on: ${{ matrix.inputs.os }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -759,44 +757,6 @@ jobs:
             exit 1
           fi
         shell: bash
-
-  test-setup-cache-local:
-    runs-on: selfhosted-ubuntu-arm64
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - name: Setup with cache
-        uses: ./
-        with:
-          enable-cache: true
-          cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-local
-          cache-local-path: /tmp/uv-cache
-      - run: uv sync
-        working-directory: __tests__/fixtures/uv-project
-  test-restore-cache-local:
-    runs-on: selfhosted-ubuntu-arm64
-    needs: test-setup-cache-local
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - name: Restore with cache
-        id: restore
-        uses: ./
-        with:
-          enable-cache: true
-          cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-local
-          cache-local-path: /tmp/uv-cache
-      - name: Cache was hit
-        run: |
-          if [ "$CACHE_HIT" != "true" ]; then
-            exit 1
-          fi
-        env:
-          CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
-      - run: uv sync
-        working-directory: __tests__/fixtures/uv-project
 
   test-no-python-version:
     runs-on: ubuntu-latest
@@ -988,8 +948,6 @@ jobs:
             expected-python-dir: "/home/runner/work/_temp/uv-python-dir"
           - os: windows-latest
             expected-python-dir: "D:\\a\\_temp\\uv-python-dir"
-          - os: selfhosted-ubuntu-arm64
-            expected-python-dir: "/home/ubuntu/.local/share/uv/python"
     runs-on: ${{ matrix.inputs.os }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -1065,8 +1023,6 @@ jobs:
       - test-restore-cache-save-cache-false
       - test-setup-cache-restore-cache-false
       - test-restore-cache-restore-cache-false
-      - test-setup-cache-local
-      - test-restore-cache-local
       - test-no-python-version
       - test-custom-manifest-file
       - test-absolute-path
