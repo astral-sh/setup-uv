@@ -5,6 +5,11 @@ import * as semver from "semver";
 import { fetch } from "../utils/fetch";
 
 const localManifestFile = join(__dirname, "..", "..", "version-manifest.json");
+export const REMOTE_MANIFEST_URL =
+  "https://raw.githubusercontent.com/astral-sh/setup-uv/main/version-manifest.json";
+
+// Cache for manifest entries to avoid re-fetching
+const manifestCache = new Map<string, ManifestEntry[]>();
 
 interface ManifestEntry {
   version: string;
@@ -39,9 +44,25 @@ export async function getDownloadUrl(
   return entry ? entry.downloadUrl : undefined;
 }
 
+export async function getAvailableVersionsFromManifest(
+  manifestUrl: string | undefined,
+): Promise<string[]> {
+  const manifestEntries = await getManifestEntries(manifestUrl);
+  return [...new Set(manifestEntries.map((entry) => entry.version))];
+}
+
 async function getManifestEntries(
   manifestUrl: string | undefined,
 ): Promise<ManifestEntry[]> {
+  const cacheKey = manifestUrl ?? "local";
+
+  // Return cached entries if available
+  const cached = manifestCache.get(cacheKey);
+  if (cached !== undefined) {
+    core.debug(`Using cached manifest entries for: ${cacheKey}`);
+    return cached;
+  }
+
   let data: string;
   if (manifestUrl !== undefined) {
     core.info(`Fetching manifest-file from: ${manifestUrl}`);
@@ -58,7 +79,9 @@ async function getManifestEntries(
     data = fileContent.toString();
   }
 
-  return JSON.parse(data);
+  const entries: ManifestEntry[] = JSON.parse(data);
+  manifestCache.set(cacheKey, entries);
+  return entries;
 }
 
 export async function updateVersionManifest(

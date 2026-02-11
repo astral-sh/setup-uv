@@ -158,12 +158,7 @@ async function determineVersion(
   manifestFile: string | undefined,
 ): Promise<string> {
   if (versionInput !== "") {
-    return await resolveVersion(
-      versionInput,
-      manifestFile,
-      githubToken,
-      resolutionStrategy,
-    );
+    return await resolveVersion(versionInput, manifestFile, resolutionStrategy);
   }
   if (versionFileInput !== "") {
     const versionFromFile = getUvVersionFromFile(versionFileInput);
@@ -175,7 +170,6 @@ async function determineVersion(
     return await resolveVersion(
       versionFromFile,
       manifestFile,
-      githubToken,
       resolutionStrategy,
     );
   }
@@ -193,7 +187,6 @@ async function determineVersion(
   return await resolveVersion(
     versionFromUvToml || versionFromPyproject || "latest",
     manifestFile,
-    githubToken,
     resolutionStrategy,
   );
 }
