@@ -106,9 +106,15 @@ function getLinuxOSNameVersion(): string {
       const content = fs.readFileSync(file, "utf8");
       const id = parseOsReleaseValue(content, "ID");
       const versionId = parseOsReleaseValue(content, "VERSION_ID");
+      // Fallback for rolling releases (debian:unstable/testing, arch, etc.)
+      // that don't have VERSION_ID but have VERSION_CODENAME
+      const versionCodename = parseOsReleaseValue(content, "VERSION_CODENAME");
 
       if (id && versionId) {
         return `${id}-${versionId}`;
+      }
+      if (id && versionCodename) {
+        return `${id}-${versionCodename}`;
       }
     } catch {
       // Try next file
