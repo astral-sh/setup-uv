@@ -418,6 +418,20 @@ jobs:
           PY
         shell: bash
 
+  test-debian-unstable:
+    runs-on: ubuntu-latest
+    container: debian:unstable
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Install latest version
+        uses: ./
+        with:
+          enable-cache: true
+      - run: uv sync
+        working-directory: __tests__/fixtures/uv-project
+
   test-musl:
     runs-on: ubuntu-latest
     container: alpine
@@ -1031,6 +1045,7 @@ jobs:
       - test-python-version
       - test-activate-environment
       - test-activate-environment-custom-path
+      - test-debian-unstable
       - test-musl
       - test-cache-key-os-version
       - test-cache-local
