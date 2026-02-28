@@ -32690,8 +32690,10 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.REMOTE_MANIFEST_URL = void 0;
 exports.getLatestKnownVersion = getLatestKnownVersion;
 exports.getDownloadUrl = getDownloadUrl;
+exports.getAvailableVersionsFromManifest = getAvailableVersionsFromManifest;
 exports.updateVersionManifest = updateVersionManifest;
 const node_fs_1 = __nccwpck_require__(3024);
 const node_path_1 = __nccwpck_require__(6760);
@@ -32699,6 +32701,9 @@ const core = __importStar(__nccwpck_require__(7484));
 const semver = __importStar(__nccwpck_require__(9318));
 const fetch_1 = __nccwpck_require__(3385);
 const localManifestFile = (0, node_path_1.join)(__dirname, "..", "..", "version-manifest.json");
+exports.REMOTE_MANIFEST_URL = "https://raw.githubusercontent.com/astral-sh/setup-uv/main/version-manifest.json";
+// Cache for manifest entries to avoid re-fetching
+const manifestCache = new Map();
 async function getLatestKnownVersion(manifestUrl) {
     const manifestEntries = await getManifestEntries(manifestUrl);
     return manifestEntries.reduce((a, b) => semver.gt(a.version, b.version) ? a : b).version;
@@ -32710,7 +32715,18 @@ async function getDownloadUrl(manifestUrl, version, arch, platform) {
         entry.platform === platform);
     return entry ? entry.downloadUrl : undefined;
 }
+async function getAvailableVersionsFromManifest(manifestUrl) {
+    const manifestEntries = await getManifestEntries(manifestUrl);
+    return [...new Set(manifestEntries.map((entry) => entry.version))];
+}
 async function getManifestEntries(manifestUrl) {
+    const cacheKey = manifestUrl ?? "local";
+    // Return cached entries if available
+    const cached = manifestCache.get(cacheKey);
+    if (cached !== undefined) {
+        core.debug(`Using cached manifest entries for: ${cacheKey}`);
+        return cached;
+    }
     let data;
     if (manifestUrl !== undefined) {
         core.info(`Fetching manifest-file from: ${manifestUrl}`);
@@ -32725,7 +32741,9 @@ async function getManifestEntries(manifestUrl) {
         const fileContent = await node_fs_1.promises.readFile(localManifestFile);
         data = fileContent.toString();
     }
-    return JSON.parse(data);
+    const entries = JSON.parse(data);
+    manifestCache.set(cacheKey, entries);
+    return entries;
 }
 async function updateVersionManifest(manifestUrl, downloadUrls) {
     const manifest = [];

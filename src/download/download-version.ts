@@ -2,20 +2,17 @@ import { promises as fs } from "node:fs";
 import * as path from "node:path";
 import * as core from "@actions/core";
 import * as tc from "@actions/tool-cache";
-import type { Endpoints } from "@octokit/types";
 import * as pep440 from "@renovatebot/pep440";
 import * as semver from "semver";
 import { OWNER, REPO, TOOL_CACHE_NAME } from "../utils/constants";
-import { Octokit } from "../utils/octokit";
 import type { Architecture, Platform } from "../utils/platforms";
 import { validateChecksum } from "./checksum/checksum";
 import {
+  getAvailableVersionsFromManifest,
   getDownloadUrl,
   getLatestKnownVersion as getLatestVersionInManifest,
+  REMOTE_MANIFEST_URL,
 } from "./version-manifest";
-
-type Release =
-  Endpoints["GET /repos/{owner}/{repo}/releases"]["response"]["data"][number];
 
 export function tryGetFromToolCache(
   arch: Architecture,
@@ -61,27 +58,36 @@ export async function downloadVersionFromManifest(
   checkSum: string | undefined,
   githubToken: string,
 ): Promise<{ version: string; cachedToolDir: string }> {
-  const downloadUrl = await getDownloadUrl(
-    manifestUrl,
-    version,
-    arch,
-    platform,
-  );
-  if (!downloadUrl) {
-    core.info(
-      `manifest-file does not contain version ${version}, arch ${arch}, platform ${platform}. Falling back to GitHub releases.`,
-    );
-    return await downloadVersionFromGithub(
-      platform,
-      arch,
-      version,
-      checkSum,
-      githubToken,
-    );
+  // If no user-provided manifest, try remote manifest first (will use cache if already fetched)
+  // then fall back to bundled manifest
+  const manifestSources =
+    manifestUrl !== undefined
+      ? [manifestUrl]
+      : [REMOTE_MANIFEST_URL, undefined];
+
+  for (const source of manifestSources) {
+    try {
+      const downloadUrl = await getDownloadUrl(source, version, arch, platform);
+      if (downloadUrl) {
+        return await downloadVersion(
+          downloadUrl,
+          `uv-${arch}-${platform}`,
+          platform,
+          arch,
+          version,
+          checkSum,
+          githubToken,
+        );
+      }
+    } catch (err) {
+      core.debug(`Failed to get download URL from manifest ${source}: ${err}`);
+    }
   }
-  return await downloadVersion(
-    downloadUrl,
-    `uv-${arch}-${platform}`,
+
+  core.info(
+    `Manifest does not contain version ${version}, arch ${arch}, platform ${platform}. Falling back to GitHub releases.`,
+  );
+  return await downloadVersionFromGithub(
     platform,
     arch,
     version,
@@ -143,7 +149,6 @@ function getExtension(platform: Platform): string {
 export async function resolveVersion(
   versionInput: string,
   manifestFile: string | undefined,
-  githubToken: string,
   resolutionStrategy: "highest" | "lowest" = "highest",
 ): Promise<string> {
   core.debug(`Resolving version: ${versionInput}`);
@@ -163,7 +168,7 @@ export async function resolveVersion(
   } else {
     version =
       versionInput === "latest" || resolveVersionSpecifierToLatest
-        ? await getLatestVersion(githubToken)
+        ? await getLatestVersion()
         : versionInput;
   }
   if (tc.isExplicitVersion(version)) {
@@ -175,7 +180,7 @@ export async function resolveVersion(
     }
     return version;
   }
-  const availableVersions = await getAvailableVersions(githubToken);
+  const availableVersions = await getAvailableVersions();
   core.debug(`Available versions: ${availableVersions}`);
   const resolvedVersion =
     resolutionStrategy === "lowest"
@@ -187,79 +192,37 @@ export async function resolveVersion(
   return resolvedVersion;
 }
 
-async function getAvailableVersions(githubToken: string): Promise<string[]> {
-  core.info("Getting available versions from GitHub API...");
+async function getAvailableVersions(): Promise<string[]> {
+  // 1. Try remote manifest first (no rate limits, always current)
   try {
-    const octokit = new Octokit({
-      auth: githubToken,
-    });
-    return await getReleaseTagNames(octokit);
+    core.info("Getting available versions from remote manifest...");
+    const versions =
+      await getAvailableVersionsFromManifest(REMOTE_MANIFEST_URL);
+    core.debug(`Found ${versions.length} versions from remote manifest`);
+    return versions;
   } catch (err) {
-    if ((err as Error).message.includes("Bad credentials")) {
-      core.info(
-        "No (valid) GitHub token provided. Falling back to anonymous. Requests might be rate limited.",
-      );
-      const octokit = new Octokit();
-      return await getReleaseTagNames(octokit);
-    }
-    throw err;
+    core.debug(`Remote manifest lookup failed: ${err}`);
   }
+
+  // 2. Fall back to bundled manifest (no network, may be stale)
+  core.info("Getting available versions from bundled manifest...");
+  return await getAvailableVersionsFromManifest(undefined);
 }
 
-async function getReleaseTagNames(octokit: Octokit): Promise<string[]> {
-  const response: Release[] = await octokit.paginate(
-    octokit.rest.repos.listReleases,
-    {
-      owner: OWNER,
-      repo: REPO,
-    },
-  );
-  const releaseTagNames = response.map((release) => release.tag_name);
-  if (releaseTagNames.length === 0) {
-    throw Error(
-      "Github API request failed while getting releases. Check the GitHub status page for outages. Try again later.",
-    );
-  }
-  return releaseTagNames;
-}
-
-async function getLatestVersion(githubToken: string) {
-  core.info("Getting latest version from GitHub API...");
-  const octokit = new Octokit({
-    auth: githubToken,
-  });
-
-  let latestRelease: { tag_name: string } | undefined;
+async function getLatestVersion() {
+  // 1. Try remote manifest first (no rate limits, always current)
   try {
-    latestRelease = await getLatestRelease(octokit);
+    core.info("Getting latest version from remote manifest...");
+    const version = await getLatestVersionInManifest(REMOTE_MANIFEST_URL);
+    core.debug(`Latest version from remote manifest: ${version}`);
+    return version;
   } catch (err) {
-    if ((err as Error).message.includes("Bad credentials")) {
-      core.info(
-        "No (valid) GitHub token provided. Falling back to anonymous. Requests might be rate limited.",
-      );
-      const octokit = new Octokit();
-      latestRelease = await getLatestRelease(octokit);
-    } else {
-      core.error(
-        "Github API request failed while getting latest release. Check the GitHub status page for outages. Try again later.",
-      );
-      throw err;
-    }
+    core.debug(`Remote manifest lookup failed: ${err}`);
   }
 
-  if (!latestRelease) {
-    throw new Error("Could not determine latest release.");
-  }
-  core.debug(`Latest version: ${latestRelease.tag_name}`);
-  return latestRelease.tag_name;
-}
-
-async function getLatestRelease(octokit: Octokit) {
-  const { data: latestRelease } = await octokit.rest.repos.getLatestRelease({
-    owner: OWNER,
-    repo: REPO,
-  });
-  return latestRelease;
+  // 2. Fall back to bundled manifest (no network, may be stale)
+  core.info("Getting latest version from bundled manifest...");
+  return await getLatestVersionInManifest(undefined);
 }
 
 function maxSatisfying(
