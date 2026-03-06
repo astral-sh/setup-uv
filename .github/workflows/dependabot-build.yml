@@ -13,15 +13,15 @@ jobs:
     if: github.actor == 'dependabot[bot]'
     steps:
       - name: Checkout PR branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
         with:
           ref: ${{ github.head_ref }}
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v4
         with:
-          node-version: "20"
-          cache: "npm"
+          node-version-file: .nvmrc
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
@@ -30,7 +30,7 @@ jobs:
         run: npm run all
 
       - name: Commit built dist
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@b863ae1933cb653a53c021fe36dbb774e1fb9403 # v5
         with:
           commit_message: "Build dist for Dependabot update"
           file_pattern: dist/
