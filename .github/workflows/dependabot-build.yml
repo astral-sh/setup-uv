@@ -4,18 +4,26 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    if: >-
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      startsWith(github.head_ref, 'dependabot/')
+    timeout-minutes: 15
     steps:
       - name: Checkout PR branch
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
 
       - name: Setup Node.js
@@ -25,15 +33,35 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Build and test
         run: npm run all
 
       - name: Commit built dist
-        uses: stefanzweifel/git-auto-commit-action@b863ae1933cb653a53c021fe36dbb774e1fb9403 # v5
         env:
+          EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          commit_message: "Build dist for Dependabot update"
-          file_pattern: dist/
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local core.hooksPath /dev/null
+
+          git fetch --no-tags --depth=1 origin "${GITHUB_HEAD_REF}"
+          if [ "$(git rev-parse FETCH_HEAD)" != "${EXPECTED_HEAD_SHA}" ]; then
+            echo "::notice::Skipping dist commit because ${GITHUB_HEAD_REF} moved after the workflow started."
+            exit 0
+          fi
+
+          git add --all dist/
+
+          if git diff --cached --quiet; then
+            echo "No dist changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Build dist for Dependabot update"
+
+          auth="$(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 | tr -d '\n')"
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${auth}" \
+            push origin "HEAD:${GITHUB_HEAD_REF}"
