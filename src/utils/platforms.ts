@@ -13,6 +13,7 @@ export type Architecture =
   | "x86_64"
   | "aarch64"
   | "s390x"
+  | "riscv64gc"
   | "powerpc64le";
 
 export function getArch(): Architecture | undefined {
@@ -21,6 +22,7 @@ export function getArch(): Architecture | undefined {
     arm64: "aarch64",
     ia32: "i686",
     ppc64: "powerpc64le",
+    riscv64: "riscv64gc",
     s390x: "s390x",
     x64: "x86_64",
   };
