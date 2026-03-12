@@ -19,7 +19,7 @@ categories:
     labels:
       - "maintenance"
       - "ci"
-      - "update-known-versions"
+      - "update-known-checksums"
   - title: "📚 Documentation"
     labels:
       - "documentation"

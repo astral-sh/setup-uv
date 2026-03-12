@@ -2,20 +2,21 @@ import { promises as fs } from "node:fs";
 import * as path from "node:path";
 import * as core from "@actions/core";
 import * as tc from "@actions/tool-cache";
-import type { Endpoints } from "@octokit/types";
 import * as pep440 from "@renovatebot/pep440";
 import * as semver from "semver";
-import { OWNER, REPO, TOOL_CACHE_NAME } from "../utils/constants";
-import { Octokit } from "../utils/octokit";
+import { TOOL_CACHE_NAME, VERSIONS_NDJSON_URL } from "../utils/constants";
 import type { Architecture, Platform } from "../utils/platforms";
 import { validateChecksum } from "./checksum/checksum";
 import {
-  getDownloadUrl,
+  getAllVersions as getAllManifestVersions,
   getLatestKnownVersion as getLatestVersionInManifest,
+  getManifestArtifact,
 } from "./version-manifest";
-
-type Release =
-  Endpoints["GET /repos/{owner}/{repo}/releases"]["response"]["data"][number];
+import {
+  getAllVersions as getAllVersionsFromNdjson,
+  getArtifact as getArtifactFromNdjson,
+  getLatestVersion as getLatestVersionFromNdjson,
+} from "./versions-client";
 
 export function tryGetFromToolCache(
   arch: Architecture,
@@ -32,19 +33,26 @@ export function tryGetFromToolCache(
   return { installedPath, version: resolvedVersion };
 }
 
-export async function downloadVersionFromGithub(
+export async function downloadVersionFromNdjson(
   platform: Platform,
   arch: Architecture,
   version: string,
   checkSum: string | undefined,
   githubToken: string,
 ): Promise<{ version: string; cachedToolDir: string }> {
-  const artifact = `uv-${arch}-${platform}`;
-  const extension = getExtension(platform);
-  const downloadUrl = `https://github.com/${OWNER}/${REPO}/releases/download/${version}/${artifact}${extension}`;
+  const artifact = await getArtifactFromNdjson(version, arch, platform);
+
+  if (!artifact) {
+    throw new Error(
+      `Could not find artifact for version ${version}, arch ${arch}, platform ${platform} in ${VERSIONS_NDJSON_URL} .`,
+    );
+  }
+
+  // For the default astral-sh/versions source, checksum validation relies on
+  // user input or the built-in KNOWN_CHECKSUMS table, not NDJSON sha256 values.
   return await downloadVersion(
-    downloadUrl,
-    artifact,
+    artifact.url,
+    `uv-${arch}-${platform}`,
     platform,
     arch,
     version,
@@ -54,38 +62,32 @@ export async function downloadVersionFromGithub(
 }
 
 export async function downloadVersionFromManifest(
-  manifestUrl: string | undefined,
+  manifestUrl: string,
   platform: Platform,
   arch: Architecture,
   version: string,
   checkSum: string | undefined,
   githubToken: string,
 ): Promise<{ version: string; cachedToolDir: string }> {
-  const downloadUrl = await getDownloadUrl(
+  const artifact = await getManifestArtifact(
     manifestUrl,
     version,
     arch,
     platform,
   );
-  if (!downloadUrl) {
-    core.info(
-      `manifest-file does not contain version ${version}, arch ${arch}, platform ${platform}. Falling back to GitHub releases.`,
-    );
-    return await downloadVersionFromGithub(
-      platform,
-      arch,
-      version,
-      checkSum,
-      githubToken,
+  if (!artifact) {
+    throw new Error(
+      `manifest-file does not contain version ${version}, arch ${arch}, platform ${platform}.`,
     );
   }
+
   return await downloadVersion(
-    downloadUrl,
+    artifact.downloadUrl,
     `uv-${arch}-${platform}`,
     platform,
     arch,
     version,
-    checkSum,
+    resolveChecksum(checkSum, artifact.checksum),
     githubToken,
   );
 }
@@ -96,7 +98,7 @@ async function downloadVersion(
   platform: Platform,
   arch: Architecture,
   version: string,
-  checkSum: string | undefined,
+  checksum: string | undefined,
   githubToken: string,
 ): Promise<{ version: string; cachedToolDir: string }> {
   core.info(`Downloading uv from "${downloadUrl}" ...`);
@@ -105,14 +107,14 @@ async function downloadVersion(
     undefined,
     githubToken,
   );
-  await validateChecksum(checkSum, downloadPath, arch, platform, version);
+  await validateChecksum(checksum, downloadPath, arch, platform, version);
 
   let uvDir: string;
   if (platform === "pc-windows-msvc") {
-    // On windows extracting the zip does not create an intermediate directory
+    // On windows extracting the zip does not create an intermediate directory.
     try {
       // Try tar first as it's much faster, but only bsdtar supports zip files,
-      // so this my fail if another tar, like gnu tar, ends up being used.
+      // so this may fail if another tar, like gnu tar, ends up being used.
       uvDir = await tc.extractTar(downloadPath, undefined, "x");
     } catch (err) {
       core.info(
@@ -127,6 +129,7 @@ async function downloadVersion(
     const extractedDir = await tc.extractTar(downloadPath);
     uvDir = path.join(extractedDir, artifactName);
   }
+
   const cachedToolDir = await tc.cacheDir(
     uvDir,
     TOOL_CACHE_NAME,
@@ -136,14 +139,22 @@ async function downloadVersion(
   return { cachedToolDir, version: version };
 }
 
+function resolveChecksum(
+  checkSum: string | undefined,
+  manifestChecksum?: string,
+): string | undefined {
+  return checkSum !== undefined && checkSum !== ""
+    ? checkSum
+    : manifestChecksum;
+}
+
 function getExtension(platform: Platform): string {
   return platform === "pc-windows-msvc" ? ".zip" : ".tar.gz";
 }
 
 export async function resolveVersion(
   versionInput: string,
-  manifestFile: string | undefined,
-  githubToken: string,
+  manifestUrl: string | undefined,
   resolutionStrategy: "highest" | "lowest" = "highest",
 ): Promise<string> {
   core.debug(`Resolving version: ${versionInput}`);
@@ -155,15 +166,15 @@ export async function resolveVersion(
   if (resolveVersionSpecifierToLatest) {
     core.info("Found minimum version specifier, using latest version");
   }
-  if (manifestFile) {
+  if (manifestUrl !== undefined) {
     version =
       versionInput === "latest" || resolveVersionSpecifierToLatest
-        ? await getLatestVersionInManifest(manifestFile)
+        ? await getLatestVersionInManifest(manifestUrl)
         : versionInput;
   } else {
     version =
       versionInput === "latest" || resolveVersionSpecifierToLatest
-        ? await getLatestVersion(githubToken)
+        ? await getLatestVersionFromNdjson()
         : versionInput;
   }
   if (tc.isExplicitVersion(version)) {
@@ -175,91 +186,33 @@ export async function resolveVersion(
     }
     return version;
   }
-  const availableVersions = await getAvailableVersions(githubToken);
+
+  const availableVersions = await getAvailableVersions(manifestUrl);
   core.debug(`Available versions: ${availableVersions}`);
   const resolvedVersion =
     resolutionStrategy === "lowest"
       ? minSatisfying(availableVersions, version)
       : maxSatisfying(availableVersions, version);
+
   if (resolvedVersion === undefined) {
     throw new Error(`No version found for ${version}`);
   }
+
   return resolvedVersion;
 }
 
-async function getAvailableVersions(githubToken: string): Promise<string[]> {
-  core.info("Getting available versions from GitHub API...");
-  try {
-    const octokit = new Octokit({
-      auth: githubToken,
-    });
-    return await getReleaseTagNames(octokit);
-  } catch (err) {
-    if ((err as Error).message.includes("Bad credentials")) {
-      core.info(
-        "No (valid) GitHub token provided. Falling back to anonymous. Requests might be rate limited.",
-      );
-      const octokit = new Octokit();
-      return await getReleaseTagNames(octokit);
-    }
-    throw err;
-  }
-}
-
-async function getReleaseTagNames(octokit: Octokit): Promise<string[]> {
-  const response: Release[] = await octokit.paginate(
-    octokit.rest.repos.listReleases,
-    {
-      owner: OWNER,
-      repo: REPO,
-    },
-  );
-  const releaseTagNames = response.map((release) => release.tag_name);
-  if (releaseTagNames.length === 0) {
-    throw Error(
-      "Github API request failed while getting releases. Check the GitHub status page for outages. Try again later.",
+async function getAvailableVersions(
+  manifestUrl: string | undefined,
+): Promise<string[]> {
+  if (manifestUrl !== undefined) {
+    core.info(
+      `Getting available versions from manifest-file ${manifestUrl} ...`,
     );
-  }
-  return releaseTagNames;
-}
-
-async function getLatestVersion(githubToken: string) {
-  core.info("Getting latest version from GitHub API...");
-  const octokit = new Octokit({
-    auth: githubToken,
-  });
-
-  let latestRelease: { tag_name: string } | undefined;
-  try {
-    latestRelease = await getLatestRelease(octokit);
-  } catch (err) {
-    if ((err as Error).message.includes("Bad credentials")) {
-      core.info(
-        "No (valid) GitHub token provided. Falling back to anonymous. Requests might be rate limited.",
-      );
-      const octokit = new Octokit();
-      latestRelease = await getLatestRelease(octokit);
-    } else {
-      core.error(
-        "Github API request failed while getting latest release. Check the GitHub status page for outages. Try again later.",
-      );
-      throw err;
-    }
+    return await getAllManifestVersions(manifestUrl);
   }
 
-  if (!latestRelease) {
-    throw new Error("Could not determine latest release.");
-  }
-  core.debug(`Latest version: ${latestRelease.tag_name}`);
-  return latestRelease.tag_name;
-}
-
-async function getLatestRelease(octokit: Octokit) {
-  const { data: latestRelease } = await octokit.rest.repos.getLatestRelease({
-    owner: OWNER,
-    repo: REPO,
-  });
-  return latestRelease;
+  core.info(`Getting available versions from ${VERSIONS_NDJSON_URL} ...`);
+  return await getAllVersionsFromNdjson();
 }
 
 function maxSatisfying(

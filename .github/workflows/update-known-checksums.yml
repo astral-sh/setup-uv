@@ -1,0 +1,68 @@
+name: "Update known checksums"
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 4 * * *" # Run every day at 4am UTC
+  repository_dispatch:
+    types: [ pypi_release ]
+
+permissions: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: "20"
+      - name: Update known checksums
+        id: update-known-checksums
+        run:
+          node dist/update-known-checksums/index.js
+          src/download/checksum/known-checksums.ts
+      - name: Check for changes
+        id: changes-exist
+        run: |
+          git status --porcelain
+          if [ -n "$(git status --porcelain)" ]; then
+              echo "changes-exist=true" >> "$GITHUB_OUTPUT"
+          else
+              echo "changes-exist=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Compile changes
+        if: ${{ steps.changes-exist.outputs.changes-exist == 'true' }}
+        run: npm ci --ignore-scripts && npm run all
+      - name: Commit and push changes
+        if: ${{ steps.changes-exist.outputs.changes-exist == 'true' }}
+        id: commit-and-push
+        continue-on-error: true
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+          git add .
+          git commit -m "chore: update known checksums for $LATEST_VERSION"
+          git push origin HEAD:refs/heads/main
+        env:
+          LATEST_VERSION: ${{ steps.update-known-checksums.outputs.latest-version }}
+
+      - name: Create Pull Request
+        if: ${{ steps.changes-exist.outputs.changes-exist == 'true' && steps.commit-and-push.outcome != 'success' }}
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
+        with:
+          commit-message: "chore: update known checksums"
+          title:
+            "chore: update known checksums for ${{
+            steps.update-known-checksums.outputs.latest-version }}"
+          body:
+            "chore: update known checksums for ${{
+            steps.update-known-checksums.outputs.latest-version }}"
+          base: main
+          labels: "automated-pr,update-known-checksums"
+          branch: update-known-checksums-pr
+          delete-branch: true
