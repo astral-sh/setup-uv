@@ -38,9 +38,12 @@ You can customize the venv location with `venv-path`, for example to place it in
 
 ## GitHub authentication token
 
-This action uses the GitHub API to fetch the uv release artifacts. To avoid hitting the GitHub API
-rate limit too quickly, an authentication token can be provided via the `github-token` input. By
-default, the `GITHUB_TOKEN` secret is used, which is automatically provided by GitHub Actions.
+By default, this action resolves available uv versions from
+[`astral-sh/versions`](https://github.com/astral-sh/versions), then downloads uv artifacts from
+GitHub Releases.
+
+You can provide a token via `github-token` to authenticate those downloads. By default, the
+`GITHUB_TOKEN` secret is used, which is automatically provided by GitHub Actions.
 
 If the default
 [permissions for the GitHub token](https://docs.github.com/en/actions/security-for-github-actions/security-guides/automatic-token-authentication#permissions-for-the-github_token)

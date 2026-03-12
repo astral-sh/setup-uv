@@ -68,7 +68,7 @@ Have a look under [Advanced Configuration](#advanced-configuration) for detailed
     # The checksum of the uv version to install
     checksum: ""
 
-    # Used to increase the rate limit when retrieving versions and downloading uv
+    # Used when downloading uv from GitHub releases
     github-token: ${{ github.token }}
 
     # Enable uploading of the uv cache: true, false, or auto (enabled on GitHub-hosted runners, disabled on self-hosted runners)
@@ -114,7 +114,7 @@ Have a look under [Advanced Configuration](#advanced-configuration) for detailed
     # Custom path to set UV_TOOL_BIN_DIR to
     tool-bin-dir: ""
 
-    # URL to the manifest file containing available versions and download URLs
+    # URL to a custom manifest file (NDJSON preferred, legacy JSON array is deprecated)
     manifest-file: ""
 
     # Add problem matchers
@@ -190,10 +190,12 @@ For more advanced configuration options, see our detailed documentation:
 
 ## How it works
 
-This action downloads uv from the uv repo's official
-[GitHub Releases](https://github.com/astral-sh/uv) and uses the
-[GitHub Actions Toolkit](https://github.com/actions/toolkit) to cache it as a tool to speed up
-consecutive runs on self-hosted runners.
+By default, this action resolves uv versions from
+[`astral-sh/versions`](https://github.com/astral-sh/versions) (NDJSON) and downloads uv from the
+official [GitHub Releases](https://github.com/astral-sh/uv).
+
+It then uses the [GitHub Actions Toolkit](https://github.com/actions/toolkit) to cache uv as a
+tool to speed up consecutive runs on self-hosted runners.
 
 The installed version of uv is then added to the runner PATH, enabling later steps to invoke it
 by name (`uv`).

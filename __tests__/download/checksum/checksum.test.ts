@@ -4,10 +4,11 @@ import {
   validateChecksum,
 } from "../../../src/download/checksum/checksum";
 
+const validChecksum =
+  "f3da96ec7e995debee7f5d52ecd034dfb7074309a1da42f76429ecb814d813a3";
+const filePath = "__tests__/fixtures/checksumfile";
+
 test("checksum should match", async () => {
-  const validChecksum =
-    "f3da96ec7e995debee7f5d52ecd034dfb7074309a1da42f76429ecb814d813a3";
-  const filePath = "__tests__/fixtures/checksumfile";
   // string params don't matter only test the checksum mechanism, not known checksums
   await validateChecksum(
     validChecksum,
@@ -15,6 +16,16 @@ test("checksum should match", async () => {
     "aarch64",
     "pc-windows-msvc",
     "1.2.3",
+  );
+});
+
+test("provided checksum beats known checksums", async () => {
+  await validateChecksum(
+    validChecksum,
+    filePath,
+    "x86_64",
+    "unknown-linux-gnu",
+    "0.3.0",
   );
 });
 

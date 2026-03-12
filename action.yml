@@ -26,7 +26,7 @@ inputs:
     required: false
   github-token:
     description:
-      "Used to increase the rate limit when retrieving versions and downloading uv."
+      "Used when downloading uv from GitHub releases."
     required: false
     default: ${{ github.token }}
   enable-cache:
@@ -75,7 +75,7 @@ inputs:
     description: "Custom path to set UV_TOOL_BIN_DIR to."
     required: false
   manifest-file:
-    description: "URL to the manifest file containing available versions and download URLs."
+    description: "URL to a custom manifest file. Supports the astral-sh/versions NDJSON format and the legacy JSON array format (deprecated)."
     required: false
   add-problem-matchers:
     description: "Add problem matchers."
