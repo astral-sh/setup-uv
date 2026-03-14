@@ -12,6 +12,7 @@ const {
   fetchVersionData,
   getAllVersions,
   getArtifact,
+  getHighestSatisfyingVersion,
   getLatestVersion,
   parseVersionData,
 } = await import("../../src/download/versions-client");
@@ -21,13 +22,28 @@ const sampleNdjsonResponse = `{"version":"0.9.26","artifacts":[{"platform":"aarc
 
 const multiVariantNdjsonResponse = `{"version":"0.9.26","artifacts":[{"platform":"aarch64-apple-darwin","variant":"python-managed","url":"https://github.com/astral-sh/uv/releases/download/0.9.26/uv-aarch64-apple-darwin-managed.tar.gz","archive_format":"tar.gz","sha256":"managed-checksum"},{"platform":"aarch64-apple-darwin","variant":"default","url":"https://github.com/astral-sh/uv/releases/download/0.9.26/uv-aarch64-apple-darwin.zip","archive_format":"zip","sha256":"default-checksum"}]}`;
 
+function createMockStream(chunks: string[]): ReadableStream<Uint8Array> {
+  const encoder = new TextEncoder();
+
+  return new ReadableStream<Uint8Array>({
+    start(controller) {
+      for (const chunk of chunks) {
+        controller.enqueue(encoder.encode(chunk));
+      }
+      controller.close();
+    },
+  });
+}
+
 function createMockResponse(
   ok: boolean,
   status: number,
   statusText: string,
   data: string,
+  chunks: string[] = [data],
 ) {
   return {
+    body: createMockStream(chunks),
     ok,
     status,
     statusText,
@@ -86,6 +102,22 @@ describe("versions-client", () => {
 
       expect(latest).toBe("0.9.26");
     });
+
+    it("should stop after the first record when resolving latest", async () => {
+      mockFetch.mockResolvedValue(
+        createMockResponse(
+          true,
+          200,
+          "OK",
+          `${sampleNdjsonResponse}\n{"version":`,
+          [`${sampleNdjsonResponse.split("\n")[0]}\n`, '{"version":'],
+        ),
+      );
+
+      const latest = await getLatestVersion();
+
+      expect(latest).toBe("0.9.26");
+    });
   });
 
   describe("getAllVersions", () => {
@@ -100,6 +132,24 @@ describe("versions-client", () => {
     });
   });
 
+  describe("getHighestSatisfyingVersion", () => {
+    it("should return the first matching version from the stream", async () => {
+      mockFetch.mockResolvedValue(
+        createMockResponse(
+          true,
+          200,
+          "OK",
+          `${sampleNdjsonResponse}\n{"version":`,
+          [`${sampleNdjsonResponse.split("\n")[0]}\n`, '{"version":'],
+        ),
+      );
+
+      const version = await getHighestSatisfyingVersion("^0.9.0");
+
+      expect(version).toBe("0.9.26");
+    });
+  });
+
   describe("getArtifact", () => {
     beforeEach(() => {
       mockFetch.mockResolvedValue(
@@ -108,6 +158,27 @@ describe("versions-client", () => {
     });
 
     it("should find artifact by version and platform", async () => {
+      const artifact = await getArtifact("0.9.26", "aarch64", "apple-darwin");
+
+      expect(artifact).toEqual({
+        archiveFormat: "tar.gz",
+        sha256:
+          "fcf0a9ea6599c6ae28a4c854ac6da76f2c889354d7c36ce136ef071f7ab9721f",
+        url: "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-aarch64-apple-darwin.tar.gz",
+      });
+    });
+
+    it("should stop once the requested version is found", async () => {
+      mockFetch.mockResolvedValue(
+        createMockResponse(
+          true,
+          200,
+          "OK",
+          `${sampleNdjsonResponse}\n{"version":`,
+          [`${sampleNdjsonResponse.split("\n")[0]}\n`, '{"version":'],
+        ),
+      );
+
       const artifact = await getArtifact("0.9.26", "aarch64", "apple-darwin");
 
       expect(artifact).toEqual({

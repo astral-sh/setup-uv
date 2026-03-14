@@ -20742,7 +20742,7 @@ var require_satisfies = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/satisfies.js"(exports2, module2) {
     "use strict";
     var Range = require_range();
-    var satisfies4 = (version4, range2, options) => {
+    var satisfies6 = (version4, range2, options) => {
       try {
         range2 = new Range(range2, options);
       } catch (er) {
@@ -20750,7 +20750,7 @@ var require_satisfies = __commonJS({
       }
       return range2.test(version4);
     };
-    module2.exports = satisfies4;
+    module2.exports = satisfies6;
   }
 });
 
@@ -20905,7 +20905,7 @@ var require_outside = __commonJS({
     var Comparator = require_comparator();
     var { ANY } = Comparator;
     var Range = require_range();
-    var satisfies4 = require_satisfies();
+    var satisfies6 = require_satisfies();
     var gt3 = require_gt();
     var lt = require_lt();
     var lte = require_lte();
@@ -20932,7 +20932,7 @@ var require_outside = __commonJS({
         default:
           throw new TypeError('Must provide a hilo val of "<" or ">"');
       }
-      if (satisfies4(version4, range2, options)) {
+      if (satisfies6(version4, range2, options)) {
         return false;
       }
       for (let i = 0; i < range2.set.length; ++i) {
@@ -21004,7 +21004,7 @@ var require_intersects = __commonJS({
 var require_simplify = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/ranges/simplify.js"(exports2, module2) {
     "use strict";
-    var satisfies4 = require_satisfies();
+    var satisfies6 = require_satisfies();
     var compare = require_compare();
     module2.exports = (versions, range2, options) => {
       const set = [];
@@ -21012,7 +21012,7 @@ var require_simplify = __commonJS({
       let prev = null;
       const v = versions.sort((a, b) => compare(a, b, options));
       for (const version4 of v) {
-        const included = satisfies4(version4, range2, options);
+        const included = satisfies6(version4, range2, options);
         if (included) {
           prev = version4;
           if (!first) {
@@ -21057,7 +21057,7 @@ var require_subset = __commonJS({
     var Range = require_range();
     var Comparator = require_comparator();
     var { ANY } = Comparator;
-    var satisfies4 = require_satisfies();
+    var satisfies6 = require_satisfies();
     var compare = require_compare();
     var subset = (sub, dom, options = {}) => {
       if (sub === dom) {
@@ -21126,14 +21126,14 @@ var require_subset = __commonJS({
         }
       }
       for (const eq of eqSet) {
-        if (gt3 && !satisfies4(eq, String(gt3), options)) {
+        if (gt3 && !satisfies6(eq, String(gt3), options)) {
           return null;
         }
-        if (lt && !satisfies4(eq, String(lt), options)) {
+        if (lt && !satisfies6(eq, String(lt), options)) {
           return null;
         }
         for (const c of dom) {
-          if (!satisfies4(eq, String(c), options)) {
+          if (!satisfies6(eq, String(c), options)) {
             return false;
           }
         }
@@ -21160,7 +21160,7 @@ var require_subset = __commonJS({
             if (higher === c && higher !== gt3) {
               return false;
             }
-          } else if (gt3.operator === ">=" && !satisfies4(gt3.semver, String(c), options)) {
+          } else if (gt3.operator === ">=" && !satisfies6(gt3.semver, String(c), options)) {
             return false;
           }
         }
@@ -21175,7 +21175,7 @@ var require_subset = __commonJS({
             if (lower === c && lower !== lt) {
               return false;
             }
-          } else if (lt.operator === "<=" && !satisfies4(lt.semver, String(c), options)) {
+          } else if (lt.operator === "<=" && !satisfies6(lt.semver, String(c), options)) {
             return false;
           }
         }
@@ -21245,7 +21245,7 @@ var require_semver2 = __commonJS({
     var coerce = require_coerce();
     var Comparator = require_comparator();
     var Range = require_range();
-    var satisfies4 = require_satisfies();
+    var satisfies6 = require_satisfies();
     var toComparators = require_to_comparators();
     var maxSatisfying3 = require_max_satisfying();
     var minSatisfying4 = require_min_satisfying();
@@ -21283,7 +21283,7 @@ var require_semver2 = __commonJS({
       coerce,
       Comparator,
       Range,
-      satisfies: satisfies4,
+      satisfies: satisfies6,
       toComparators,
       maxSatisfying: maxSatisfying3,
       minSatisfying: minSatisfying4,
@@ -28352,7 +28352,7 @@ var require_satisfies2 = __commonJS({
   "node_modules/@actions/tool-cache/node_modules/semver/functions/satisfies.js"(exports2, module2) {
     "use strict";
     var Range = require_range2();
-    var satisfies4 = (version4, range2, options) => {
+    var satisfies6 = (version4, range2, options) => {
       try {
         range2 = new Range(range2, options);
       } catch (er) {
@@ -28360,7 +28360,7 @@ var require_satisfies2 = __commonJS({
       }
       return range2.test(version4);
     };
-    module2.exports = satisfies4;
+    module2.exports = satisfies6;
   }
 });
 
@@ -28515,7 +28515,7 @@ var require_outside2 = __commonJS({
     var Comparator = require_comparator2();
     var { ANY } = Comparator;
     var Range = require_range2();
-    var satisfies4 = require_satisfies2();
+    var satisfies6 = require_satisfies2();
     var gt3 = require_gt2();
     var lt = require_lt2();
     var lte = require_lte2();
@@ -28542,7 +28542,7 @@ var require_outside2 = __commonJS({
         default:
           throw new TypeError('Must provide a hilo val of "<" or ">"');
       }
-      if (satisfies4(version4, range2, options)) {
+      if (satisfies6(version4, range2, options)) {
         return false;
       }
       for (let i = 0; i < range2.set.length; ++i) {
@@ -28614,7 +28614,7 @@ var require_intersects2 = __commonJS({
 var require_simplify2 = __commonJS({
   "node_modules/@actions/tool-cache/node_modules/semver/ranges/simplify.js"(exports2, module2) {
     "use strict";
-    var satisfies4 = require_satisfies2();
+    var satisfies6 = require_satisfies2();
     var compare = require_compare2();
     module2.exports = (versions, range2, options) => {
       const set = [];
@@ -28622,7 +28622,7 @@ var require_simplify2 = __commonJS({
       let prev = null;
       const v = versions.sort((a, b) => compare(a, b, options));
       for (const version4 of v) {
-        const included = satisfies4(version4, range2, options);
+        const included = satisfies6(version4, range2, options);
         if (included) {
           prev = version4;
           if (!first) {
@@ -28667,7 +28667,7 @@ var require_subset2 = __commonJS({
     var Range = require_range2();
     var Comparator = require_comparator2();
     var { ANY } = Comparator;
-    var satisfies4 = require_satisfies2();
+    var satisfies6 = require_satisfies2();
     var compare = require_compare2();
     var subset = (sub, dom, options = {}) => {
       if (sub === dom) {
@@ -28736,14 +28736,14 @@ var require_subset2 = __commonJS({
         }
       }
       for (const eq of eqSet) {
-        if (gt3 && !satisfies4(eq, String(gt3), options)) {
+        if (gt3 && !satisfies6(eq, String(gt3), options)) {
           return null;
         }
-        if (lt && !satisfies4(eq, String(lt), options)) {
+        if (lt && !satisfies6(eq, String(lt), options)) {
           return null;
         }
         for (const c of dom) {
-          if (!satisfies4(eq, String(c), options)) {
+          if (!satisfies6(eq, String(c), options)) {
             return false;
           }
         }
@@ -28770,7 +28770,7 @@ var require_subset2 = __commonJS({
             if (higher === c && higher !== gt3) {
               return false;
             }
-          } else if (gt3.operator === ">=" && !satisfies4(gt3.semver, String(c), options)) {
+          } else if (gt3.operator === ">=" && !satisfies6(gt3.semver, String(c), options)) {
             return false;
           }
         }
@@ -28785,7 +28785,7 @@ var require_subset2 = __commonJS({
             if (lower === c && lower !== lt) {
               return false;
             }
-          } else if (lt.operator === "<=" && !satisfies4(lt.semver, String(c), options)) {
+          } else if (lt.operator === "<=" && !satisfies6(lt.semver, String(c), options)) {
             return false;
           }
         }
@@ -28855,7 +28855,7 @@ var require_semver4 = __commonJS({
     var coerce = require_coerce2();
     var Comparator = require_comparator2();
     var Range = require_range2();
-    var satisfies4 = require_satisfies2();
+    var satisfies6 = require_satisfies2();
     var toComparators = require_to_comparators2();
     var maxSatisfying3 = require_max_satisfying2();
     var minSatisfying4 = require_min_satisfying2();
@@ -28893,7 +28893,7 @@ var require_semver4 = __commonJS({
       coerce,
       Comparator,
       Range,
-      satisfies: satisfies4,
+      satisfies: satisfies6,
       toComparators,
       maxSatisfying: maxSatisfying3,
       minSatisfying: minSatisfying4,
@@ -29229,7 +29229,7 @@ var require_specifier = __commonJS({
     module2.exports = {
       RANGE_PATTERN,
       parse: parse3,
-      satisfies: satisfies4,
+      satisfies: satisfies6,
       filter,
       validRange,
       maxSatisfying: maxSatisfying3,
@@ -29306,7 +29306,7 @@ var require_specifier = __commonJS({
         }, true);
       });
     }
-    function satisfies4(version4, specifier, options = {}) {
+    function satisfies6(version4, specifier, options = {}) {
       const filtered = pick([version4], specifier, options);
       return filtered.length === 1;
     }
@@ -29336,7 +29336,7 @@ var require_specifier = __commonJS({
         if (spec.epoch) {
           compatiblePrefix = spec.epoch + "!" + compatiblePrefix;
         }
-        return satisfies4(version4, `>=${spec.version}, ==${compatiblePrefix}`, {
+        return satisfies6(version4, `>=${spec.version}, ==${compatiblePrefix}`, {
           prereleases: spec.prereleases
         });
       }
@@ -29527,7 +29527,7 @@ var require_pep440 = __commonJS({
       maxSatisfying: maxSatisfying3,
       minSatisfying: minSatisfying4,
       RANGE_PATTERN,
-      satisfies: satisfies4,
+      satisfies: satisfies6,
       validRange
     } = require_specifier();
     var { major, minor, patch, inc } = require_semantic();
@@ -29554,7 +29554,7 @@ var require_pep440 = __commonJS({
       maxSatisfying: maxSatisfying3,
       minSatisfying: minSatisfying4,
       RANGE_PATTERN,
-      satisfies: satisfies4,
+      satisfies: satisfies6,
       validRange,
       // semantic
       major,
@@ -30183,13 +30183,13 @@ var require_semver5 = __commonJS({
           return true;
         }
         rangeTmp = new Range(comp26.value, options);
-        return satisfies4(this.value, rangeTmp, options);
+        return satisfies6(this.value, rangeTmp, options);
       } else if (comp26.operator === "") {
         if (comp26.value === "") {
           return true;
         }
         rangeTmp = new Range(this.value, options);
-        return satisfies4(comp26.semver, rangeTmp, options);
+        return satisfies6(comp26.semver, rangeTmp, options);
       }
       var sameDirectionIncreasing = (this.operator === ">=" || this.operator === ">") && (comp26.operator === ">=" || comp26.operator === ">");
       var sameDirectionDecreasing = (this.operator === "<=" || this.operator === "<") && (comp26.operator === "<=" || comp26.operator === "<");
@@ -30516,8 +30516,8 @@ var require_semver5 = __commonJS({
       }
       return true;
     }
-    exports2.satisfies = satisfies4;
-    function satisfies4(version4, range2, options) {
+    exports2.satisfies = satisfies6;
+    function satisfies6(version4, range2, options) {
       try {
         range2 = new Range(range2, options);
       } catch (er) {
@@ -30647,7 +30647,7 @@ var require_semver5 = __commonJS({
         default:
           throw new TypeError('Must provide a hilo val of "<" or ">"');
       }
-      if (satisfies4(version4, range2, options)) {
+      if (satisfies6(version4, range2, options)) {
         return false;
       }
       for (var i2 = 0; i2 < range2.set.length; ++i2) {
@@ -91879,8 +91879,8 @@ function _getGlobal(key, defaultValue) {
 }
 
 // src/download/download-version.ts
-var pep440 = __toESM(require_pep440(), 1);
-var semver5 = __toESM(require_semver5(), 1);
+var pep4402 = __toESM(require_pep440(), 1);
+var semver6 = __toESM(require_semver5(), 1);
 
 // src/utils/constants.ts
 var TOOL_CACHE_NAME = "uv";
@@ -96338,7 +96338,7 @@ async function validateFileCheckSum(filePath, expected) {
 }
 
 // src/download/version-manifest.ts
-var semver4 = __toESM(require_semver5(), 1);
+var semver5 = __toESM(require_semver5(), 1);
 
 // src/utils/fetch.ts
 var import_undici2 = __toESM(require_undici2(), 1);
@@ -96424,7 +96424,11 @@ function formatVariants(entries) {
 }
 
 // src/download/versions-client.ts
+var pep440 = __toESM(require_pep440(), 1);
+var semver4 = __toESM(require_semver5(), 1);
 var cachedVersionData = /* @__PURE__ */ new Map();
+var cachedLatestVersionData = /* @__PURE__ */ new Map();
+var cachedVersionLookup = /* @__PURE__ */ new Map();
 async function fetchVersionData(url2 = VERSIONS_NDJSON_URL) {
   const cachedVersions = cachedVersionData.get(url2);
   if (cachedVersions !== void 0) {
@@ -96432,15 +96436,8 @@ async function fetchVersionData(url2 = VERSIONS_NDJSON_URL) {
     return cachedVersions;
   }
   info(`Fetching version data from ${url2} ...`);
-  const response = await fetch(url2, {});
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch version data: ${response.status} ${response.statusText}`
-    );
-  }
-  const body2 = await response.text();
-  const versions = parseVersionData(body2, url2);
-  cachedVersionData.set(url2, versions);
+  const { versions } = await readVersionData(url2);
+  cacheCompleteVersionData(url2, versions);
   return versions;
 }
 function parseVersionData(data, sourceDescription) {
@@ -96450,20 +96447,7 @@ function parseVersionData(data, sourceDescription) {
     if (trimmed === "") {
       continue;
     }
-    let parsed;
-    try {
-      parsed = JSON.parse(trimmed);
-    } catch (error2) {
-      throw new Error(
-        `Failed to parse version data from ${sourceDescription} at line ${index + 1}: ${error2.message}`
-      );
-    }
-    if (!isNdjsonVersion(parsed)) {
-      throw new Error(
-        `Invalid NDJSON record in ${sourceDescription} at line ${index + 1}.`
-      );
-    }
-    versions.push(parsed);
+    versions.push(parseVersionLine(trimmed, sourceDescription, index + 1));
   }
   if (versions.length === 0) {
     throw new Error(`No version data found in ${sourceDescription}.`);
@@ -96471,23 +96455,34 @@ function parseVersionData(data, sourceDescription) {
   return versions;
 }
 async function getLatestVersion() {
-  const versions = await fetchVersionData();
-  const latestVersion = versions[0]?.version;
+  const cachedVersions = cachedVersionData.get(VERSIONS_NDJSON_URL);
+  const cachedLatestVersion = cachedVersions?.[0] ?? cachedLatestVersionData.get(VERSIONS_NDJSON_URL);
+  if (cachedLatestVersion !== void 0) {
+    debug(
+      `Latest version from NDJSON cache: ${cachedLatestVersion.version}`
+    );
+    return cachedLatestVersion.version;
+  }
+  const latestVersion = await findVersionData(() => true);
   if (!latestVersion) {
     throw new Error("No versions found in NDJSON data");
   }
-  debug(`Latest version from NDJSON: ${latestVersion}`);
-  return latestVersion;
+  debug(`Latest version from NDJSON: ${latestVersion.version}`);
+  return latestVersion.version;
 }
 async function getAllVersions() {
   const versions = await fetchVersionData();
   return versions.map((versionData) => versionData.version);
 }
-async function getArtifact(version4, arch3, platform2) {
-  const versions = await fetchVersionData();
-  const versionData = versions.find(
-    (candidate) => candidate.version === version4
+async function getHighestSatisfyingVersion(versionSpecifier, url2 = VERSIONS_NDJSON_URL) {
+  const matchedVersion = await findVersionData(
+    (candidate) => versionSatisfies(candidate.version, versionSpecifier),
+    url2
   );
+  return matchedVersion?.version;
+}
+async function getArtifact(version4, arch3, platform2) {
+  const versionData = await getVersionData(version4);
   if (!versionData) {
     debug(`Version ${version4} not found in NDJSON data`);
     return void 0;
@@ -96515,6 +96510,135 @@ function selectArtifact(artifacts, version4, targetPlatform) {
     `Multiple artifacts found for ${targetPlatform} in version ${version4}`
   );
 }
+async function getVersionData(version4, url2 = VERSIONS_NDJSON_URL) {
+  const cachedVersions = cachedVersionData.get(url2);
+  if (cachedVersions !== void 0) {
+    return cachedVersions.find((candidate) => candidate.version === version4);
+  }
+  const cachedVersion = cachedVersionLookup.get(url2)?.get(version4);
+  if (cachedVersion !== void 0) {
+    return cachedVersion;
+  }
+  return await findVersionData(
+    (candidate) => candidate.version === version4,
+    url2
+  );
+}
+async function findVersionData(predicate, url2 = VERSIONS_NDJSON_URL) {
+  const cachedVersions = cachedVersionData.get(url2);
+  if (cachedVersions !== void 0) {
+    return cachedVersions.find(predicate);
+  }
+  const { matchedVersion, versions, complete } = await readVersionData(
+    url2,
+    predicate
+  );
+  if (complete) {
+    cacheCompleteVersionData(url2, versions);
+  }
+  return matchedVersion;
+}
+async function readVersionData(url2, stopWhen) {
+  const response = await fetch(url2, {});
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch version data: ${response.status} ${response.statusText}`
+    );
+  }
+  if (response.body === null) {
+    const body2 = await response.text();
+    const versions2 = parseVersionData(body2, url2);
+    const matchedVersion2 = stopWhen ? versions2.find((candidate) => stopWhen(candidate)) : void 0;
+    return { complete: true, matchedVersion: matchedVersion2, versions: versions2 };
+  }
+  const versions = [];
+  let lineNumber = 0;
+  let matchedVersion;
+  let buffer3 = "";
+  const decoder = new TextDecoder();
+  const reader = response.body.getReader();
+  const processLine = (line) => {
+    const trimmed = line.trim();
+    if (trimmed === "") {
+      return false;
+    }
+    lineNumber += 1;
+    const versionData = parseVersionLine(trimmed, url2, lineNumber);
+    if (versions.length === 0) {
+      cachedLatestVersionData.set(url2, versionData);
+    }
+    versions.push(versionData);
+    cacheVersion(url2, versionData);
+    if (stopWhen?.(versionData) === true) {
+      matchedVersion = versionData;
+      return true;
+    }
+    return false;
+  };
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      buffer3 += decoder.decode();
+      break;
+    }
+    buffer3 += decoder.decode(value, { stream: true });
+    let newlineIndex = buffer3.indexOf("\n");
+    while (newlineIndex !== -1) {
+      const line = buffer3.slice(0, newlineIndex);
+      buffer3 = buffer3.slice(newlineIndex + 1);
+      if (processLine(line)) {
+        await reader.cancel();
+        return { complete: false, matchedVersion, versions };
+      }
+      newlineIndex = buffer3.indexOf("\n");
+    }
+  }
+  if (buffer3.trim() !== "" && processLine(buffer3)) {
+    return { complete: true, matchedVersion, versions };
+  }
+  if (versions.length === 0) {
+    throw new Error(`No version data found in ${url2}.`);
+  }
+  return { complete: true, matchedVersion, versions };
+}
+function cacheCompleteVersionData(url2, versions) {
+  cachedVersionData.set(url2, versions);
+  if (versions[0] !== void 0) {
+    cachedLatestVersionData.set(url2, versions[0]);
+  }
+  const versionLookup = /* @__PURE__ */ new Map();
+  for (const versionData of versions) {
+    versionLookup.set(versionData.version, versionData);
+  }
+  cachedVersionLookup.set(url2, versionLookup);
+}
+function cacheVersion(url2, versionData) {
+  let versionLookup = cachedVersionLookup.get(url2);
+  if (versionLookup === void 0) {
+    versionLookup = /* @__PURE__ */ new Map();
+    cachedVersionLookup.set(url2, versionLookup);
+  }
+  versionLookup.set(versionData.version, versionData);
+}
+function parseVersionLine(line, sourceDescription, lineNumber) {
+  let parsed;
+  try {
+    parsed = JSON.parse(line);
+  } catch (error2) {
+    throw new Error(
+      `Failed to parse version data from ${sourceDescription} at line ${lineNumber}: ${error2.message}`
+    );
+  }
+  if (!isNdjsonVersion(parsed)) {
+    throw new Error(
+      `Invalid NDJSON record in ${sourceDescription} at line ${lineNumber}.`
+    );
+  }
+  return parsed;
+}
+function versionSatisfies(version4, versionSpecifier) {
+  return semver4.satisfies(version4, versionSpecifier) || pep440.satisfies(version4, versionSpecifier);
+}
 function isNdjsonVersion(value) {
   if (!isRecord2(value)) {
     return false;
@@ -96540,7 +96664,7 @@ var cachedManifestEntries = /* @__PURE__ */ new Map();
 async function getLatestKnownVersion(manifestUrl) {
   const versions = await getAllVersions2(manifestUrl);
   const latestVersion = versions.reduce(
-    (latest, current) => semver4.gt(current, latest) ? current : latest
+    (latest, current) => semver5.gt(current, latest) ? current : latest
   );
   return latestVersion;
 }
@@ -96745,11 +96869,19 @@ async function resolveVersion(versionInput, manifestUrl, resolutionStrategy2 = "
   if (isExplicitVersion(version4)) {
     debug(`Version ${version4} is an explicit version.`);
     if (resolveVersionSpecifierToLatest) {
-      if (!pep440.satisfies(version4, versionInput)) {
+      if (!pep4402.satisfies(version4, versionInput)) {
         throw new Error(`No version found for ${versionInput}`);
       }
     }
     return version4;
+  }
+  if (manifestUrl === void 0 && resolutionStrategy2 === "highest") {
+    const resolvedVersion2 = await getHighestSatisfyingVersion(version4);
+    if (resolvedVersion2 !== void 0) {
+      debug(`Resolved version from NDJSON stream: ${resolvedVersion2}`);
+      return resolvedVersion2;
+    }
+    throw new Error(`No version found for ${version4}`);
   }
   const availableVersions = await getAvailableVersions(manifestUrl);
   debug(`Available versions: ${availableVersions}`);
@@ -96775,7 +96907,7 @@ function maxSatisfying2(versions, version4) {
     debug(`Found a version that satisfies the semver range: ${maxSemver}`);
     return maxSemver;
   }
-  const maxPep440 = pep440.maxSatisfying(versions, version4);
+  const maxPep440 = pep4402.maxSatisfying(versions, version4);
   if (maxPep440 !== null) {
     debug(
       `Found a version that satisfies the pep440 specifier: ${maxPep440}`
@@ -96785,12 +96917,12 @@ function maxSatisfying2(versions, version4) {
   return void 0;
 }
 function minSatisfying3(versions, version4) {
-  const minSemver = semver5.minSatisfying(versions, version4);
+  const minSemver = semver6.minSatisfying(versions, version4);
   if (minSemver !== null) {
     debug(`Found a version that satisfies the semver range: ${minSemver}`);
     return minSemver;
   }
-  const minPep440 = pep440.minSatisfying(versions, version4);
+  const minPep440 = pep4402.minSatisfying(versions, version4);
   if (minPep440 !== null) {
     debug(
       `Found a version that satisfies the pep440 specifier: ${minPep440}`
