@@ -34,7 +34,7 @@
     "@actions/tool-cache": "^2.0.2",
     "@renovatebot/pep440": "^4.2.2",
     "smol-toml": "^1.6.0",
-    "undici": "5.28.5"
+    "undici": "7.22.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.7",
