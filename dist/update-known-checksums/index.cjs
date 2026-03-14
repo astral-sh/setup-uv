@@ -19201,13 +19201,13 @@ var require_semver = __commonJS({
           return true;
         }
         rangeTmp = new Range(comp.value, options);
-        return satisfies(this.value, rangeTmp, options);
+        return satisfies3(this.value, rangeTmp, options);
       } else if (comp.operator === "") {
         if (comp.value === "") {
           return true;
         }
         rangeTmp = new Range(this.value, options);
-        return satisfies(comp.semver, rangeTmp, options);
+        return satisfies3(comp.semver, rangeTmp, options);
       }
       var sameDirectionIncreasing = (this.operator === ">=" || this.operator === ">") && (comp.operator === ">=" || comp.operator === ">");
       var sameDirectionDecreasing = (this.operator === "<=" || this.operator === "<") && (comp.operator === "<=" || comp.operator === "<");
@@ -19534,8 +19534,8 @@ var require_semver = __commonJS({
       }
       return true;
     }
-    exports2.satisfies = satisfies;
-    function satisfies(version, range, options) {
+    exports2.satisfies = satisfies3;
+    function satisfies3(version, range, options) {
       try {
         range = new Range(range, options);
       } catch (er) {
@@ -19665,7 +19665,7 @@ var require_semver = __commonJS({
         default:
           throw new TypeError('Must provide a hilo val of "<" or ">"');
       }
-      if (satisfies(version, range, options)) {
+      if (satisfies3(version, range, options)) {
         return false;
       }
       for (var i2 = 0; i2 < range.set.length; ++i2) {
@@ -19736,6 +19736,654 @@ var require_semver = __commonJS({
       }
       return parse(match[2] + "." + (match[3] || "0") + "." + (match[4] || "0"), options);
     }
+  }
+});
+
+// node_modules/@renovatebot/pep440/lib/version.js
+var require_version = __commonJS({
+  "node_modules/@renovatebot/pep440/lib/version.js"(exports2, module2) {
+    var VERSION_PATTERN = [
+      "v?",
+      "(?:",
+      /* */
+      "(?:(?<epoch>[0-9]+)!)?",
+      // epoch
+      /* */
+      "(?<release>[0-9]+(?:\\.[0-9]+)*)",
+      // release segment
+      /* */
+      "(?<pre>",
+      // pre-release
+      /*    */
+      "[-_\\.]?",
+      /*    */
+      "(?<pre_l>(a|b|c|rc|alpha|beta|pre|preview))",
+      /*    */
+      "[-_\\.]?",
+      /*    */
+      "(?<pre_n>[0-9]+)?",
+      /* */
+      ")?",
+      /* */
+      "(?<post>",
+      // post release
+      /*    */
+      "(?:-(?<post_n1>[0-9]+))",
+      /*    */
+      "|",
+      /*    */
+      "(?:",
+      /*        */
+      "[-_\\.]?",
+      /*        */
+      "(?<post_l>post|rev|r)",
+      /*        */
+      "[-_\\.]?",
+      /*        */
+      "(?<post_n2>[0-9]+)?",
+      /*    */
+      ")",
+      /* */
+      ")?",
+      /* */
+      "(?<dev>",
+      // dev release
+      /*    */
+      "[-_\\.]?",
+      /*    */
+      "(?<dev_l>dev)",
+      /*    */
+      "[-_\\.]?",
+      /*    */
+      "(?<dev_n>[0-9]+)?",
+      /* */
+      ")?",
+      ")",
+      "(?:\\+(?<local>[a-z0-9]+(?:[-_\\.][a-z0-9]+)*))?"
+      // local version
+    ].join("");
+    module2.exports = {
+      VERSION_PATTERN,
+      valid,
+      clean,
+      explain,
+      parse,
+      stringify
+    };
+    var validRegex = new RegExp("^" + VERSION_PATTERN + "$", "i");
+    function valid(version) {
+      return validRegex.test(version) ? version : null;
+    }
+    var cleanRegex = new RegExp("^\\s*" + VERSION_PATTERN + "\\s*$", "i");
+    function clean(version) {
+      return stringify(parse(version, cleanRegex));
+    }
+    function parse(version, regex) {
+      const { groups } = (regex || validRegex).exec(version) || {};
+      if (!groups) {
+        return null;
+      }
+      const parsed = {
+        epoch: Number(groups.epoch ? groups.epoch : 0),
+        release: groups.release.split(".").map(Number),
+        pre: normalize_letter_version(groups.pre_l, groups.pre_n),
+        post: normalize_letter_version(
+          groups.post_l,
+          groups.post_n1 || groups.post_n2
+        ),
+        dev: normalize_letter_version(groups.dev_l, groups.dev_n),
+        local: parse_local_version(groups.local)
+      };
+      return parsed;
+    }
+    function stringify(parsed) {
+      if (!parsed) {
+        return null;
+      }
+      const { epoch, release, pre, post, dev, local } = parsed;
+      const parts = [];
+      if (epoch !== 0) {
+        parts.push(`${epoch}!`);
+      }
+      parts.push(release.join("."));
+      if (pre) {
+        parts.push(pre.join(""));
+      }
+      if (post) {
+        parts.push("." + post.join(""));
+      }
+      if (dev) {
+        parts.push("." + dev.join(""));
+      }
+      if (local) {
+        parts.push(`+${local}`);
+      }
+      return parts.join("");
+    }
+    function normalize_letter_version(letterIn, numberIn) {
+      let letter = letterIn;
+      let number = numberIn;
+      if (letter) {
+        if (!number) {
+          number = 0;
+        }
+        letter = letter.toLowerCase();
+        if (letter === "alpha") {
+          letter = "a";
+        } else if (letter === "beta") {
+          letter = "b";
+        } else if (["c", "pre", "preview"].includes(letter)) {
+          letter = "rc";
+        } else if (["rev", "r"].includes(letter)) {
+          letter = "post";
+        }
+        return [letter, Number(number)];
+      }
+      if (!letter && number) {
+        letter = "post";
+        return [letter, Number(number)];
+      }
+      return null;
+    }
+    function parse_local_version(local) {
+      if (local) {
+        return local.split(/[._-]/).map(
+          (part) => Number.isNaN(Number(part)) ? part.toLowerCase() : Number(part)
+        );
+      }
+      return null;
+    }
+    function explain(version) {
+      const parsed = parse(version);
+      if (!parsed) {
+        return parsed;
+      }
+      const { epoch, release, pre, post, dev, local } = parsed;
+      let base_version = "";
+      if (epoch !== 0) {
+        base_version += epoch + "!";
+      }
+      base_version += release.join(".");
+      const is_prerelease = Boolean(dev || pre);
+      const is_devrelease = Boolean(dev);
+      const is_postrelease = Boolean(post);
+      return {
+        epoch,
+        release,
+        pre,
+        post: post ? post[1] : post,
+        dev: dev ? dev[1] : dev,
+        local: local ? local.join(".") : local,
+        public: stringify(parsed).split("+", 1)[0],
+        base_version,
+        is_prerelease,
+        is_devrelease,
+        is_postrelease
+      };
+    }
+  }
+});
+
+// node_modules/@renovatebot/pep440/lib/operator.js
+var require_operator = __commonJS({
+  "node_modules/@renovatebot/pep440/lib/operator.js"(exports2, module2) {
+    var { parse } = require_version();
+    module2.exports = {
+      compare,
+      rcompare: rcompare2,
+      lt,
+      le,
+      eq,
+      ne,
+      ge,
+      gt,
+      "<": lt,
+      "<=": le,
+      "==": eq,
+      "!=": ne,
+      ">=": ge,
+      ">": gt,
+      "===": arbitrary
+    };
+    function lt(version, other) {
+      return compare(version, other) < 0;
+    }
+    function le(version, other) {
+      return compare(version, other) <= 0;
+    }
+    function eq(version, other) {
+      return compare(version, other) === 0;
+    }
+    function ne(version, other) {
+      return compare(version, other) !== 0;
+    }
+    function ge(version, other) {
+      return compare(version, other) >= 0;
+    }
+    function gt(version, other) {
+      return compare(version, other) > 0;
+    }
+    function arbitrary(version, other) {
+      return version.toLowerCase() === other.toLowerCase();
+    }
+    function compare(version, other) {
+      const parsedVersion = parse(version);
+      const parsedOther = parse(other);
+      const keyVersion = calculateKey(parsedVersion);
+      const keyOther = calculateKey(parsedOther);
+      return pyCompare(keyVersion, keyOther);
+    }
+    function rcompare2(version, other) {
+      return -compare(version, other);
+    }
+    function pyCompare(elemIn, otherIn) {
+      let elem = elemIn;
+      let other = otherIn;
+      if (elem === other) {
+        return 0;
+      }
+      if (Array.isArray(elem) !== Array.isArray(other)) {
+        elem = Array.isArray(elem) ? elem : [elem];
+        other = Array.isArray(other) ? other : [other];
+      }
+      if (Array.isArray(elem)) {
+        const len = Math.min(elem.length, other.length);
+        for (let i = 0; i < len; i += 1) {
+          const res = pyCompare(elem[i], other[i]);
+          if (res !== 0) {
+            return res;
+          }
+        }
+        return elem.length - other.length;
+      }
+      if (elem === -Infinity || other === Infinity) {
+        return -1;
+      }
+      if (elem === Infinity || other === -Infinity) {
+        return 1;
+      }
+      return elem < other ? -1 : 1;
+    }
+    function calculateKey(input) {
+      const { epoch } = input;
+      let { release, pre, post, local, dev } = input;
+      release = release.concat();
+      release.reverse();
+      while (release.length && release[0] === 0) {
+        release.shift();
+      }
+      release.reverse();
+      if (!pre && !post && dev) pre = -Infinity;
+      else if (!pre) pre = Infinity;
+      if (!post) post = -Infinity;
+      if (!dev) dev = Infinity;
+      if (!local) {
+        local = -Infinity;
+      } else {
+        local = local.map(
+          (i) => Number.isNaN(Number(i)) ? [-Infinity, i] : [Number(i), ""]
+        );
+      }
+      return [epoch, release, pre, post, dev, local];
+    }
+  }
+});
+
+// node_modules/@renovatebot/pep440/lib/specifier.js
+var require_specifier = __commonJS({
+  "node_modules/@renovatebot/pep440/lib/specifier.js"(exports2, module2) {
+    var { VERSION_PATTERN, explain: explainVersion } = require_version();
+    var Operator = require_operator();
+    var RANGE_PATTERN = [
+      "(?<operator>(===|~=|==|!=|<=|>=|<|>))",
+      "\\s*",
+      "(",
+      /*  */
+      "(?<version>(?:" + VERSION_PATTERN.replace(/\?<\w+>/g, "?:") + "))",
+      /*  */
+      "(?<prefix>\\.\\*)?",
+      /*  */
+      "|",
+      /*  */
+      "(?<legacy>[^,;\\s)]+)",
+      ")"
+    ].join("");
+    module2.exports = {
+      RANGE_PATTERN,
+      parse,
+      satisfies: satisfies3,
+      filter,
+      validRange,
+      maxSatisfying,
+      minSatisfying
+    };
+    var isEqualityOperator = (op) => ["==", "!=", "==="].includes(op);
+    var rangeRegex = new RegExp("^" + RANGE_PATTERN + "$", "i");
+    function parse(ranges) {
+      if (!ranges.trim()) {
+        return [];
+      }
+      const specifiers = ranges.split(",").map((range) => rangeRegex.exec(range.trim()) || {}).map(({ groups }) => {
+        if (!groups) {
+          return null;
+        }
+        let { ...spec } = groups;
+        const { operator, version, prefix, legacy } = groups;
+        if (version) {
+          spec = { ...spec, ...explainVersion(version) };
+          if (operator === "~=") {
+            if (spec.release.length < 2) {
+              return null;
+            }
+          }
+          if (!isEqualityOperator(operator) && spec.local) {
+            return null;
+          }
+          if (prefix) {
+            if (!isEqualityOperator(operator) || spec.dev || spec.local) {
+              return null;
+            }
+          }
+        }
+        if (legacy && operator !== "===") {
+          return null;
+        }
+        return spec;
+      });
+      if (specifiers.filter(Boolean).length !== specifiers.length) {
+        return null;
+      }
+      return specifiers;
+    }
+    function filter(versions, specifier, options = {}) {
+      const filtered = pick(versions, specifier, options);
+      if (filtered.length === 0 && options.prereleases === void 0) {
+        return pick(versions, specifier, { prereleases: true });
+      }
+      return filtered;
+    }
+    function maxSatisfying(versions, range, options) {
+      const found = filter(versions, range, options).sort(Operator.compare);
+      return found.length === 0 ? null : found[found.length - 1];
+    }
+    function minSatisfying(versions, range, options) {
+      const found = filter(versions, range, options).sort(Operator.compare);
+      return found.length === 0 ? null : found[0];
+    }
+    function pick(versions, specifier, options) {
+      const parsed = parse(specifier);
+      if (!parsed) {
+        return [];
+      }
+      return versions.filter((version) => {
+        const explained = explainVersion(version);
+        if (!parsed.length) {
+          return explained && !(explained.is_prerelease && !options.prereleases);
+        }
+        return parsed.reduce((pass, spec) => {
+          if (!pass) {
+            return false;
+          }
+          return contains({ ...spec, ...options }, { version, explained });
+        }, true);
+      });
+    }
+    function satisfies3(version, specifier, options = {}) {
+      const filtered = pick([version], specifier, options);
+      return filtered.length === 1;
+    }
+    function arrayStartsWith(array, prefix) {
+      if (prefix.length > array.length) {
+        return false;
+      }
+      for (let i = 0; i < prefix.length; i += 1) {
+        if (prefix[i] !== array[i]) {
+          return false;
+        }
+      }
+      return true;
+    }
+    function contains(specifier, input) {
+      const { explained } = input;
+      let { version } = input;
+      const { ...spec } = specifier;
+      if (spec.prereleases === void 0) {
+        spec.prereleases = spec.is_prerelease;
+      }
+      if (explained && explained.is_prerelease && !spec.prereleases) {
+        return false;
+      }
+      if (spec.operator === "~=") {
+        let compatiblePrefix = spec.release.slice(0, -1).concat("*").join(".");
+        if (spec.epoch) {
+          compatiblePrefix = spec.epoch + "!" + compatiblePrefix;
+        }
+        return satisfies3(version, `>=${spec.version}, ==${compatiblePrefix}`, {
+          prereleases: spec.prereleases
+        });
+      }
+      if (spec.prefix) {
+        const isMatching = explained.epoch === spec.epoch && arrayStartsWith(explained.release, spec.release);
+        const isEquality = spec.operator !== "!=";
+        return isEquality ? isMatching : !isMatching;
+      }
+      if (explained) {
+        if (explained.local && spec.version) {
+          version = explained.public;
+          spec.version = explainVersion(spec.version).public;
+        }
+      }
+      if (spec.operator === "<" || spec.operator === ">") {
+        if (Operator.eq(spec.release.join("."), explained.release.join("."))) {
+          return false;
+        }
+      }
+      const op = Operator[spec.operator];
+      return op(version, spec.version || spec.legacy);
+    }
+    function validRange(specifier) {
+      return Boolean(parse(specifier));
+    }
+  }
+});
+
+// node_modules/@renovatebot/pep440/lib/semantic.js
+var require_semantic = __commonJS({
+  "node_modules/@renovatebot/pep440/lib/semantic.js"(exports2, module2) {
+    var { explain, parse, stringify } = require_version();
+    module2.exports = {
+      major,
+      minor,
+      patch,
+      inc
+    };
+    function major(input) {
+      const version = explain(input);
+      if (!version) {
+        throw new TypeError("Invalid Version: " + input);
+      }
+      return version.release[0];
+    }
+    function minor(input) {
+      const version = explain(input);
+      if (!version) {
+        throw new TypeError("Invalid Version: " + input);
+      }
+      if (version.release.length < 2) {
+        return 0;
+      }
+      return version.release[1];
+    }
+    function patch(input) {
+      const version = explain(input);
+      if (!version) {
+        throw new TypeError("Invalid Version: " + input);
+      }
+      if (version.release.length < 3) {
+        return 0;
+      }
+      return version.release[2];
+    }
+    function inc(input, release, preReleaseIdentifier) {
+      let identifier = preReleaseIdentifier || `a`;
+      const version = parse(input);
+      if (!version) {
+        return null;
+      }
+      if (!["a", "b", "c", "rc", "alpha", "beta", "pre", "preview"].includes(
+        identifier
+      )) {
+        return null;
+      }
+      switch (release) {
+        case "premajor":
+          {
+            const [majorVersion] = version.release;
+            version.release.fill(0);
+            version.release[0] = majorVersion + 1;
+          }
+          version.pre = [identifier, 0];
+          delete version.post;
+          delete version.dev;
+          delete version.local;
+          break;
+        case "preminor":
+          {
+            const [majorVersion, minorVersion = 0] = version.release;
+            version.release.fill(0);
+            version.release[0] = majorVersion;
+            version.release[1] = minorVersion + 1;
+          }
+          version.pre = [identifier, 0];
+          delete version.post;
+          delete version.dev;
+          delete version.local;
+          break;
+        case "prepatch":
+          {
+            const [majorVersion, minorVersion = 0, patchVersion = 0] = version.release;
+            version.release.fill(0);
+            version.release[0] = majorVersion;
+            version.release[1] = minorVersion;
+            version.release[2] = patchVersion + 1;
+          }
+          version.pre = [identifier, 0];
+          delete version.post;
+          delete version.dev;
+          delete version.local;
+          break;
+        case "prerelease":
+          if (version.pre === null) {
+            const [majorVersion, minorVersion = 0, patchVersion = 0] = version.release;
+            version.release.fill(0);
+            version.release[0] = majorVersion;
+            version.release[1] = minorVersion;
+            version.release[2] = patchVersion + 1;
+            version.pre = [identifier, 0];
+          } else {
+            if (preReleaseIdentifier === void 0 && version.pre !== null) {
+              [identifier] = version.pre;
+            }
+            const [letter, number] = version.pre;
+            if (letter === identifier) {
+              version.pre = [letter, number + 1];
+            } else {
+              version.pre = [identifier, 0];
+            }
+          }
+          delete version.post;
+          delete version.dev;
+          delete version.local;
+          break;
+        case "major":
+          if (version.release.slice(1).some((value) => value !== 0) || version.pre === null) {
+            const [majorVersion] = version.release;
+            version.release.fill(0);
+            version.release[0] = majorVersion + 1;
+          }
+          delete version.pre;
+          delete version.post;
+          delete version.dev;
+          delete version.local;
+          break;
+        case "minor":
+          if (version.release.slice(2).some((value) => value !== 0) || version.pre === null) {
+            const [majorVersion, minorVersion = 0] = version.release;
+            version.release.fill(0);
+            version.release[0] = majorVersion;
+            version.release[1] = minorVersion + 1;
+          }
+          delete version.pre;
+          delete version.post;
+          delete version.dev;
+          delete version.local;
+          break;
+        case "patch":
+          if (version.release.slice(3).some((value) => value !== 0) || version.pre === null) {
+            const [majorVersion, minorVersion = 0, patchVersion = 0] = version.release;
+            version.release.fill(0);
+            version.release[0] = majorVersion;
+            version.release[1] = minorVersion;
+            version.release[2] = patchVersion + 1;
+          }
+          delete version.pre;
+          delete version.post;
+          delete version.dev;
+          delete version.local;
+          break;
+        default:
+          return null;
+      }
+      return stringify(version);
+    }
+  }
+});
+
+// node_modules/@renovatebot/pep440/index.js
+var require_pep440 = __commonJS({
+  "node_modules/@renovatebot/pep440/index.js"(exports2, module2) {
+    var { valid, clean, explain, parse } = require_version();
+    var { lt, le, eq, ne, ge, gt, compare, rcompare: rcompare2 } = require_operator();
+    var {
+      filter,
+      maxSatisfying,
+      minSatisfying,
+      RANGE_PATTERN,
+      satisfies: satisfies3,
+      validRange
+    } = require_specifier();
+    var { major, minor, patch, inc } = require_semantic();
+    module2.exports = {
+      // version
+      valid,
+      clean,
+      explain,
+      parse,
+      // operator
+      lt,
+      le,
+      lte: le,
+      eq,
+      ne,
+      neq: ne,
+      ge,
+      gte: ge,
+      gt,
+      compare,
+      rcompare: rcompare2,
+      // range
+      filter,
+      maxSatisfying,
+      minSatisfying,
+      RANGE_PATTERN,
+      satisfies: satisfies3,
+      validRange,
+      // semantic
+      major,
+      minor,
+      patch,
+      inc
+    };
   }
 });
 
@@ -44945,7 +45593,7 @@ function info(message) {
 }
 
 // src/update-known-checksums.ts
-var semver = __toESM(require_semver(), 1);
+var semver2 = __toESM(require_semver(), 1);
 
 // src/download/checksum/known-checksums.ts
 var KNOWN_CHECKSUMS = {
@@ -49376,6 +50024,10 @@ async function updateChecksums(filePath, checksumEntries) {
   await import_node_fs.promises.writeFile(filePath, content);
 }
 
+// src/download/versions-client.ts
+var pep440 = __toESM(require_pep440(), 1);
+var semver = __toESM(require_semver(), 1);
+
 // src/utils/constants.ts
 var VERSIONS_NDJSON_URL = "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson";
 
@@ -49399,6 +50051,8 @@ var fetch = async (url, opts) => await (0, import_undici2.fetch)(url, {
 
 // src/download/versions-client.ts
 var cachedVersionData = /* @__PURE__ */ new Map();
+var cachedLatestVersionData = /* @__PURE__ */ new Map();
+var cachedVersionLookup = /* @__PURE__ */ new Map();
 async function fetchVersionData(url = VERSIONS_NDJSON_URL) {
   const cachedVersions = cachedVersionData.get(url);
   if (cachedVersions !== void 0) {
@@ -49406,15 +50060,8 @@ async function fetchVersionData(url = VERSIONS_NDJSON_URL) {
     return cachedVersions;
   }
   info(`Fetching version data from ${url} ...`);
-  const response = await fetch(url, {});
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch version data: ${response.status} ${response.statusText}`
-    );
-  }
-  const body = await response.text();
-  const versions = parseVersionData(body, url);
-  cachedVersionData.set(url, versions);
+  const { versions } = await readVersionData(url);
+  cacheCompleteVersionData(url, versions);
   return versions;
 }
 function parseVersionData(data, sourceDescription) {
@@ -49424,20 +50071,7 @@ function parseVersionData(data, sourceDescription) {
     if (trimmed === "") {
       continue;
     }
-    let parsed;
-    try {
-      parsed = JSON.parse(trimmed);
-    } catch (error) {
-      throw new Error(
-        `Failed to parse version data from ${sourceDescription} at line ${index + 1}: ${error.message}`
-      );
-    }
-    if (!isNdjsonVersion(parsed)) {
-      throw new Error(
-        `Invalid NDJSON record in ${sourceDescription} at line ${index + 1}.`
-      );
-    }
-    versions.push(parsed);
+    versions.push(parseVersionLine(trimmed, sourceDescription, index + 1));
   }
   if (versions.length === 0) {
     throw new Error(`No version data found in ${sourceDescription}.`);
@@ -49445,13 +50079,132 @@ function parseVersionData(data, sourceDescription) {
   return versions;
 }
 async function getLatestVersion() {
-  const versions = await fetchVersionData();
-  const latestVersion = versions[0]?.version;
+  const cachedVersions = cachedVersionData.get(VERSIONS_NDJSON_URL);
+  const cachedLatestVersion = cachedVersions?.[0] ?? cachedLatestVersionData.get(VERSIONS_NDJSON_URL);
+  if (cachedLatestVersion !== void 0) {
+    debug(
+      `Latest version from NDJSON cache: ${cachedLatestVersion.version}`
+    );
+    return cachedLatestVersion.version;
+  }
+  const latestVersion = await findVersionData(() => true);
   if (!latestVersion) {
     throw new Error("No versions found in NDJSON data");
   }
-  debug(`Latest version from NDJSON: ${latestVersion}`);
-  return latestVersion;
+  debug(`Latest version from NDJSON: ${latestVersion.version}`);
+  return latestVersion.version;
+}
+async function findVersionData(predicate, url = VERSIONS_NDJSON_URL) {
+  const cachedVersions = cachedVersionData.get(url);
+  if (cachedVersions !== void 0) {
+    return cachedVersions.find(predicate);
+  }
+  const { matchedVersion, versions, complete } = await readVersionData(
+    url,
+    predicate
+  );
+  if (complete) {
+    cacheCompleteVersionData(url, versions);
+  }
+  return matchedVersion;
+}
+async function readVersionData(url, stopWhen) {
+  const response = await fetch(url, {});
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch version data: ${response.status} ${response.statusText}`
+    );
+  }
+  if (response.body === null) {
+    const body = await response.text();
+    const versions2 = parseVersionData(body, url);
+    const matchedVersion2 = stopWhen ? versions2.find((candidate) => stopWhen(candidate)) : void 0;
+    return { complete: true, matchedVersion: matchedVersion2, versions: versions2 };
+  }
+  const versions = [];
+  let lineNumber = 0;
+  let matchedVersion;
+  let buffer = "";
+  const decoder = new TextDecoder();
+  const reader = response.body.getReader();
+  const processLine = (line) => {
+    const trimmed = line.trim();
+    if (trimmed === "") {
+      return false;
+    }
+    lineNumber += 1;
+    const versionData = parseVersionLine(trimmed, url, lineNumber);
+    if (versions.length === 0) {
+      cachedLatestVersionData.set(url, versionData);
+    }
+    versions.push(versionData);
+    cacheVersion(url, versionData);
+    if (stopWhen?.(versionData) === true) {
+      matchedVersion = versionData;
+      return true;
+    }
+    return false;
+  };
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      buffer += decoder.decode();
+      break;
+    }
+    buffer += decoder.decode(value, { stream: true });
+    let newlineIndex = buffer.indexOf("\n");
+    while (newlineIndex !== -1) {
+      const line = buffer.slice(0, newlineIndex);
+      buffer = buffer.slice(newlineIndex + 1);
+      if (processLine(line)) {
+        await reader.cancel();
+        return { complete: false, matchedVersion, versions };
+      }
+      newlineIndex = buffer.indexOf("\n");
+    }
+  }
+  if (buffer.trim() !== "" && processLine(buffer)) {
+    return { complete: true, matchedVersion, versions };
+  }
+  if (versions.length === 0) {
+    throw new Error(`No version data found in ${url}.`);
+  }
+  return { complete: true, matchedVersion, versions };
+}
+function cacheCompleteVersionData(url, versions) {
+  cachedVersionData.set(url, versions);
+  if (versions[0] !== void 0) {
+    cachedLatestVersionData.set(url, versions[0]);
+  }
+  const versionLookup = /* @__PURE__ */ new Map();
+  for (const versionData of versions) {
+    versionLookup.set(versionData.version, versionData);
+  }
+  cachedVersionLookup.set(url, versionLookup);
+}
+function cacheVersion(url, versionData) {
+  let versionLookup = cachedVersionLookup.get(url);
+  if (versionLookup === void 0) {
+    versionLookup = /* @__PURE__ */ new Map();
+    cachedVersionLookup.set(url, versionLookup);
+  }
+  versionLookup.set(versionData.version, versionData);
+}
+function parseVersionLine(line, sourceDescription, lineNumber) {
+  let parsed;
+  try {
+    parsed = JSON.parse(line);
+  } catch (error) {
+    throw new Error(
+      `Failed to parse version data from ${sourceDescription} at line ${lineNumber}: ${error.message}`
+    );
+  }
+  if (!isNdjsonVersion(parsed)) {
+    throw new Error(
+      `Invalid NDJSON record in ${sourceDescription} at line ${lineNumber}.`
+    );
+  }
+  return parsed;
 }
 function isNdjsonVersion(value) {
   if (!isRecord(value)) {
@@ -49484,7 +50237,7 @@ async function run() {
   }
   const latestVersion = await getLatestVersion();
   const latestKnownVersion = getLatestKnownVersionFromChecksums();
-  if (semver.lte(latestVersion, latestKnownVersion)) {
+  if (semver2.lte(latestVersion, latestKnownVersion)) {
     info(
       `Latest release (${latestVersion}) is not newer than the latest known version (${latestKnownVersion}). Skipping update.`
     );
@@ -49503,7 +50256,7 @@ function getLatestKnownVersionFromChecksums() {
       versions.add(version);
     }
   }
-  const latestVersion = [...versions].sort(semver.rcompare)[0];
+  const latestVersion = [...versions].sort(semver2.rcompare)[0];
   if (!latestVersion) {
     throw new Error("Could not determine latest known version from checksums.");
   }
