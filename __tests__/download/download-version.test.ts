@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import * as semver from "semver";
 
 const mockInfo = jest.fn();
 const mockWarning = jest.fn();
 
-jest.mock("@actions/core", () => ({
+jest.unstable_mockModule("@actions/core", () => ({
   debug: jest.fn(),
   info: mockInfo,
   warning: mockWarning,
@@ -18,20 +19,17 @@ const mockExtractZip = jest.fn<any>();
 // biome-ignore lint/suspicious/noExplicitAny: Mock requires flexible typing in tests.
 const mockCacheDir = jest.fn<any>();
 
-jest.mock("@actions/tool-cache", () => {
-  const actual = jest.requireActual("@actions/tool-cache") as Record<
-    string,
-    unknown
-  >;
-
-  return {
-    ...actual,
-    cacheDir: mockCacheDir,
-    downloadTool: mockDownloadTool,
-    extractTar: mockExtractTar,
-    extractZip: mockExtractZip,
-  };
-});
+jest.unstable_mockModule("@actions/tool-cache", () => ({
+  cacheDir: mockCacheDir,
+  downloadTool: mockDownloadTool,
+  evaluateVersions: (versions: string[], range: string) =>
+    semver.maxSatisfying(versions, range) ?? "",
+  extractTar: mockExtractTar,
+  extractZip: mockExtractZip,
+  find: () => "",
+  findAllVersions: () => [],
+  isExplicitVersion: (version: string) => semver.valid(version) !== null,
+}));
 
 // biome-ignore lint/suspicious/noExplicitAny: Mock requires flexible typing in tests.
 const mockGetLatestVersionFromNdjson = jest.fn<any>();
@@ -40,7 +38,7 @@ const mockGetAllVersionsFromNdjson = jest.fn<any>();
 // biome-ignore lint/suspicious/noExplicitAny: Mock requires flexible typing in tests.
 const mockGetArtifactFromNdjson = jest.fn<any>();
 
-jest.mock("../../src/download/versions-client", () => ({
+jest.unstable_mockModule("../../src/download/versions-client", () => ({
   getAllVersions: mockGetAllVersionsFromNdjson,
   getArtifact: mockGetArtifactFromNdjson,
   getLatestVersion: mockGetLatestVersionFromNdjson,
@@ -53,7 +51,7 @@ const mockGetLatestVersionInManifest = jest.fn<any>();
 // biome-ignore lint/suspicious/noExplicitAny: Mock requires flexible typing in tests.
 const mockGetManifestArtifact = jest.fn<any>();
 
-jest.mock("../../src/download/version-manifest", () => ({
+jest.unstable_mockModule("../../src/download/version-manifest", () => ({
   getAllVersions: mockGetAllManifestVersions,
   getLatestKnownVersion: mockGetLatestVersionInManifest,
   getManifestArtifact: mockGetManifestArtifact,
@@ -62,15 +60,15 @@ jest.mock("../../src/download/version-manifest", () => ({
 // biome-ignore lint/suspicious/noExplicitAny: Mock requires flexible typing in tests.
 const mockValidateChecksum = jest.fn<any>();
 
-jest.mock("../../src/download/checksum/checksum", () => ({
+jest.unstable_mockModule("../../src/download/checksum/checksum", () => ({
   validateChecksum: mockValidateChecksum,
 }));
 
-import {
+const {
   downloadVersionFromManifest,
   downloadVersionFromNdjson,
   resolveVersion,
-} from "../../src/download/download-version";
+} = await import("../../src/download/download-version");
 
 describe("download-version", () => {
   beforeEach(() => {

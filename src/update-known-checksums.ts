@@ -18,7 +18,7 @@ async function run(): Promise<void> {
   const checksumFilePath = process.argv.slice(2)[0];
   if (!checksumFilePath) {
     throw new Error(
-      "Missing checksum file path. Usage: node dist/update-known-checksums/index.js <checksum-file-path>",
+      "Missing checksum file path. Usage: node dist/update-known-checksums/index.cjs <checksum-file-path>",
     );
   }
 

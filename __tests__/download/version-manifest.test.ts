@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 
 const mockWarning = jest.fn();
 
-jest.mock("@actions/core", () => ({
+jest.unstable_mockModule("@actions/core", () => ({
   debug: jest.fn(),
   info: jest.fn(),
   warning: mockWarning,
@@ -10,16 +10,16 @@ jest.mock("@actions/core", () => ({
 
 // biome-ignore lint/suspicious/noExplicitAny: Mock requires flexible typing in tests.
 const mockFetch = jest.fn<any>();
-jest.mock("../../src/utils/fetch", () => ({
+jest.unstable_mockModule("../../src/utils/fetch", () => ({
   fetch: mockFetch,
 }));
 
-import {
+const {
   clearManifestCache,
   getAllVersions,
   getLatestKnownVersion,
   getManifestArtifact,
-} from "../../src/download/version-manifest";
+} = await import("../../src/download/version-manifest");
 
 const legacyManifestResponse = JSON.stringify([
   {
