@@ -2,16 +2,18 @@
   "name": "setup-uv",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "Set up your GitHub Actions workflow with a specific version of uv",
-  "main": "dist/index.js",
+  "main": "dist/setup/index.cjs",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --noEmit",
     "check": "biome check --write",
-    "package": "ncc build -o dist/setup src/setup-uv.ts && ncc build -o dist/save-cache src/save-cache.ts && ncc build -o dist/update-known-checksums src/update-known-checksums.ts",
-    "test": "jest",
+    "package": "node scripts/build-dist.mjs",
+    "test:unit": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
+    "test": "npm run build && npm run test:unit",
     "act": "act pull_request -W .github/workflows/test.yml --container-architecture linux/amd64 -s GITHUB_TOKEN=\"$(gh auth token)\"",
-    "update-known-checksums": "RUNNER_TEMP=known_versions node dist/update-known-checksums/index.js src/download/checksum/known-checksums.ts",
-    "all": "npm run build && npm run check && npm run package && npm test"
+    "update-known-checksums": "RUNNER_TEMP=known_versions node dist/update-known-checksums/index.cjs src/download/checksum/known-checksums.ts",
+    "all": "npm run build && npm run check && npm run package && npm run test:unit"
   },
   "repository": {
     "type": "git",
@@ -26,25 +28,26 @@
   "author": "@eifinger",
   "license": "MIT",
   "dependencies": {
-    "@actions/cache": "^4.1.0",
-    "@actions/core": "^1.11.1",
-    "@actions/exec": "^1.1.1",
-    "@actions/glob": "^0.5.0",
-    "@actions/io": "^1.1.3",
-    "@actions/tool-cache": "^2.0.2",
+    "@actions/cache": "^6.0.0",
+    "@actions/core": "^3.0.0",
+    "@actions/exec": "^3.0.0",
+    "@actions/glob": "^0.6.1",
+    "@actions/io": "^3.0.2",
+    "@actions/tool-cache": "^4.0.0",
     "@renovatebot/pep440": "^4.2.2",
     "smol-toml": "^1.6.0",
-    "undici": "5.28.5"
+    "undici": "^7.24.2"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.7",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^24.10.1",
+    "@types/node": "^25.5.0",
     "@types/semver": "^7.7.1",
     "@vercel/ncc": "^0.38.4",
-    "jest": "^30.2.0",
-    "js-yaml": "^4.1.0",
-    "ts-jest": "^29.4.5",
+    "esbuild": "^0.27.4",
+    "jest": "^30.3.0",
+    "js-yaml": "^4.1.1",
+    "ts-jest": "^29.4.6",
     "typescript": "^5.9.3"
   }
 }

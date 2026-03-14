@@ -102,8 +102,8 @@ outputs:
     description: "A boolean value to indicate the Python cache entry was found"
 runs:
   using: "node24"
-  main: "dist/setup/index.js"
-  post: "dist/save-cache/index.js"
+  main: "dist/setup/index.cjs"
+  post: "dist/save-cache/index.cjs"
   post-if: success()
 branding:
   icon: "package"

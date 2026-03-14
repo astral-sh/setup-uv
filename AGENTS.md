@@ -10,4 +10,9 @@ This repository is a TypeScript-based GitHub Action for installing `uv` in GitHu
 - User-facing changes are usually multi-file changes. If you add or change inputs, outputs, or behavior, update `action.yml`, the implementation in `src/`, tests in `__tests__/`, relevant docs/README, and then re-package.
 - The easiest areas to regress are version resolution and caching. When touching them, add or update tests for precedence, cache invalidation, and cross-platform path behavior.
 - Workflow edits have extra CI-only checks (`actionlint` and `zizmor`); `npm run all` does not cover them.
+- Source is authored with bundler-friendly TypeScript, but published action artifacts in `dist/` are bundled as CommonJS for maximum GitHub Actions runtime compatibility with `@actions/*` dependencies.
+- Keep these concerns separate when changing module formats:
+  - `src/` and tests may use modern ESM-friendly TypeScript patterns.
+  - `dist/` should prioritize runtime reliability over format purity.
+  - Do not switch published bundles to ESM without validating the actual committed artifacts under the target Node runtime.
 - Before finishing, make sure validation does not leave generated or formatting-only diffs behind.

@@ -1,14 +1,3 @@
-jest.mock("@actions/core", () => {
-  return {
-    debug: jest.fn(),
-    getBooleanInput: jest.fn(
-      (name: string) => (mockInputs[name] ?? "") === "true",
-    ),
-    getInput: jest.fn((name: string) => mockInputs[name] ?? ""),
-    warning: jest.fn(),
-  };
-});
-
 import {
   afterEach,
   beforeEach,
@@ -21,6 +10,26 @@ import {
 // Will be mutated per test before (re-)importing the module under test
 let mockInputs: Record<string, string> = {};
 const ORIGINAL_HOME = process.env.HOME;
+
+const mockDebug = jest.fn();
+const mockGetBooleanInput = jest.fn(
+  (name: string) => (mockInputs[name] ?? "") === "true",
+);
+const mockGetInput = jest.fn((name: string) => mockInputs[name] ?? "");
+const mockInfo = jest.fn();
+const mockWarning = jest.fn();
+
+jest.unstable_mockModule("@actions/core", () => ({
+  debug: mockDebug,
+  getBooleanInput: mockGetBooleanInput,
+  getInput: mockGetInput,
+  info: mockInfo,
+  warning: mockWarning,
+}));
+
+async function importInputsModule() {
+  return await import("../../src/utils/inputs");
+}
 
 describe("cacheDependencyGlob", () => {
   beforeEach(() => {
@@ -36,21 +45,21 @@ describe("cacheDependencyGlob", () => {
 
   it("returns empty string when input not provided", async () => {
     mockInputs["working-directory"] = "/workspace";
-    const { cacheDependencyGlob } = await import("../../src/utils/inputs");
+    const { cacheDependencyGlob } = await importInputsModule();
     expect(cacheDependencyGlob).toBe("");
   });
 
   it("resolves a single relative path", async () => {
     mockInputs["working-directory"] = "/workspace";
     mockInputs["cache-dependency-glob"] = "requirements.txt";
-    const { cacheDependencyGlob } = await import("../../src/utils/inputs");
+    const { cacheDependencyGlob } = await importInputsModule();
     expect(cacheDependencyGlob).toBe("/workspace/requirements.txt");
   });
 
   it("strips leading ./ from relative path", async () => {
     mockInputs["working-directory"] = "/workspace";
     mockInputs["cache-dependency-glob"] = "./uv.lock";
-    const { cacheDependencyGlob } = await import("../../src/utils/inputs");
+    const { cacheDependencyGlob } = await importInputsModule();
     expect(cacheDependencyGlob).toBe("/workspace/uv.lock");
   });
 
@@ -58,7 +67,7 @@ describe("cacheDependencyGlob", () => {
     mockInputs["working-directory"] = "/workspace";
     mockInputs["cache-dependency-glob"] =
       "  ~/.cache/file1\n ./rel/file2  \nfile3.txt";
-    const { cacheDependencyGlob } = await import("../../src/utils/inputs");
+    const { cacheDependencyGlob } = await importInputsModule();
     expect(cacheDependencyGlob).toBe(
       [
         "/home/testuser/.cache/file1", // expanded tilde, absolute path unchanged
@@ -71,7 +80,7 @@ describe("cacheDependencyGlob", () => {
   it("keeps absolute path unchanged in multiline input", async () => {
     mockInputs["working-directory"] = "/workspace";
     mockInputs["cache-dependency-glob"] = "/abs/path.lock\nrelative.lock";
-    const { cacheDependencyGlob } = await import("../../src/utils/inputs");
+    const { cacheDependencyGlob } = await importInputsModule();
     expect(cacheDependencyGlob).toBe(
       ["/abs/path.lock", "/workspace/relative.lock"].join("\n"),
     );
@@ -80,7 +89,7 @@ describe("cacheDependencyGlob", () => {
   it("handles exclusions in relative paths correct", async () => {
     mockInputs["working-directory"] = "/workspace";
     mockInputs["cache-dependency-glob"] = "!/abs/path.lock\n!relative.lock";
-    const { cacheDependencyGlob } = await import("../../src/utils/inputs");
+    const { cacheDependencyGlob } = await importInputsModule();
     expect(cacheDependencyGlob).toBe(
       ["!/abs/path.lock", "!/workspace/relative.lock"].join("\n"),
     );
@@ -104,7 +113,7 @@ describe("tool directories", () => {
     mockInputs["tool-bin-dir"] = "~/tool-bin-dir";
     mockInputs["tool-dir"] = "~/tool-dir";
 
-    const { toolBinDir, toolDir } = await import("../../src/utils/inputs");
+    const { toolBinDir, toolDir } = await importInputsModule();
 
     expect(toolBinDir).toBe("/home/testuser/tool-bin-dir");
     expect(toolDir).toBe("/home/testuser/tool-dir");
@@ -127,9 +136,7 @@ describe("cacheLocalPath", () => {
     mockInputs["working-directory"] = "/workspace";
     mockInputs["cache-local-path"] = "~/uv-cache/cache-local-path";
 
-    const { CacheLocalSource, cacheLocalPath } = await import(
-      "../../src/utils/inputs"
-    );
+    const { CacheLocalSource, cacheLocalPath } = await importInputsModule();
 
     expect(cacheLocalPath).toEqual({
       path: "/home/testuser/uv-cache/cache-local-path",
@@ -152,7 +159,7 @@ describe("venvPath", () => {
 
   it("defaults to .venv in the working directory", async () => {
     mockInputs["working-directory"] = "/workspace";
-    const { venvPath } = await import("../../src/utils/inputs");
+    const { venvPath } = await importInputsModule();
     expect(venvPath).toBe("/workspace/.venv");
   });
 
@@ -160,7 +167,7 @@ describe("venvPath", () => {
     mockInputs["working-directory"] = "/workspace";
     mockInputs["activate-environment"] = "true";
     mockInputs["venv-path"] = "custom-venv";
-    const { venvPath } = await import("../../src/utils/inputs");
+    const { venvPath } = await importInputsModule();
     expect(venvPath).toBe("/workspace/custom-venv");
   });
 
@@ -168,7 +175,7 @@ describe("venvPath", () => {
     mockInputs["working-directory"] = "/workspace";
     mockInputs["activate-environment"] = "true";
     mockInputs["venv-path"] = "custom-venv/";
-    const { venvPath } = await import("../../src/utils/inputs");
+    const { venvPath } = await importInputsModule();
     expect(venvPath).toBe("/workspace/custom-venv");
   });
 
@@ -176,7 +183,7 @@ describe("venvPath", () => {
     mockInputs["working-directory"] = "/workspace";
     mockInputs["activate-environment"] = "true";
     mockInputs["venv-path"] = "/tmp/custom-venv";
-    const { venvPath } = await import("../../src/utils/inputs");
+    const { venvPath } = await importInputsModule();
     expect(venvPath).toBe("/tmp/custom-venv");
   });
 
@@ -184,7 +191,7 @@ describe("venvPath", () => {
     mockInputs["working-directory"] = "/workspace";
     mockInputs["activate-environment"] = "true";
     mockInputs["venv-path"] = "~/.venv";
-    const { venvPath } = await import("../../src/utils/inputs");
+    const { venvPath } = await importInputsModule();
     expect(venvPath).toBe("/home/testuser/.venv");
   });
 
@@ -192,18 +199,11 @@ describe("venvPath", () => {
     mockInputs["working-directory"] = "/workspace";
     mockInputs["venv-path"] = "custom-venv";
 
-    const { activateEnvironment, venvPath } = await import(
-      "../../src/utils/inputs"
-    );
+    const { activateEnvironment, venvPath } = await importInputsModule();
 
     expect(activateEnvironment).toBe(false);
     expect(venvPath).toBe("/workspace/custom-venv");
-
-    const mockedCore = jest.requireMock("@actions/core") as {
-      warning: jest.Mock;
-    };
-
-    expect(mockedCore.warning).toHaveBeenCalledWith(
+    expect(mockWarning).toHaveBeenCalledWith(
       "venv-path is only used when activate-environment is true",
     );
   });

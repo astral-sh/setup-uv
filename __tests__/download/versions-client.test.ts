@@ -2,18 +2,19 @@ import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 
 // biome-ignore lint/suspicious/noExplicitAny: Mock requires flexible typing in tests.
 const mockFetch = jest.fn<any>();
-jest.mock("../../src/utils/fetch", () => ({
+
+jest.unstable_mockModule("../../src/utils/fetch", () => ({
   fetch: mockFetch,
 }));
 
-import {
+const {
   clearCache,
   fetchVersionData,
   getAllVersions,
   getArtifact,
   getLatestVersion,
   parseVersionData,
-} from "../../src/download/versions-client";
+} = await import("../../src/download/versions-client");
 
 const sampleNdjsonResponse = `{"version":"0.9.26","artifacts":[{"platform":"aarch64-apple-darwin","variant":"default","url":"https://github.com/astral-sh/uv/releases/download/0.9.26/uv-aarch64-apple-darwin.tar.gz","archive_format":"tar.gz","sha256":"fcf0a9ea6599c6ae28a4c854ac6da76f2c889354d7c36ce136ef071f7ab9721f"},{"platform":"x86_64-pc-windows-msvc","variant":"default","url":"https://github.com/astral-sh/uv/releases/download/0.9.26/uv-x86_64-pc-windows-msvc.zip","archive_format":"zip","sha256":"eb02fd95d8e0eed462b4a67ecdd320d865b38c560bffcda9a0b87ec944bdf036"}]}
 {"version":"0.9.25","artifacts":[{"platform":"aarch64-apple-darwin","variant":"default","url":"https://github.com/astral-sh/uv/releases/download/0.9.25/uv-aarch64-apple-darwin.tar.gz","archive_format":"tar.gz","sha256":"606b3c6949d971709f2526fa0d9f0fd23ccf60e09f117999b406b424af18a6a6"}]}`;
