@@ -54180,7 +54180,9 @@ function contains(specifier, input) {
     if (spec.epoch) {
       compatiblePrefix = spec.epoch + '!' + compatiblePrefix;
     }
-    return satisfies(version, `>=${spec.version}, ==${compatiblePrefix}`);
+    return satisfies(version, `>=${spec.version}, ==${compatiblePrefix}`, {
+      prereleases: spec.prereleases,
+    });
   }
 
   if (spec.prefix) {
