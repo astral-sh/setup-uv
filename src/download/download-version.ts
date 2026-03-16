@@ -4,7 +4,12 @@ import * as core from "@actions/core";
 import * as tc from "@actions/tool-cache";
 import * as pep440 from "@renovatebot/pep440";
 import * as semver from "semver";
-import { TOOL_CACHE_NAME, VERSIONS_NDJSON_URL } from "../utils/constants";
+import {
+  ASTRAL_MIRROR_PREFIX,
+  GITHUB_RELEASES_PREFIX,
+  TOOL_CACHE_NAME,
+  VERSIONS_NDJSON_URL,
+} from "../utils/constants";
 import type { Architecture, Platform } from "../utils/platforms";
 import { validateChecksum } from "./checksum/checksum";
 import {
@@ -48,17 +53,53 @@ export async function downloadVersionFromNdjson(
     );
   }
 
+  const mirrorUrl = rewriteToMirror(artifact.url);
+  const downloadUrl = mirrorUrl ?? artifact.url;
+  // Don't send the GitHub token to the Astral mirror.
+  const downloadToken = mirrorUrl !== undefined ? undefined : githubToken;
+
   // For the default astral-sh/versions source, checksum validation relies on
   // user input or the built-in KNOWN_CHECKSUMS table, not NDJSON sha256 values.
-  return await downloadVersion(
-    artifact.url,
-    `uv-${arch}-${platform}`,
-    platform,
-    arch,
-    version,
-    checkSum,
-    githubToken,
-  );
+  try {
+    return await downloadVersion(
+      downloadUrl,
+      `uv-${arch}-${platform}`,
+      platform,
+      arch,
+      version,
+      checkSum,
+      downloadToken,
+    );
+  } catch (err) {
+    if (mirrorUrl === undefined) {
+      throw err;
+    }
+
+    core.warning(
+      `Failed to download from mirror, falling back to GitHub Releases: ${(err as Error).message}`,
+    );
+
+    return await downloadVersion(
+      artifact.url,
+      `uv-${arch}-${platform}`,
+      platform,
+      arch,
+      version,
+      checkSum,
+      githubToken,
+    );
+  }
+}
+
+/**
+ * Rewrite a GitHub Releases URL to the Astral mirror.
+ * Returns `undefined` if the URL does not match the expected GitHub prefix.
+ */
+export function rewriteToMirror(url: string): string | undefined {
+  if (!url.startsWith(GITHUB_RELEASES_PREFIX)) {
+    return undefined;
+  }
+  return ASTRAL_MIRROR_PREFIX + url.slice(GITHUB_RELEASES_PREFIX.length);
 }
 
 export async function downloadVersionFromManifest(
@@ -99,7 +140,7 @@ async function downloadVersion(
   arch: Architecture,
   version: string,
   checksum: string | undefined,
-  githubToken: string,
+  githubToken: string | undefined,
 ): Promise<{ version: string; cachedToolDir: string }> {
   core.info(`Downloading uv from "${downloadUrl}" ...`);
   const downloadPath = await tc.downloadTool(
