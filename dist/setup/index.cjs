@@ -91887,6 +91887,8 @@ var TOOL_CACHE_NAME = "uv";
 var STATE_UV_PATH = "uv-path";
 var STATE_UV_VERSION = "uv-version";
 var VERSIONS_NDJSON_URL = "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson";
+var GITHUB_RELEASES_PREFIX = "https://github.com/astral-sh/uv/releases/download/";
+var ASTRAL_MIRROR_PREFIX = "https://releases.astral.sh/github/uv/releases/download/";
 
 // src/download/checksum/checksum.ts
 var crypto6 = __toESM(require("node:crypto"), 1);
@@ -96658,15 +96660,42 @@ async function downloadVersionFromNdjson(platform2, arch3, version4, checkSum2, 
       `Could not find artifact for version ${version4}, arch ${arch3}, platform ${platform2} in ${VERSIONS_NDJSON_URL} .`
     );
   }
-  return await downloadVersion(
-    artifact.url,
-    `uv-${arch3}-${platform2}`,
-    platform2,
-    arch3,
-    version4,
-    checkSum2,
-    githubToken2
-  );
+  const mirrorUrl = rewriteToMirror(artifact.url);
+  const downloadUrl = mirrorUrl ?? artifact.url;
+  const downloadToken = mirrorUrl !== void 0 ? void 0 : githubToken2;
+  try {
+    return await downloadVersion(
+      downloadUrl,
+      `uv-${arch3}-${platform2}`,
+      platform2,
+      arch3,
+      version4,
+      checkSum2,
+      downloadToken
+    );
+  } catch (err) {
+    if (mirrorUrl === void 0) {
+      throw err;
+    }
+    warning(
+      `Failed to download from mirror, falling back to GitHub Releases: ${err.message}`
+    );
+    return await downloadVersion(
+      artifact.url,
+      `uv-${arch3}-${platform2}`,
+      platform2,
+      arch3,
+      version4,
+      checkSum2,
+      githubToken2
+    );
+  }
+}
+function rewriteToMirror(url2) {
+  if (!url2.startsWith(GITHUB_RELEASES_PREFIX)) {
+    return void 0;
+  }
+  return ASTRAL_MIRROR_PREFIX + url2.slice(GITHUB_RELEASES_PREFIX.length);
 }
 async function downloadVersionFromManifest(manifestUrl, platform2, arch3, version4, checkSum2, githubToken2) {
   const artifact = await getManifestArtifact(

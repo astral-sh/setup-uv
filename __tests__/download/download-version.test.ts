@@ -68,6 +68,7 @@ const {
   downloadVersionFromManifest,
   downloadVersionFromNdjson,
   resolveVersion,
+  rewriteToMirror,
 } = await import("../../src/download/download-version");
 
 describe("download-version", () => {
@@ -197,6 +198,135 @@ describe("download-version", () => {
         "unknown-linux-gnu",
         "0.9.26",
       );
+    });
+
+    it("rewrites GitHub Releases URLs to the Astral mirror", async () => {
+      mockGetArtifactFromNdjson.mockResolvedValue({
+        archiveFormat: "tar.gz",
+        sha256: "abc123",
+        url: "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-x86_64-unknown-linux-gnu.tar.gz",
+      });
+
+      await downloadVersionFromNdjson(
+        "unknown-linux-gnu",
+        "x86_64",
+        "0.9.26",
+        undefined,
+        "token",
+      );
+
+      expect(mockDownloadTool).toHaveBeenCalledWith(
+        "https://releases.astral.sh/github/uv/releases/download/0.9.26/uv-x86_64-unknown-linux-gnu.tar.gz",
+        undefined,
+        undefined,
+      );
+    });
+
+    it("does not rewrite non-GitHub URLs", async () => {
+      mockGetArtifactFromNdjson.mockResolvedValue({
+        archiveFormat: "tar.gz",
+        sha256: "abc123",
+        url: "https://example.com/uv.tar.gz",
+      });
+
+      await downloadVersionFromNdjson(
+        "unknown-linux-gnu",
+        "x86_64",
+        "0.9.26",
+        undefined,
+        "token",
+      );
+
+      expect(mockDownloadTool).toHaveBeenCalledWith(
+        "https://example.com/uv.tar.gz",
+        undefined,
+        "token",
+      );
+    });
+
+    it("falls back to GitHub Releases when the mirror fails", async () => {
+      mockGetArtifactFromNdjson.mockResolvedValue({
+        archiveFormat: "tar.gz",
+        sha256: "abc123",
+        url: "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-x86_64-unknown-linux-gnu.tar.gz",
+      });
+
+      mockDownloadTool
+        .mockRejectedValueOnce(new Error("mirror unavailable"))
+        .mockResolvedValueOnce("/tmp/downloaded");
+
+      await downloadVersionFromNdjson(
+        "unknown-linux-gnu",
+        "x86_64",
+        "0.9.26",
+        undefined,
+        "token",
+      );
+
+      expect(mockDownloadTool).toHaveBeenCalledTimes(2);
+      // Mirror request: no token
+      expect(mockDownloadTool).toHaveBeenNthCalledWith(
+        1,
+        "https://releases.astral.sh/github/uv/releases/download/0.9.26/uv-x86_64-unknown-linux-gnu.tar.gz",
+        undefined,
+        undefined,
+      );
+      // GitHub fallback: token restored
+      expect(mockDownloadTool).toHaveBeenNthCalledWith(
+        2,
+        "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-x86_64-unknown-linux-gnu.tar.gz",
+        undefined,
+        "token",
+      );
+      expect(mockWarning).toHaveBeenCalledWith(
+        "Failed to download from mirror, falling back to GitHub Releases: mirror unavailable",
+      );
+    });
+
+    it("does not fall back for non-GitHub URLs", async () => {
+      mockGetArtifactFromNdjson.mockResolvedValue({
+        archiveFormat: "tar.gz",
+        sha256: "abc123",
+        url: "https://example.com/uv.tar.gz",
+      });
+
+      mockDownloadTool.mockRejectedValue(new Error("download failed"));
+
+      await expect(
+        downloadVersionFromNdjson(
+          "unknown-linux-gnu",
+          "x86_64",
+          "0.9.26",
+          undefined,
+          "token",
+        ),
+      ).rejects.toThrow("download failed");
+
+      expect(mockDownloadTool).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("rewriteToMirror", () => {
+    it("rewrites a GitHub Releases URL to the Astral mirror", () => {
+      expect(
+        rewriteToMirror(
+          "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-x86_64-unknown-linux-gnu.tar.gz",
+        ),
+      ).toBe(
+        "https://releases.astral.sh/github/uv/releases/download/0.9.26/uv-x86_64-unknown-linux-gnu.tar.gz",
+      );
+    });
+
+    it("returns undefined for non-GitHub URLs", () => {
+      expect(rewriteToMirror("https://example.com/uv.tar.gz")).toBeUndefined();
+    });
+
+    it("returns undefined for a different GitHub repo", () => {
+      expect(
+        rewriteToMirror(
+          "https://github.com/other/repo/releases/download/v1.0/file.tar.gz",
+        ),
+      ).toBeUndefined();
     });
   });
 
