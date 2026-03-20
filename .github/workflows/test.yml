@@ -164,10 +164,22 @@ jobs:
       - name: Latest version gets installed
         run: |
           LATEST_VERSION=$(gh api -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /repos/astral-sh/uv/releases/latest | jq -r '.tag_name')
+          UV_VERSION_OUTPUT=$(uv --version)
+
+          if [[ ! "$UV_VERSION_OUTPUT" =~ ^uv[[:space:]]+([^[:space:]]+) ]]; then
+            echo "Could not parse uv version from: $UV_VERSION_OUTPUT"
+            exit 1
+          fi
+
+          UV_VERSION="${BASH_REMATCH[1]}"
+
           echo "Latest version is $LATEST_VERSION"
-          if [ "$(uv --version)" != "uv $LATEST_VERSION" ]; then
-              echo "Wrong uv version: $(uv --version)"
-              exit 1
+          echo "uv --version output is $UV_VERSION_OUTPUT"
+          echo "Parsed uv version is $UV_VERSION"
+
+          if [ "$UV_VERSION" != "$LATEST_VERSION" ]; then
+            echo "Wrong uv version: $UV_VERSION_OUTPUT"
+            exit 1
           fi
         env:
           GH_TOKEN: ${{ github.token }}
