@@ -9,6 +9,7 @@
     "build": "tsc --noEmit",
     "check": "biome check --write",
     "package": "node scripts/build-dist.mjs",
+    "bench:versions": "node scripts/bench-versions-client.mjs",
     "test:unit": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
     "test": "npm run build && npm run test:unit",
     "act": "act pull_request -W .github/workflows/test.yml --container-architecture linux/amd64 -s GITHUB_TOKEN=\"$(gh auth token)\"",

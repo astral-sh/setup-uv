@@ -20,6 +20,7 @@ import {
 import {
   getAllVersions as getAllVersionsFromNdjson,
   getArtifact as getArtifactFromNdjson,
+  getHighestSatisfyingVersion as getHighestSatisfyingVersionFromNdjson,
   getLatestVersion as getLatestVersionFromNdjson,
 } from "./versions-client";
 
@@ -226,6 +227,17 @@ export async function resolveVersion(
       }
     }
     return version;
+  }
+
+  if (manifestUrl === undefined && resolutionStrategy === "highest") {
+    const resolvedVersion =
+      await getHighestSatisfyingVersionFromNdjson(version);
+    if (resolvedVersion !== undefined) {
+      core.debug(`Resolved version from NDJSON stream: ${resolvedVersion}`);
+      return resolvedVersion;
+    }
+
+    throw new Error(`No version found for ${version}`);
   }
 
   const availableVersions = await getAvailableVersions(manifestUrl);

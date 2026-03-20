@@ -37,10 +37,13 @@ const mockGetLatestVersionFromNdjson = jest.fn<any>();
 const mockGetAllVersionsFromNdjson = jest.fn<any>();
 // biome-ignore lint/suspicious/noExplicitAny: Mock requires flexible typing in tests.
 const mockGetArtifactFromNdjson = jest.fn<any>();
+// biome-ignore lint/suspicious/noExplicitAny: Mock requires flexible typing in tests.
+const mockGetHighestSatisfyingVersionFromNdjson = jest.fn<any>();
 
 jest.unstable_mockModule("../../src/download/versions-client", () => ({
   getAllVersions: mockGetAllVersionsFromNdjson,
   getArtifact: mockGetArtifactFromNdjson,
+  getHighestSatisfyingVersion: mockGetHighestSatisfyingVersionFromNdjson,
   getLatestVersion: mockGetLatestVersionFromNdjson,
 }));
 
@@ -82,6 +85,7 @@ describe("download-version", () => {
     mockGetLatestVersionFromNdjson.mockReset();
     mockGetAllVersionsFromNdjson.mockReset();
     mockGetArtifactFromNdjson.mockReset();
+    mockGetHighestSatisfyingVersionFromNdjson.mockReset();
     mockGetAllManifestVersions.mockReset();
     mockGetLatestVersionInManifest.mockReset();
     mockGetManifestArtifact.mockReset();
@@ -103,13 +107,26 @@ describe("download-version", () => {
       expect(mockGetLatestVersionFromNdjson).toHaveBeenCalledTimes(1);
     });
 
-    it("uses astral-sh/versions to resolve available versions", async () => {
-      mockGetAllVersionsFromNdjson.mockResolvedValue(["0.9.26", "0.9.25"]);
+    it("streams astral-sh/versions to resolve the highest matching version", async () => {
+      mockGetHighestSatisfyingVersionFromNdjson.mockResolvedValue("0.9.26");
 
       const version = await resolveVersion("^0.9.0", undefined);
 
       expect(version).toBe("0.9.26");
+      expect(mockGetHighestSatisfyingVersionFromNdjson).toHaveBeenCalledWith(
+        "^0.9.0",
+      );
+      expect(mockGetAllVersionsFromNdjson).not.toHaveBeenCalled();
+    });
+
+    it("still loads all versions when resolving the lowest matching version", async () => {
+      mockGetAllVersionsFromNdjson.mockResolvedValue(["0.9.26", "0.9.25"]);
+
+      const version = await resolveVersion("^0.9.0", undefined, "lowest");
+
+      expect(version).toBe("0.9.25");
       expect(mockGetAllVersionsFromNdjson).toHaveBeenCalledTimes(1);
+      expect(mockGetHighestSatisfyingVersionFromNdjson).not.toHaveBeenCalled();
     });
 
     it("does not fall back when astral-sh/versions fails", async () => {
