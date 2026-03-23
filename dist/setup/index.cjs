@@ -91886,7 +91886,7 @@ var semver5 = __toESM(require_semver5(), 1);
 var TOOL_CACHE_NAME = "uv";
 var STATE_UV_PATH = "uv-path";
 var STATE_UV_VERSION = "uv-version";
-var VERSIONS_NDJSON_URL = "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson";
+var VERSIONS_MANIFEST_URL = "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson";
 var GITHUB_RELEASES_PREFIX = "https://github.com/astral-sh/uv/releases/download/";
 var ASTRAL_MIRROR_PREFIX = "https://releases.astral.sh/github/uv/releases/download/";
 
@@ -96563,17 +96563,18 @@ async function downloadVersion(platform2, arch3, version4, checkSum2, githubToke
       getMissingArtifactMessage(version4, arch3, platform2, manifestUrl)
     );
   }
-  const mirrorUrl = rewriteToMirror(artifact.url);
-  const downloadUrl = mirrorUrl ?? artifact.url;
+  const checksum = manifestUrl === void 0 ? checkSum2 : resolveChecksum(checkSum2, artifact.checksum);
+  const mirrorUrl = rewriteToMirror(artifact.downloadUrl);
+  const downloadUrl = mirrorUrl ?? artifact.downloadUrl;
   const downloadToken = mirrorUrl !== void 0 ? void 0 : githubToken2;
   try {
-    return await downloadVersion(
+    return await downloadArtifact(
       downloadUrl,
       `uv-${arch3}-${platform2}`,
       platform2,
       arch3,
       version4,
-      checkSum2,
+      checksum,
       downloadToken
     );
   } catch (err) {
@@ -96583,13 +96584,13 @@ async function downloadVersion(platform2, arch3, version4, checkSum2, githubToke
     warning(
       `Failed to download from mirror, falling back to GitHub Releases: ${err.message}`
     );
-    return await downloadVersion(
-      artifact.url,
+    return await downloadArtifact(
+      artifact.downloadUrl,
       `uv-${arch3}-${platform2}`,
       platform2,
       arch3,
       version4,
-      checkSum2,
+      checksum,
       githubToken2
     );
   }
@@ -96599,28 +96600,6 @@ function rewriteToMirror(url2) {
     return void 0;
   }
   return ASTRAL_MIRROR_PREFIX + url2.slice(GITHUB_RELEASES_PREFIX.length);
-}
-async function downloadVersionFromManifest(manifestUrl, platform2, arch3, version4, checkSum2, githubToken2) {
-  const artifact = await getManifestArtifact(
-    manifestUrl,
-    version4,
-    arch3,
-    platform2
-  );
-  if (!artifact) {
-    throw new Error(
-      `manifest-file does not contain version ${version4}, arch ${arch3}, platform ${platform2}.`
-    );
-  }
-  return await downloadVersion(
-    artifact.downloadUrl,
-    `uv-${arch3}-${platform2}`,
-    platform2,
-    arch3,
-    version4,
-    checksum,
-    githubToken2
-  );
 }
 async function downloadArtifact(downloadUrl, artifactName, platform2, arch3, version4, checksum, githubToken2) {
   info(`Downloading uv from "${downloadUrl}" ...`);
