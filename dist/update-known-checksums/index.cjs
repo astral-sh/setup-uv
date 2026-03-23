@@ -19064,8 +19064,8 @@ var require_semver = __commonJS({
         return exports2.compareBuild(b, a, loose);
       });
     }
-    exports2.gt = gt;
-    function gt(a, b, loose) {
+    exports2.gt = gt2;
+    function gt2(a, b, loose) {
       return compare(a, b, loose) > 0;
     }
     exports2.lt = lt;
@@ -19110,7 +19110,7 @@ var require_semver = __commonJS({
         case "!=":
           return neq(a, b, loose);
         case ">":
-          return gt(a, b, loose);
+          return gt2(a, b, loose);
         case ">=":
           return gte(a, b, loose);
         case "<":
@@ -19608,7 +19608,7 @@ var require_semver = __commonJS({
             /* fallthrough */
             case "":
             case ">=":
-              if (!minver || gt(minver, compver)) {
+              if (!minver || gt2(minver, compver)) {
                 minver = compver;
               }
               break;
@@ -19649,7 +19649,7 @@ var require_semver = __commonJS({
       var gtfn, ltefn, ltfn, comp, ecomp;
       switch (hilo) {
         case ">":
-          gtfn = gt;
+          gtfn = gt2;
           ltefn = lte2;
           ltfn = lt;
           comp = ">";
@@ -19658,7 +19658,7 @@ var require_semver = __commonJS({
         case "<":
           gtfn = lt;
           ltefn = gte;
-          ltfn = gt;
+          ltfn = gt2;
           comp = "<";
           ecomp = "<=";
           break;
@@ -44945,7 +44945,7 @@ function info(message) {
 }
 
 // src/update-known-checksums.ts
-var semver = __toESM(require_semver(), 1);
+var semver2 = __toESM(require_semver(), 1);
 
 // src/download/checksum/known-checksums.ts
 var KNOWN_CHECKSUMS = {
@@ -49410,8 +49410,11 @@ async function updateChecksums(filePath, checksumEntries) {
   await import_node_fs.promises.writeFile(filePath, content);
 }
 
+// src/download/manifest.ts
+var semver = __toESM(require_semver(), 1);
+
 // src/utils/constants.ts
-var VERSIONS_NDJSON_URL = "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson";
+var VERSIONS_MANIFEST_URL = "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson";
 
 // src/utils/fetch.ts
 var import_undici2 = __toESM(require_undici2(), 1);
@@ -49431,72 +49434,87 @@ var fetch = async (url, opts) => await (0, import_undici2.fetch)(url, {
   ...opts
 });
 
-// src/download/versions-client.ts
-var cachedVersionData = /* @__PURE__ */ new Map();
-async function fetchVersionData(url = VERSIONS_NDJSON_URL) {
-  const cachedVersions = cachedVersionData.get(url);
+// src/download/manifest.ts
+var cachedManifestData = /* @__PURE__ */ new Map();
+async function fetchManifest(manifestUrl = VERSIONS_MANIFEST_URL) {
+  const cachedVersions = cachedManifestData.get(manifestUrl);
   if (cachedVersions !== void 0) {
-    debug(`Using cached NDJSON version data from ${url}`);
+    debug(`Using cached manifest data from ${manifestUrl}`);
     return cachedVersions;
   }
-  info(`Fetching version data from ${url} ...`);
-  const response = await fetch(url, {});
+  info(`Fetching manifest data from ${manifestUrl} ...`);
+  const response = await fetch(manifestUrl, {});
   if (!response.ok) {
     throw new Error(
-      `Failed to fetch version data: ${response.status} ${response.statusText}`
+      `Failed to fetch manifest data: ${response.status} ${response.statusText}`
     );
   }
   const body = await response.text();
-  const versions = parseVersionData(body, url);
-  cachedVersionData.set(url, versions);
+  const versions = parseManifest(body, manifestUrl);
+  cachedManifestData.set(manifestUrl, versions);
   return versions;
 }
-function parseVersionData(data, sourceDescription) {
+function parseManifest(data, sourceDescription) {
+  const trimmed = data.trim();
+  if (trimmed === "") {
+    throw new Error(`Manifest at ${sourceDescription} is empty.`);
+  }
+  if (trimmed.startsWith("[")) {
+    throw new Error(
+      `Legacy JSON array manifests are no longer supported in ${sourceDescription}. Use the astral-sh/versions manifest format instead.`
+    );
+  }
   const versions = [];
   for (const [index, line] of data.split("\n").entries()) {
-    const trimmed = line.trim();
-    if (trimmed === "") {
+    const record = line.trim();
+    if (record === "") {
       continue;
     }
     let parsed;
     try {
-      parsed = JSON.parse(trimmed);
+      parsed = JSON.parse(record);
     } catch (error) {
       throw new Error(
-        `Failed to parse version data from ${sourceDescription} at line ${index + 1}: ${error.message}`
+        `Failed to parse manifest data from ${sourceDescription} at line ${index + 1}: ${error.message}`
       );
     }
-    if (!isNdjsonVersion(parsed)) {
+    if (!isManifestVersion(parsed)) {
       throw new Error(
-        `Invalid NDJSON record in ${sourceDescription} at line ${index + 1}.`
+        `Invalid manifest record in ${sourceDescription} at line ${index + 1}.`
       );
     }
     versions.push(parsed);
   }
   if (versions.length === 0) {
-    throw new Error(`No version data found in ${sourceDescription}.`);
+    throw new Error(`No manifest data found in ${sourceDescription}.`);
   }
   return versions;
 }
-async function getLatestVersion() {
-  const versions = await fetchVersionData();
-  const latestVersion = versions[0]?.version;
-  if (!latestVersion) {
-    throw new Error("No versions found in NDJSON data");
+async function getLatestVersion(manifestUrl = VERSIONS_MANIFEST_URL) {
+  const versions = await fetchManifest(manifestUrl);
+  const [firstVersion, ...remainingVersions] = versions.map(
+    (versionData) => versionData.version
+  );
+  if (firstVersion === void 0) {
+    throw new Error("No versions found in manifest data");
   }
-  debug(`Latest version from NDJSON: ${latestVersion}`);
+  const latestVersion = remainingVersions.reduce(
+    (latest, current) => semver.gt(current, latest) ? current : latest,
+    firstVersion
+  );
+  debug(`Latest version from manifest: ${latestVersion}`);
   return latestVersion;
 }
-function isNdjsonVersion(value) {
+function isManifestVersion(value) {
   if (!isRecord(value)) {
     return false;
   }
   if (typeof value.version !== "string" || !Array.isArray(value.artifacts)) {
     return false;
   }
-  return value.artifacts.every(isNdjsonArtifact);
+  return value.artifacts.every(isManifestArtifact);
 }
-function isNdjsonArtifact(value) {
+function isManifestArtifact(value) {
   if (!isRecord(value)) {
     return false;
   }
@@ -49518,14 +49536,14 @@ async function run() {
   }
   const latestVersion = await getLatestVersion();
   const latestKnownVersion = getLatestKnownVersionFromChecksums();
-  if (semver.lte(latestVersion, latestKnownVersion)) {
+  if (semver2.lte(latestVersion, latestKnownVersion)) {
     info(
       `Latest release (${latestVersion}) is not newer than the latest known version (${latestKnownVersion}). Skipping update.`
     );
     return;
   }
-  const versions = await fetchVersionData();
-  const checksumEntries = extractChecksumsFromNdjson(versions);
+  const versions = await fetchManifest();
+  const checksumEntries = extractChecksumsFromManifest(versions);
   await updateChecksums(checksumFilePath, checksumEntries);
   setOutput("latest-version", latestVersion);
 }
@@ -49537,7 +49555,7 @@ function getLatestKnownVersionFromChecksums() {
       versions.add(version);
     }
   }
-  const latestVersion = [...versions].sort(semver.rcompare)[0];
+  const latestVersion = [...versions].sort(semver2.rcompare)[0];
   if (!latestVersion) {
     throw new Error("Could not determine latest known version from checksums.");
   }
@@ -49546,7 +49564,7 @@ function getLatestKnownVersionFromChecksums() {
 function extractVersionFromChecksumKey(key) {
   return key.match(VERSION_IN_CHECKSUM_KEY_PATTERN)?.[1];
 }
-function extractChecksumsFromNdjson(versions) {
+function extractChecksumsFromManifest(versions) {
   const checksums = [];
   for (const version of versions) {
     for (const artifact of version.artifacts) {

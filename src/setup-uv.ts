@@ -4,8 +4,7 @@ import * as core from "@actions/core";
 import * as exec from "@actions/exec";
 import { restoreCache } from "./cache/restore-cache";
 import {
-  downloadVersionFromManifest,
-  downloadVersionFromNdjson,
+  downloadVersion,
   resolveVersion,
   tryGetFromToolCache,
 } from "./download/download-version";
@@ -132,7 +131,7 @@ async function setupUv(
   checkSum: string | undefined,
   githubToken: string,
 ): Promise<{ uvDir: string; version: string }> {
-  const resolvedVersion = await determineVersion(manifestFile);
+  const resolvedVersion = await determineVersion();
   const toolCacheResult = tryGetFromToolCache(arch, resolvedVersion);
   if (toolCacheResult.installedPath) {
     core.info(`Found uv in tool-cache for ${toolCacheResult.version}`);
@@ -142,36 +141,34 @@ async function setupUv(
     };
   }
 
-  const downloadVersionResult =
-    manifestFile !== undefined
-      ? await downloadVersionFromManifest(
-          manifestFile,
-          platform,
-          arch,
-          resolvedVersion,
-          checkSum,
-          githubToken,
-        )
-      : await downloadVersionFromNdjson(
-          platform,
-          arch,
-          resolvedVersion,
-          checkSum,
-          githubToken,
-        );
+  const downloadResult = await downloadVersion(
+    platform,
+    arch,
+    resolvedVersion,
+    checkSum,
+    githubToken,
+    manifestFile,
+  );
 
   return {
-    uvDir: downloadVersionResult.cachedToolDir,
-    version: downloadVersionResult.version,
+    uvDir: downloadResult.cachedToolDir,
+    version: downloadResult.version,
   };
 }
 
-async function determineVersion(
-  manifestFile: string | undefined,
-): Promise<string> {
+async function determineVersion(): Promise<string> {
+  return await resolveVersion(
+    getRequestedVersion(),
+    manifestFile,
+    resolutionStrategy,
+  );
+}
+
+function getRequestedVersion(): string {
   if (versionInput !== "") {
-    return await resolveVersion(versionInput, manifestFile, resolutionStrategy);
+    return versionInput;
   }
+
   if (versionFileInput !== "") {
     const versionFromFile = getUvVersionFromFile(versionFileInput);
     if (versionFromFile === undefined) {
@@ -179,28 +176,23 @@ async function determineVersion(
         `Could not determine uv version from file: ${versionFileInput}`,
       );
     }
-    return await resolveVersion(
-      versionFromFile,
-      manifestFile,
-      resolutionStrategy,
-    );
+    return versionFromFile;
   }
+
   const versionFromUvToml = getUvVersionFromFile(
     `${workingDirectory}${path.sep}uv.toml`,
   );
   const versionFromPyproject = getUvVersionFromFile(
     `${workingDirectory}${path.sep}pyproject.toml`,
   );
+
   if (versionFromUvToml === undefined && versionFromPyproject === undefined) {
     core.info(
       "Could not determine uv version from uv.toml or pyproject.toml. Falling back to latest.",
     );
   }
-  return await resolveVersion(
-    versionFromUvToml || versionFromPyproject || "latest",
-    manifestFile,
-    resolutionStrategy,
-  );
+
+  return versionFromUvToml || versionFromPyproject || "latest";
 }
 
 function addUvToPathAndOutput(cachedPath: string): void {
