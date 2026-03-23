@@ -19,14 +19,14 @@ are automatically verified by this action. The sha256 hashes can be found on the
 ## Manifest file
 
 By default, setup-uv reads version metadata from
-[`astral-sh/versions`](https://github.com/astral-sh/versions) (NDJSON format).
+[`astral-sh/versions`](https://github.com/astral-sh/versions).
 
 The `manifest-file` input lets you override that source with your own URL, for example to test
 custom uv builds or alternate download locations.
 
 ### Format
 
-The manifest file must be in NDJSON format, where each line is a JSON object representing a version and its artifacts. For example:
+The manifest file must use the same format as `astral-sh/versions`: one JSON object per line, where each object represents a version and its artifacts. The versions must be sorted in descending order. For example:
 
 ```json
 {"version":"0.10.7","artifacts":[{"platform":"x86_64-unknown-linux-gnu","variant":"default","url":"https://example.com/uv-x86_64-unknown-linux-gnu.tar.gz","archive_format":"tar.gz","sha256":"..."}]}
@@ -36,23 +36,6 @@ The manifest file must be in NDJSON format, where each line is a JSON object rep
 setup-uv currently only supports `default` as the `variant`.
 
 The `archive_format` field is currently ignored.
-
-### Legacy format: JSON array (deprecated)
-
-The previous JSON array format is still supported for compatibility, but deprecated and will be
-removed in a future major release.
-
-```json
-[
-  {
-    "version": "0.7.13",
-    "artifactName": "uv-aarch64-apple-darwin.tar.gz",
-    "arch": "aarch64",
-    "platform": "apple-darwin",
-    "downloadUrl": "https://github.com/astral-sh/uv/releases/download/0.7.13/uv-aarch64-apple-darwin.tar.gz"
-  }
-]
-```
 
 ```yaml
 - name: Use a custom manifest file

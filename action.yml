@@ -75,7 +75,7 @@ inputs:
     description: "Custom path to set UV_TOOL_BIN_DIR to."
     required: false
   manifest-file:
-    description: "URL to a custom manifest file. Supports the astral-sh/versions NDJSON format and the legacy JSON array format (deprecated)."
+    description: "URL to a custom manifest file in the astral-sh/versions format."
     required: false
   add-problem-matchers:
     description: "Add problem matchers."

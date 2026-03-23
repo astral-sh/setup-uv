@@ -8,20 +8,11 @@ import {
   ASTRAL_MIRROR_PREFIX,
   GITHUB_RELEASES_PREFIX,
   TOOL_CACHE_NAME,
-  VERSIONS_NDJSON_URL,
+  VERSIONS_MANIFEST_URL,
 } from "../utils/constants";
 import type { Architecture, Platform } from "../utils/platforms";
 import { validateChecksum } from "./checksum/checksum";
-import {
-  getAllVersions as getAllManifestVersions,
-  getLatestKnownVersion as getLatestVersionInManifest,
-  getManifestArtifact,
-} from "./version-manifest";
-import {
-  getAllVersions as getAllVersionsFromNdjson,
-  getArtifact as getArtifactFromNdjson,
-  getLatestVersion as getLatestVersionFromNdjson,
-} from "./versions-client";
+import { getAllVersions, getArtifact, getLatestVersion } from "./manifest";
 
 export function tryGetFromToolCache(
   arch: Architecture,
@@ -38,36 +29,42 @@ export function tryGetFromToolCache(
   return { installedPath, version: resolvedVersion };
 }
 
-export async function downloadVersionFromNdjson(
+export async function downloadVersion(
   platform: Platform,
   arch: Architecture,
   version: string,
   checkSum: string | undefined,
   githubToken: string,
+  manifestUrl?: string,
 ): Promise<{ version: string; cachedToolDir: string }> {
-  const artifact = await getArtifactFromNdjson(version, arch, platform);
+  const artifact = await getArtifact(version, arch, platform, manifestUrl);
 
   if (!artifact) {
     throw new Error(
-      `Could not find artifact for version ${version}, arch ${arch}, platform ${platform} in ${VERSIONS_NDJSON_URL} .`,
+      getMissingArtifactMessage(version, arch, platform, manifestUrl),
     );
   }
 
-  const mirrorUrl = rewriteToMirror(artifact.url);
-  const downloadUrl = mirrorUrl ?? artifact.url;
+  // For the default astral-sh/versions source, checksum validation relies on
+  // user input or the built-in KNOWN_CHECKSUMS table, not manifest sha256 values.
+  const checksum =
+    manifestUrl === undefined
+      ? checkSum
+      : resolveChecksum(checkSum, artifact.checksum);
+
+  const mirrorUrl = rewriteToMirror(artifact.downloadUrl);
+  const downloadUrl = mirrorUrl ?? artifact.downloadUrl;
   // Don't send the GitHub token to the Astral mirror.
   const downloadToken = mirrorUrl !== undefined ? undefined : githubToken;
 
-  // For the default astral-sh/versions source, checksum validation relies on
-  // user input or the built-in KNOWN_CHECKSUMS table, not NDJSON sha256 values.
   try {
-    return await downloadVersion(
+    return await downloadArtifact(
       downloadUrl,
       `uv-${arch}-${platform}`,
       platform,
       arch,
       version,
-      checkSum,
+      checksum,
       downloadToken,
     );
   } catch (err) {
@@ -79,13 +76,13 @@ export async function downloadVersionFromNdjson(
       `Failed to download from mirror, falling back to GitHub Releases: ${(err as Error).message}`,
     );
 
-    return await downloadVersion(
-      artifact.url,
+    return await downloadArtifact(
+      artifact.downloadUrl,
       `uv-${arch}-${platform}`,
       platform,
       arch,
       version,
-      checkSum,
+      checksum,
       githubToken,
     );
   }
@@ -99,41 +96,11 @@ export function rewriteToMirror(url: string): string | undefined {
   if (!url.startsWith(GITHUB_RELEASES_PREFIX)) {
     return undefined;
   }
+
   return ASTRAL_MIRROR_PREFIX + url.slice(GITHUB_RELEASES_PREFIX.length);
 }
 
-export async function downloadVersionFromManifest(
-  manifestUrl: string,
-  platform: Platform,
-  arch: Architecture,
-  version: string,
-  checkSum: string | undefined,
-  githubToken: string,
-): Promise<{ version: string; cachedToolDir: string }> {
-  const artifact = await getManifestArtifact(
-    manifestUrl,
-    version,
-    arch,
-    platform,
-  );
-  if (!artifact) {
-    throw new Error(
-      `manifest-file does not contain version ${version}, arch ${arch}, platform ${platform}.`,
-    );
-  }
-
-  return await downloadVersion(
-    artifact.downloadUrl,
-    `uv-${arch}-${platform}`,
-    platform,
-    arch,
-    version,
-    resolveChecksum(checkSum, artifact.checksum),
-    githubToken,
-  );
-}
-
-async function downloadVersion(
+async function downloadArtifact(
   downloadUrl: string,
   artifactName: string,
   platform: Platform,
@@ -177,13 +144,26 @@ async function downloadVersion(
     version,
     arch,
   );
-  return { cachedToolDir, version: version };
+  return { cachedToolDir, version };
+}
+
+function getMissingArtifactMessage(
+  version: string,
+  arch: Architecture,
+  platform: Platform,
+  manifestUrl?: string,
+): string {
+  if (manifestUrl === undefined) {
+    return `Could not find artifact for version ${version}, arch ${arch}, platform ${platform} in ${VERSIONS_MANIFEST_URL} .`;
+  }
+
+  return `manifest-file does not contain version ${version}, arch ${arch}, platform ${platform}.`;
 }
 
 function resolveChecksum(
   checkSum: string | undefined,
-  manifestChecksum?: string,
-): string | undefined {
+  manifestChecksum: string,
+): string {
   return checkSum !== undefined && checkSum !== ""
     ? checkSum
     : manifestChecksum;
@@ -199,31 +179,27 @@ export async function resolveVersion(
   resolutionStrategy: "highest" | "lowest" = "highest",
 ): Promise<string> {
   core.debug(`Resolving version: ${versionInput}`);
-  let version: string;
   const isSimpleMinimumVersionSpecifier =
     versionInput.includes(">") && !versionInput.includes(",");
   const resolveVersionSpecifierToLatest =
     isSimpleMinimumVersionSpecifier && resolutionStrategy === "highest";
+
   if (resolveVersionSpecifierToLatest) {
     core.info("Found minimum version specifier, using latest version");
   }
-  if (manifestUrl !== undefined) {
-    version =
-      versionInput === "latest" || resolveVersionSpecifierToLatest
-        ? await getLatestVersionInManifest(manifestUrl)
-        : versionInput;
-  } else {
-    version =
-      versionInput === "latest" || resolveVersionSpecifierToLatest
-        ? await getLatestVersionFromNdjson()
-        : versionInput;
-  }
+
+  const version =
+    versionInput === "latest" || resolveVersionSpecifierToLatest
+      ? await getLatestVersion(manifestUrl)
+      : versionInput;
+
   if (tc.isExplicitVersion(version)) {
     core.debug(`Version ${version} is an explicit version.`);
-    if (resolveVersionSpecifierToLatest) {
-      if (!pep440.satisfies(version, versionInput)) {
-        throw new Error(`No version found for ${versionInput}`);
-      }
+    if (
+      resolveVersionSpecifierToLatest &&
+      !pep440.satisfies(version, versionInput)
+    ) {
+      throw new Error(`No version found for ${versionInput}`);
     }
     return version;
   }
@@ -249,11 +225,11 @@ async function getAvailableVersions(
     core.info(
       `Getting available versions from manifest-file ${manifestUrl} ...`,
     );
-    return await getAllManifestVersions(manifestUrl);
+  } else {
+    core.info(`Getting available versions from ${VERSIONS_MANIFEST_URL} ...`);
   }
 
-  core.info(`Getting available versions from ${VERSIONS_NDJSON_URL} ...`);
-  return await getAllVersionsFromNdjson();
+  return await getAllVersions(manifestUrl);
 }
 
 function maxSatisfying(

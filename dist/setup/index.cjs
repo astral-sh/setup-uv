@@ -91886,7 +91886,7 @@ var semver5 = __toESM(require_semver5(), 1);
 var TOOL_CACHE_NAME = "uv";
 var STATE_UV_PATH = "uv-path";
 var STATE_UV_VERSION = "uv-version";
-var VERSIONS_NDJSON_URL = "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson";
+var VERSIONS_MANIFEST_URL = "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson";
 var GITHUB_RELEASES_PREFIX = "https://github.com/astral-sh/uv/releases/download/";
 var ASTRAL_MIRROR_PREFIX = "https://releases.astral.sh/github/uv/releases/download/";
 
@@ -96373,7 +96373,7 @@ async function validateFileCheckSum(filePath, expected) {
   });
 }
 
-// src/download/version-manifest.ts
+// src/download/manifest.ts
 var semver4 = __toESM(require_semver5(), 1);
 
 // src/utils/fetch.ts
@@ -96393,45 +96393,6 @@ var fetch = async (url2, opts) => await (0, import_undici2.fetch)(url2, {
   dispatcher: getProxyAgent(),
   ...opts
 });
-
-// src/download/legacy-version-manifest.ts
-var warnedLegacyManifestUrls = /* @__PURE__ */ new Set();
-function parseLegacyManifestEntries(parsedEntries, manifestUrl) {
-  warnAboutLegacyManifestFormat(manifestUrl);
-  return parsedEntries.map((entry, index) => {
-    if (!isLegacyManifestEntry(entry)) {
-      throw new Error(
-        `Invalid legacy manifest-file entry at index ${index} in ${manifestUrl}.`
-      );
-    }
-    return {
-      arch: entry.arch,
-      checksum: entry.checksum,
-      downloadUrl: entry.downloadUrl,
-      platform: entry.platform,
-      version: entry.version
-    };
-  });
-}
-function warnAboutLegacyManifestFormat(manifestUrl) {
-  if (warnedLegacyManifestUrls.has(manifestUrl)) {
-    return;
-  }
-  warnedLegacyManifestUrls.add(manifestUrl);
-  warning(
-    `manifest-file ${manifestUrl} uses the legacy JSON array format, which is deprecated. Please migrate to the astral-sh/versions NDJSON format before the next major release.`
-  );
-}
-function isLegacyManifestEntry(value) {
-  if (!isRecord(value)) {
-    return false;
-  }
-  const checksumIsValid = typeof value.checksum === "string" || value.checksum === void 0;
-  return typeof value.arch === "string" && checksumIsValid && typeof value.downloadUrl === "string" && typeof value.platform === "string" && typeof value.version === "string";
-}
-function isRecord(value) {
-  return typeof value === "object" && value !== null;
-}
 
 // src/download/variant-selection.ts
 function selectDefaultVariant(entries, duplicateEntryDescription) {
@@ -96459,73 +96420,88 @@ function formatVariants(entries) {
   return entries.map((entry) => entry.variant ?? "default").sort((left, right) => left.localeCompare(right)).join(", ");
 }
 
-// src/download/versions-client.ts
-var cachedVersionData = /* @__PURE__ */ new Map();
-async function fetchVersionData(url2 = VERSIONS_NDJSON_URL) {
-  const cachedVersions = cachedVersionData.get(url2);
+// src/download/manifest.ts
+var cachedManifestData = /* @__PURE__ */ new Map();
+async function fetchManifest(manifestUrl = VERSIONS_MANIFEST_URL) {
+  const cachedVersions = cachedManifestData.get(manifestUrl);
   if (cachedVersions !== void 0) {
-    debug(`Using cached NDJSON version data from ${url2}`);
+    debug(`Using cached manifest data from ${manifestUrl}`);
     return cachedVersions;
   }
-  info(`Fetching version data from ${url2} ...`);
-  const response = await fetch(url2, {});
+  info(`Fetching manifest data from ${manifestUrl} ...`);
+  const response = await fetch(manifestUrl, {});
   if (!response.ok) {
     throw new Error(
-      `Failed to fetch version data: ${response.status} ${response.statusText}`
+      `Failed to fetch manifest data: ${response.status} ${response.statusText}`
     );
   }
   const body2 = await response.text();
-  const versions = parseVersionData(body2, url2);
-  cachedVersionData.set(url2, versions);
+  const versions = parseManifest(body2, manifestUrl);
+  cachedManifestData.set(manifestUrl, versions);
   return versions;
 }
-function parseVersionData(data, sourceDescription) {
+function parseManifest(data, sourceDescription) {
+  const trimmed = data.trim();
+  if (trimmed === "") {
+    throw new Error(`Manifest at ${sourceDescription} is empty.`);
+  }
+  if (trimmed.startsWith("[")) {
+    throw new Error(
+      `Legacy JSON array manifests are no longer supported in ${sourceDescription}. Use the astral-sh/versions manifest format instead.`
+    );
+  }
   const versions = [];
   for (const [index, line] of data.split("\n").entries()) {
-    const trimmed = line.trim();
-    if (trimmed === "") {
+    const record = line.trim();
+    if (record === "") {
       continue;
     }
     let parsed;
     try {
-      parsed = JSON.parse(trimmed);
+      parsed = JSON.parse(record);
     } catch (error2) {
       throw new Error(
-        `Failed to parse version data from ${sourceDescription} at line ${index + 1}: ${error2.message}`
+        `Failed to parse manifest data from ${sourceDescription} at line ${index + 1}: ${error2.message}`
       );
     }
-    if (!isNdjsonVersion(parsed)) {
+    if (!isManifestVersion(parsed)) {
       throw new Error(
-        `Invalid NDJSON record in ${sourceDescription} at line ${index + 1}.`
+        `Invalid manifest record in ${sourceDescription} at line ${index + 1}.`
       );
     }
     versions.push(parsed);
   }
   if (versions.length === 0) {
-    throw new Error(`No version data found in ${sourceDescription}.`);
+    throw new Error(`No manifest data found in ${sourceDescription}.`);
   }
   return versions;
 }
-async function getLatestVersion() {
-  const versions = await fetchVersionData();
-  const latestVersion = versions[0]?.version;
-  if (!latestVersion) {
-    throw new Error("No versions found in NDJSON data");
+async function getLatestVersion(manifestUrl = VERSIONS_MANIFEST_URL) {
+  const versions = await fetchManifest(manifestUrl);
+  const [firstVersion, ...remainingVersions] = versions.map(
+    (versionData) => versionData.version
+  );
+  if (firstVersion === void 0) {
+    throw new Error("No versions found in manifest data");
   }
-  debug(`Latest version from NDJSON: ${latestVersion}`);
+  const latestVersion = remainingVersions.reduce(
+    (latest, current) => semver4.gt(current, latest) ? current : latest,
+    firstVersion
+  );
+  debug(`Latest version from manifest: ${latestVersion}`);
   return latestVersion;
 }
-async function getAllVersions() {
-  const versions = await fetchVersionData();
+async function getAllVersions(manifestUrl = VERSIONS_MANIFEST_URL) {
+  const versions = await fetchManifest(manifestUrl);
   return versions.map((versionData) => versionData.version);
 }
-async function getArtifact(version4, arch3, platform2) {
-  const versions = await fetchVersionData();
+async function getArtifact(version4, arch3, platform2, manifestUrl = VERSIONS_MANIFEST_URL) {
+  const versions = await fetchManifest(manifestUrl);
   const versionData = versions.find(
     (candidate) => candidate.version === version4
   );
   if (!versionData) {
-    debug(`Version ${version4} not found in NDJSON data`);
+    debug(`Version ${version4} not found in manifest ${manifestUrl}`);
     return void 0;
   }
   const targetPlatform = `${arch3}-${platform2}`;
@@ -96538,141 +96514,34 @@ async function getArtifact(version4, arch3, platform2) {
     );
     return void 0;
   }
-  const artifact = selectArtifact(matchingArtifacts, version4, targetPlatform);
-  return {
-    archiveFormat: artifact.archive_format,
-    sha256: artifact.sha256,
-    url: artifact.url
-  };
-}
-function selectArtifact(artifacts, version4, targetPlatform) {
-  return selectDefaultVariant(
-    artifacts,
+  const artifact = selectDefaultVariant(
+    matchingArtifacts,
     `Multiple artifacts found for ${targetPlatform} in version ${version4}`
   );
+  return {
+    archiveFormat: artifact.archive_format,
+    checksum: artifact.sha256,
+    downloadUrl: artifact.url
+  };
 }
-function isNdjsonVersion(value) {
-  if (!isRecord2(value)) {
+function isManifestVersion(value) {
+  if (!isRecord(value)) {
     return false;
   }
   if (typeof value.version !== "string" || !Array.isArray(value.artifacts)) {
     return false;
   }
-  return value.artifacts.every(isNdjsonArtifact);
+  return value.artifacts.every(isManifestArtifact);
 }
-function isNdjsonArtifact(value) {
-  if (!isRecord2(value)) {
+function isManifestArtifact(value) {
+  if (!isRecord(value)) {
     return false;
   }
   const variantIsValid = typeof value.variant === "string" || value.variant === void 0;
   return typeof value.archive_format === "string" && typeof value.platform === "string" && typeof value.sha256 === "string" && typeof value.url === "string" && variantIsValid;
 }
-function isRecord2(value) {
+function isRecord(value) {
   return typeof value === "object" && value !== null;
-}
-
-// src/download/version-manifest.ts
-var cachedManifestEntries = /* @__PURE__ */ new Map();
-async function getLatestKnownVersion(manifestUrl) {
-  const versions = await getAllVersions2(manifestUrl);
-  const latestVersion = versions.reduce(
-    (latest, current) => semver4.gt(current, latest) ? current : latest
-  );
-  return latestVersion;
-}
-async function getAllVersions2(manifestUrl) {
-  const manifestEntries = await getManifestEntries(manifestUrl);
-  return [...new Set(manifestEntries.map((entry) => entry.version))];
-}
-async function getManifestArtifact(manifestUrl, version4, arch3, platform2) {
-  const manifestEntries = await getManifestEntries(manifestUrl);
-  const entry = selectManifestEntry(
-    manifestEntries,
-    manifestUrl,
-    version4,
-    arch3,
-    platform2
-  );
-  if (!entry) {
-    return void 0;
-  }
-  return {
-    archiveFormat: entry.archiveFormat,
-    checksum: entry.checksum,
-    downloadUrl: entry.downloadUrl
-  };
-}
-async function getManifestEntries(manifestUrl) {
-  const cachedEntries = cachedManifestEntries.get(manifestUrl);
-  if (cachedEntries !== void 0) {
-    debug(`Using cached manifest-file from: ${manifestUrl}`);
-    return cachedEntries;
-  }
-  info(`Fetching manifest-file from: ${manifestUrl}`);
-  const response = await fetch(manifestUrl, {});
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch manifest-file: ${response.status} ${response.statusText}`
-    );
-  }
-  const data = await response.text();
-  const parsedEntries = parseManifestEntries(data, manifestUrl);
-  cachedManifestEntries.set(manifestUrl, parsedEntries);
-  return parsedEntries;
-}
-function parseManifestEntries(data, manifestUrl) {
-  const trimmed = data.trim();
-  if (trimmed === "") {
-    throw new Error(`manifest-file at ${manifestUrl} is empty.`);
-  }
-  const parsedAsJson = tryParseJson(trimmed);
-  if (Array.isArray(parsedAsJson)) {
-    return parseLegacyManifestEntries(parsedAsJson, manifestUrl);
-  }
-  const versions = parseVersionData(trimmed, manifestUrl);
-  return mapNdjsonVersionsToManifestEntries(versions, manifestUrl);
-}
-function mapNdjsonVersionsToManifestEntries(versions, manifestUrl) {
-  const manifestEntries = [];
-  for (const versionData of versions) {
-    for (const artifact of versionData.artifacts) {
-      const [arch3, ...platformParts] = artifact.platform.split("-");
-      if (arch3 === void 0 || platformParts.length === 0) {
-        throw new Error(
-          `Invalid artifact platform '${artifact.platform}' in manifest-file ${manifestUrl}.`
-        );
-      }
-      manifestEntries.push({
-        arch: arch3,
-        archiveFormat: artifact.archive_format,
-        checksum: artifact.sha256,
-        downloadUrl: artifact.url,
-        platform: platformParts.join("-"),
-        variant: artifact.variant,
-        version: versionData.version
-      });
-    }
-  }
-  return manifestEntries;
-}
-function selectManifestEntry(manifestEntries, manifestUrl, version4, arch3, platform2) {
-  const matches = manifestEntries.filter(
-    (candidate) => candidate.version === version4 && candidate.arch === arch3 && candidate.platform === platform2
-  );
-  if (matches.length === 0) {
-    return void 0;
-  }
-  return selectDefaultVariant(
-    matches,
-    `manifest-file ${manifestUrl} contains multiple artifacts for version ${version4}, arch ${arch3}, platform ${platform2}`
-  );
-}
-function tryParseJson(value) {
-  try {
-    return JSON.parse(value);
-  } catch {
-    return void 0;
-  }
 }
 
 // src/download/download-version.ts
@@ -96687,24 +96556,25 @@ function tryGetFromToolCache(arch3, version4) {
   const installedPath = find(TOOL_CACHE_NAME, resolvedVersion, arch3);
   return { installedPath, version: resolvedVersion };
 }
-async function downloadVersionFromNdjson(platform2, arch3, version4, checkSum2, githubToken2) {
-  const artifact = await getArtifact(version4, arch3, platform2);
+async function downloadVersion(platform2, arch3, version4, checkSum2, githubToken2, manifestUrl) {
+  const artifact = await getArtifact(version4, arch3, platform2, manifestUrl);
   if (!artifact) {
     throw new Error(
-      `Could not find artifact for version ${version4}, arch ${arch3}, platform ${platform2} in ${VERSIONS_NDJSON_URL} .`
+      getMissingArtifactMessage(version4, arch3, platform2, manifestUrl)
     );
   }
-  const mirrorUrl = rewriteToMirror(artifact.url);
-  const downloadUrl = mirrorUrl ?? artifact.url;
+  const checksum = manifestUrl === void 0 ? checkSum2 : resolveChecksum(checkSum2, artifact.checksum);
+  const mirrorUrl = rewriteToMirror(artifact.downloadUrl);
+  const downloadUrl = mirrorUrl ?? artifact.downloadUrl;
   const downloadToken = mirrorUrl !== void 0 ? void 0 : githubToken2;
   try {
-    return await downloadVersion(
+    return await downloadArtifact(
       downloadUrl,
       `uv-${arch3}-${platform2}`,
       platform2,
       arch3,
       version4,
-      checkSum2,
+      checksum,
       downloadToken
     );
   } catch (err) {
@@ -96714,13 +96584,13 @@ async function downloadVersionFromNdjson(platform2, arch3, version4, checkSum2, 
     warning(
       `Failed to download from mirror, falling back to GitHub Releases: ${err.message}`
     );
-    return await downloadVersion(
-      artifact.url,
+    return await downloadArtifact(
+      artifact.downloadUrl,
       `uv-${arch3}-${platform2}`,
       platform2,
       arch3,
       version4,
-      checkSum2,
+      checksum,
       githubToken2
     );
   }
@@ -96731,29 +96601,7 @@ function rewriteToMirror(url2) {
   }
   return ASTRAL_MIRROR_PREFIX + url2.slice(GITHUB_RELEASES_PREFIX.length);
 }
-async function downloadVersionFromManifest(manifestUrl, platform2, arch3, version4, checkSum2, githubToken2) {
-  const artifact = await getManifestArtifact(
-    manifestUrl,
-    version4,
-    arch3,
-    platform2
-  );
-  if (!artifact) {
-    throw new Error(
-      `manifest-file does not contain version ${version4}, arch ${arch3}, platform ${platform2}.`
-    );
-  }
-  return await downloadVersion(
-    artifact.downloadUrl,
-    `uv-${arch3}-${platform2}`,
-    platform2,
-    arch3,
-    version4,
-    resolveChecksum(checkSum2, artifact.checksum),
-    githubToken2
-  );
-}
-async function downloadVersion(downloadUrl, artifactName, platform2, arch3, version4, checksum, githubToken2) {
+async function downloadArtifact(downloadUrl, artifactName, platform2, arch3, version4, checksum, githubToken2) {
   info(`Downloading uv from "${downloadUrl}" ...`);
   const downloadPath = await downloadTool(
     downloadUrl,
@@ -96786,6 +96634,12 @@ async function downloadVersion(downloadUrl, artifactName, platform2, arch3, vers
   );
   return { cachedToolDir, version: version4 };
 }
+function getMissingArtifactMessage(version4, arch3, platform2, manifestUrl) {
+  if (manifestUrl === void 0) {
+    return `Could not find artifact for version ${version4}, arch ${arch3}, platform ${platform2} in ${VERSIONS_MANIFEST_URL} .`;
+  }
+  return `manifest-file does not contain version ${version4}, arch ${arch3}, platform ${platform2}.`;
+}
 function resolveChecksum(checkSum2, manifestChecksum) {
   return checkSum2 !== void 0 && checkSum2 !== "" ? checkSum2 : manifestChecksum;
 }
@@ -96794,23 +96648,16 @@ function getExtension(platform2) {
 }
 async function resolveVersion(versionInput, manifestUrl, resolutionStrategy2 = "highest") {
   debug(`Resolving version: ${versionInput}`);
-  let version4;
   const isSimpleMinimumVersionSpecifier = versionInput.includes(">") && !versionInput.includes(",");
   const resolveVersionSpecifierToLatest = isSimpleMinimumVersionSpecifier && resolutionStrategy2 === "highest";
   if (resolveVersionSpecifierToLatest) {
     info("Found minimum version specifier, using latest version");
   }
-  if (manifestUrl !== void 0) {
-    version4 = versionInput === "latest" || resolveVersionSpecifierToLatest ? await getLatestKnownVersion(manifestUrl) : versionInput;
-  } else {
-    version4 = versionInput === "latest" || resolveVersionSpecifierToLatest ? await getLatestVersion() : versionInput;
-  }
+  const version4 = versionInput === "latest" || resolveVersionSpecifierToLatest ? await getLatestVersion(manifestUrl) : versionInput;
   if (isExplicitVersion(version4)) {
     debug(`Version ${version4} is an explicit version.`);
-    if (resolveVersionSpecifierToLatest) {
-      if (!pep440.satisfies(version4, versionInput)) {
-        throw new Error(`No version found for ${versionInput}`);
-      }
+    if (resolveVersionSpecifierToLatest && !pep440.satisfies(version4, versionInput)) {
+      throw new Error(`No version found for ${versionInput}`);
     }
     return version4;
   }
@@ -96827,10 +96674,10 @@ async function getAvailableVersions(manifestUrl) {
     info(
       `Getting available versions from manifest-file ${manifestUrl} ...`
     );
-    return await getAllVersions2(manifestUrl);
+  } else {
+    info(`Getting available versions from ${VERSIONS_MANIFEST_URL} ...`);
   }
-  info(`Getting available versions from ${VERSIONS_NDJSON_URL} ...`);
-  return await getAllVersions();
+  return await getAllVersions(manifestUrl);
 }
 function maxSatisfying2(versions, version4) {
   const maxSemver = evaluateVersions(versions, version4);
@@ -97024,7 +96871,7 @@ function detectEmptyWorkdir() {
   }
 }
 async function setupUv(platform2, arch3, checkSum2, githubToken2) {
-  const resolvedVersion = await determineVersion(manifestFile);
+  const resolvedVersion = await determineVersion();
   const toolCacheResult = tryGetFromToolCache(arch3, resolvedVersion);
   if (toolCacheResult.installedPath) {
     info(`Found uv in tool-cache for ${toolCacheResult.version}`);
@@ -97033,28 +96880,29 @@ async function setupUv(platform2, arch3, checkSum2, githubToken2) {
       version: toolCacheResult.version
     };
   }
-  const downloadVersionResult = manifestFile !== void 0 ? await downloadVersionFromManifest(
-    manifestFile,
+  const downloadResult = await downloadVersion(
     platform2,
     arch3,
     resolvedVersion,
     checkSum2,
-    githubToken2
-  ) : await downloadVersionFromNdjson(
-    platform2,
-    arch3,
-    resolvedVersion,
-    checkSum2,
-    githubToken2
+    githubToken2,
+    manifestFile
   );
   return {
-    uvDir: downloadVersionResult.cachedToolDir,
-    version: downloadVersionResult.version
+    uvDir: downloadResult.cachedToolDir,
+    version: downloadResult.version
   };
 }
-async function determineVersion(manifestFile2) {
+async function determineVersion() {
+  return await resolveVersion(
+    getRequestedVersion(),
+    manifestFile,
+    resolutionStrategy
+  );
+}
+function getRequestedVersion() {
   if (version3 !== "") {
-    return await resolveVersion(version3, manifestFile2, resolutionStrategy);
+    return version3;
   }
   if (versionFile !== "") {
     const versionFromFile = getUvVersionFromFile(versionFile);
@@ -97063,11 +96911,7 @@ async function determineVersion(manifestFile2) {
         `Could not determine uv version from file: ${versionFile}`
       );
     }
-    return await resolveVersion(
-      versionFromFile,
-      manifestFile2,
-      resolutionStrategy
-    );
+    return versionFromFile;
   }
   const versionFromUvToml = getUvVersionFromFile(
     `${workingDirectory}${path15.sep}uv.toml`
@@ -97080,11 +96924,7 @@ async function determineVersion(manifestFile2) {
       "Could not determine uv version from uv.toml or pyproject.toml. Falling back to latest."
     );
   }
-  return await resolveVersion(
-    versionFromUvToml || versionFromPyproject || "latest",
-    manifestFile2,
-    resolutionStrategy
-  );
+  return versionFromUvToml || versionFromPyproject || "latest";
 }
 function addUvToPathAndOutput(cachedPath) {
   setOutput("uv-path", `${cachedPath}${path15.sep}uv`);

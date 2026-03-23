@@ -32,29 +32,16 @@ jest.unstable_mockModule("@actions/tool-cache", () => ({
 }));
 
 // biome-ignore lint/suspicious/noExplicitAny: Mock requires flexible typing in tests.
-const mockGetLatestVersionFromNdjson = jest.fn<any>();
+const mockGetLatestVersion = jest.fn<any>();
 // biome-ignore lint/suspicious/noExplicitAny: Mock requires flexible typing in tests.
-const mockGetAllVersionsFromNdjson = jest.fn<any>();
+const mockGetAllVersions = jest.fn<any>();
 // biome-ignore lint/suspicious/noExplicitAny: Mock requires flexible typing in tests.
-const mockGetArtifactFromNdjson = jest.fn<any>();
+const mockGetArtifact = jest.fn<any>();
 
-jest.unstable_mockModule("../../src/download/versions-client", () => ({
-  getAllVersions: mockGetAllVersionsFromNdjson,
-  getArtifact: mockGetArtifactFromNdjson,
-  getLatestVersion: mockGetLatestVersionFromNdjson,
-}));
-
-// biome-ignore lint/suspicious/noExplicitAny: Mock requires flexible typing in tests.
-const mockGetAllManifestVersions = jest.fn<any>();
-// biome-ignore lint/suspicious/noExplicitAny: Mock requires flexible typing in tests.
-const mockGetLatestVersionInManifest = jest.fn<any>();
-// biome-ignore lint/suspicious/noExplicitAny: Mock requires flexible typing in tests.
-const mockGetManifestArtifact = jest.fn<any>();
-
-jest.unstable_mockModule("../../src/download/version-manifest", () => ({
-  getAllVersions: mockGetAllManifestVersions,
-  getLatestKnownVersion: mockGetLatestVersionInManifest,
-  getManifestArtifact: mockGetManifestArtifact,
+jest.unstable_mockModule("../../src/download/manifest", () => ({
+  getAllVersions: mockGetAllVersions,
+  getArtifact: mockGetArtifact,
+  getLatestVersion: mockGetLatestVersion,
 }));
 
 // biome-ignore lint/suspicious/noExplicitAny: Mock requires flexible typing in tests.
@@ -64,12 +51,9 @@ jest.unstable_mockModule("../../src/download/checksum/checksum", () => ({
   validateChecksum: mockValidateChecksum,
 }));
 
-const {
-  downloadVersionFromManifest,
-  downloadVersionFromNdjson,
-  resolveVersion,
-  rewriteToMirror,
-} = await import("../../src/download/download-version");
+const { downloadVersion, resolveVersion, rewriteToMirror } = await import(
+  "../../src/download/download-version"
+);
 
 describe("download-version", () => {
   beforeEach(() => {
@@ -79,12 +63,9 @@ describe("download-version", () => {
     mockExtractTar.mockReset();
     mockExtractZip.mockReset();
     mockCacheDir.mockReset();
-    mockGetLatestVersionFromNdjson.mockReset();
-    mockGetAllVersionsFromNdjson.mockReset();
-    mockGetArtifactFromNdjson.mockReset();
-    mockGetAllManifestVersions.mockReset();
-    mockGetLatestVersionInManifest.mockReset();
-    mockGetManifestArtifact.mockReset();
+    mockGetLatestVersion.mockReset();
+    mockGetAllVersions.mockReset();
+    mockGetArtifact.mockReset();
     mockValidateChecksum.mockReset();
 
     mockDownloadTool.mockResolvedValue("/tmp/downloaded");
@@ -94,36 +75,28 @@ describe("download-version", () => {
   });
 
   describe("resolveVersion", () => {
-    it("uses astral-sh/versions to resolve latest", async () => {
-      mockGetLatestVersionFromNdjson.mockResolvedValue("0.9.26");
+    it("uses the default manifest to resolve latest", async () => {
+      mockGetLatestVersion.mockResolvedValue("0.9.26");
 
       const version = await resolveVersion("latest", undefined);
 
       expect(version).toBe("0.9.26");
-      expect(mockGetLatestVersionFromNdjson).toHaveBeenCalledTimes(1);
+      expect(mockGetLatestVersion).toHaveBeenCalledTimes(1);
+      expect(mockGetLatestVersion).toHaveBeenCalledWith(undefined);
     });
 
-    it("uses astral-sh/versions to resolve available versions", async () => {
-      mockGetAllVersionsFromNdjson.mockResolvedValue(["0.9.26", "0.9.25"]);
+    it("uses the default manifest to resolve available versions", async () => {
+      mockGetAllVersions.mockResolvedValue(["0.9.26", "0.9.25"]);
 
       const version = await resolveVersion("^0.9.0", undefined);
 
       expect(version).toBe("0.9.26");
-      expect(mockGetAllVersionsFromNdjson).toHaveBeenCalledTimes(1);
-    });
-
-    it("does not fall back when astral-sh/versions fails", async () => {
-      mockGetLatestVersionFromNdjson.mockRejectedValue(
-        new Error("NDJSON unavailable"),
-      );
-
-      await expect(resolveVersion("latest", undefined)).rejects.toThrow(
-        "NDJSON unavailable",
-      );
+      expect(mockGetAllVersions).toHaveBeenCalledTimes(1);
+      expect(mockGetAllVersions).toHaveBeenCalledWith(undefined);
     });
 
     it("uses manifest-file when provided", async () => {
-      mockGetAllManifestVersions.mockResolvedValue(["0.9.26", "0.9.25"]);
+      mockGetAllVersions.mockResolvedValue(["0.9.26", "0.9.25"]);
 
       const version = await resolveVersion(
         "^0.9.0",
@@ -131,37 +104,35 @@ describe("download-version", () => {
       );
 
       expect(version).toBe("0.9.26");
-      expect(mockGetAllManifestVersions).toHaveBeenCalledWith(
+      expect(mockGetAllVersions).toHaveBeenCalledWith(
         "https://example.com/custom.ndjson",
       );
     });
   });
 
-  describe("downloadVersionFromNdjson", () => {
-    it("fails when NDJSON metadata lookup fails", async () => {
-      mockGetArtifactFromNdjson.mockRejectedValue(
-        new Error("NDJSON unavailable"),
-      );
+  describe("downloadVersion", () => {
+    it("fails when manifest lookup fails", async () => {
+      mockGetArtifact.mockRejectedValue(new Error("manifest unavailable"));
 
       await expect(
-        downloadVersionFromNdjson(
+        downloadVersion(
           "unknown-linux-gnu",
           "x86_64",
           "0.9.26",
           undefined,
           "token",
         ),
-      ).rejects.toThrow("NDJSON unavailable");
+      ).rejects.toThrow("manifest unavailable");
 
       expect(mockDownloadTool).not.toHaveBeenCalled();
       expect(mockValidateChecksum).not.toHaveBeenCalled();
     });
 
-    it("fails when no matching artifact exists in NDJSON metadata", async () => {
-      mockGetArtifactFromNdjson.mockResolvedValue(undefined);
+    it("fails when no matching artifact exists in the default manifest", async () => {
+      mockGetArtifact.mockResolvedValue(undefined);
 
       await expect(
-        downloadVersionFromNdjson(
+        downloadVersion(
           "unknown-linux-gnu",
           "x86_64",
           "0.9.26",
@@ -176,14 +147,14 @@ describe("download-version", () => {
       expect(mockValidateChecksum).not.toHaveBeenCalled();
     });
 
-    it("uses built-in checksums for default NDJSON downloads", async () => {
-      mockGetArtifactFromNdjson.mockResolvedValue({
+    it("uses built-in checksums for default manifest downloads", async () => {
+      mockGetArtifact.mockResolvedValue({
         archiveFormat: "tar.gz",
-        sha256: "ndjson-checksum-that-should-be-ignored",
-        url: "https://example.com/uv.tar.gz",
+        checksum: "manifest-checksum-that-should-be-ignored",
+        downloadUrl: "https://example.com/uv.tar.gz",
       });
 
-      await downloadVersionFromNdjson(
+      await downloadVersion(
         "unknown-linux-gnu",
         "x86_64",
         "0.9.26",
@@ -201,13 +172,14 @@ describe("download-version", () => {
     });
 
     it("rewrites GitHub Releases URLs to the Astral mirror", async () => {
-      mockGetArtifactFromNdjson.mockResolvedValue({
+      mockGetArtifact.mockResolvedValue({
         archiveFormat: "tar.gz",
-        sha256: "abc123",
-        url: "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-x86_64-unknown-linux-gnu.tar.gz",
+        checksum: "abc123",
+        downloadUrl:
+          "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-x86_64-unknown-linux-gnu.tar.gz",
       });
 
-      await downloadVersionFromNdjson(
+      await downloadVersion(
         "unknown-linux-gnu",
         "x86_64",
         "0.9.26",
@@ -223,13 +195,13 @@ describe("download-version", () => {
     });
 
     it("does not rewrite non-GitHub URLs", async () => {
-      mockGetArtifactFromNdjson.mockResolvedValue({
+      mockGetArtifact.mockResolvedValue({
         archiveFormat: "tar.gz",
-        sha256: "abc123",
-        url: "https://example.com/uv.tar.gz",
+        checksum: "abc123",
+        downloadUrl: "https://example.com/uv.tar.gz",
       });
 
-      await downloadVersionFromNdjson(
+      await downloadVersion(
         "unknown-linux-gnu",
         "x86_64",
         "0.9.26",
@@ -245,17 +217,18 @@ describe("download-version", () => {
     });
 
     it("falls back to GitHub Releases when the mirror fails", async () => {
-      mockGetArtifactFromNdjson.mockResolvedValue({
+      mockGetArtifact.mockResolvedValue({
         archiveFormat: "tar.gz",
-        sha256: "abc123",
-        url: "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-x86_64-unknown-linux-gnu.tar.gz",
+        checksum: "abc123",
+        downloadUrl:
+          "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-x86_64-unknown-linux-gnu.tar.gz",
       });
 
       mockDownloadTool
         .mockRejectedValueOnce(new Error("mirror unavailable"))
         .mockResolvedValueOnce("/tmp/downloaded");
 
-      await downloadVersionFromNdjson(
+      await downloadVersion(
         "unknown-linux-gnu",
         "x86_64",
         "0.9.26",
@@ -264,14 +237,12 @@ describe("download-version", () => {
       );
 
       expect(mockDownloadTool).toHaveBeenCalledTimes(2);
-      // Mirror request: no token
       expect(mockDownloadTool).toHaveBeenNthCalledWith(
         1,
         "https://releases.astral.sh/github/uv/releases/download/0.9.26/uv-x86_64-unknown-linux-gnu.tar.gz",
         undefined,
         undefined,
       );
-      // GitHub fallback: token restored
       expect(mockDownloadTool).toHaveBeenNthCalledWith(
         2,
         "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-x86_64-unknown-linux-gnu.tar.gz",
@@ -284,16 +255,16 @@ describe("download-version", () => {
     });
 
     it("does not fall back for non-GitHub URLs", async () => {
-      mockGetArtifactFromNdjson.mockResolvedValue({
+      mockGetArtifact.mockResolvedValue({
         archiveFormat: "tar.gz",
-        sha256: "abc123",
-        url: "https://example.com/uv.tar.gz",
+        checksum: "abc123",
+        downloadUrl: "https://example.com/uv.tar.gz",
       });
 
       mockDownloadTool.mockRejectedValue(new Error("download failed"));
 
       await expect(
-        downloadVersionFromNdjson(
+        downloadVersion(
           "unknown-linux-gnu",
           "x86_64",
           "0.9.26",
@@ -303,6 +274,56 @@ describe("download-version", () => {
       ).rejects.toThrow("download failed");
 
       expect(mockDownloadTool).toHaveBeenCalledTimes(1);
+    });
+
+    it("uses manifest-file checksum metadata when checksum input is unset", async () => {
+      mockGetArtifact.mockResolvedValue({
+        archiveFormat: "tar.gz",
+        checksum: "manifest-checksum",
+        downloadUrl: "https://example.com/custom-uv.tar.gz",
+      });
+
+      await downloadVersion(
+        "unknown-linux-gnu",
+        "x86_64",
+        "0.9.26",
+        "",
+        "token",
+        "https://example.com/custom.ndjson",
+      );
+
+      expect(mockValidateChecksum).toHaveBeenCalledWith(
+        "manifest-checksum",
+        "/tmp/downloaded",
+        "x86_64",
+        "unknown-linux-gnu",
+        "0.9.26",
+      );
+    });
+
+    it("prefers checksum input over manifest-file checksum metadata", async () => {
+      mockGetArtifact.mockResolvedValue({
+        archiveFormat: "tar.gz",
+        checksum: "manifest-checksum",
+        downloadUrl: "https://example.com/custom-uv.tar.gz",
+      });
+
+      await downloadVersion(
+        "unknown-linux-gnu",
+        "x86_64",
+        "0.9.26",
+        "user-checksum",
+        "token",
+        "https://example.com/custom.ndjson",
+      );
+
+      expect(mockValidateChecksum).toHaveBeenCalledWith(
+        "user-checksum",
+        "/tmp/downloaded",
+        "x86_64",
+        "unknown-linux-gnu",
+        "0.9.26",
+      );
     });
   });
 
@@ -327,58 +348,6 @@ describe("download-version", () => {
           "https://github.com/other/repo/releases/download/v1.0/file.tar.gz",
         ),
       ).toBeUndefined();
-    });
-  });
-
-  describe("downloadVersionFromManifest", () => {
-    it("uses manifest-file checksum metadata when checksum input is unset", async () => {
-      mockGetManifestArtifact.mockResolvedValue({
-        archiveFormat: "tar.gz",
-        checksum: "manifest-checksum",
-        downloadUrl: "https://example.com/custom-uv.tar.gz",
-      });
-
-      await downloadVersionFromManifest(
-        "https://example.com/custom.ndjson",
-        "unknown-linux-gnu",
-        "x86_64",
-        "0.9.26",
-        "",
-        "token",
-      );
-
-      expect(mockValidateChecksum).toHaveBeenCalledWith(
-        "manifest-checksum",
-        "/tmp/downloaded",
-        "x86_64",
-        "unknown-linux-gnu",
-        "0.9.26",
-      );
-    });
-
-    it("prefers checksum input over manifest-file checksum metadata", async () => {
-      mockGetManifestArtifact.mockResolvedValue({
-        archiveFormat: "tar.gz",
-        checksum: "manifest-checksum",
-        downloadUrl: "https://example.com/custom-uv.tar.gz",
-      });
-
-      await downloadVersionFromManifest(
-        "https://example.com/custom.ndjson",
-        "unknown-linux-gnu",
-        "x86_64",
-        "0.9.26",
-        "user-checksum",
-        "token",
-      );
-
-      expect(mockValidateChecksum).toHaveBeenCalledWith(
-        "user-checksum",
-        "/tmp/downloaded",
-        "x86_64",
-        "unknown-linux-gnu",
-        "0.9.26",
-      );
     });
   });
 });

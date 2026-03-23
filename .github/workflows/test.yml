@@ -808,12 +808,12 @@ jobs:
       - name: Install from custom manifest file
         uses: ./
         with:
-          manifest-file: "https://raw.githubusercontent.com/astral-sh/setup-uv/${{ github.ref }}/__tests__/download/custom-manifest.json"
+          manifest-file: "https://raw.githubusercontent.com/astral-sh/setup-uv/${{ github.ref }}/__tests__/download/custom-manifest.ndjson"
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
       - name: Correct version gets installed
         run: |
-          if [ "$(uv --version)" != "uv 0.7.12-alpha.1" ]; then
+          if [ "$(uv --version)" != "uv 0.9.26" ]; then
             echo "Wrong uv version: $(uv --version)"
             exit 1
           fi
