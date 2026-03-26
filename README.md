@@ -50,7 +50,7 @@ Have a look under [Advanced Configuration](#advanced-configuration) for detailed
     # Path to a file containing the version of uv to install (default: searches uv.toml then pyproject.toml)
     version-file: ""
 
-    # Resolution strategy when resolving version ranges: 'highest' or 'lowest'
+    # Resolution strategy when resolving version ranges: 'highest', 'lowest', or 'lowest-direct'
     resolution-strategy: "highest"
 
     # The version of Python to set UV_PYTHON to
