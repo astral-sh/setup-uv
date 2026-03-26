@@ -240,8 +240,11 @@ function getManifestFile(): string | undefined {
   return undefined;
 }
 
-function getResolutionStrategy(): "highest" | "lowest" {
+function getResolutionStrategy(): "highest" | "lowest" | "lowest-direct" {
   const resolutionStrategyInput = core.getInput("resolution-strategy");
+  if (resolutionStrategyInput === "lowest-direct") {
+    return "lowest-direct";
+  }
   if (resolutionStrategyInput === "lowest") {
     return "lowest";
   }
@@ -249,6 +252,6 @@ function getResolutionStrategy(): "highest" | "lowest" {
     return "highest";
   }
   throw new Error(
-    `Invalid resolution-strategy: ${resolutionStrategyInput}. Must be 'highest' or 'lowest'.`,
+    `Invalid resolution-strategy: ${resolutionStrategyInput}. Must be 'highest', 'lowest', or 'lowest-direct'.`,
   );
 }
