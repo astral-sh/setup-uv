@@ -38,7 +38,7 @@ jobs:
           npm run all
       - name: Check all jobs are in all-tests-passed.needs
         run: |
-          tsc --module nodenext --moduleResolution nodenext --target es2022 check-all-tests-passed-needs.ts
+          tsc -p tsconfig.json
           node check-all-tests-passed-needs.js
         working-directory: .github/scripts
       - name: Make sure no changes from linters are detected
