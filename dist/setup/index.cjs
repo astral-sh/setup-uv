@@ -1491,36 +1491,36 @@ var require_diagnostics = __commonJS({
       const debuglog = fetchDebuglog.enabled ? fetchDebuglog : undiciDebugLog;
       diagnosticsChannel.channel("undici:client:beforeConnect").subscribe((evt) => {
         const {
-          connectParams: { version: version4, protocol, port, host }
+          connectParams: { version: version3, protocol, port, host }
         } = evt;
         debuglog(
           "connecting to %s using %s%s",
           `${host}${port ? `:${port}` : ""}`,
           protocol,
-          version4
+          version3
         );
       });
       diagnosticsChannel.channel("undici:client:connected").subscribe((evt) => {
         const {
-          connectParams: { version: version4, protocol, port, host }
+          connectParams: { version: version3, protocol, port, host }
         } = evt;
         debuglog(
           "connected to %s using %s%s",
           `${host}${port ? `:${port}` : ""}`,
           protocol,
-          version4
+          version3
         );
       });
       diagnosticsChannel.channel("undici:client:connectError").subscribe((evt) => {
         const {
-          connectParams: { version: version4, protocol, port, host },
+          connectParams: { version: version3, protocol, port, host },
           error: error2
         } = evt;
         debuglog(
           "connection to %s using %s%s errored - %s",
           `${host}${port ? `:${port}` : ""}`,
           protocol,
-          version4,
+          version3,
           error2.message
         );
       });
@@ -1569,31 +1569,31 @@ var require_diagnostics = __commonJS({
         const debuglog = undiciDebugLog.enabled ? undiciDebugLog : websocketDebuglog;
         diagnosticsChannel.channel("undici:client:beforeConnect").subscribe((evt) => {
           const {
-            connectParams: { version: version4, protocol, port, host }
+            connectParams: { version: version3, protocol, port, host }
           } = evt;
           debuglog(
             "connecting to %s%s using %s%s",
             host,
             port ? `:${port}` : "",
             protocol,
-            version4
+            version3
           );
         });
         diagnosticsChannel.channel("undici:client:connected").subscribe((evt) => {
           const {
-            connectParams: { version: version4, protocol, port, host }
+            connectParams: { version: version3, protocol, port, host }
           } = evt;
           debuglog(
             "connected to %s%s using %s%s",
             host,
             port ? `:${port}` : "",
             protocol,
-            version4
+            version3
           );
         });
         diagnosticsChannel.channel("undici:client:connectError").subscribe((evt) => {
           const {
-            connectParams: { version: version4, protocol, port, host },
+            connectParams: { version: version3, protocol, port, host },
             error: error2
           } = evt;
           debuglog(
@@ -1601,7 +1601,7 @@ var require_diagnostics = __commonJS({
             host,
             port ? `:${port}` : "",
             protocol,
-            version4,
+            version3,
             error2.message
           );
         });
@@ -19561,31 +19561,31 @@ var require_semver = __commonJS({
     var parseOptions = require_parse_options();
     var { compareIdentifiers } = require_identifiers();
     var SemVer = class _SemVer {
-      constructor(version4, options) {
+      constructor(version3, options) {
         options = parseOptions(options);
-        if (version4 instanceof _SemVer) {
-          if (version4.loose === !!options.loose && version4.includePrerelease === !!options.includePrerelease) {
-            return version4;
+        if (version3 instanceof _SemVer) {
+          if (version3.loose === !!options.loose && version3.includePrerelease === !!options.includePrerelease) {
+            return version3;
           } else {
-            version4 = version4.version;
+            version3 = version3.version;
           }
-        } else if (typeof version4 !== "string") {
-          throw new TypeError(`Invalid version. Must be a string. Got type "${typeof version4}".`);
+        } else if (typeof version3 !== "string") {
+          throw new TypeError(`Invalid version. Must be a string. Got type "${typeof version3}".`);
         }
-        if (version4.length > MAX_LENGTH) {
+        if (version3.length > MAX_LENGTH) {
           throw new TypeError(
             `version is longer than ${MAX_LENGTH} characters`
           );
         }
-        debug2("SemVer", version4, options);
+        debug2("SemVer", version3, options);
         this.options = options;
         this.loose = !!options.loose;
         this.includePrerelease = !!options.includePrerelease;
-        const m = version4.trim().match(options.loose ? re[t.LOOSE] : re[t.FULL]);
+        const m = version3.trim().match(options.loose ? re[t.LOOSE] : re[t.FULL]);
         if (!m) {
-          throw new TypeError(`Invalid Version: ${version4}`);
+          throw new TypeError(`Invalid Version: ${version3}`);
         }
-        this.raw = version4;
+        this.raw = version3;
         this.major = +m[1];
         this.minor = +m[2];
         this.patch = +m[3];
@@ -19835,12 +19835,12 @@ var require_parse2 = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/parse.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
-    var parse3 = (version4, options, throwErrors = false) => {
-      if (version4 instanceof SemVer) {
-        return version4;
+    var parse3 = (version3, options, throwErrors = false) => {
+      if (version3 instanceof SemVer) {
+        return version3;
       }
       try {
-        return new SemVer(version4, options);
+        return new SemVer(version3, options);
       } catch (er) {
         if (!throwErrors) {
           return null;
@@ -19857,8 +19857,8 @@ var require_valid = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/valid.js"(exports2, module2) {
     "use strict";
     var parse3 = require_parse2();
-    var valid2 = (version4, options) => {
-      const v = parse3(version4, options);
+    var valid2 = (version3, options) => {
+      const v = parse3(version3, options);
       return v ? v.version : null;
     };
     module2.exports = valid2;
@@ -19870,8 +19870,8 @@ var require_clean = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/clean.js"(exports2, module2) {
     "use strict";
     var parse3 = require_parse2();
-    var clean3 = (version4, options) => {
-      const s = parse3(version4.trim().replace(/^[=v]+/, ""), options);
+    var clean3 = (version3, options) => {
+      const s = parse3(version3.trim().replace(/^[=v]+/, ""), options);
       return s ? s.version : null;
     };
     module2.exports = clean3;
@@ -19883,7 +19883,7 @@ var require_inc = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/inc.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
-    var inc = (version4, release, options, identifier, identifierBase) => {
+    var inc = (version3, release, options, identifier, identifierBase) => {
       if (typeof options === "string") {
         identifierBase = identifier;
         identifier = options;
@@ -19891,7 +19891,7 @@ var require_inc = __commonJS({
       }
       try {
         return new SemVer(
-          version4 instanceof SemVer ? version4.version : version4,
+          version3 instanceof SemVer ? version3.version : version3,
           options
         ).inc(release, identifier, identifierBase).version;
       } catch (er) {
@@ -19981,8 +19981,8 @@ var require_prerelease = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/prerelease.js"(exports2, module2) {
     "use strict";
     var parse3 = require_parse2();
-    var prerelease = (version4, options) => {
-      const parsed = parse3(version4, options);
+    var prerelease = (version3, options) => {
+      const parsed = parse3(version3, options);
       return parsed && parsed.prerelease.length ? parsed.prerelease : null;
     };
     module2.exports = prerelease;
@@ -20170,24 +20170,24 @@ var require_coerce = __commonJS({
     var SemVer = require_semver();
     var parse3 = require_parse2();
     var { safeRe: re, t } = require_re();
-    var coerce = (version4, options) => {
-      if (version4 instanceof SemVer) {
-        return version4;
+    var coerce = (version3, options) => {
+      if (version3 instanceof SemVer) {
+        return version3;
       }
-      if (typeof version4 === "number") {
-        version4 = String(version4);
+      if (typeof version3 === "number") {
+        version3 = String(version3);
       }
-      if (typeof version4 !== "string") {
+      if (typeof version3 !== "string") {
         return null;
       }
       options = options || {};
       let match2 = null;
       if (!options.rtl) {
-        match2 = version4.match(options.includePrerelease ? re[t.COERCEFULL] : re[t.COERCE]);
+        match2 = version3.match(options.includePrerelease ? re[t.COERCEFULL] : re[t.COERCE]);
       } else {
         const coerceRtlRegex = options.includePrerelease ? re[t.COERCERTLFULL] : re[t.COERCERTL];
         let next;
-        while ((next = coerceRtlRegex.exec(version4)) && (!match2 || match2.index + match2[0].length !== version4.length)) {
+        while ((next = coerceRtlRegex.exec(version3)) && (!match2 || match2.index + match2[0].length !== version3.length)) {
           if (!match2 || next.index + next[0].length !== match2.index + match2[0].length) {
             match2 = next;
           }
@@ -20371,19 +20371,19 @@ var require_range = __commonJS({
         });
       }
       // if ANY of the sets match ALL of its comparators, then pass
-      test(version4) {
-        if (!version4) {
+      test(version3) {
+        if (!version3) {
           return false;
         }
-        if (typeof version4 === "string") {
+        if (typeof version3 === "string") {
           try {
-            version4 = new SemVer(version4, this.options);
+            version3 = new SemVer(version3, this.options);
           } catch (er) {
             return false;
           }
         }
         for (let i = 0; i < this.set.length; i++) {
-          if (testSet(this.set[i], version4, this.options)) {
+          if (testSet(this.set[i], version3, this.options)) {
             return true;
           }
         }
@@ -20598,13 +20598,13 @@ var require_range = __commonJS({
       }
       return `${from} ${to}`.trim();
     };
-    var testSet = (set, version4, options) => {
+    var testSet = (set, version3, options) => {
       for (let i = 0; i < set.length; i++) {
-        if (!set[i].test(version4)) {
+        if (!set[i].test(version3)) {
           return false;
         }
       }
-      if (version4.prerelease.length && !options.includePrerelease) {
+      if (version3.prerelease.length && !options.includePrerelease) {
         for (let i = 0; i < set.length; i++) {
           debug2(set[i].semver);
           if (set[i].semver === Comparator.ANY) {
@@ -20612,7 +20612,7 @@ var require_range = __commonJS({
           }
           if (set[i].semver.prerelease.length > 0) {
             const allowed = set[i].semver;
-            if (allowed.major === version4.major && allowed.minor === version4.minor && allowed.patch === version4.patch) {
+            if (allowed.major === version3.major && allowed.minor === version3.minor && allowed.patch === version3.patch) {
               return true;
             }
           }
@@ -20673,19 +20673,19 @@ var require_comparator = __commonJS({
       toString() {
         return this.value;
       }
-      test(version4) {
-        debug2("Comparator.test", version4, this.options.loose);
-        if (this.semver === ANY || version4 === ANY) {
+      test(version3) {
+        debug2("Comparator.test", version3, this.options.loose);
+        if (this.semver === ANY || version3 === ANY) {
           return true;
         }
-        if (typeof version4 === "string") {
+        if (typeof version3 === "string") {
           try {
-            version4 = new SemVer(version4, this.options);
+            version3 = new SemVer(version3, this.options);
           } catch (er) {
             return false;
           }
         }
-        return cmp(version4, this.operator, this.semver, this.options);
+        return cmp(version3, this.operator, this.semver, this.options);
       }
       intersects(comp26, options) {
         if (!(comp26 instanceof _Comparator)) {
@@ -20742,13 +20742,13 @@ var require_satisfies = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/satisfies.js"(exports2, module2) {
     "use strict";
     var Range = require_range();
-    var satisfies4 = (version4, range2, options) => {
+    var satisfies4 = (version3, range2, options) => {
       try {
         range2 = new Range(range2, options);
       } catch (er) {
         return false;
       }
-      return range2.test(version4);
+      return range2.test(version3);
     };
     module2.exports = satisfies4;
   }
@@ -20910,8 +20910,8 @@ var require_outside = __commonJS({
     var lt = require_lt();
     var lte = require_lte();
     var gte = require_gte();
-    var outside = (version4, range2, hilo, options) => {
-      version4 = new SemVer(version4, options);
+    var outside = (version3, range2, hilo, options) => {
+      version3 = new SemVer(version3, options);
       range2 = new Range(range2, options);
       let gtfn, ltefn, ltfn, comp26, ecomp;
       switch (hilo) {
@@ -20932,7 +20932,7 @@ var require_outside = __commonJS({
         default:
           throw new TypeError('Must provide a hilo val of "<" or ">"');
       }
-      if (satisfies4(version4, range2, options)) {
+      if (satisfies4(version3, range2, options)) {
         return false;
       }
       for (let i = 0; i < range2.set.length; ++i) {
@@ -20954,9 +20954,9 @@ var require_outside = __commonJS({
         if (high.operator === comp26 || high.operator === ecomp) {
           return false;
         }
-        if ((!low.operator || low.operator === comp26) && ltefn(version4, low.semver)) {
+        if ((!low.operator || low.operator === comp26) && ltefn(version3, low.semver)) {
           return false;
-        } else if (low.operator === ecomp && ltfn(version4, low.semver)) {
+        } else if (low.operator === ecomp && ltfn(version3, low.semver)) {
           return false;
         }
       }
@@ -20971,7 +20971,7 @@ var require_gtr = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/ranges/gtr.js"(exports2, module2) {
     "use strict";
     var outside = require_outside();
-    var gtr = (version4, range2, options) => outside(version4, range2, ">", options);
+    var gtr = (version3, range2, options) => outside(version3, range2, ">", options);
     module2.exports = gtr;
   }
 });
@@ -20981,7 +20981,7 @@ var require_ltr = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/ranges/ltr.js"(exports2, module2) {
     "use strict";
     var outside = require_outside();
-    var ltr = (version4, range2, options) => outside(version4, range2, "<", options);
+    var ltr = (version3, range2, options) => outside(version3, range2, "<", options);
     module2.exports = ltr;
   }
 });
@@ -21011,12 +21011,12 @@ var require_simplify = __commonJS({
       let first = null;
       let prev = null;
       const v = versions.sort((a, b) => compare(a, b, options));
-      for (const version4 of v) {
-        const included = satisfies4(version4, range2, options);
+      for (const version3 of v) {
+        const included = satisfies4(version3, range2, options);
         if (included) {
-          prev = version4;
+          prev = version3;
           if (!first) {
-            first = version4;
+            first = version3;
           }
         } else {
           if (prev) {
@@ -21839,10 +21839,10 @@ var require_supports_color = __commonJS({
         return 3;
       }
       if ("TERM_PROGRAM" in env) {
-        const version4 = parseInt((env.TERM_PROGRAM_VERSION || "").split(".")[0], 10);
+        const version3 = parseInt((env.TERM_PROGRAM_VERSION || "").split(".")[0], 10);
         switch (env.TERM_PROGRAM) {
           case "iTerm.app":
-            return version4 >= 3 ? 3 : 2;
+            return version3 >= 3 ? 3 : 2;
           case "Apple_Terminal":
             return 2;
         }
@@ -27171,31 +27171,31 @@ var require_semver3 = __commonJS({
     var parseOptions = require_parse_options2();
     var { compareIdentifiers } = require_identifiers2();
     var SemVer = class _SemVer {
-      constructor(version4, options) {
+      constructor(version3, options) {
         options = parseOptions(options);
-        if (version4 instanceof _SemVer) {
-          if (version4.loose === !!options.loose && version4.includePrerelease === !!options.includePrerelease) {
-            return version4;
+        if (version3 instanceof _SemVer) {
+          if (version3.loose === !!options.loose && version3.includePrerelease === !!options.includePrerelease) {
+            return version3;
           } else {
-            version4 = version4.version;
+            version3 = version3.version;
           }
-        } else if (typeof version4 !== "string") {
-          throw new TypeError(`Invalid version. Must be a string. Got type "${typeof version4}".`);
+        } else if (typeof version3 !== "string") {
+          throw new TypeError(`Invalid version. Must be a string. Got type "${typeof version3}".`);
         }
-        if (version4.length > MAX_LENGTH) {
+        if (version3.length > MAX_LENGTH) {
           throw new TypeError(
             `version is longer than ${MAX_LENGTH} characters`
           );
         }
-        debug2("SemVer", version4, options);
+        debug2("SemVer", version3, options);
         this.options = options;
         this.loose = !!options.loose;
         this.includePrerelease = !!options.includePrerelease;
-        const m = version4.trim().match(options.loose ? re[t.LOOSE] : re[t.FULL]);
+        const m = version3.trim().match(options.loose ? re[t.LOOSE] : re[t.FULL]);
         if (!m) {
-          throw new TypeError(`Invalid Version: ${version4}`);
+          throw new TypeError(`Invalid Version: ${version3}`);
         }
-        this.raw = version4;
+        this.raw = version3;
         this.major = +m[1];
         this.minor = +m[2];
         this.patch = +m[3];
@@ -27445,12 +27445,12 @@ var require_parse3 = __commonJS({
   "node_modules/@actions/tool-cache/node_modules/semver/functions/parse.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver3();
-    var parse3 = (version4, options, throwErrors = false) => {
-      if (version4 instanceof SemVer) {
-        return version4;
+    var parse3 = (version3, options, throwErrors = false) => {
+      if (version3 instanceof SemVer) {
+        return version3;
       }
       try {
-        return new SemVer(version4, options);
+        return new SemVer(version3, options);
       } catch (er) {
         if (!throwErrors) {
           return null;
@@ -27467,8 +27467,8 @@ var require_valid3 = __commonJS({
   "node_modules/@actions/tool-cache/node_modules/semver/functions/valid.js"(exports2, module2) {
     "use strict";
     var parse3 = require_parse3();
-    var valid2 = (version4, options) => {
-      const v = parse3(version4, options);
+    var valid2 = (version3, options) => {
+      const v = parse3(version3, options);
       return v ? v.version : null;
     };
     module2.exports = valid2;
@@ -27480,8 +27480,8 @@ var require_clean2 = __commonJS({
   "node_modules/@actions/tool-cache/node_modules/semver/functions/clean.js"(exports2, module2) {
     "use strict";
     var parse3 = require_parse3();
-    var clean3 = (version4, options) => {
-      const s = parse3(version4.trim().replace(/^[=v]+/, ""), options);
+    var clean3 = (version3, options) => {
+      const s = parse3(version3.trim().replace(/^[=v]+/, ""), options);
       return s ? s.version : null;
     };
     module2.exports = clean3;
@@ -27493,7 +27493,7 @@ var require_inc2 = __commonJS({
   "node_modules/@actions/tool-cache/node_modules/semver/functions/inc.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver3();
-    var inc = (version4, release, options, identifier, identifierBase) => {
+    var inc = (version3, release, options, identifier, identifierBase) => {
       if (typeof options === "string") {
         identifierBase = identifier;
         identifier = options;
@@ -27501,7 +27501,7 @@ var require_inc2 = __commonJS({
       }
       try {
         return new SemVer(
-          version4 instanceof SemVer ? version4.version : version4,
+          version3 instanceof SemVer ? version3.version : version3,
           options
         ).inc(release, identifier, identifierBase).version;
       } catch (er) {
@@ -27591,8 +27591,8 @@ var require_prerelease2 = __commonJS({
   "node_modules/@actions/tool-cache/node_modules/semver/functions/prerelease.js"(exports2, module2) {
     "use strict";
     var parse3 = require_parse3();
-    var prerelease = (version4, options) => {
-      const parsed = parse3(version4, options);
+    var prerelease = (version3, options) => {
+      const parsed = parse3(version3, options);
       return parsed && parsed.prerelease.length ? parsed.prerelease : null;
     };
     module2.exports = prerelease;
@@ -27780,24 +27780,24 @@ var require_coerce2 = __commonJS({
     var SemVer = require_semver3();
     var parse3 = require_parse3();
     var { safeRe: re, t } = require_re2();
-    var coerce = (version4, options) => {
-      if (version4 instanceof SemVer) {
-        return version4;
+    var coerce = (version3, options) => {
+      if (version3 instanceof SemVer) {
+        return version3;
       }
-      if (typeof version4 === "number") {
-        version4 = String(version4);
+      if (typeof version3 === "number") {
+        version3 = String(version3);
       }
-      if (typeof version4 !== "string") {
+      if (typeof version3 !== "string") {
         return null;
       }
       options = options || {};
       let match2 = null;
       if (!options.rtl) {
-        match2 = version4.match(options.includePrerelease ? re[t.COERCEFULL] : re[t.COERCE]);
+        match2 = version3.match(options.includePrerelease ? re[t.COERCEFULL] : re[t.COERCE]);
       } else {
         const coerceRtlRegex = options.includePrerelease ? re[t.COERCERTLFULL] : re[t.COERCERTL];
         let next;
-        while ((next = coerceRtlRegex.exec(version4)) && (!match2 || match2.index + match2[0].length !== version4.length)) {
+        while ((next = coerceRtlRegex.exec(version3)) && (!match2 || match2.index + match2[0].length !== version3.length)) {
           if (!match2 || next.index + next[0].length !== match2.index + match2[0].length) {
             match2 = next;
           }
@@ -27981,19 +27981,19 @@ var require_range2 = __commonJS({
         });
       }
       // if ANY of the sets match ALL of its comparators, then pass
-      test(version4) {
-        if (!version4) {
+      test(version3) {
+        if (!version3) {
           return false;
         }
-        if (typeof version4 === "string") {
+        if (typeof version3 === "string") {
           try {
-            version4 = new SemVer(version4, this.options);
+            version3 = new SemVer(version3, this.options);
           } catch (er) {
             return false;
           }
         }
         for (let i = 0; i < this.set.length; i++) {
-          if (testSet(this.set[i], version4, this.options)) {
+          if (testSet(this.set[i], version3, this.options)) {
             return true;
           }
         }
@@ -28208,13 +28208,13 @@ var require_range2 = __commonJS({
       }
       return `${from} ${to}`.trim();
     };
-    var testSet = (set, version4, options) => {
+    var testSet = (set, version3, options) => {
       for (let i = 0; i < set.length; i++) {
-        if (!set[i].test(version4)) {
+        if (!set[i].test(version3)) {
           return false;
         }
       }
-      if (version4.prerelease.length && !options.includePrerelease) {
+      if (version3.prerelease.length && !options.includePrerelease) {
         for (let i = 0; i < set.length; i++) {
           debug2(set[i].semver);
           if (set[i].semver === Comparator.ANY) {
@@ -28222,7 +28222,7 @@ var require_range2 = __commonJS({
           }
           if (set[i].semver.prerelease.length > 0) {
             const allowed = set[i].semver;
-            if (allowed.major === version4.major && allowed.minor === version4.minor && allowed.patch === version4.patch) {
+            if (allowed.major === version3.major && allowed.minor === version3.minor && allowed.patch === version3.patch) {
               return true;
             }
           }
@@ -28283,19 +28283,19 @@ var require_comparator2 = __commonJS({
       toString() {
         return this.value;
       }
-      test(version4) {
-        debug2("Comparator.test", version4, this.options.loose);
-        if (this.semver === ANY || version4 === ANY) {
+      test(version3) {
+        debug2("Comparator.test", version3, this.options.loose);
+        if (this.semver === ANY || version3 === ANY) {
           return true;
         }
-        if (typeof version4 === "string") {
+        if (typeof version3 === "string") {
           try {
-            version4 = new SemVer(version4, this.options);
+            version3 = new SemVer(version3, this.options);
           } catch (er) {
             return false;
           }
         }
-        return cmp(version4, this.operator, this.semver, this.options);
+        return cmp(version3, this.operator, this.semver, this.options);
       }
       intersects(comp26, options) {
         if (!(comp26 instanceof _Comparator)) {
@@ -28352,13 +28352,13 @@ var require_satisfies2 = __commonJS({
   "node_modules/@actions/tool-cache/node_modules/semver/functions/satisfies.js"(exports2, module2) {
     "use strict";
     var Range = require_range2();
-    var satisfies4 = (version4, range2, options) => {
+    var satisfies4 = (version3, range2, options) => {
       try {
         range2 = new Range(range2, options);
       } catch (er) {
         return false;
       }
-      return range2.test(version4);
+      return range2.test(version3);
     };
     module2.exports = satisfies4;
   }
@@ -28520,8 +28520,8 @@ var require_outside2 = __commonJS({
     var lt = require_lt2();
     var lte = require_lte2();
     var gte = require_gte2();
-    var outside = (version4, range2, hilo, options) => {
-      version4 = new SemVer(version4, options);
+    var outside = (version3, range2, hilo, options) => {
+      version3 = new SemVer(version3, options);
       range2 = new Range(range2, options);
       let gtfn, ltefn, ltfn, comp26, ecomp;
       switch (hilo) {
@@ -28542,7 +28542,7 @@ var require_outside2 = __commonJS({
         default:
           throw new TypeError('Must provide a hilo val of "<" or ">"');
       }
-      if (satisfies4(version4, range2, options)) {
+      if (satisfies4(version3, range2, options)) {
         return false;
       }
       for (let i = 0; i < range2.set.length; ++i) {
@@ -28564,9 +28564,9 @@ var require_outside2 = __commonJS({
         if (high.operator === comp26 || high.operator === ecomp) {
           return false;
         }
-        if ((!low.operator || low.operator === comp26) && ltefn(version4, low.semver)) {
+        if ((!low.operator || low.operator === comp26) && ltefn(version3, low.semver)) {
           return false;
-        } else if (low.operator === ecomp && ltfn(version4, low.semver)) {
+        } else if (low.operator === ecomp && ltfn(version3, low.semver)) {
           return false;
         }
       }
@@ -28581,7 +28581,7 @@ var require_gtr2 = __commonJS({
   "node_modules/@actions/tool-cache/node_modules/semver/ranges/gtr.js"(exports2, module2) {
     "use strict";
     var outside = require_outside2();
-    var gtr = (version4, range2, options) => outside(version4, range2, ">", options);
+    var gtr = (version3, range2, options) => outside(version3, range2, ">", options);
     module2.exports = gtr;
   }
 });
@@ -28591,7 +28591,7 @@ var require_ltr2 = __commonJS({
   "node_modules/@actions/tool-cache/node_modules/semver/ranges/ltr.js"(exports2, module2) {
     "use strict";
     var outside = require_outside2();
-    var ltr = (version4, range2, options) => outside(version4, range2, "<", options);
+    var ltr = (version3, range2, options) => outside(version3, range2, "<", options);
     module2.exports = ltr;
   }
 });
@@ -28621,12 +28621,12 @@ var require_simplify2 = __commonJS({
       let first = null;
       let prev = null;
       const v = versions.sort((a, b) => compare(a, b, options));
-      for (const version4 of v) {
-        const included = satisfies4(version4, range2, options);
+      for (const version3 of v) {
+        const included = satisfies4(version3, range2, options);
         if (included) {
-          prev = version4;
+          prev = version3;
           if (!first) {
-            first = version4;
+            first = version3;
           }
         } else {
           if (prev) {
@@ -28989,15 +28989,15 @@ var require_version = __commonJS({
       stringify: stringify2
     };
     var validRegex = new RegExp("^" + VERSION_PATTERN + "$", "i");
-    function valid2(version4) {
-      return validRegex.test(version4) ? version4 : null;
+    function valid2(version3) {
+      return validRegex.test(version3) ? version3 : null;
     }
     var cleanRegex = new RegExp("^\\s*" + VERSION_PATTERN + "\\s*$", "i");
-    function clean3(version4) {
-      return stringify2(parse3(version4, cleanRegex));
+    function clean3(version3) {
+      return stringify2(parse3(version3, cleanRegex));
     }
-    function parse3(version4, regex) {
-      const { groups } = (regex || validRegex).exec(version4) || {};
+    function parse3(version3, regex) {
+      const { groups } = (regex || validRegex).exec(version3) || {};
       if (!groups) {
         return null;
       }
@@ -29071,8 +29071,8 @@ var require_version = __commonJS({
       }
       return null;
     }
-    function explain(version4) {
-      const parsed = parse3(version4);
+    function explain(version3) {
+      const parsed = parse3(version3);
       if (!parsed) {
         return parsed;
       }
@@ -29123,36 +29123,36 @@ var require_operator = __commonJS({
       ">": gt3,
       "===": arbitrary
     };
-    function lt(version4, other) {
-      return compare(version4, other) < 0;
+    function lt(version3, other) {
+      return compare(version3, other) < 0;
     }
-    function le(version4, other) {
-      return compare(version4, other) <= 0;
+    function le(version3, other) {
+      return compare(version3, other) <= 0;
     }
-    function eq(version4, other) {
-      return compare(version4, other) === 0;
+    function eq(version3, other) {
+      return compare(version3, other) === 0;
     }
-    function ne(version4, other) {
-      return compare(version4, other) !== 0;
+    function ne(version3, other) {
+      return compare(version3, other) !== 0;
     }
-    function ge(version4, other) {
-      return compare(version4, other) >= 0;
+    function ge(version3, other) {
+      return compare(version3, other) >= 0;
     }
-    function gt3(version4, other) {
-      return compare(version4, other) > 0;
+    function gt3(version3, other) {
+      return compare(version3, other) > 0;
     }
-    function arbitrary(version4, other) {
-      return version4.toLowerCase() === other.toLowerCase();
+    function arbitrary(version3, other) {
+      return version3.toLowerCase() === other.toLowerCase();
     }
-    function compare(version4, other) {
-      const parsedVersion = parse3(version4);
+    function compare(version3, other) {
+      const parsedVersion = parse3(version3);
       const parsedOther = parse3(other);
       const keyVersion = calculateKey(parsedVersion);
       const keyOther = calculateKey(parsedOther);
       return pyCompare(keyVersion, keyOther);
     }
-    function rcompare(version4, other) {
-      return -compare(version4, other);
+    function rcompare(version3, other) {
+      return -compare(version3, other);
     }
     function pyCompare(elemIn, otherIn) {
       let elem = elemIn;
@@ -29246,9 +29246,9 @@ var require_specifier = __commonJS({
           return null;
         }
         let { ...spec } = groups;
-        const { operator, version: version4, prefix: prefix2, legacy } = groups;
-        if (version4) {
-          spec = { ...spec, ...explainVersion(version4) };
+        const { operator, version: version3, prefix: prefix2, legacy } = groups;
+        if (version3) {
+          spec = { ...spec, ...explainVersion(version3) };
           if (operator === "~=") {
             if (spec.release.length < 2) {
               return null;
@@ -29293,8 +29293,8 @@ var require_specifier = __commonJS({
       if (!parsed) {
         return [];
       }
-      return versions.filter((version4) => {
-        const explained = explainVersion(version4);
+      return versions.filter((version3) => {
+        const explained = explainVersion(version3);
         if (!parsed.length) {
           return explained && !(explained.is_prerelease && !options.prereleases);
         }
@@ -29302,12 +29302,12 @@ var require_specifier = __commonJS({
           if (!pass) {
             return false;
           }
-          return contains({ ...spec, ...options }, { version: version4, explained });
+          return contains({ ...spec, ...options }, { version: version3, explained });
         }, true);
       });
     }
-    function satisfies4(version4, specifier, options = {}) {
-      const filtered = pick([version4], specifier, options);
+    function satisfies4(version3, specifier, options = {}) {
+      const filtered = pick([version3], specifier, options);
       return filtered.length === 1;
     }
     function arrayStartsWith(array, prefix2) {
@@ -29323,7 +29323,7 @@ var require_specifier = __commonJS({
     }
     function contains(specifier, input) {
       const { explained } = input;
-      let { version: version4 } = input;
+      let { version: version3 } = input;
       const { ...spec } = specifier;
       if (spec.prereleases === void 0) {
         spec.prereleases = spec.is_prerelease;
@@ -29336,7 +29336,7 @@ var require_specifier = __commonJS({
         if (spec.epoch) {
           compatiblePrefix = spec.epoch + "!" + compatiblePrefix;
         }
-        return satisfies4(version4, `>=${spec.version}, ==${compatiblePrefix}`, {
+        return satisfies4(version3, `>=${spec.version}, ==${compatiblePrefix}`, {
           prereleases: spec.prereleases
         });
       }
@@ -29347,7 +29347,7 @@ var require_specifier = __commonJS({
       }
       if (explained) {
         if (explained.local && spec.version) {
-          version4 = explained.public;
+          version3 = explained.public;
           spec.version = explainVersion(spec.version).public;
         }
       }
@@ -29357,7 +29357,7 @@ var require_specifier = __commonJS({
         }
       }
       const op = Operator[spec.operator];
-      return op(version4, spec.version || spec.legacy);
+      return op(version3, spec.version || spec.legacy);
     }
     function validRange(specifier) {
       return Boolean(parse3(specifier));
@@ -29376,36 +29376,36 @@ var require_semantic = __commonJS({
       inc
     };
     function major(input) {
-      const version4 = explain(input);
-      if (!version4) {
+      const version3 = explain(input);
+      if (!version3) {
         throw new TypeError("Invalid Version: " + input);
       }
-      return version4.release[0];
+      return version3.release[0];
     }
     function minor(input) {
-      const version4 = explain(input);
-      if (!version4) {
+      const version3 = explain(input);
+      if (!version3) {
         throw new TypeError("Invalid Version: " + input);
       }
-      if (version4.release.length < 2) {
+      if (version3.release.length < 2) {
         return 0;
       }
-      return version4.release[1];
+      return version3.release[1];
     }
     function patch(input) {
-      const version4 = explain(input);
-      if (!version4) {
+      const version3 = explain(input);
+      if (!version3) {
         throw new TypeError("Invalid Version: " + input);
       }
-      if (version4.release.length < 3) {
+      if (version3.release.length < 3) {
         return 0;
       }
-      return version4.release[2];
+      return version3.release[2];
     }
     function inc(input, release, preReleaseIdentifier) {
       let identifier = preReleaseIdentifier || `a`;
-      const version4 = parse3(input);
-      if (!version4) {
+      const version3 = parse3(input);
+      if (!version3) {
         return null;
       }
       if (!["a", "b", "c", "rc", "alpha", "beta", "pre", "preview"].includes(
@@ -29416,103 +29416,103 @@ var require_semantic = __commonJS({
       switch (release) {
         case "premajor":
           {
-            const [majorVersion] = version4.release;
-            version4.release.fill(0);
-            version4.release[0] = majorVersion + 1;
+            const [majorVersion] = version3.release;
+            version3.release.fill(0);
+            version3.release[0] = majorVersion + 1;
           }
-          version4.pre = [identifier, 0];
-          delete version4.post;
-          delete version4.dev;
-          delete version4.local;
+          version3.pre = [identifier, 0];
+          delete version3.post;
+          delete version3.dev;
+          delete version3.local;
           break;
         case "preminor":
           {
-            const [majorVersion, minorVersion = 0] = version4.release;
-            version4.release.fill(0);
-            version4.release[0] = majorVersion;
-            version4.release[1] = minorVersion + 1;
+            const [majorVersion, minorVersion = 0] = version3.release;
+            version3.release.fill(0);
+            version3.release[0] = majorVersion;
+            version3.release[1] = minorVersion + 1;
           }
-          version4.pre = [identifier, 0];
-          delete version4.post;
-          delete version4.dev;
-          delete version4.local;
+          version3.pre = [identifier, 0];
+          delete version3.post;
+          delete version3.dev;
+          delete version3.local;
           break;
         case "prepatch":
           {
-            const [majorVersion, minorVersion = 0, patchVersion = 0] = version4.release;
-            version4.release.fill(0);
-            version4.release[0] = majorVersion;
-            version4.release[1] = minorVersion;
-            version4.release[2] = patchVersion + 1;
+            const [majorVersion, minorVersion = 0, patchVersion = 0] = version3.release;
+            version3.release.fill(0);
+            version3.release[0] = majorVersion;
+            version3.release[1] = minorVersion;
+            version3.release[2] = patchVersion + 1;
           }
-          version4.pre = [identifier, 0];
-          delete version4.post;
-          delete version4.dev;
-          delete version4.local;
+          version3.pre = [identifier, 0];
+          delete version3.post;
+          delete version3.dev;
+          delete version3.local;
           break;
         case "prerelease":
-          if (version4.pre === null) {
-            const [majorVersion, minorVersion = 0, patchVersion = 0] = version4.release;
-            version4.release.fill(0);
-            version4.release[0] = majorVersion;
-            version4.release[1] = minorVersion;
-            version4.release[2] = patchVersion + 1;
-            version4.pre = [identifier, 0];
+          if (version3.pre === null) {
+            const [majorVersion, minorVersion = 0, patchVersion = 0] = version3.release;
+            version3.release.fill(0);
+            version3.release[0] = majorVersion;
+            version3.release[1] = minorVersion;
+            version3.release[2] = patchVersion + 1;
+            version3.pre = [identifier, 0];
           } else {
-            if (preReleaseIdentifier === void 0 && version4.pre !== null) {
-              [identifier] = version4.pre;
+            if (preReleaseIdentifier === void 0 && version3.pre !== null) {
+              [identifier] = version3.pre;
             }
-            const [letter, number] = version4.pre;
+            const [letter, number] = version3.pre;
             if (letter === identifier) {
-              version4.pre = [letter, number + 1];
+              version3.pre = [letter, number + 1];
             } else {
-              version4.pre = [identifier, 0];
+              version3.pre = [identifier, 0];
             }
           }
-          delete version4.post;
-          delete version4.dev;
-          delete version4.local;
+          delete version3.post;
+          delete version3.dev;
+          delete version3.local;
           break;
         case "major":
-          if (version4.release.slice(1).some((value) => value !== 0) || version4.pre === null) {
-            const [majorVersion] = version4.release;
-            version4.release.fill(0);
-            version4.release[0] = majorVersion + 1;
+          if (version3.release.slice(1).some((value) => value !== 0) || version3.pre === null) {
+            const [majorVersion] = version3.release;
+            version3.release.fill(0);
+            version3.release[0] = majorVersion + 1;
           }
-          delete version4.pre;
-          delete version4.post;
-          delete version4.dev;
-          delete version4.local;
+          delete version3.pre;
+          delete version3.post;
+          delete version3.dev;
+          delete version3.local;
           break;
         case "minor":
-          if (version4.release.slice(2).some((value) => value !== 0) || version4.pre === null) {
-            const [majorVersion, minorVersion = 0] = version4.release;
-            version4.release.fill(0);
-            version4.release[0] = majorVersion;
-            version4.release[1] = minorVersion + 1;
+          if (version3.release.slice(2).some((value) => value !== 0) || version3.pre === null) {
+            const [majorVersion, minorVersion = 0] = version3.release;
+            version3.release.fill(0);
+            version3.release[0] = majorVersion;
+            version3.release[1] = minorVersion + 1;
           }
-          delete version4.pre;
-          delete version4.post;
-          delete version4.dev;
-          delete version4.local;
+          delete version3.pre;
+          delete version3.post;
+          delete version3.dev;
+          delete version3.local;
           break;
         case "patch":
-          if (version4.release.slice(3).some((value) => value !== 0) || version4.pre === null) {
-            const [majorVersion, minorVersion = 0, patchVersion = 0] = version4.release;
-            version4.release.fill(0);
-            version4.release[0] = majorVersion;
-            version4.release[1] = minorVersion;
-            version4.release[2] = patchVersion + 1;
+          if (version3.release.slice(3).some((value) => value !== 0) || version3.pre === null) {
+            const [majorVersion, minorVersion = 0, patchVersion = 0] = version3.release;
+            version3.release.fill(0);
+            version3.release[0] = majorVersion;
+            version3.release[1] = minorVersion;
+            version3.release[2] = patchVersion + 1;
           }
-          delete version4.pre;
-          delete version4.post;
-          delete version4.dev;
-          delete version4.local;
+          delete version3.pre;
+          delete version3.post;
+          delete version3.dev;
+          delete version3.local;
           break;
         default:
           return null;
       }
-      return stringify2(version4);
+      return stringify2(version3);
     }
   }
 });
@@ -29703,73 +29703,73 @@ var require_semver5 = __commonJS({
     }
     var i;
     exports2.parse = parse3;
-    function parse3(version4, options) {
+    function parse3(version3, options) {
       if (!options || typeof options !== "object") {
         options = {
           loose: !!options,
           includePrerelease: false
         };
       }
-      if (version4 instanceof SemVer) {
-        return version4;
+      if (version3 instanceof SemVer) {
+        return version3;
       }
-      if (typeof version4 !== "string") {
+      if (typeof version3 !== "string") {
         return null;
       }
-      if (version4.length > MAX_LENGTH) {
+      if (version3.length > MAX_LENGTH) {
         return null;
       }
       var r = options.loose ? safeRe[t.LOOSE] : safeRe[t.FULL];
-      if (!r.test(version4)) {
+      if (!r.test(version3)) {
         return null;
       }
       try {
-        return new SemVer(version4, options);
+        return new SemVer(version3, options);
       } catch (er) {
         return null;
       }
     }
     exports2.valid = valid2;
-    function valid2(version4, options) {
-      var v = parse3(version4, options);
+    function valid2(version3, options) {
+      var v = parse3(version3, options);
       return v ? v.version : null;
     }
     exports2.clean = clean3;
-    function clean3(version4, options) {
-      var s = parse3(version4.trim().replace(/^[=v]+/, ""), options);
+    function clean3(version3, options) {
+      var s = parse3(version3.trim().replace(/^[=v]+/, ""), options);
       return s ? s.version : null;
     }
     exports2.SemVer = SemVer;
-    function SemVer(version4, options) {
+    function SemVer(version3, options) {
       if (!options || typeof options !== "object") {
         options = {
           loose: !!options,
           includePrerelease: false
         };
       }
-      if (version4 instanceof SemVer) {
-        if (version4.loose === options.loose) {
-          return version4;
+      if (version3 instanceof SemVer) {
+        if (version3.loose === options.loose) {
+          return version3;
         } else {
-          version4 = version4.version;
+          version3 = version3.version;
         }
-      } else if (typeof version4 !== "string") {
-        throw new TypeError("Invalid Version: " + version4);
+      } else if (typeof version3 !== "string") {
+        throw new TypeError("Invalid Version: " + version3);
       }
-      if (version4.length > MAX_LENGTH) {
+      if (version3.length > MAX_LENGTH) {
         throw new TypeError("version is longer than " + MAX_LENGTH + " characters");
       }
       if (!(this instanceof SemVer)) {
-        return new SemVer(version4, options);
+        return new SemVer(version3, options);
       }
-      debug2("SemVer", version4, options);
+      debug2("SemVer", version3, options);
       this.options = options;
       this.loose = !!options.loose;
-      var m = version4.trim().match(options.loose ? safeRe[t.LOOSE] : safeRe[t.FULL]);
+      var m = version3.trim().match(options.loose ? safeRe[t.LOOSE] : safeRe[t.FULL]);
       if (!m) {
-        throw new TypeError("Invalid Version: " + version4);
+        throw new TypeError("Invalid Version: " + version3);
       }
-      this.raw = version4;
+      this.raw = version3;
       this.major = +m[1];
       this.minor = +m[2];
       this.patch = +m[3];
@@ -29956,13 +29956,13 @@ var require_semver5 = __commonJS({
       return this;
     };
     exports2.inc = inc;
-    function inc(version4, release, loose, identifier) {
+    function inc(version3, release, loose, identifier) {
       if (typeof loose === "string") {
         identifier = loose;
         loose = void 0;
       }
       try {
-        return new SemVer(version4, loose).inc(release, identifier).version;
+        return new SemVer(version3, loose).inc(release, identifier).version;
       } catch (er) {
         return null;
       }
@@ -30153,19 +30153,19 @@ var require_semver5 = __commonJS({
     Comparator.prototype.toString = function() {
       return this.value;
     };
-    Comparator.prototype.test = function(version4) {
-      debug2("Comparator.test", version4, this.options.loose);
-      if (this.semver === ANY || version4 === ANY) {
+    Comparator.prototype.test = function(version3) {
+      debug2("Comparator.test", version3, this.options.loose);
+      if (this.semver === ANY || version3 === ANY) {
         return true;
       }
-      if (typeof version4 === "string") {
+      if (typeof version3 === "string") {
         try {
-          version4 = new SemVer(version4, this.options);
+          version3 = new SemVer(version3, this.options);
         } catch (er) {
           return false;
         }
       }
-      return cmp(version4, this.operator, this.semver, this.options);
+      return cmp(version3, this.operator, this.semver, this.options);
     };
     Comparator.prototype.intersects = function(comp26, options) {
       if (!(comp26 instanceof Comparator)) {
@@ -30475,31 +30475,31 @@ var require_semver5 = __commonJS({
       }
       return (from + " " + to).trim();
     }
-    Range.prototype.test = function(version4) {
-      if (!version4) {
+    Range.prototype.test = function(version3) {
+      if (!version3) {
         return false;
       }
-      if (typeof version4 === "string") {
+      if (typeof version3 === "string") {
         try {
-          version4 = new SemVer(version4, this.options);
+          version3 = new SemVer(version3, this.options);
         } catch (er) {
           return false;
         }
       }
       for (var i2 = 0; i2 < this.set.length; i2++) {
-        if (testSet(this.set[i2], version4, this.options)) {
+        if (testSet(this.set[i2], version3, this.options)) {
           return true;
         }
       }
       return false;
     };
-    function testSet(set, version4, options) {
+    function testSet(set, version3, options) {
       for (var i2 = 0; i2 < set.length; i2++) {
-        if (!set[i2].test(version4)) {
+        if (!set[i2].test(version3)) {
           return false;
         }
       }
-      if (version4.prerelease.length && !options.includePrerelease) {
+      if (version3.prerelease.length && !options.includePrerelease) {
         for (i2 = 0; i2 < set.length; i2++) {
           debug2(set[i2].semver);
           if (set[i2].semver === ANY) {
@@ -30507,7 +30507,7 @@ var require_semver5 = __commonJS({
           }
           if (set[i2].semver.prerelease.length > 0) {
             var allowed = set[i2].semver;
-            if (allowed.major === version4.major && allowed.minor === version4.minor && allowed.patch === version4.patch) {
+            if (allowed.major === version3.major && allowed.minor === version3.minor && allowed.patch === version3.patch) {
               return true;
             }
           }
@@ -30517,13 +30517,13 @@ var require_semver5 = __commonJS({
       return true;
     }
     exports2.satisfies = satisfies4;
-    function satisfies4(version4, range2, options) {
+    function satisfies4(version3, range2, options) {
       try {
         range2 = new Range(range2, options);
       } catch (er) {
         return false;
       }
-      return range2.test(version4);
+      return range2.test(version3);
     }
     exports2.maxSatisfying = maxSatisfying3;
     function maxSatisfying3(versions, range2, options) {
@@ -30617,16 +30617,16 @@ var require_semver5 = __commonJS({
       }
     }
     exports2.ltr = ltr;
-    function ltr(version4, range2, options) {
-      return outside(version4, range2, "<", options);
+    function ltr(version3, range2, options) {
+      return outside(version3, range2, "<", options);
     }
     exports2.gtr = gtr;
-    function gtr(version4, range2, options) {
-      return outside(version4, range2, ">", options);
+    function gtr(version3, range2, options) {
+      return outside(version3, range2, ">", options);
     }
     exports2.outside = outside;
-    function outside(version4, range2, hilo, options) {
-      version4 = new SemVer(version4, options);
+    function outside(version3, range2, hilo, options) {
+      version3 = new SemVer(version3, options);
       range2 = new Range(range2, options);
       var gtfn, ltefn, ltfn, comp26, ecomp;
       switch (hilo) {
@@ -30647,7 +30647,7 @@ var require_semver5 = __commonJS({
         default:
           throw new TypeError('Must provide a hilo val of "<" or ">"');
       }
-      if (satisfies4(version4, range2, options)) {
+      if (satisfies4(version3, range2, options)) {
         return false;
       }
       for (var i2 = 0; i2 < range2.set.length; ++i2) {
@@ -30669,17 +30669,17 @@ var require_semver5 = __commonJS({
         if (high.operator === comp26 || high.operator === ecomp) {
           return false;
         }
-        if ((!low.operator || low.operator === comp26) && ltefn(version4, low.semver)) {
+        if ((!low.operator || low.operator === comp26) && ltefn(version3, low.semver)) {
           return false;
-        } else if (low.operator === ecomp && ltfn(version4, low.semver)) {
+        } else if (low.operator === ecomp && ltfn(version3, low.semver)) {
           return false;
         }
       }
       return true;
     }
     exports2.prerelease = prerelease;
-    function prerelease(version4, options) {
-      var parsed = parse3(version4, options);
+    function prerelease(version3, options) {
+      var parsed = parse3(version3, options);
       return parsed && parsed.prerelease.length ? parsed.prerelease : null;
     }
     exports2.intersects = intersects;
@@ -30689,23 +30689,23 @@ var require_semver5 = __commonJS({
       return r1.intersects(r2);
     }
     exports2.coerce = coerce;
-    function coerce(version4, options) {
-      if (version4 instanceof SemVer) {
-        return version4;
+    function coerce(version3, options) {
+      if (version3 instanceof SemVer) {
+        return version3;
       }
-      if (typeof version4 === "number") {
-        version4 = String(version4);
+      if (typeof version3 === "number") {
+        version3 = String(version3);
       }
-      if (typeof version4 !== "string") {
+      if (typeof version3 !== "string") {
         return null;
       }
       options = options || {};
       var match2 = null;
       if (!options.rtl) {
-        match2 = version4.match(safeRe[t.COERCE]);
+        match2 = version3.match(safeRe[t.COERCE]);
       } else {
         var next;
-        while ((next = safeRe[t.COERCERTL].exec(version4)) && (!match2 || match2.index + match2[0].length !== version4.length)) {
+        while ((next = safeRe[t.COERCERTL].exec(version3)) && (!match2 || match2.index + match2[0].length !== version3.length)) {
           if (!match2 || next.index + next[0].length !== match2.index + match2[0].length) {
             match2 = next;
           }
@@ -32600,14 +32600,14 @@ var require_diagnostics2 = __commonJS({
         "undici:client:beforeConnect",
         (evt) => {
           const {
-            connectParams: { version: version4, protocol, port, host }
+            connectParams: { version: version3, protocol, port, host }
           } = evt;
           debugLog(
             "connecting to %s%s using %s%s",
             host,
             port ? `:${port}` : "",
             protocol,
-            version4
+            version3
           );
         }
       );
@@ -32615,14 +32615,14 @@ var require_diagnostics2 = __commonJS({
         "undici:client:connected",
         (evt) => {
           const {
-            connectParams: { version: version4, protocol, port, host }
+            connectParams: { version: version3, protocol, port, host }
           } = evt;
           debugLog(
             "connected to %s%s using %s%s",
             host,
             port ? `:${port}` : "",
             protocol,
-            version4
+            version3
           );
         }
       );
@@ -32630,7 +32630,7 @@ var require_diagnostics2 = __commonJS({
         "undici:client:connectError",
         (evt) => {
           const {
-            connectParams: { version: version4, protocol, port, host },
+            connectParams: { version: version3, protocol, port, host },
             error: error2
           } = evt;
           debugLog(
@@ -32638,7 +32638,7 @@ var require_diagnostics2 = __commonJS({
             host,
             port ? `:${port}` : "",
             protocol,
-            version4,
+            version3,
             error2.message
           );
         }
@@ -40624,10 +40624,10 @@ var require_socks5_client = __commonJS({
         if (this.buffer.length < 2) {
           return;
         }
-        const version4 = this.buffer[0];
+        const version3 = this.buffer[0];
         const method = this.buffer[1];
-        if (version4 !== SOCKS_VERSION) {
-          throw new Socks5ProxyError(`Invalid SOCKS version: ${version4}`, "UND_ERR_SOCKS5_VERSION");
+        if (version3 !== SOCKS_VERSION) {
+          throw new Socks5ProxyError(`Invalid SOCKS version: ${version3}`, "UND_ERR_SOCKS5_VERSION");
         }
         if (method === AUTH_METHODS.NO_ACCEPTABLE) {
           throw new Socks5ProxyError("No acceptable authentication method", "UND_ERR_SOCKS5_AUTH_REJECTED");
@@ -40672,10 +40672,10 @@ var require_socks5_client = __commonJS({
         if (this.buffer.length < 2) {
           return;
         }
-        const version4 = this.buffer[0];
+        const version3 = this.buffer[0];
         const status = this.buffer[1];
-        if (version4 !== 1) {
-          throw new Socks5ProxyError(`Invalid auth sub-negotiation version: ${version4}`, "UND_ERR_SOCKS5_AUTH_VERSION");
+        if (version3 !== 1) {
+          throw new Socks5ProxyError(`Invalid auth sub-negotiation version: ${version3}`, "UND_ERR_SOCKS5_AUTH_VERSION");
         }
         if (status !== 0) {
           throw new Socks5ProxyError("Authentication failed", "UND_ERR_SOCKS5_AUTH_FAILED");
@@ -40719,11 +40719,11 @@ var require_socks5_client = __commonJS({
         if (this.buffer.length < 4) {
           return;
         }
-        const version4 = this.buffer[0];
+        const version3 = this.buffer[0];
         const reply = this.buffer[1];
         const addressType = this.buffer[3];
-        if (version4 !== SOCKS_VERSION) {
-          throw new Socks5ProxyError(`Invalid SOCKS version in reply: ${version4}`, "UND_ERR_SOCKS5_REPLY_VERSION");
+        if (version3 !== SOCKS_VERSION) {
+          throw new Socks5ProxyError(`Invalid SOCKS version in reply: ${version3}`, "UND_ERR_SOCKS5_REPLY_VERSION");
         }
         let responseLength = 4;
         if (addressType === ADDRESS_TYPES.IPV4) {
@@ -58339,8 +58339,8 @@ function getVersion(app_1) {
 function getCompressionMethod() {
   return __awaiter10(this, void 0, void 0, function* () {
     const versionOutput = yield getVersion("zstd", ["--quiet"]);
-    const version4 = semver.clean(versionOutput);
-    debug(`zstd version: ${version4}`);
+    const version3 = semver.clean(versionOutput);
+    debug(`zstd version: ${version3}`);
     if (versionOutput === "") {
       return CompressionMethod.Gzip;
     } else {
@@ -82675,8 +82675,8 @@ var SASQueryParameters = class {
     }
     return void 0;
   }
-  constructor(version4, signature, permissionsOrOptions, services, resourceTypes, protocol, startsOn, expiresOn2, ipRange, identifier, resource, cacheControl, contentDisposition, contentEncoding, contentLanguage, contentType2, userDelegationKey, preauthorizedAgentObjectId, correlationId, encryptionScope2, delegatedUserObjectId) {
-    this.version = version4;
+  constructor(version3, signature, permissionsOrOptions, services, resourceTypes, protocol, startsOn, expiresOn2, ipRange, identifier, resource, cacheControl, contentDisposition, contentEncoding, contentLanguage, contentType2, userDelegationKey, preauthorizedAgentObjectId, correlationId, encryptionScope2, delegatedUserObjectId) {
+    this.version = version3;
     this.signature = signature;
     if (permissionsOrOptions !== void 0 && typeof permissionsOrOptions !== "string") {
       this.permissions = permissionsOrOptions.permissions;
@@ -82883,7 +82883,7 @@ function generateBlobSASQueryParameters(blobSASSignatureValues, sharedKeyCredent
   return generateBlobSASQueryParametersInternal(blobSASSignatureValues, sharedKeyCredentialOrUserDelegationKey, accountName).sasQueryParameters;
 }
 function generateBlobSASQueryParametersInternal(blobSASSignatureValues, sharedKeyCredentialOrUserDelegationKey, accountName) {
-  const version4 = blobSASSignatureValues.version ? blobSASSignatureValues.version : SERVICE_VERSION;
+  const version3 = blobSASSignatureValues.version ? blobSASSignatureValues.version : SERVICE_VERSION;
   const sharedKeyCredential = sharedKeyCredentialOrUserDelegationKey instanceof StorageSharedKeyCredential ? sharedKeyCredentialOrUserDelegationKey : void 0;
   let userDelegationKeyCredential;
   if (sharedKeyCredential === void 0 && accountName !== void 0) {
@@ -82892,29 +82892,29 @@ function generateBlobSASQueryParametersInternal(blobSASSignatureValues, sharedKe
   if (sharedKeyCredential === void 0 && userDelegationKeyCredential === void 0) {
     throw TypeError("Invalid sharedKeyCredential, userDelegationKey or accountName.");
   }
-  if (version4 >= "2020-12-06") {
+  if (version3 >= "2020-12-06") {
     if (sharedKeyCredential !== void 0) {
       return generateBlobSASQueryParameters20201206(blobSASSignatureValues, sharedKeyCredential);
     } else {
-      if (version4 >= "2025-07-05") {
+      if (version3 >= "2025-07-05") {
         return generateBlobSASQueryParametersUDK20250705(blobSASSignatureValues, userDelegationKeyCredential);
       } else {
         return generateBlobSASQueryParametersUDK20201206(blobSASSignatureValues, userDelegationKeyCredential);
       }
     }
   }
-  if (version4 >= "2018-11-09") {
+  if (version3 >= "2018-11-09") {
     if (sharedKeyCredential !== void 0) {
       return generateBlobSASQueryParameters20181109(blobSASSignatureValues, sharedKeyCredential);
     } else {
-      if (version4 >= "2020-02-10") {
+      if (version3 >= "2020-02-10") {
         return generateBlobSASQueryParametersUDK20200210(blobSASSignatureValues, userDelegationKeyCredential);
       } else {
         return generateBlobSASQueryParametersUDK20181109(blobSASSignatureValues, userDelegationKeyCredential);
       }
     }
   }
-  if (version4 >= "2015-04-05") {
+  if (version3 >= "2015-04-05") {
     if (sharedKeyCredential !== void 0) {
       return generateBlobSASQueryParameters20150405(blobSASSignatureValues, sharedKeyCredential);
     } else {
@@ -83289,44 +83289,44 @@ function getCanonicalName(accountName, containerName, blobName) {
   return elements.join("");
 }
 function SASSignatureValuesSanityCheckAndAutofill(blobSASSignatureValues) {
-  const version4 = blobSASSignatureValues.version ? blobSASSignatureValues.version : SERVICE_VERSION;
-  if (blobSASSignatureValues.snapshotTime && version4 < "2018-11-09") {
+  const version3 = blobSASSignatureValues.version ? blobSASSignatureValues.version : SERVICE_VERSION;
+  if (blobSASSignatureValues.snapshotTime && version3 < "2018-11-09") {
     throw RangeError("'version' must be >= '2018-11-09' when providing 'snapshotTime'.");
   }
   if (blobSASSignatureValues.blobName === void 0 && blobSASSignatureValues.snapshotTime) {
     throw RangeError("Must provide 'blobName' when providing 'snapshotTime'.");
   }
-  if (blobSASSignatureValues.versionId && version4 < "2019-10-10") {
+  if (blobSASSignatureValues.versionId && version3 < "2019-10-10") {
     throw RangeError("'version' must be >= '2019-10-10' when providing 'versionId'.");
   }
   if (blobSASSignatureValues.blobName === void 0 && blobSASSignatureValues.versionId) {
     throw RangeError("Must provide 'blobName' when providing 'versionId'.");
   }
-  if (blobSASSignatureValues.permissions && blobSASSignatureValues.permissions.setImmutabilityPolicy && version4 < "2020-08-04") {
+  if (blobSASSignatureValues.permissions && blobSASSignatureValues.permissions.setImmutabilityPolicy && version3 < "2020-08-04") {
     throw RangeError("'version' must be >= '2020-08-04' when provided 'i' permission.");
   }
-  if (blobSASSignatureValues.permissions && blobSASSignatureValues.permissions.deleteVersion && version4 < "2019-10-10") {
+  if (blobSASSignatureValues.permissions && blobSASSignatureValues.permissions.deleteVersion && version3 < "2019-10-10") {
     throw RangeError("'version' must be >= '2019-10-10' when providing 'x' permission.");
   }
-  if (blobSASSignatureValues.permissions && blobSASSignatureValues.permissions.permanentDelete && version4 < "2019-10-10") {
+  if (blobSASSignatureValues.permissions && blobSASSignatureValues.permissions.permanentDelete && version3 < "2019-10-10") {
     throw RangeError("'version' must be >= '2019-10-10' when providing 'y' permission.");
   }
-  if (blobSASSignatureValues.permissions && blobSASSignatureValues.permissions.tag && version4 < "2019-12-12") {
+  if (blobSASSignatureValues.permissions && blobSASSignatureValues.permissions.tag && version3 < "2019-12-12") {
     throw RangeError("'version' must be >= '2019-12-12' when providing 't' permission.");
   }
-  if (version4 < "2020-02-10" && blobSASSignatureValues.permissions && (blobSASSignatureValues.permissions.move || blobSASSignatureValues.permissions.execute)) {
+  if (version3 < "2020-02-10" && blobSASSignatureValues.permissions && (blobSASSignatureValues.permissions.move || blobSASSignatureValues.permissions.execute)) {
     throw RangeError("'version' must be >= '2020-02-10' when providing the 'm' or 'e' permission.");
   }
-  if (version4 < "2021-04-10" && blobSASSignatureValues.permissions && blobSASSignatureValues.permissions.filterByTags) {
+  if (version3 < "2021-04-10" && blobSASSignatureValues.permissions && blobSASSignatureValues.permissions.filterByTags) {
     throw RangeError("'version' must be >= '2021-04-10' when providing the 'f' permission.");
   }
-  if (version4 < "2020-02-10" && (blobSASSignatureValues.preauthorizedAgentObjectId || blobSASSignatureValues.correlationId)) {
+  if (version3 < "2020-02-10" && (blobSASSignatureValues.preauthorizedAgentObjectId || blobSASSignatureValues.correlationId)) {
     throw RangeError("'version' must be >= '2020-02-10' when providing 'preauthorizedAgentObjectId' or 'correlationId'.");
   }
-  if (blobSASSignatureValues.encryptionScope && version4 < "2020-12-06") {
+  if (blobSASSignatureValues.encryptionScope && version3 < "2020-12-06") {
     throw RangeError("'version' must be >= '2020-12-06' when provided 'encryptionScope' in SAS.");
   }
-  blobSASSignatureValues.version = version4;
+  blobSASSignatureValues.version = version3;
   return blobSASSignatureValues;
 }
 
@@ -88912,14 +88912,14 @@ function getCacheServiceVersion() {
   return process.env["ACTIONS_CACHE_SERVICE_V2"] ? "v2" : "v1";
 }
 function getCacheServiceURL() {
-  const version4 = getCacheServiceVersion();
-  switch (version4) {
+  const version3 = getCacheServiceVersion();
+  switch (version3) {
     case "v1":
       return process.env["ACTIONS_CACHE_URL"] || process.env["ACTIONS_RESULTS_URL"] || "";
     case "v2":
       return process.env["ACTIONS_RESULTS_URL"] || "";
     default:
-      throw new Error(`Unsupported cache service version: ${version4}`);
+      throw new Error(`Unsupported cache service version: ${version3}`);
   }
 }
 
@@ -88985,14 +88985,14 @@ function createHttpClient() {
 function getCacheEntry(keys, paths, options) {
   return __awaiter13(this, void 0, void 0, function* () {
     const httpClient = createHttpClient();
-    const version4 = getCacheVersion(paths, options === null || options === void 0 ? void 0 : options.compressionMethod, options === null || options === void 0 ? void 0 : options.enableCrossOsArchive);
-    const resource = `cache?keys=${encodeURIComponent(keys.join(","))}&version=${version4}`;
+    const version3 = getCacheVersion(paths, options === null || options === void 0 ? void 0 : options.compressionMethod, options === null || options === void 0 ? void 0 : options.enableCrossOsArchive);
+    const resource = `cache?keys=${encodeURIComponent(keys.join(","))}&version=${version3}`;
     const response = yield retryTypedResponse("getCacheEntry", () => __awaiter13(this, void 0, void 0, function* () {
       return httpClient.getJson(getCacheApiUrl(resource));
     }));
     if (response.statusCode === 204) {
       if (isDebug()) {
-        yield printCachesListForDiagnostics(keys[0], httpClient, version4);
+        yield printCachesListForDiagnostics(keys[0], httpClient, version3);
       }
       return null;
     }
@@ -89010,7 +89010,7 @@ function getCacheEntry(keys, paths, options) {
     return cacheResult;
   });
 }
-function printCachesListForDiagnostics(key, httpClient, version4) {
+function printCachesListForDiagnostics(key, httpClient, version3) {
   return __awaiter13(this, void 0, void 0, function* () {
     const resource = `caches?key=${encodeURIComponent(key)}`;
     const response = yield retryTypedResponse("listCache", () => __awaiter13(this, void 0, void 0, function* () {
@@ -89020,7 +89020,7 @@ function printCachesListForDiagnostics(key, httpClient, version4) {
       const cacheListResult = response.result;
       const totalCount = cacheListResult === null || cacheListResult === void 0 ? void 0 : cacheListResult.totalCount;
       if (totalCount && totalCount > 0) {
-        debug(`No matching cache found for cache key '${key}', version '${version4} and scope ${process.env["GITHUB_REF"]}. There exist one or more cache(s) with similar key but they have different version or scope. See more info on cache matching here: https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows#matching-a-cache-key 
+        debug(`No matching cache found for cache key '${key}', version '${version3} and scope ${process.env["GITHUB_REF"]}. There exist one or more cache(s) with similar key but they have different version or scope. See more info on cache matching here: https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows#matching-a-cache-key 
 Other caches with similar key:`);
         for (const cacheEntry of (cacheListResult === null || cacheListResult === void 0 ? void 0 : cacheListResult.artifactCaches) || []) {
           debug(`Cache Key: ${cacheEntry === null || cacheEntry === void 0 ? void 0 : cacheEntry.cacheKey}, Cache Version: ${cacheEntry === null || cacheEntry === void 0 ? void 0 : cacheEntry.cacheVersion}, Cache Scope: ${cacheEntry === null || cacheEntry === void 0 ? void 0 : cacheEntry.scope}, Cache Created: ${cacheEntry === null || cacheEntry === void 0 ? void 0 : cacheEntry.creationTime}`);
@@ -89964,14 +89964,14 @@ function getTarArgs(tarPath_1, compressionMethod_1, type_1) {
     const args = [`"${tarPath.path}"`];
     const cacheFileName = getCacheFileName(compressionMethod);
     const tarFile = "cache.tar";
-    const workingDirectory2 = getWorkingDirectory();
+    const workingDirectory = getWorkingDirectory();
     const BSD_TAR_ZSTD = tarPath.type === ArchiveToolType.BSD && compressionMethod !== CompressionMethod.Gzip && IS_WINDOWS8;
     switch (type) {
       case "create":
-        args.push("--posix", "-cf", BSD_TAR_ZSTD ? tarFile : cacheFileName.replace(new RegExp(`\\${path10.sep}`, "g"), "/"), "--exclude", BSD_TAR_ZSTD ? tarFile : cacheFileName.replace(new RegExp(`\\${path10.sep}`, "g"), "/"), "-P", "-C", workingDirectory2.replace(new RegExp(`\\${path10.sep}`, "g"), "/"), "--files-from", ManifestFilename);
+        args.push("--posix", "-cf", BSD_TAR_ZSTD ? tarFile : cacheFileName.replace(new RegExp(`\\${path10.sep}`, "g"), "/"), "--exclude", BSD_TAR_ZSTD ? tarFile : cacheFileName.replace(new RegExp(`\\${path10.sep}`, "g"), "/"), "-P", "-C", workingDirectory.replace(new RegExp(`\\${path10.sep}`, "g"), "/"), "--files-from", ManifestFilename);
         break;
       case "extract":
-        args.push("-xf", BSD_TAR_ZSTD ? tarFile : archivePath.replace(new RegExp(`\\${path10.sep}`, "g"), "/"), "-P", "-C", workingDirectory2.replace(new RegExp(`\\${path10.sep}`, "g"), "/"));
+        args.push("-xf", BSD_TAR_ZSTD ? tarFile : archivePath.replace(new RegExp(`\\${path10.sep}`, "g"), "/"), "-P", "-C", workingDirectory.replace(new RegExp(`\\${path10.sep}`, "g"), "/"));
         break;
       case "list":
         args.push("-tf", BSD_TAR_ZSTD ? tarFile : archivePath.replace(new RegExp(`\\${path10.sep}`, "g"), "/"), "-P");
@@ -90083,8 +90083,8 @@ function listTar(archivePath, compressionMethod) {
 }
 function extractTar(archivePath, compressionMethod) {
   return __awaiter15(this, void 0, void 0, function* () {
-    const workingDirectory2 = getWorkingDirectory();
-    yield mkdirP(workingDirectory2);
+    const workingDirectory = getWorkingDirectory();
+    yield mkdirP(workingDirectory);
     const commands = yield getCommands(compressionMethod, "extract", archivePath);
     yield execCommands(commands);
   });
@@ -90319,926 +90319,8 @@ async function hashFiles2(pattern, verbose = false) {
   return "";
 }
 
-// src/utils/inputs.ts
-var import_node_path = __toESM(require("node:path"), 1);
-
-// src/utils/config-file.ts
-var import_node_fs2 = __toESM(require("node:fs"), 1);
-
-// node_modules/smol-toml/dist/error.js
-function getLineColFromPtr(string, ptr) {
-  let lines = string.slice(0, ptr).split(/\r\n|\n|\r/g);
-  return [lines.length, lines.pop().length + 1];
-}
-function makeCodeBlock(string, line, column) {
-  let lines = string.split(/\r\n|\n|\r/g);
-  let codeblock = "";
-  let numberLen = (Math.log10(line + 1) | 0) + 1;
-  for (let i = line - 1; i <= line + 1; i++) {
-    let l = lines[i - 1];
-    if (!l)
-      continue;
-    codeblock += i.toString().padEnd(numberLen, " ");
-    codeblock += ":  ";
-    codeblock += l;
-    codeblock += "\n";
-    if (i === line) {
-      codeblock += " ".repeat(numberLen + column + 2);
-      codeblock += "^\n";
-    }
-  }
-  return codeblock;
-}
-var TomlError = class extends Error {
-  line;
-  column;
-  codeblock;
-  constructor(message, options) {
-    const [line, column] = getLineColFromPtr(options.toml, options.ptr);
-    const codeblock = makeCodeBlock(options.toml, line, column);
-    super(`Invalid TOML document: ${message}
-
-${codeblock}`, options);
-    this.line = line;
-    this.column = column;
-    this.codeblock = codeblock;
-  }
-};
-
-// node_modules/smol-toml/dist/util.js
-function isEscaped(str, ptr) {
-  let i = 0;
-  while (str[ptr - ++i] === "\\")
-    ;
-  return --i && i % 2;
-}
-function indexOfNewline(str, start = 0, end = str.length) {
-  let idx = str.indexOf("\n", start);
-  if (str[idx - 1] === "\r")
-    idx--;
-  return idx <= end ? idx : -1;
-}
-function skipComment(str, ptr) {
-  for (let i = ptr; i < str.length; i++) {
-    let c = str[i];
-    if (c === "\n")
-      return i;
-    if (c === "\r" && str[i + 1] === "\n")
-      return i + 1;
-    if (c < " " && c !== "	" || c === "\x7F") {
-      throw new TomlError("control characters are not allowed in comments", {
-        toml: str,
-        ptr
-      });
-    }
-  }
-  return str.length;
-}
-function skipVoid(str, ptr, banNewLines, banComments) {
-  let c;
-  while ((c = str[ptr]) === " " || c === "	" || !banNewLines && (c === "\n" || c === "\r" && str[ptr + 1] === "\n"))
-    ptr++;
-  return banComments || c !== "#" ? ptr : skipVoid(str, skipComment(str, ptr), banNewLines);
-}
-function skipUntil(str, ptr, sep8, end, banNewLines = false) {
-  if (!end) {
-    ptr = indexOfNewline(str, ptr);
-    return ptr < 0 ? str.length : ptr;
-  }
-  for (let i = ptr; i < str.length; i++) {
-    let c = str[i];
-    if (c === "#") {
-      i = indexOfNewline(str, i);
-    } else if (c === sep8) {
-      return i + 1;
-    } else if (c === end || banNewLines && (c === "\n" || c === "\r" && str[i + 1] === "\n")) {
-      return i;
-    }
-  }
-  throw new TomlError("cannot find end of structure", {
-    toml: str,
-    ptr
-  });
-}
-function getStringEnd(str, seek) {
-  let first = str[seek];
-  let target = first === str[seek + 1] && str[seek + 1] === str[seek + 2] ? str.slice(seek, seek + 3) : first;
-  seek += target.length - 1;
-  do
-    seek = str.indexOf(target, ++seek);
-  while (seek > -1 && first !== "'" && isEscaped(str, seek));
-  if (seek > -1) {
-    seek += target.length;
-    if (target.length > 1) {
-      if (str[seek] === first)
-        seek++;
-      if (str[seek] === first)
-        seek++;
-    }
-  }
-  return seek;
-}
-
-// node_modules/smol-toml/dist/date.js
-var DATE_TIME_RE = /^(\d{4}-\d{2}-\d{2})?[T ]?(?:(\d{2}):\d{2}(?::\d{2}(?:\.\d+)?)?)?(Z|[-+]\d{2}:\d{2})?$/i;
-var TomlDate = class _TomlDate extends Date {
-  #hasDate = false;
-  #hasTime = false;
-  #offset = null;
-  constructor(date) {
-    let hasDate = true;
-    let hasTime = true;
-    let offset = "Z";
-    if (typeof date === "string") {
-      let match2 = date.match(DATE_TIME_RE);
-      if (match2) {
-        if (!match2[1]) {
-          hasDate = false;
-          date = `0000-01-01T${date}`;
-        }
-        hasTime = !!match2[2];
-        hasTime && date[10] === " " && (date = date.replace(" ", "T"));
-        if (match2[2] && +match2[2] > 23) {
-          date = "";
-        } else {
-          offset = match2[3] || null;
-          date = date.toUpperCase();
-          if (!offset && hasTime)
-            date += "Z";
-        }
-      } else {
-        date = "";
-      }
-    }
-    super(date);
-    if (!isNaN(this.getTime())) {
-      this.#hasDate = hasDate;
-      this.#hasTime = hasTime;
-      this.#offset = offset;
-    }
-  }
-  isDateTime() {
-    return this.#hasDate && this.#hasTime;
-  }
-  isLocal() {
-    return !this.#hasDate || !this.#hasTime || !this.#offset;
-  }
-  isDate() {
-    return this.#hasDate && !this.#hasTime;
-  }
-  isTime() {
-    return this.#hasTime && !this.#hasDate;
-  }
-  isValid() {
-    return this.#hasDate || this.#hasTime;
-  }
-  toISOString() {
-    let iso = super.toISOString();
-    if (this.isDate())
-      return iso.slice(0, 10);
-    if (this.isTime())
-      return iso.slice(11, 23);
-    if (this.#offset === null)
-      return iso.slice(0, -1);
-    if (this.#offset === "Z")
-      return iso;
-    let offset = +this.#offset.slice(1, 3) * 60 + +this.#offset.slice(4, 6);
-    offset = this.#offset[0] === "-" ? offset : -offset;
-    let offsetDate = new Date(this.getTime() - offset * 6e4);
-    return offsetDate.toISOString().slice(0, -1) + this.#offset;
-  }
-  static wrapAsOffsetDateTime(jsDate, offset = "Z") {
-    let date = new _TomlDate(jsDate);
-    date.#offset = offset;
-    return date;
-  }
-  static wrapAsLocalDateTime(jsDate) {
-    let date = new _TomlDate(jsDate);
-    date.#offset = null;
-    return date;
-  }
-  static wrapAsLocalDate(jsDate) {
-    let date = new _TomlDate(jsDate);
-    date.#hasTime = false;
-    date.#offset = null;
-    return date;
-  }
-  static wrapAsLocalTime(jsDate) {
-    let date = new _TomlDate(jsDate);
-    date.#hasDate = false;
-    date.#offset = null;
-    return date;
-  }
-};
-
-// node_modules/smol-toml/dist/primitive.js
-var INT_REGEX = /^((0x[0-9a-fA-F](_?[0-9a-fA-F])*)|(([+-]|0[ob])?\d(_?\d)*))$/;
-var FLOAT_REGEX = /^[+-]?\d(_?\d)*(\.\d(_?\d)*)?([eE][+-]?\d(_?\d)*)?$/;
-var LEADING_ZERO = /^[+-]?0[0-9_]/;
-var ESCAPE_REGEX = /^[0-9a-f]{2,8}$/i;
-var ESC_MAP = {
-  b: "\b",
-  t: "	",
-  n: "\n",
-  f: "\f",
-  r: "\r",
-  e: "\x1B",
-  '"': '"',
-  "\\": "\\"
-};
-function parseString(str, ptr = 0, endPtr = str.length) {
-  let isLiteral = str[ptr] === "'";
-  let isMultiline = str[ptr++] === str[ptr] && str[ptr] === str[ptr + 1];
-  if (isMultiline) {
-    endPtr -= 2;
-    if (str[ptr += 2] === "\r")
-      ptr++;
-    if (str[ptr] === "\n")
-      ptr++;
-  }
-  let tmp = 0;
-  let isEscape;
-  let parsed = "";
-  let sliceStart = ptr;
-  while (ptr < endPtr - 1) {
-    let c = str[ptr++];
-    if (c === "\n" || c === "\r" && str[ptr] === "\n") {
-      if (!isMultiline) {
-        throw new TomlError("newlines are not allowed in strings", {
-          toml: str,
-          ptr: ptr - 1
-        });
-      }
-    } else if (c < " " && c !== "	" || c === "\x7F") {
-      throw new TomlError("control characters are not allowed in strings", {
-        toml: str,
-        ptr: ptr - 1
-      });
-    }
-    if (isEscape) {
-      isEscape = false;
-      if (c === "x" || c === "u" || c === "U") {
-        let code = str.slice(ptr, ptr += c === "x" ? 2 : c === "u" ? 4 : 8);
-        if (!ESCAPE_REGEX.test(code)) {
-          throw new TomlError("invalid unicode escape", {
-            toml: str,
-            ptr: tmp
-          });
-        }
-        try {
-          parsed += String.fromCodePoint(parseInt(code, 16));
-        } catch {
-          throw new TomlError("invalid unicode escape", {
-            toml: str,
-            ptr: tmp
-          });
-        }
-      } else if (isMultiline && (c === "\n" || c === " " || c === "	" || c === "\r")) {
-        ptr = skipVoid(str, ptr - 1, true);
-        if (str[ptr] !== "\n" && str[ptr] !== "\r") {
-          throw new TomlError("invalid escape: only line-ending whitespace may be escaped", {
-            toml: str,
-            ptr: tmp
-          });
-        }
-        ptr = skipVoid(str, ptr);
-      } else if (c in ESC_MAP) {
-        parsed += ESC_MAP[c];
-      } else {
-        throw new TomlError("unrecognized escape sequence", {
-          toml: str,
-          ptr: tmp
-        });
-      }
-      sliceStart = ptr;
-    } else if (!isLiteral && c === "\\") {
-      tmp = ptr - 1;
-      isEscape = true;
-      parsed += str.slice(sliceStart, tmp);
-    }
-  }
-  return parsed + str.slice(sliceStart, endPtr - 1);
-}
-function parseValue2(value, toml, ptr, integersAsBigInt) {
-  if (value === "true")
-    return true;
-  if (value === "false")
-    return false;
-  if (value === "-inf")
-    return -Infinity;
-  if (value === "inf" || value === "+inf")
-    return Infinity;
-  if (value === "nan" || value === "+nan" || value === "-nan")
-    return NaN;
-  if (value === "-0")
-    return integersAsBigInt ? 0n : 0;
-  let isInt = INT_REGEX.test(value);
-  if (isInt || FLOAT_REGEX.test(value)) {
-    if (LEADING_ZERO.test(value)) {
-      throw new TomlError("leading zeroes are not allowed", {
-        toml,
-        ptr
-      });
-    }
-    value = value.replace(/_/g, "");
-    let numeric = +value;
-    if (isNaN(numeric)) {
-      throw new TomlError("invalid number", {
-        toml,
-        ptr
-      });
-    }
-    if (isInt) {
-      if ((isInt = !Number.isSafeInteger(numeric)) && !integersAsBigInt) {
-        throw new TomlError("integer value cannot be represented losslessly", {
-          toml,
-          ptr
-        });
-      }
-      if (isInt || integersAsBigInt === true)
-        numeric = BigInt(value);
-    }
-    return numeric;
-  }
-  const date = new TomlDate(value);
-  if (!date.isValid()) {
-    throw new TomlError("invalid value", {
-      toml,
-      ptr
-    });
-  }
-  return date;
-}
-
-// node_modules/smol-toml/dist/extract.js
-function sliceAndTrimEndOf(str, startPtr, endPtr) {
-  let value = str.slice(startPtr, endPtr);
-  let commentIdx = value.indexOf("#");
-  if (commentIdx > -1) {
-    skipComment(str, commentIdx);
-    value = value.slice(0, commentIdx);
-  }
-  return [value.trimEnd(), commentIdx];
-}
-function extractValue(str, ptr, end, depth, integersAsBigInt) {
-  if (depth === 0) {
-    throw new TomlError("document contains excessively nested structures. aborting.", {
-      toml: str,
-      ptr
-    });
-  }
-  let c = str[ptr];
-  if (c === "[" || c === "{") {
-    let [value, endPtr2] = c === "[" ? parseArray(str, ptr, depth, integersAsBigInt) : parseInlineTable(str, ptr, depth, integersAsBigInt);
-    if (end) {
-      endPtr2 = skipVoid(str, endPtr2);
-      if (str[endPtr2] === ",")
-        endPtr2++;
-      else if (str[endPtr2] !== end) {
-        throw new TomlError("expected comma or end of structure", {
-          toml: str,
-          ptr: endPtr2
-        });
-      }
-    }
-    return [value, endPtr2];
-  }
-  let endPtr;
-  if (c === '"' || c === "'") {
-    endPtr = getStringEnd(str, ptr);
-    let parsed = parseString(str, ptr, endPtr);
-    if (end) {
-      endPtr = skipVoid(str, endPtr);
-      if (str[endPtr] && str[endPtr] !== "," && str[endPtr] !== end && str[endPtr] !== "\n" && str[endPtr] !== "\r") {
-        throw new TomlError("unexpected character encountered", {
-          toml: str,
-          ptr: endPtr
-        });
-      }
-      endPtr += +(str[endPtr] === ",");
-    }
-    return [parsed, endPtr];
-  }
-  endPtr = skipUntil(str, ptr, ",", end);
-  let slice = sliceAndTrimEndOf(str, ptr, endPtr - +(str[endPtr - 1] === ","));
-  if (!slice[0]) {
-    throw new TomlError("incomplete key-value declaration: no value specified", {
-      toml: str,
-      ptr
-    });
-  }
-  if (end && slice[1] > -1) {
-    endPtr = skipVoid(str, ptr + slice[1]);
-    endPtr += +(str[endPtr] === ",");
-  }
-  return [
-    parseValue2(slice[0], str, ptr, integersAsBigInt),
-    endPtr
-  ];
-}
-
-// node_modules/smol-toml/dist/struct.js
-var KEY_PART_RE = /^[a-zA-Z0-9-_]+[ \t]*$/;
-function parseKey(str, ptr, end = "=") {
-  let dot = ptr - 1;
-  let parsed = [];
-  let endPtr = str.indexOf(end, ptr);
-  if (endPtr < 0) {
-    throw new TomlError("incomplete key-value: cannot find end of key", {
-      toml: str,
-      ptr
-    });
-  }
-  do {
-    let c = str[ptr = ++dot];
-    if (c !== " " && c !== "	") {
-      if (c === '"' || c === "'") {
-        if (c === str[ptr + 1] && c === str[ptr + 2]) {
-          throw new TomlError("multiline strings are not allowed in keys", {
-            toml: str,
-            ptr
-          });
-        }
-        let eos = getStringEnd(str, ptr);
-        if (eos < 0) {
-          throw new TomlError("unfinished string encountered", {
-            toml: str,
-            ptr
-          });
-        }
-        dot = str.indexOf(".", eos);
-        let strEnd = str.slice(eos, dot < 0 || dot > endPtr ? endPtr : dot);
-        let newLine = indexOfNewline(strEnd);
-        if (newLine > -1) {
-          throw new TomlError("newlines are not allowed in keys", {
-            toml: str,
-            ptr: ptr + dot + newLine
-          });
-        }
-        if (strEnd.trimStart()) {
-          throw new TomlError("found extra tokens after the string part", {
-            toml: str,
-            ptr: eos
-          });
-        }
-        if (endPtr < eos) {
-          endPtr = str.indexOf(end, eos);
-          if (endPtr < 0) {
-            throw new TomlError("incomplete key-value: cannot find end of key", {
-              toml: str,
-              ptr
-            });
-          }
-        }
-        parsed.push(parseString(str, ptr, eos));
-      } else {
-        dot = str.indexOf(".", ptr);
-        let part = str.slice(ptr, dot < 0 || dot > endPtr ? endPtr : dot);
-        if (!KEY_PART_RE.test(part)) {
-          throw new TomlError("only letter, numbers, dashes and underscores are allowed in keys", {
-            toml: str,
-            ptr
-          });
-        }
-        parsed.push(part.trimEnd());
-      }
-    }
-  } while (dot + 1 && dot < endPtr);
-  return [parsed, skipVoid(str, endPtr + 1, true, true)];
-}
-function parseInlineTable(str, ptr, depth, integersAsBigInt) {
-  let res = {};
-  let seen = /* @__PURE__ */ new Set();
-  let c;
-  ptr++;
-  while ((c = str[ptr++]) !== "}" && c) {
-    if (c === ",") {
-      throw new TomlError("expected value, found comma", {
-        toml: str,
-        ptr: ptr - 1
-      });
-    } else if (c === "#")
-      ptr = skipComment(str, ptr);
-    else if (c !== " " && c !== "	" && c !== "\n" && c !== "\r") {
-      let k;
-      let t = res;
-      let hasOwn = false;
-      let [key, keyEndPtr] = parseKey(str, ptr - 1);
-      for (let i = 0; i < key.length; i++) {
-        if (i)
-          t = hasOwn ? t[k] : t[k] = {};
-        k = key[i];
-        if ((hasOwn = Object.hasOwn(t, k)) && (typeof t[k] !== "object" || seen.has(t[k]))) {
-          throw new TomlError("trying to redefine an already defined value", {
-            toml: str,
-            ptr
-          });
-        }
-        if (!hasOwn && k === "__proto__") {
-          Object.defineProperty(t, k, { enumerable: true, configurable: true, writable: true });
-        }
-      }
-      if (hasOwn) {
-        throw new TomlError("trying to redefine an already defined value", {
-          toml: str,
-          ptr
-        });
-      }
-      let [value, valueEndPtr] = extractValue(str, keyEndPtr, "}", depth - 1, integersAsBigInt);
-      seen.add(value);
-      t[k] = value;
-      ptr = valueEndPtr;
-    }
-  }
-  if (!c) {
-    throw new TomlError("unfinished table encountered", {
-      toml: str,
-      ptr
-    });
-  }
-  return [res, ptr];
-}
-function parseArray(str, ptr, depth, integersAsBigInt) {
-  let res = [];
-  let c;
-  ptr++;
-  while ((c = str[ptr++]) !== "]" && c) {
-    if (c === ",") {
-      throw new TomlError("expected value, found comma", {
-        toml: str,
-        ptr: ptr - 1
-      });
-    } else if (c === "#")
-      ptr = skipComment(str, ptr);
-    else if (c !== " " && c !== "	" && c !== "\n" && c !== "\r") {
-      let e = extractValue(str, ptr - 1, "]", depth - 1, integersAsBigInt);
-      res.push(e[0]);
-      ptr = e[1];
-    }
-  }
-  if (!c) {
-    throw new TomlError("unfinished array encountered", {
-      toml: str,
-      ptr
-    });
-  }
-  return [res, ptr];
-}
-
-// node_modules/smol-toml/dist/parse.js
-function peekTable(key, table, meta, type) {
-  let t = table;
-  let m = meta;
-  let k;
-  let hasOwn = false;
-  let state3;
-  for (let i = 0; i < key.length; i++) {
-    if (i) {
-      t = hasOwn ? t[k] : t[k] = {};
-      m = (state3 = m[k]).c;
-      if (type === 0 && (state3.t === 1 || state3.t === 2)) {
-        return null;
-      }
-      if (state3.t === 2) {
-        let l = t.length - 1;
-        t = t[l];
-        m = m[l].c;
-      }
-    }
-    k = key[i];
-    if ((hasOwn = Object.hasOwn(t, k)) && m[k]?.t === 0 && m[k]?.d) {
-      return null;
-    }
-    if (!hasOwn) {
-      if (k === "__proto__") {
-        Object.defineProperty(t, k, { enumerable: true, configurable: true, writable: true });
-        Object.defineProperty(m, k, { enumerable: true, configurable: true, writable: true });
-      }
-      m[k] = {
-        t: i < key.length - 1 && type === 2 ? 3 : type,
-        d: false,
-        i: 0,
-        c: {}
-      };
-    }
-  }
-  state3 = m[k];
-  if (state3.t !== type && !(type === 1 && state3.t === 3)) {
-    return null;
-  }
-  if (type === 2) {
-    if (!state3.d) {
-      state3.d = true;
-      t[k] = [];
-    }
-    t[k].push(t = {});
-    state3.c[state3.i++] = state3 = { t: 1, d: false, i: 0, c: {} };
-  }
-  if (state3.d) {
-    return null;
-  }
-  state3.d = true;
-  if (type === 1) {
-    t = hasOwn ? t[k] : t[k] = {};
-  } else if (type === 0 && hasOwn) {
-    return null;
-  }
-  return [k, t, state3.c];
-}
-function parse2(toml, { maxDepth = 1e3, integersAsBigInt } = {}) {
-  let res = {};
-  let meta = {};
-  let tbl = res;
-  let m = meta;
-  for (let ptr = skipVoid(toml, 0); ptr < toml.length; ) {
-    if (toml[ptr] === "[") {
-      let isTableArray = toml[++ptr] === "[";
-      let k = parseKey(toml, ptr += +isTableArray, "]");
-      if (isTableArray) {
-        if (toml[k[1] - 1] !== "]") {
-          throw new TomlError("expected end of table declaration", {
-            toml,
-            ptr: k[1] - 1
-          });
-        }
-        k[1]++;
-      }
-      let p = peekTable(
-        k[0],
-        res,
-        meta,
-        isTableArray ? 2 : 1
-        /* Type.EXPLICIT */
-      );
-      if (!p) {
-        throw new TomlError("trying to redefine an already defined table or value", {
-          toml,
-          ptr
-        });
-      }
-      m = p[2];
-      tbl = p[1];
-      ptr = k[1];
-    } else {
-      let k = parseKey(toml, ptr);
-      let p = peekTable(
-        k[0],
-        tbl,
-        m,
-        0
-        /* Type.DOTTED */
-      );
-      if (!p) {
-        throw new TomlError("trying to redefine an already defined table or value", {
-          toml,
-          ptr
-        });
-      }
-      let v = extractValue(toml, k[1], void 0, maxDepth, integersAsBigInt);
-      p[1][p[0]] = v[0];
-      ptr = v[1];
-    }
-    ptr = skipVoid(toml, ptr, true);
-    if (toml[ptr] && toml[ptr] !== "\n" && toml[ptr] !== "\r") {
-      throw new TomlError("each key-value declaration must be followed by an end-of-line", {
-        toml,
-        ptr
-      });
-    }
-    ptr = skipVoid(toml, ptr);
-  }
-  return res;
-}
-
-// src/utils/config-file.ts
-function getConfigValueFromTomlFile(filePath, key) {
-  if (!import_node_fs2.default.existsSync(filePath) || !filePath.endsWith(".toml")) {
-    return void 0;
-  }
-  const fileContent = import_node_fs2.default.readFileSync(filePath, "utf-8");
-  if (filePath.endsWith("pyproject.toml")) {
-    const tomlContent2 = parse2(fileContent);
-    return tomlContent2?.tool?.uv?.[key];
-  }
-  const tomlContent = parse2(fileContent);
-  return tomlContent[key];
-}
-
-// src/utils/inputs.ts
-var workingDirectory = getInput("working-directory");
-var version3 = getInput("version");
-var versionFile = getVersionFile();
-var pythonVersion = getInput("python-version");
-var activateEnvironment = getBooleanInput("activate-environment");
-var venvPath = getVenvPath();
-var checkSum = getInput("checksum");
-var enableCache = getEnableCache();
-var restoreCache2 = getInput("restore-cache") === "true";
-var saveCache2 = getInput("save-cache") === "true";
-var cacheSuffix = getInput("cache-suffix") || "";
-var cacheLocalPath = getCacheLocalPath();
-var cacheDependencyGlob = getCacheDependencyGlob();
-var pruneCache = getInput("prune-cache") === "true";
-var cachePython = getInput("cache-python") === "true";
-var ignoreNothingToCache = getInput("ignore-nothing-to-cache") === "true";
-var ignoreEmptyWorkdir = getInput("ignore-empty-workdir") === "true";
-var toolBinDir = getToolBinDir();
-var toolDir = getToolDir();
-var pythonDir = getUvPythonDir();
-var githubToken = getInput("github-token");
-var manifestFile = getManifestFile();
-var addProblemMatchers = getInput("add-problem-matchers") === "true";
-var resolutionStrategy = getResolutionStrategy();
-function getVersionFile() {
-  const versionFileInput = getInput("version-file");
-  if (versionFileInput !== "") {
-    const tildeExpanded = expandTilde(versionFileInput);
-    return resolveRelativePath(tildeExpanded);
-  }
-  return versionFileInput;
-}
-function getVenvPath() {
-  const venvPathInput = getInput("venv-path");
-  if (venvPathInput !== "") {
-    if (!activateEnvironment) {
-      warning("venv-path is only used when activate-environment is true");
-    }
-    const tildeExpanded = expandTilde(venvPathInput);
-    return normalizePath(resolveRelativePath(tildeExpanded));
-  }
-  return normalizePath(resolveRelativePath(".venv"));
-}
-function getEnableCache() {
-  const enableCacheInput = getInput("enable-cache");
-  if (enableCacheInput === "auto") {
-    return process.env.RUNNER_ENVIRONMENT === "github-hosted";
-  }
-  return enableCacheInput === "true";
-}
-function getToolBinDir() {
-  const toolBinDirInput = getInput("tool-bin-dir");
-  if (toolBinDirInput !== "") {
-    const tildeExpanded = expandTilde(toolBinDirInput);
-    return resolveRelativePath(tildeExpanded);
-  }
-  if (process.platform === "win32") {
-    if (process.env.RUNNER_TEMP !== void 0) {
-      return `${process.env.RUNNER_TEMP}${import_node_path.default.sep}uv-tool-bin-dir`;
-    }
-    throw Error(
-      "Could not determine UV_TOOL_BIN_DIR. Please make sure RUNNER_TEMP is set or provide the tool-bin-dir input"
-    );
-  }
-  return void 0;
-}
-function getToolDir() {
-  const toolDirInput = getInput("tool-dir");
-  if (toolDirInput !== "") {
-    const tildeExpanded = expandTilde(toolDirInput);
-    return resolveRelativePath(tildeExpanded);
-  }
-  if (process.platform === "win32") {
-    if (process.env.RUNNER_TEMP !== void 0) {
-      return `${process.env.RUNNER_TEMP}${import_node_path.default.sep}uv-tool-dir`;
-    }
-    throw Error(
-      "Could not determine UV_TOOL_DIR. Please make sure RUNNER_TEMP is set or provide the tool-dir input"
-    );
-  }
-  return void 0;
-}
-function getCacheLocalPath() {
-  const cacheLocalPathInput = getInput("cache-local-path");
-  if (cacheLocalPathInput !== "") {
-    const tildeExpanded = expandTilde(cacheLocalPathInput);
-    return {
-      path: resolveRelativePath(tildeExpanded),
-      source: 0 /* Input */
-    };
-  }
-  const cacheDirFromConfig = getCacheDirFromConfig();
-  if (cacheDirFromConfig !== void 0) {
-    return { path: cacheDirFromConfig, source: 1 /* Config */ };
-  }
-  if (process.env.UV_CACHE_DIR !== void 0) {
-    info(`UV_CACHE_DIR is already set to ${process.env.UV_CACHE_DIR}`);
-    return { path: process.env.UV_CACHE_DIR, source: 2 /* Env */ };
-  }
-  if (getEnableCache()) {
-    if (process.env.RUNNER_ENVIRONMENT === "github-hosted") {
-      if (process.env.RUNNER_TEMP !== void 0) {
-        return {
-          path: `${process.env.RUNNER_TEMP}${import_node_path.default.sep}setup-uv-cache`,
-          source: 3 /* Default */
-        };
-      }
-      throw Error(
-        "Could not determine UV_CACHE_DIR. Please make sure RUNNER_TEMP is set or provide the cache-local-path input"
-      );
-    }
-    if (process.platform === "win32") {
-      return {
-        path: `${process.env.APPDATA}${import_node_path.default.sep}uv${import_node_path.default.sep}cache`,
-        source: 3 /* Default */
-      };
-    }
-    return {
-      path: `${process.env.HOME}${import_node_path.default.sep}.cache${import_node_path.default.sep}uv`,
-      source: 3 /* Default */
-    };
-  }
-}
-function getCacheDirFromConfig() {
-  for (const filePath of [versionFile, "uv.toml", "pyproject.toml"]) {
-    const resolvedPath = resolveRelativePath(filePath);
-    try {
-      const cacheDir2 = getConfigValueFromTomlFile(resolvedPath, "cache-dir");
-      if (cacheDir2 !== void 0) {
-        info(`Found cache-dir in ${resolvedPath}: ${cacheDir2}`);
-        return cacheDir2;
-      }
-    } catch (err) {
-      const message = err.message;
-      warning(`Error while parsing ${filePath}: ${message}`);
-      return void 0;
-    }
-  }
-  return void 0;
-}
-function getUvPythonDir() {
-  if (process.env.UV_PYTHON_INSTALL_DIR !== void 0) {
-    info(
-      `UV_PYTHON_INSTALL_DIR is already set to ${process.env.UV_PYTHON_INSTALL_DIR}`
-    );
-    return process.env.UV_PYTHON_INSTALL_DIR;
-  }
-  if (process.env.RUNNER_ENVIRONMENT !== "github-hosted") {
-    if (process.platform === "win32") {
-      return `${process.env.APPDATA}${import_node_path.default.sep}uv${import_node_path.default.sep}python`;
-    } else {
-      return `${process.env.HOME}${import_node_path.default.sep}.local${import_node_path.default.sep}share${import_node_path.default.sep}uv${import_node_path.default.sep}python`;
-    }
-  }
-  if (process.env.RUNNER_TEMP !== void 0) {
-    return `${process.env.RUNNER_TEMP}${import_node_path.default.sep}uv-python-dir`;
-  }
-  throw Error(
-    "Could not determine UV_PYTHON_INSTALL_DIR. Please make sure RUNNER_TEMP is set or provide the UV_PYTHON_INSTALL_DIR environment variable"
-  );
-}
-function getCacheDependencyGlob() {
-  const cacheDependencyGlobInput = getInput("cache-dependency-glob");
-  if (cacheDependencyGlobInput !== "") {
-    return cacheDependencyGlobInput.split("\n").map((part) => part.trim()).map((part) => expandTilde(part)).map((part) => resolveRelativePath(part)).join("\n");
-  }
-  return cacheDependencyGlobInput;
-}
-function expandTilde(input) {
-  if (input.startsWith("~")) {
-    return `${process.env.HOME}${input.substring(1)}`;
-  }
-  return input;
-}
-function normalizePath(inputPath) {
-  const normalized = import_node_path.default.normalize(inputPath);
-  const root = import_node_path.default.parse(normalized).root;
-  let trimmed = normalized;
-  while (trimmed.length > root.length && trimmed.endsWith(import_node_path.default.sep)) {
-    trimmed = trimmed.slice(0, -1);
-  }
-  return trimmed;
-}
-function resolveRelativePath(inputPath) {
-  const hasNegation = inputPath.startsWith("!");
-  const pathWithoutNegation = hasNegation ? inputPath.substring(1) : inputPath;
-  const resolvedPath = import_node_path.default.resolve(workingDirectory, pathWithoutNegation);
-  debug(
-    `Resolving relative path ${inputPath} to ${hasNegation ? "!" : ""}${resolvedPath}`
-  );
-  return hasNegation ? `!${resolvedPath}` : resolvedPath;
-}
-function getManifestFile() {
-  const manifestFileInput = getInput("manifest-file");
-  if (manifestFileInput !== "") {
-    return manifestFileInput;
-  }
-  return void 0;
-}
-function getResolutionStrategy() {
-  const resolutionStrategyInput = getInput("resolution-strategy");
-  if (resolutionStrategyInput === "lowest") {
-    return "lowest";
-  }
-  if (resolutionStrategyInput === "highest" || resolutionStrategyInput === "") {
-    return "highest";
-  }
-  throw new Error(
-    `Invalid resolution-strategy: ${resolutionStrategyInput}. Must be 'highest' or 'lowest'.`
-  );
-}
-
 // src/utils/platforms.ts
-var import_node_fs3 = __toESM(require("node:fs"), 1);
+var import_node_fs2 = __toESM(require("node:fs"), 1);
 var import_node_os3 = __toESM(require("node:os"), 1);
 function getArch() {
   const arch3 = process.arch;
@@ -91314,7 +90396,7 @@ function getLinuxOSNameVersion() {
   const files = ["/etc/os-release", "/usr/lib/os-release"];
   for (const file of files) {
     try {
-      const content = import_node_fs3.default.readFileSync(file, "utf8");
+      const content = import_node_fs2.default.readFileSync(file, "utf8");
       const id = parseOsReleaseValue(content, "ID");
       const versionId2 = parseOsReleaseValue(content, "VERSION_ID");
       const versionCodename = parseOsReleaseValue(content, "VERSION_CODENAME");
@@ -91345,10 +90427,10 @@ function getMacOSNameVersion() {
   return `macos-${macosVersion}`;
 }
 function getWindowsNameVersion() {
-  const version4 = import_node_os3.default.version();
-  const match2 = version4.match(/Windows(?: Server)? (\d+)/);
+  const version3 = import_node_os3.default.version();
+  const match2 = version3.match(/Windows(?: Server)? (\d+)/);
   if (!match2) {
-    throw new Error(`Failed to parse Windows version from: ${version4}`);
+    throw new Error(`Failed to parse Windows version from: ${version3}`);
   }
   return `windows-${match2[1]}`;
 }
@@ -91358,30 +90440,30 @@ var STATE_CACHE_KEY = "cache-key";
 var STATE_CACHE_MATCHED_KEY = "cache-matched-key";
 var STATE_PYTHON_CACHE_MATCHED_KEY = "python-cache-matched-key";
 var CACHE_VERSION = "2";
-async function restoreCache3(pythonVersion2) {
-  const cacheKey = await computeKeys(pythonVersion2);
+async function restoreCache2(inputs, pythonVersion) {
+  const cacheKey = await computeKeys(inputs, pythonVersion);
   saveState(STATE_CACHE_KEY, cacheKey);
   setOutput("cache-key", cacheKey);
-  if (!restoreCache2) {
+  if (!inputs.restoreCache) {
     info("restore-cache is false. Skipping restore cache step.");
     setOutput("python-cache-hit", false);
     return;
   }
-  if (cacheLocalPath === void 0) {
+  if (inputs.cacheLocalPath === void 0) {
     throw new Error(
       "cache-local-path is not set. Cannot restore cache without a valid cache path."
     );
   }
   await restoreCacheFromKey(
     cacheKey,
-    cacheLocalPath.path,
+    inputs.cacheLocalPath.path,
     STATE_CACHE_MATCHED_KEY,
     "cache-hit"
   );
-  if (cachePython) {
+  if (inputs.cachePython) {
     await restoreCacheFromKey(
       `${cacheKey}-python`,
-      pythonDir,
+      inputs.pythonDir,
       STATE_PYTHON_CACHE_MATCHED_KEY,
       "python-cache-hit"
     );
@@ -91404,29 +90486,32 @@ async function restoreCacheFromKey(cacheKey, cachePath, stateKey, outputKey) {
   }
   handleMatchResult(matchedKey, cacheKey, stateKey, outputKey);
 }
-async function computeKeys(pythonVersion2) {
+async function computeKeys(inputs, pythonVersion) {
   let cacheDependencyPathHash = "-";
-  if (cacheDependencyGlob !== "") {
+  if (inputs.cacheDependencyGlob !== "") {
     info(
-      `Searching files using cache dependency glob: ${cacheDependencyGlob.split("\n").join(",")}`
+      `Searching files using cache dependency glob: ${inputs.cacheDependencyGlob.split("\n").join(",")}`
     );
-    cacheDependencyPathHash += await hashFiles2(cacheDependencyGlob, true);
+    cacheDependencyPathHash += await hashFiles2(
+      inputs.cacheDependencyGlob,
+      true
+    );
     if (cacheDependencyPathHash === "-") {
       warning(
-        `No file matched to [${cacheDependencyGlob.split("\n").join(",")}]. The cache will never get invalidated. Make sure you have checked out the target repository and configured the cache-dependency-glob input correctly.`
+        `No file matched to [${inputs.cacheDependencyGlob.split("\n").join(",")}]. The cache will never get invalidated. Make sure you have checked out the target repository and configured the cache-dependency-glob input correctly.`
       );
     }
   }
   if (cacheDependencyPathHash === "-") {
     cacheDependencyPathHash = "-no-dependency-glob";
   }
-  const suffix = cacheSuffix ? `-${cacheSuffix}` : "";
-  const version4 = pythonVersion2 ?? "unknown";
+  const suffix = inputs.cacheSuffix ? `-${inputs.cacheSuffix}` : "";
+  const version3 = pythonVersion ?? "unknown";
   const platform2 = await getPlatform();
   const osNameVersion = getOSNameVersion();
-  const pruned = pruneCache ? "-pruned" : "";
-  const python = cachePython ? "-py" : "";
-  return `setup-uv-${CACHE_VERSION}-${getArch()}-${platform2}-${osNameVersion}-${version4}${pruned}${python}${cacheDependencyPathHash}${suffix}`;
+  const pruned = inputs.pruneCache ? "-pruned" : "";
+  const python = inputs.cachePython ? "-py" : "";
+  return `setup-uv-${CACHE_VERSION}-${getArch()}-${platform2}-${osNameVersion}-${version3}${pruned}${python}${cacheDependencyPathHash}${suffix}`;
 }
 function handleMatchResult(matchedKey, primaryKey, stateKey, outputKey) {
   if (!matchedKey) {
@@ -91440,19 +90525,19 @@ function handleMatchResult(matchedKey, primaryKey, stateKey, outputKey) {
 }
 
 // src/download/download-version.ts
-var import_node_fs4 = require("node:fs");
-var path14 = __toESM(require("node:path"), 1);
+var import_node_fs3 = require("node:fs");
+var path13 = __toESM(require("node:path"), 1);
 
 // node_modules/@actions/tool-cache/lib/tool-cache.js
 var crypto5 = __toESM(require("crypto"), 1);
-var fs10 = __toESM(require("fs"), 1);
+var fs9 = __toESM(require("fs"), 1);
 
 // node_modules/@actions/tool-cache/lib/manifest.js
 var semver2 = __toESM(require_semver4(), 1);
 
 // node_modules/@actions/tool-cache/lib/tool-cache.js
 var os9 = __toESM(require("os"), 1);
-var path13 = __toESM(require("path"), 1);
+var path12 = __toESM(require("path"), 1);
 var semver3 = __toESM(require_semver4(), 1);
 var stream3 = __toESM(require("stream"), 1);
 var util6 = __toESM(require("util"), 1);
@@ -91568,8 +90653,8 @@ var IS_MAC = process.platform === "darwin";
 var userAgent = "actions/tool-cache";
 function downloadTool(url2, dest, auth, headers) {
   return __awaiter18(this, void 0, void 0, function* () {
-    dest = dest || path13.join(_getTempDirectory(), crypto5.randomUUID());
-    yield mkdirP(path13.dirname(dest));
+    dest = dest || path12.join(_getTempDirectory(), crypto5.randomUUID());
+    yield mkdirP(path12.dirname(dest));
     debug(`Downloading ${url2}`);
     debug(`Destination ${dest}`);
     const maxAttempts = 3;
@@ -91590,7 +90675,7 @@ function downloadTool(url2, dest, auth, headers) {
 }
 function downloadToolAttempt(url2, dest, auth, headers) {
   return __awaiter18(this, void 0, void 0, function* () {
-    if (fs10.existsSync(dest)) {
+    if (fs9.existsSync(dest)) {
       throw new Error(`Destination file path ${dest} already exists`);
     }
     const http3 = new HttpClient(userAgent, [], {
@@ -91614,7 +90699,7 @@ function downloadToolAttempt(url2, dest, auth, headers) {
     const readStream = responseMessageFactory();
     let succeeded = false;
     try {
-      yield pipeline4(readStream, fs10.createWriteStream(dest));
+      yield pipeline4(readStream, fs9.createWriteStream(dest));
       debug("download complete");
       succeeded = true;
       return dest;
@@ -91744,21 +90829,21 @@ function extractZipNix(file, dest) {
     yield exec(`"${unzipPath}"`, args, { cwd: dest });
   });
 }
-function cacheDir(sourceDir2, tool, version4, arch3) {
+function cacheDir(sourceDir2, tool, version3, arch3) {
   return __awaiter18(this, void 0, void 0, function* () {
-    version4 = semver3.clean(version4) || version4;
+    version3 = semver3.clean(version3) || version3;
     arch3 = arch3 || os9.arch();
-    debug(`Caching tool ${tool} ${version4} ${arch3}`);
+    debug(`Caching tool ${tool} ${version3} ${arch3}`);
     debug(`source dir: ${sourceDir2}`);
-    if (!fs10.statSync(sourceDir2).isDirectory()) {
+    if (!fs9.statSync(sourceDir2).isDirectory()) {
       throw new Error("sourceDir is not a directory");
     }
-    const destPath = yield _createToolPath(tool, version4, arch3);
-    for (const itemName of fs10.readdirSync(sourceDir2)) {
-      const s = path13.join(sourceDir2, itemName);
+    const destPath = yield _createToolPath(tool, version3, arch3);
+    for (const itemName of fs9.readdirSync(sourceDir2)) {
+      const s = path12.join(sourceDir2, itemName);
       yield cp(s, destPath, { recursive: true });
     }
-    _completeToolPath(tool, version4, arch3);
+    _completeToolPath(tool, version3, arch3);
     return destPath;
   });
 }
@@ -91778,9 +90863,9 @@ function find(toolName, versionSpec, arch3) {
   let toolPath = "";
   if (versionSpec) {
     versionSpec = semver3.clean(versionSpec) || "";
-    const cachePath = path13.join(_getCacheDirectory(), toolName, versionSpec, arch3);
+    const cachePath = path12.join(_getCacheDirectory(), toolName, versionSpec, arch3);
     debug(`checking cache: ${cachePath}`);
-    if (fs10.existsSync(cachePath) && fs10.existsSync(`${cachePath}.complete`)) {
+    if (fs9.existsSync(cachePath) && fs9.existsSync(`${cachePath}.complete`)) {
       debug(`Found tool in cache ${toolName} ${versionSpec} ${arch3}`);
       toolPath = cachePath;
     } else {
@@ -91792,13 +90877,13 @@ function find(toolName, versionSpec, arch3) {
 function findAllVersions(toolName, arch3) {
   const versions = [];
   arch3 = arch3 || os9.arch();
-  const toolPath = path13.join(_getCacheDirectory(), toolName);
-  if (fs10.existsSync(toolPath)) {
-    const children = fs10.readdirSync(toolPath);
+  const toolPath = path12.join(_getCacheDirectory(), toolName);
+  if (fs9.existsSync(toolPath)) {
+    const children = fs9.readdirSync(toolPath);
     for (const child2 of children) {
       if (isExplicitVersion(child2)) {
-        const fullPath = path13.join(toolPath, child2, arch3 || "");
-        if (fs10.existsSync(fullPath) && fs10.existsSync(`${fullPath}.complete`)) {
+        const fullPath = path12.join(toolPath, child2, arch3 || "");
+        if (fs9.existsSync(fullPath) && fs9.existsSync(`${fullPath}.complete`)) {
           versions.push(child2);
         }
       }
@@ -91809,15 +90894,15 @@ function findAllVersions(toolName, arch3) {
 function _createExtractFolder(dest) {
   return __awaiter18(this, void 0, void 0, function* () {
     if (!dest) {
-      dest = path13.join(_getTempDirectory(), crypto5.randomUUID());
+      dest = path12.join(_getTempDirectory(), crypto5.randomUUID());
     }
     yield mkdirP(dest);
     return dest;
   });
 }
-function _createToolPath(tool, version4, arch3) {
+function _createToolPath(tool, version3, arch3) {
   return __awaiter18(this, void 0, void 0, function* () {
-    const folderPath = path13.join(_getCacheDirectory(), tool, semver3.clean(version4) || version4, arch3 || "");
+    const folderPath = path12.join(_getCacheDirectory(), tool, semver3.clean(version3) || version3, arch3 || "");
     debug(`destination ${folderPath}`);
     const markerPath = `${folderPath}.complete`;
     yield rmRF(folderPath);
@@ -91826,10 +90911,10 @@ function _createToolPath(tool, version4, arch3) {
     return folderPath;
   });
 }
-function _completeToolPath(tool, version4, arch3) {
-  const folderPath = path13.join(_getCacheDirectory(), tool, semver3.clean(version4) || version4, arch3 || "");
+function _completeToolPath(tool, version3, arch3) {
+  const folderPath = path12.join(_getCacheDirectory(), tool, semver3.clean(version3) || version3, arch3 || "");
   const markerPath = `${folderPath}.complete`;
-  fs10.writeFileSync(markerPath, "");
+  fs9.writeFileSync(markerPath, "");
   debug("finished caching tool");
 }
 function isExplicitVersion(versionSpec) {
@@ -91840,7 +90925,7 @@ function isExplicitVersion(versionSpec) {
   return valid2;
 }
 function evaluateVersions(versions, versionSpec) {
-  let version4 = "";
+  let version3 = "";
   debug(`evaluating ${versions.length} versions`);
   versions = versions.sort((a, b) => {
     if (semver3.gt(a, b)) {
@@ -91852,16 +90937,16 @@ function evaluateVersions(versions, versionSpec) {
     const potential = versions[i];
     const satisfied = semver3.satisfies(potential, versionSpec);
     if (satisfied) {
-      version4 = potential;
+      version3 = potential;
       break;
     }
   }
-  if (version4) {
-    debug(`matched: ${version4}`);
+  if (version3) {
+    debug(`matched: ${version3}`);
   } else {
     debug("match not found");
   }
-  return version4;
+  return version3;
 }
 function _getCacheDirectory() {
   const cacheDirectory = process.env["RUNNER_TOOL_CACHE"] || "";
@@ -91892,7 +90977,7 @@ var ASTRAL_MIRROR_PREFIX = "https://releases.astral.sh/github/uv/releases/downlo
 
 // src/download/checksum/checksum.ts
 var crypto6 = __toESM(require("node:crypto"), 1);
-var fs11 = __toESM(require("node:fs"), 1);
+var fs10 = __toESM(require("node:fs"), 1);
 
 // src/download/checksum/known-checksums.ts
 var KNOWN_CHECKSUMS = {
@@ -96395,8 +95480,8 @@ var KNOWN_CHECKSUMS = {
 };
 
 // src/download/checksum/checksum.ts
-async function validateChecksum(checksum, downloadPath, arch3, platform2, version4) {
-  const key = `${arch3}-${platform2}-${version4}`;
+async function validateChecksum(checksum, downloadPath, arch3, platform2, version3) {
+  const key = `${arch3}-${platform2}-${version3}`;
   const hasProvidedChecksum = checksum !== void 0 && checksum !== "";
   const checksumToUse = hasProvidedChecksum ? checksum : KNOWN_CHECKSUMS[key];
   if (checksumToUse === void 0) {
@@ -96416,7 +95501,7 @@ async function validateChecksum(checksum, downloadPath, arch3, platform2, versio
 async function validateFileCheckSum(filePath, expected) {
   return new Promise((resolve3, reject) => {
     const hash = crypto6.createHash("sha256");
-    const stream4 = fs11.createReadStream(filePath);
+    const stream4 = fs10.createReadStream(filePath);
     stream4.on("error", (err) => reject(err));
     stream4.on("data", (chunk) => hash.update(chunk));
     stream4.on("end", () => {
@@ -96548,13 +95633,13 @@ async function getAllVersions(manifestUrl = VERSIONS_MANIFEST_URL) {
   const versions = await fetchManifest(manifestUrl);
   return versions.map((versionData) => versionData.version);
 }
-async function getArtifact(version4, arch3, platform2, manifestUrl = VERSIONS_MANIFEST_URL) {
+async function getArtifact(version3, arch3, platform2, manifestUrl = VERSIONS_MANIFEST_URL) {
   const versions = await fetchManifest(manifestUrl);
   const versionData = versions.find(
-    (candidate) => candidate.version === version4
+    (candidate) => candidate.version === version3
   );
   if (!versionData) {
-    debug(`Version ${version4} not found in manifest ${manifestUrl}`);
+    debug(`Version ${version3} not found in manifest ${manifestUrl}`);
     return void 0;
   }
   const targetPlatform = `${arch3}-${platform2}`;
@@ -96563,13 +95648,13 @@ async function getArtifact(version4, arch3, platform2, manifestUrl = VERSIONS_MA
   );
   if (matchingArtifacts.length === 0) {
     debug(
-      `Artifact for ${targetPlatform} not found in version ${version4}. Available platforms: ${versionData.artifacts.map((candidate) => candidate.platform).join(", ")}`
+      `Artifact for ${targetPlatform} not found in version ${version3}. Available platforms: ${versionData.artifacts.map((candidate) => candidate.platform).join(", ")}`
     );
     return void 0;
   }
   const artifact = selectDefaultVariant(
     matchingArtifacts,
-    `Multiple artifacts found for ${targetPlatform} in version ${version4}`
+    `Multiple artifacts found for ${targetPlatform} in version ${version3}`
   );
   return {
     archiveFormat: artifact.archive_format,
@@ -96598,36 +95683,36 @@ function isRecord(value) {
 }
 
 // src/download/download-version.ts
-function tryGetFromToolCache(arch3, version4) {
-  debug(`Trying to get uv from tool cache for ${version4}...`);
+function tryGetFromToolCache(arch3, version3) {
+  debug(`Trying to get uv from tool cache for ${version3}...`);
   const cachedVersions = findAllVersions(TOOL_CACHE_NAME, arch3);
   debug(`Cached versions: ${cachedVersions}`);
-  let resolvedVersion = evaluateVersions(cachedVersions, version4);
+  let resolvedVersion = evaluateVersions(cachedVersions, version3);
   if (resolvedVersion === "") {
-    resolvedVersion = version4;
+    resolvedVersion = version3;
   }
   const installedPath = find(TOOL_CACHE_NAME, resolvedVersion, arch3);
   return { installedPath, version: resolvedVersion };
 }
-async function downloadVersion(platform2, arch3, version4, checkSum2, githubToken2, manifestUrl) {
-  const artifact = await getArtifact(version4, arch3, platform2, manifestUrl);
+async function downloadVersion(platform2, arch3, version3, checksum, githubToken, manifestUrl) {
+  const artifact = await getArtifact(version3, arch3, platform2, manifestUrl);
   if (!artifact) {
     throw new Error(
-      getMissingArtifactMessage(version4, arch3, platform2, manifestUrl)
+      getMissingArtifactMessage(version3, arch3, platform2, manifestUrl)
     );
   }
-  const checksum = manifestUrl === void 0 ? checkSum2 : resolveChecksum(checkSum2, artifact.checksum);
+  const resolvedChecksum = manifestUrl === void 0 ? checksum : resolveChecksum(checksum, artifact.checksum);
   const mirrorUrl = rewriteToMirror(artifact.downloadUrl);
   const downloadUrl = mirrorUrl ?? artifact.downloadUrl;
-  const downloadToken = mirrorUrl !== void 0 ? void 0 : githubToken2;
+  const downloadToken = mirrorUrl !== void 0 ? void 0 : githubToken;
   try {
     return await downloadArtifact(
       downloadUrl,
       `uv-${arch3}-${platform2}`,
       platform2,
       arch3,
-      version4,
-      checksum,
+      version3,
+      resolvedChecksum,
       downloadToken
     );
   } catch (err) {
@@ -96642,9 +95727,9 @@ async function downloadVersion(platform2, arch3, version4, checkSum2, githubToke
       `uv-${arch3}-${platform2}`,
       platform2,
       arch3,
-      version4,
-      checksum,
-      githubToken2
+      version3,
+      resolvedChecksum,
+      githubToken
     );
   }
 }
@@ -96654,14 +95739,14 @@ function rewriteToMirror(url2) {
   }
   return ASTRAL_MIRROR_PREFIX + url2.slice(GITHUB_RELEASES_PREFIX.length);
 }
-async function downloadArtifact(downloadUrl, artifactName, platform2, arch3, version4, checksum, githubToken2) {
+async function downloadArtifact(downloadUrl, artifactName, platform2, arch3, version3, checksum, githubToken) {
   info(`Downloading uv from "${downloadUrl}" ...`);
   const downloadPath = await downloadTool(
     downloadUrl,
     void 0,
-    githubToken2
+    githubToken
   );
-  await validateChecksum(checksum, downloadPath, arch3, platform2, version4);
+  await validateChecksum(checksum, downloadPath, arch3, platform2, version3);
   let uvDir;
   if (platform2 === "pc-windows-msvc") {
     try {
@@ -96672,53 +95757,53 @@ async function downloadArtifact(downloadUrl, artifactName, platform2, arch3, ver
       );
       const extension = getExtension(platform2);
       const fullPathWithExtension = `${downloadPath}${extension}`;
-      await import_node_fs4.promises.copyFile(downloadPath, fullPathWithExtension);
+      await import_node_fs3.promises.copyFile(downloadPath, fullPathWithExtension);
       uvDir = await extractZip(fullPathWithExtension);
     }
   } else {
     const extractedDir = await extractTar2(downloadPath);
-    uvDir = path14.join(extractedDir, artifactName);
+    uvDir = path13.join(extractedDir, artifactName);
   }
   const cachedToolDir = await cacheDir(
     uvDir,
     TOOL_CACHE_NAME,
-    version4,
+    version3,
     arch3
   );
-  return { cachedToolDir, version: version4 };
+  return { cachedToolDir, version: version3 };
 }
-function getMissingArtifactMessage(version4, arch3, platform2, manifestUrl) {
+function getMissingArtifactMessage(version3, arch3, platform2, manifestUrl) {
   if (manifestUrl === void 0) {
-    return `Could not find artifact for version ${version4}, arch ${arch3}, platform ${platform2} in ${VERSIONS_MANIFEST_URL} .`;
+    return `Could not find artifact for version ${version3}, arch ${arch3}, platform ${platform2} in ${VERSIONS_MANIFEST_URL} .`;
   }
-  return `manifest-file does not contain version ${version4}, arch ${arch3}, platform ${platform2}.`;
+  return `manifest-file does not contain version ${version3}, arch ${arch3}, platform ${platform2}.`;
 }
-function resolveChecksum(checkSum2, manifestChecksum) {
-  return checkSum2 !== void 0 && checkSum2 !== "" ? checkSum2 : manifestChecksum;
+function resolveChecksum(checksum, manifestChecksum) {
+  return checksum !== void 0 && checksum !== "" ? checksum : manifestChecksum;
 }
 function getExtension(platform2) {
   return platform2 === "pc-windows-msvc" ? ".zip" : ".tar.gz";
 }
-async function resolveVersion(versionInput, manifestUrl, resolutionStrategy2 = "highest") {
+async function resolveVersion(versionInput, manifestUrl, resolutionStrategy = "highest") {
   debug(`Resolving version: ${versionInput}`);
   const isSimpleMinimumVersionSpecifier = versionInput.includes(">") && !versionInput.includes(",");
-  const resolveVersionSpecifierToLatest = isSimpleMinimumVersionSpecifier && resolutionStrategy2 === "highest";
+  const resolveVersionSpecifierToLatest = isSimpleMinimumVersionSpecifier && resolutionStrategy === "highest";
   if (resolveVersionSpecifierToLatest) {
     info("Found minimum version specifier, using latest version");
   }
-  const version4 = versionInput === "latest" || resolveVersionSpecifierToLatest ? await getLatestVersion(manifestUrl) : versionInput;
-  if (isExplicitVersion(version4)) {
-    debug(`Version ${version4} is an explicit version.`);
-    if (resolveVersionSpecifierToLatest && !pep440.satisfies(version4, versionInput)) {
+  const version3 = versionInput === "latest" || resolveVersionSpecifierToLatest ? await getLatestVersion(manifestUrl) : versionInput;
+  if (isExplicitVersion(version3)) {
+    debug(`Version ${version3} is an explicit version.`);
+    if (resolveVersionSpecifierToLatest && !pep440.satisfies(version3, versionInput)) {
       throw new Error(`No version found for ${versionInput}`);
     }
-    return version4;
+    return version3;
   }
   const availableVersions = await getAvailableVersions(manifestUrl);
   debug(`Available versions: ${availableVersions}`);
-  const resolvedVersion = resolutionStrategy2 === "lowest" ? minSatisfying3(availableVersions, version4) : maxSatisfying2(availableVersions, version4);
+  const resolvedVersion = resolutionStrategy === "lowest" ? minSatisfying3(availableVersions, version3) : maxSatisfying2(availableVersions, version3);
   if (resolvedVersion === void 0) {
-    throw new Error(`No version found for ${version4}`);
+    throw new Error(`No version found for ${version3}`);
   }
   return resolvedVersion;
 }
@@ -96732,13 +95817,13 @@ async function getAvailableVersions(manifestUrl) {
   }
   return await getAllVersions(manifestUrl);
 }
-function maxSatisfying2(versions, version4) {
-  const maxSemver = evaluateVersions(versions, version4);
+function maxSatisfying2(versions, version3) {
+  const maxSemver = evaluateVersions(versions, version3);
   if (maxSemver !== "") {
     debug(`Found a version that satisfies the semver range: ${maxSemver}`);
     return maxSemver;
   }
-  const maxPep440 = pep440.maxSatisfying(versions, version4);
+  const maxPep440 = pep440.maxSatisfying(versions, version3);
   if (maxPep440 !== null) {
     debug(
       `Found a version that satisfies the pep440 specifier: ${maxPep440}`
@@ -96747,13 +95832,13 @@ function maxSatisfying2(versions, version4) {
   }
   return void 0;
 }
-function minSatisfying3(versions, version4) {
-  const minSemver = semver5.minSatisfying(versions, version4);
+function minSatisfying3(versions, version3) {
+  const minSemver = semver5.minSatisfying(versions, version3);
   if (minSemver !== null) {
     debug(`Found a version that satisfies the semver range: ${minSemver}`);
     return minSemver;
   }
-  const minPep440 = pep440.minSatisfying(versions, version4);
+  const minPep440 = pep440.minSatisfying(versions, version3);
   if (minPep440 !== null) {
     debug(
       `Found a version that satisfies the pep440 specifier: ${minPep440}`
@@ -96761,6 +95846,965 @@ function minSatisfying3(versions, version4) {
     return minPep440;
   }
   return void 0;
+}
+
+// src/utils/inputs.ts
+var import_node_path = __toESM(require("node:path"), 1);
+
+// src/utils/config-file.ts
+var import_node_fs4 = __toESM(require("node:fs"), 1);
+
+// node_modules/smol-toml/dist/error.js
+function getLineColFromPtr(string, ptr) {
+  let lines = string.slice(0, ptr).split(/\r\n|\n|\r/g);
+  return [lines.length, lines.pop().length + 1];
+}
+function makeCodeBlock(string, line, column) {
+  let lines = string.split(/\r\n|\n|\r/g);
+  let codeblock = "";
+  let numberLen = (Math.log10(line + 1) | 0) + 1;
+  for (let i = line - 1; i <= line + 1; i++) {
+    let l = lines[i - 1];
+    if (!l)
+      continue;
+    codeblock += i.toString().padEnd(numberLen, " ");
+    codeblock += ":  ";
+    codeblock += l;
+    codeblock += "\n";
+    if (i === line) {
+      codeblock += " ".repeat(numberLen + column + 2);
+      codeblock += "^\n";
+    }
+  }
+  return codeblock;
+}
+var TomlError = class extends Error {
+  line;
+  column;
+  codeblock;
+  constructor(message, options) {
+    const [line, column] = getLineColFromPtr(options.toml, options.ptr);
+    const codeblock = makeCodeBlock(options.toml, line, column);
+    super(`Invalid TOML document: ${message}
+
+${codeblock}`, options);
+    this.line = line;
+    this.column = column;
+    this.codeblock = codeblock;
+  }
+};
+
+// node_modules/smol-toml/dist/util.js
+function isEscaped(str, ptr) {
+  let i = 0;
+  while (str[ptr - ++i] === "\\")
+    ;
+  return --i && i % 2;
+}
+function indexOfNewline(str, start = 0, end = str.length) {
+  let idx = str.indexOf("\n", start);
+  if (str[idx - 1] === "\r")
+    idx--;
+  return idx <= end ? idx : -1;
+}
+function skipComment(str, ptr) {
+  for (let i = ptr; i < str.length; i++) {
+    let c = str[i];
+    if (c === "\n")
+      return i;
+    if (c === "\r" && str[i + 1] === "\n")
+      return i + 1;
+    if (c < " " && c !== "	" || c === "\x7F") {
+      throw new TomlError("control characters are not allowed in comments", {
+        toml: str,
+        ptr
+      });
+    }
+  }
+  return str.length;
+}
+function skipVoid(str, ptr, banNewLines, banComments) {
+  let c;
+  while ((c = str[ptr]) === " " || c === "	" || !banNewLines && (c === "\n" || c === "\r" && str[ptr + 1] === "\n"))
+    ptr++;
+  return banComments || c !== "#" ? ptr : skipVoid(str, skipComment(str, ptr), banNewLines);
+}
+function skipUntil(str, ptr, sep8, end, banNewLines = false) {
+  if (!end) {
+    ptr = indexOfNewline(str, ptr);
+    return ptr < 0 ? str.length : ptr;
+  }
+  for (let i = ptr; i < str.length; i++) {
+    let c = str[i];
+    if (c === "#") {
+      i = indexOfNewline(str, i);
+    } else if (c === sep8) {
+      return i + 1;
+    } else if (c === end || banNewLines && (c === "\n" || c === "\r" && str[i + 1] === "\n")) {
+      return i;
+    }
+  }
+  throw new TomlError("cannot find end of structure", {
+    toml: str,
+    ptr
+  });
+}
+function getStringEnd(str, seek) {
+  let first = str[seek];
+  let target = first === str[seek + 1] && str[seek + 1] === str[seek + 2] ? str.slice(seek, seek + 3) : first;
+  seek += target.length - 1;
+  do
+    seek = str.indexOf(target, ++seek);
+  while (seek > -1 && first !== "'" && isEscaped(str, seek));
+  if (seek > -1) {
+    seek += target.length;
+    if (target.length > 1) {
+      if (str[seek] === first)
+        seek++;
+      if (str[seek] === first)
+        seek++;
+    }
+  }
+  return seek;
+}
+
+// node_modules/smol-toml/dist/date.js
+var DATE_TIME_RE = /^(\d{4}-\d{2}-\d{2})?[T ]?(?:(\d{2}):\d{2}(?::\d{2}(?:\.\d+)?)?)?(Z|[-+]\d{2}:\d{2})?$/i;
+var TomlDate = class _TomlDate extends Date {
+  #hasDate = false;
+  #hasTime = false;
+  #offset = null;
+  constructor(date) {
+    let hasDate = true;
+    let hasTime = true;
+    let offset = "Z";
+    if (typeof date === "string") {
+      let match2 = date.match(DATE_TIME_RE);
+      if (match2) {
+        if (!match2[1]) {
+          hasDate = false;
+          date = `0000-01-01T${date}`;
+        }
+        hasTime = !!match2[2];
+        hasTime && date[10] === " " && (date = date.replace(" ", "T"));
+        if (match2[2] && +match2[2] > 23) {
+          date = "";
+        } else {
+          offset = match2[3] || null;
+          date = date.toUpperCase();
+          if (!offset && hasTime)
+            date += "Z";
+        }
+      } else {
+        date = "";
+      }
+    }
+    super(date);
+    if (!isNaN(this.getTime())) {
+      this.#hasDate = hasDate;
+      this.#hasTime = hasTime;
+      this.#offset = offset;
+    }
+  }
+  isDateTime() {
+    return this.#hasDate && this.#hasTime;
+  }
+  isLocal() {
+    return !this.#hasDate || !this.#hasTime || !this.#offset;
+  }
+  isDate() {
+    return this.#hasDate && !this.#hasTime;
+  }
+  isTime() {
+    return this.#hasTime && !this.#hasDate;
+  }
+  isValid() {
+    return this.#hasDate || this.#hasTime;
+  }
+  toISOString() {
+    let iso = super.toISOString();
+    if (this.isDate())
+      return iso.slice(0, 10);
+    if (this.isTime())
+      return iso.slice(11, 23);
+    if (this.#offset === null)
+      return iso.slice(0, -1);
+    if (this.#offset === "Z")
+      return iso;
+    let offset = +this.#offset.slice(1, 3) * 60 + +this.#offset.slice(4, 6);
+    offset = this.#offset[0] === "-" ? offset : -offset;
+    let offsetDate = new Date(this.getTime() - offset * 6e4);
+    return offsetDate.toISOString().slice(0, -1) + this.#offset;
+  }
+  static wrapAsOffsetDateTime(jsDate, offset = "Z") {
+    let date = new _TomlDate(jsDate);
+    date.#offset = offset;
+    return date;
+  }
+  static wrapAsLocalDateTime(jsDate) {
+    let date = new _TomlDate(jsDate);
+    date.#offset = null;
+    return date;
+  }
+  static wrapAsLocalDate(jsDate) {
+    let date = new _TomlDate(jsDate);
+    date.#hasTime = false;
+    date.#offset = null;
+    return date;
+  }
+  static wrapAsLocalTime(jsDate) {
+    let date = new _TomlDate(jsDate);
+    date.#hasDate = false;
+    date.#offset = null;
+    return date;
+  }
+};
+
+// node_modules/smol-toml/dist/primitive.js
+var INT_REGEX = /^((0x[0-9a-fA-F](_?[0-9a-fA-F])*)|(([+-]|0[ob])?\d(_?\d)*))$/;
+var FLOAT_REGEX = /^[+-]?\d(_?\d)*(\.\d(_?\d)*)?([eE][+-]?\d(_?\d)*)?$/;
+var LEADING_ZERO = /^[+-]?0[0-9_]/;
+var ESCAPE_REGEX = /^[0-9a-f]{2,8}$/i;
+var ESC_MAP = {
+  b: "\b",
+  t: "	",
+  n: "\n",
+  f: "\f",
+  r: "\r",
+  e: "\x1B",
+  '"': '"',
+  "\\": "\\"
+};
+function parseString(str, ptr = 0, endPtr = str.length) {
+  let isLiteral = str[ptr] === "'";
+  let isMultiline = str[ptr++] === str[ptr] && str[ptr] === str[ptr + 1];
+  if (isMultiline) {
+    endPtr -= 2;
+    if (str[ptr += 2] === "\r")
+      ptr++;
+    if (str[ptr] === "\n")
+      ptr++;
+  }
+  let tmp = 0;
+  let isEscape;
+  let parsed = "";
+  let sliceStart = ptr;
+  while (ptr < endPtr - 1) {
+    let c = str[ptr++];
+    if (c === "\n" || c === "\r" && str[ptr] === "\n") {
+      if (!isMultiline) {
+        throw new TomlError("newlines are not allowed in strings", {
+          toml: str,
+          ptr: ptr - 1
+        });
+      }
+    } else if (c < " " && c !== "	" || c === "\x7F") {
+      throw new TomlError("control characters are not allowed in strings", {
+        toml: str,
+        ptr: ptr - 1
+      });
+    }
+    if (isEscape) {
+      isEscape = false;
+      if (c === "x" || c === "u" || c === "U") {
+        let code = str.slice(ptr, ptr += c === "x" ? 2 : c === "u" ? 4 : 8);
+        if (!ESCAPE_REGEX.test(code)) {
+          throw new TomlError("invalid unicode escape", {
+            toml: str,
+            ptr: tmp
+          });
+        }
+        try {
+          parsed += String.fromCodePoint(parseInt(code, 16));
+        } catch {
+          throw new TomlError("invalid unicode escape", {
+            toml: str,
+            ptr: tmp
+          });
+        }
+      } else if (isMultiline && (c === "\n" || c === " " || c === "	" || c === "\r")) {
+        ptr = skipVoid(str, ptr - 1, true);
+        if (str[ptr] !== "\n" && str[ptr] !== "\r") {
+          throw new TomlError("invalid escape: only line-ending whitespace may be escaped", {
+            toml: str,
+            ptr: tmp
+          });
+        }
+        ptr = skipVoid(str, ptr);
+      } else if (c in ESC_MAP) {
+        parsed += ESC_MAP[c];
+      } else {
+        throw new TomlError("unrecognized escape sequence", {
+          toml: str,
+          ptr: tmp
+        });
+      }
+      sliceStart = ptr;
+    } else if (!isLiteral && c === "\\") {
+      tmp = ptr - 1;
+      isEscape = true;
+      parsed += str.slice(sliceStart, tmp);
+    }
+  }
+  return parsed + str.slice(sliceStart, endPtr - 1);
+}
+function parseValue2(value, toml, ptr, integersAsBigInt) {
+  if (value === "true")
+    return true;
+  if (value === "false")
+    return false;
+  if (value === "-inf")
+    return -Infinity;
+  if (value === "inf" || value === "+inf")
+    return Infinity;
+  if (value === "nan" || value === "+nan" || value === "-nan")
+    return NaN;
+  if (value === "-0")
+    return integersAsBigInt ? 0n : 0;
+  let isInt = INT_REGEX.test(value);
+  if (isInt || FLOAT_REGEX.test(value)) {
+    if (LEADING_ZERO.test(value)) {
+      throw new TomlError("leading zeroes are not allowed", {
+        toml,
+        ptr
+      });
+    }
+    value = value.replace(/_/g, "");
+    let numeric = +value;
+    if (isNaN(numeric)) {
+      throw new TomlError("invalid number", {
+        toml,
+        ptr
+      });
+    }
+    if (isInt) {
+      if ((isInt = !Number.isSafeInteger(numeric)) && !integersAsBigInt) {
+        throw new TomlError("integer value cannot be represented losslessly", {
+          toml,
+          ptr
+        });
+      }
+      if (isInt || integersAsBigInt === true)
+        numeric = BigInt(value);
+    }
+    return numeric;
+  }
+  const date = new TomlDate(value);
+  if (!date.isValid()) {
+    throw new TomlError("invalid value", {
+      toml,
+      ptr
+    });
+  }
+  return date;
+}
+
+// node_modules/smol-toml/dist/extract.js
+function sliceAndTrimEndOf(str, startPtr, endPtr) {
+  let value = str.slice(startPtr, endPtr);
+  let commentIdx = value.indexOf("#");
+  if (commentIdx > -1) {
+    skipComment(str, commentIdx);
+    value = value.slice(0, commentIdx);
+  }
+  return [value.trimEnd(), commentIdx];
+}
+function extractValue(str, ptr, end, depth, integersAsBigInt) {
+  if (depth === 0) {
+    throw new TomlError("document contains excessively nested structures. aborting.", {
+      toml: str,
+      ptr
+    });
+  }
+  let c = str[ptr];
+  if (c === "[" || c === "{") {
+    let [value, endPtr2] = c === "[" ? parseArray(str, ptr, depth, integersAsBigInt) : parseInlineTable(str, ptr, depth, integersAsBigInt);
+    if (end) {
+      endPtr2 = skipVoid(str, endPtr2);
+      if (str[endPtr2] === ",")
+        endPtr2++;
+      else if (str[endPtr2] !== end) {
+        throw new TomlError("expected comma or end of structure", {
+          toml: str,
+          ptr: endPtr2
+        });
+      }
+    }
+    return [value, endPtr2];
+  }
+  let endPtr;
+  if (c === '"' || c === "'") {
+    endPtr = getStringEnd(str, ptr);
+    let parsed = parseString(str, ptr, endPtr);
+    if (end) {
+      endPtr = skipVoid(str, endPtr);
+      if (str[endPtr] && str[endPtr] !== "," && str[endPtr] !== end && str[endPtr] !== "\n" && str[endPtr] !== "\r") {
+        throw new TomlError("unexpected character encountered", {
+          toml: str,
+          ptr: endPtr
+        });
+      }
+      endPtr += +(str[endPtr] === ",");
+    }
+    return [parsed, endPtr];
+  }
+  endPtr = skipUntil(str, ptr, ",", end);
+  let slice = sliceAndTrimEndOf(str, ptr, endPtr - +(str[endPtr - 1] === ","));
+  if (!slice[0]) {
+    throw new TomlError("incomplete key-value declaration: no value specified", {
+      toml: str,
+      ptr
+    });
+  }
+  if (end && slice[1] > -1) {
+    endPtr = skipVoid(str, ptr + slice[1]);
+    endPtr += +(str[endPtr] === ",");
+  }
+  return [
+    parseValue2(slice[0], str, ptr, integersAsBigInt),
+    endPtr
+  ];
+}
+
+// node_modules/smol-toml/dist/struct.js
+var KEY_PART_RE = /^[a-zA-Z0-9-_]+[ \t]*$/;
+function parseKey(str, ptr, end = "=") {
+  let dot = ptr - 1;
+  let parsed = [];
+  let endPtr = str.indexOf(end, ptr);
+  if (endPtr < 0) {
+    throw new TomlError("incomplete key-value: cannot find end of key", {
+      toml: str,
+      ptr
+    });
+  }
+  do {
+    let c = str[ptr = ++dot];
+    if (c !== " " && c !== "	") {
+      if (c === '"' || c === "'") {
+        if (c === str[ptr + 1] && c === str[ptr + 2]) {
+          throw new TomlError("multiline strings are not allowed in keys", {
+            toml: str,
+            ptr
+          });
+        }
+        let eos = getStringEnd(str, ptr);
+        if (eos < 0) {
+          throw new TomlError("unfinished string encountered", {
+            toml: str,
+            ptr
+          });
+        }
+        dot = str.indexOf(".", eos);
+        let strEnd = str.slice(eos, dot < 0 || dot > endPtr ? endPtr : dot);
+        let newLine = indexOfNewline(strEnd);
+        if (newLine > -1) {
+          throw new TomlError("newlines are not allowed in keys", {
+            toml: str,
+            ptr: ptr + dot + newLine
+          });
+        }
+        if (strEnd.trimStart()) {
+          throw new TomlError("found extra tokens after the string part", {
+            toml: str,
+            ptr: eos
+          });
+        }
+        if (endPtr < eos) {
+          endPtr = str.indexOf(end, eos);
+          if (endPtr < 0) {
+            throw new TomlError("incomplete key-value: cannot find end of key", {
+              toml: str,
+              ptr
+            });
+          }
+        }
+        parsed.push(parseString(str, ptr, eos));
+      } else {
+        dot = str.indexOf(".", ptr);
+        let part = str.slice(ptr, dot < 0 || dot > endPtr ? endPtr : dot);
+        if (!KEY_PART_RE.test(part)) {
+          throw new TomlError("only letter, numbers, dashes and underscores are allowed in keys", {
+            toml: str,
+            ptr
+          });
+        }
+        parsed.push(part.trimEnd());
+      }
+    }
+  } while (dot + 1 && dot < endPtr);
+  return [parsed, skipVoid(str, endPtr + 1, true, true)];
+}
+function parseInlineTable(str, ptr, depth, integersAsBigInt) {
+  let res = {};
+  let seen = /* @__PURE__ */ new Set();
+  let c;
+  ptr++;
+  while ((c = str[ptr++]) !== "}" && c) {
+    if (c === ",") {
+      throw new TomlError("expected value, found comma", {
+        toml: str,
+        ptr: ptr - 1
+      });
+    } else if (c === "#")
+      ptr = skipComment(str, ptr);
+    else if (c !== " " && c !== "	" && c !== "\n" && c !== "\r") {
+      let k;
+      let t = res;
+      let hasOwn = false;
+      let [key, keyEndPtr] = parseKey(str, ptr - 1);
+      for (let i = 0; i < key.length; i++) {
+        if (i)
+          t = hasOwn ? t[k] : t[k] = {};
+        k = key[i];
+        if ((hasOwn = Object.hasOwn(t, k)) && (typeof t[k] !== "object" || seen.has(t[k]))) {
+          throw new TomlError("trying to redefine an already defined value", {
+            toml: str,
+            ptr
+          });
+        }
+        if (!hasOwn && k === "__proto__") {
+          Object.defineProperty(t, k, { enumerable: true, configurable: true, writable: true });
+        }
+      }
+      if (hasOwn) {
+        throw new TomlError("trying to redefine an already defined value", {
+          toml: str,
+          ptr
+        });
+      }
+      let [value, valueEndPtr] = extractValue(str, keyEndPtr, "}", depth - 1, integersAsBigInt);
+      seen.add(value);
+      t[k] = value;
+      ptr = valueEndPtr;
+    }
+  }
+  if (!c) {
+    throw new TomlError("unfinished table encountered", {
+      toml: str,
+      ptr
+    });
+  }
+  return [res, ptr];
+}
+function parseArray(str, ptr, depth, integersAsBigInt) {
+  let res = [];
+  let c;
+  ptr++;
+  while ((c = str[ptr++]) !== "]" && c) {
+    if (c === ",") {
+      throw new TomlError("expected value, found comma", {
+        toml: str,
+        ptr: ptr - 1
+      });
+    } else if (c === "#")
+      ptr = skipComment(str, ptr);
+    else if (c !== " " && c !== "	" && c !== "\n" && c !== "\r") {
+      let e = extractValue(str, ptr - 1, "]", depth - 1, integersAsBigInt);
+      res.push(e[0]);
+      ptr = e[1];
+    }
+  }
+  if (!c) {
+    throw new TomlError("unfinished array encountered", {
+      toml: str,
+      ptr
+    });
+  }
+  return [res, ptr];
+}
+
+// node_modules/smol-toml/dist/parse.js
+function peekTable(key, table, meta, type) {
+  let t = table;
+  let m = meta;
+  let k;
+  let hasOwn = false;
+  let state3;
+  for (let i = 0; i < key.length; i++) {
+    if (i) {
+      t = hasOwn ? t[k] : t[k] = {};
+      m = (state3 = m[k]).c;
+      if (type === 0 && (state3.t === 1 || state3.t === 2)) {
+        return null;
+      }
+      if (state3.t === 2) {
+        let l = t.length - 1;
+        t = t[l];
+        m = m[l].c;
+      }
+    }
+    k = key[i];
+    if ((hasOwn = Object.hasOwn(t, k)) && m[k]?.t === 0 && m[k]?.d) {
+      return null;
+    }
+    if (!hasOwn) {
+      if (k === "__proto__") {
+        Object.defineProperty(t, k, { enumerable: true, configurable: true, writable: true });
+        Object.defineProperty(m, k, { enumerable: true, configurable: true, writable: true });
+      }
+      m[k] = {
+        t: i < key.length - 1 && type === 2 ? 3 : type,
+        d: false,
+        i: 0,
+        c: {}
+      };
+    }
+  }
+  state3 = m[k];
+  if (state3.t !== type && !(type === 1 && state3.t === 3)) {
+    return null;
+  }
+  if (type === 2) {
+    if (!state3.d) {
+      state3.d = true;
+      t[k] = [];
+    }
+    t[k].push(t = {});
+    state3.c[state3.i++] = state3 = { t: 1, d: false, i: 0, c: {} };
+  }
+  if (state3.d) {
+    return null;
+  }
+  state3.d = true;
+  if (type === 1) {
+    t = hasOwn ? t[k] : t[k] = {};
+  } else if (type === 0 && hasOwn) {
+    return null;
+  }
+  return [k, t, state3.c];
+}
+function parse2(toml, { maxDepth = 1e3, integersAsBigInt } = {}) {
+  let res = {};
+  let meta = {};
+  let tbl = res;
+  let m = meta;
+  for (let ptr = skipVoid(toml, 0); ptr < toml.length; ) {
+    if (toml[ptr] === "[") {
+      let isTableArray = toml[++ptr] === "[";
+      let k = parseKey(toml, ptr += +isTableArray, "]");
+      if (isTableArray) {
+        if (toml[k[1] - 1] !== "]") {
+          throw new TomlError("expected end of table declaration", {
+            toml,
+            ptr: k[1] - 1
+          });
+        }
+        k[1]++;
+      }
+      let p = peekTable(
+        k[0],
+        res,
+        meta,
+        isTableArray ? 2 : 1
+        /* Type.EXPLICIT */
+      );
+      if (!p) {
+        throw new TomlError("trying to redefine an already defined table or value", {
+          toml,
+          ptr
+        });
+      }
+      m = p[2];
+      tbl = p[1];
+      ptr = k[1];
+    } else {
+      let k = parseKey(toml, ptr);
+      let p = peekTable(
+        k[0],
+        tbl,
+        m,
+        0
+        /* Type.DOTTED */
+      );
+      if (!p) {
+        throw new TomlError("trying to redefine an already defined table or value", {
+          toml,
+          ptr
+        });
+      }
+      let v = extractValue(toml, k[1], void 0, maxDepth, integersAsBigInt);
+      p[1][p[0]] = v[0];
+      ptr = v[1];
+    }
+    ptr = skipVoid(toml, ptr, true);
+    if (toml[ptr] && toml[ptr] !== "\n" && toml[ptr] !== "\r") {
+      throw new TomlError("each key-value declaration must be followed by an end-of-line", {
+        toml,
+        ptr
+      });
+    }
+    ptr = skipVoid(toml, ptr);
+  }
+  return res;
+}
+
+// src/utils/config-file.ts
+function getConfigValueFromTomlFile(filePath, key) {
+  if (!import_node_fs4.default.existsSync(filePath) || !filePath.endsWith(".toml")) {
+    return void 0;
+  }
+  const fileContent = import_node_fs4.default.readFileSync(filePath, "utf-8");
+  if (filePath.endsWith("pyproject.toml")) {
+    const tomlContent2 = parse2(fileContent);
+    return tomlContent2?.tool?.uv?.[key];
+  }
+  const tomlContent = parse2(fileContent);
+  return tomlContent[key];
+}
+
+// src/utils/inputs.ts
+function loadInputs() {
+  const workingDirectory = getInput("working-directory");
+  const version3 = getInput("version");
+  const versionFile = getVersionFile(
+    workingDirectory,
+    getInput("version-file")
+  );
+  const pythonVersion = getInput("python-version");
+  const activateEnvironment2 = getBooleanInput("activate-environment");
+  const venvPath = getVenvPath(
+    workingDirectory,
+    getInput("venv-path"),
+    activateEnvironment2
+  );
+  const checksum = getInput("checksum");
+  const enableCache = getEnableCache(getInput("enable-cache"));
+  const restoreCache3 = getInput("restore-cache") === "true";
+  const saveCache2 = getInput("save-cache") === "true";
+  const cacheSuffix = getInput("cache-suffix") || "";
+  const cacheLocalPath = getCacheLocalPath(
+    workingDirectory,
+    versionFile,
+    enableCache
+  );
+  const cacheDependencyGlob = getCacheDependencyGlob(
+    workingDirectory,
+    getInput("cache-dependency-glob")
+  );
+  const pruneCache = getInput("prune-cache") === "true";
+  const cachePython = getInput("cache-python") === "true";
+  const ignoreNothingToCache = getInput("ignore-nothing-to-cache") === "true";
+  const ignoreEmptyWorkdir = getInput("ignore-empty-workdir") === "true";
+  const toolBinDir = getToolBinDir(
+    workingDirectory,
+    getInput("tool-bin-dir")
+  );
+  const toolDir = getToolDir(workingDirectory, getInput("tool-dir"));
+  const pythonDir = getUvPythonDir();
+  const githubToken = getInput("github-token");
+  const manifestFile = getManifestFile(getInput("manifest-file"));
+  const addProblemMatchers = getInput("add-problem-matchers") === "true";
+  const resolutionStrategy = getResolutionStrategy(
+    getInput("resolution-strategy")
+  );
+  return {
+    activateEnvironment: activateEnvironment2,
+    addProblemMatchers,
+    cacheDependencyGlob,
+    cacheLocalPath,
+    cachePython,
+    cacheSuffix,
+    checksum,
+    enableCache,
+    githubToken,
+    ignoreEmptyWorkdir,
+    ignoreNothingToCache,
+    manifestFile,
+    pruneCache,
+    pythonDir,
+    pythonVersion,
+    resolutionStrategy,
+    restoreCache: restoreCache3,
+    saveCache: saveCache2,
+    toolBinDir,
+    toolDir,
+    venvPath,
+    version: version3,
+    versionFile,
+    workingDirectory
+  };
+}
+function getVersionFile(workingDirectory, versionFileInput) {
+  if (versionFileInput !== "") {
+    const tildeExpanded = expandTilde(versionFileInput);
+    return resolveRelativePath(workingDirectory, tildeExpanded);
+  }
+  return versionFileInput;
+}
+function getVenvPath(workingDirectory, venvPathInput, activateEnvironment2) {
+  if (venvPathInput !== "") {
+    if (!activateEnvironment2) {
+      warning("venv-path is only used when activate-environment is true");
+    }
+    const tildeExpanded = expandTilde(venvPathInput);
+    return normalizePath(resolveRelativePath(workingDirectory, tildeExpanded));
+  }
+  return normalizePath(resolveRelativePath(workingDirectory, ".venv"));
+}
+function getEnableCache(enableCacheInput) {
+  if (enableCacheInput === "auto") {
+    return process.env.RUNNER_ENVIRONMENT === "github-hosted";
+  }
+  return enableCacheInput === "true";
+}
+function getToolBinDir(workingDirectory, toolBinDirInput) {
+  if (toolBinDirInput !== "") {
+    const tildeExpanded = expandTilde(toolBinDirInput);
+    return resolveRelativePath(workingDirectory, tildeExpanded);
+  }
+  if (process.platform === "win32") {
+    if (process.env.RUNNER_TEMP !== void 0) {
+      return `${process.env.RUNNER_TEMP}${import_node_path.default.sep}uv-tool-bin-dir`;
+    }
+    throw Error(
+      "Could not determine UV_TOOL_BIN_DIR. Please make sure RUNNER_TEMP is set or provide the tool-bin-dir input"
+    );
+  }
+  return void 0;
+}
+function getToolDir(workingDirectory, toolDirInput) {
+  if (toolDirInput !== "") {
+    const tildeExpanded = expandTilde(toolDirInput);
+    return resolveRelativePath(workingDirectory, tildeExpanded);
+  }
+  if (process.platform === "win32") {
+    if (process.env.RUNNER_TEMP !== void 0) {
+      return `${process.env.RUNNER_TEMP}${import_node_path.default.sep}uv-tool-dir`;
+    }
+    throw Error(
+      "Could not determine UV_TOOL_DIR. Please make sure RUNNER_TEMP is set or provide the tool-dir input"
+    );
+  }
+  return void 0;
+}
+function getCacheLocalPath(workingDirectory, versionFile, enableCache) {
+  const cacheLocalPathInput = getInput("cache-local-path");
+  if (cacheLocalPathInput !== "") {
+    const tildeExpanded = expandTilde(cacheLocalPathInput);
+    return {
+      path: resolveRelativePath(workingDirectory, tildeExpanded),
+      source: 0 /* Input */
+    };
+  }
+  const cacheDirFromConfig = getCacheDirFromConfig(
+    workingDirectory,
+    versionFile
+  );
+  if (cacheDirFromConfig !== void 0) {
+    return { path: cacheDirFromConfig, source: 1 /* Config */ };
+  }
+  if (process.env.UV_CACHE_DIR !== void 0) {
+    info(`UV_CACHE_DIR is already set to ${process.env.UV_CACHE_DIR}`);
+    return { path: process.env.UV_CACHE_DIR, source: 2 /* Env */ };
+  }
+  if (enableCache) {
+    if (process.env.RUNNER_ENVIRONMENT === "github-hosted") {
+      if (process.env.RUNNER_TEMP !== void 0) {
+        return {
+          path: `${process.env.RUNNER_TEMP}${import_node_path.default.sep}setup-uv-cache`,
+          source: 3 /* Default */
+        };
+      }
+      throw Error(
+        "Could not determine UV_CACHE_DIR. Please make sure RUNNER_TEMP is set or provide the cache-local-path input"
+      );
+    }
+    if (process.platform === "win32") {
+      return {
+        path: `${process.env.APPDATA}${import_node_path.default.sep}uv${import_node_path.default.sep}cache`,
+        source: 3 /* Default */
+      };
+    }
+    return {
+      path: `${process.env.HOME}${import_node_path.default.sep}.cache${import_node_path.default.sep}uv`,
+      source: 3 /* Default */
+    };
+  }
+}
+function getCacheDirFromConfig(workingDirectory, versionFile) {
+  for (const filePath of [versionFile, "uv.toml", "pyproject.toml"]) {
+    const resolvedPath = resolveRelativePath(workingDirectory, filePath);
+    try {
+      const cacheDir2 = getConfigValueFromTomlFile(resolvedPath, "cache-dir");
+      if (cacheDir2 !== void 0) {
+        info(`Found cache-dir in ${resolvedPath}: ${cacheDir2}`);
+        return cacheDir2;
+      }
+    } catch (err) {
+      const message = err.message;
+      warning(`Error while parsing ${filePath}: ${message}`);
+      return void 0;
+    }
+  }
+  return void 0;
+}
+function getUvPythonDir() {
+  if (process.env.UV_PYTHON_INSTALL_DIR !== void 0) {
+    info(
+      `UV_PYTHON_INSTALL_DIR is already set to ${process.env.UV_PYTHON_INSTALL_DIR}`
+    );
+    return process.env.UV_PYTHON_INSTALL_DIR;
+  }
+  if (process.env.RUNNER_ENVIRONMENT !== "github-hosted") {
+    if (process.platform === "win32") {
+      return `${process.env.APPDATA}${import_node_path.default.sep}uv${import_node_path.default.sep}python`;
+    }
+    return `${process.env.HOME}${import_node_path.default.sep}.local${import_node_path.default.sep}share${import_node_path.default.sep}uv${import_node_path.default.sep}python`;
+  }
+  if (process.env.RUNNER_TEMP !== void 0) {
+    return `${process.env.RUNNER_TEMP}${import_node_path.default.sep}uv-python-dir`;
+  }
+  throw Error(
+    "Could not determine UV_PYTHON_INSTALL_DIR. Please make sure RUNNER_TEMP is set or provide the UV_PYTHON_INSTALL_DIR environment variable"
+  );
+}
+function getCacheDependencyGlob(workingDirectory, cacheDependencyGlobInput) {
+  if (cacheDependencyGlobInput !== "") {
+    return cacheDependencyGlobInput.split("\n").map((part) => part.trim()).map((part) => expandTilde(part)).map((part) => resolveRelativePath(workingDirectory, part)).join("\n");
+  }
+  return cacheDependencyGlobInput;
+}
+function expandTilde(input) {
+  if (input.startsWith("~")) {
+    return `${process.env.HOME}${input.substring(1)}`;
+  }
+  return input;
+}
+function normalizePath(inputPath) {
+  const normalized = import_node_path.default.normalize(inputPath);
+  const root = import_node_path.default.parse(normalized).root;
+  let trimmed = normalized;
+  while (trimmed.length > root.length && trimmed.endsWith(import_node_path.default.sep)) {
+    trimmed = trimmed.slice(0, -1);
+  }
+  return trimmed;
+}
+function resolveRelativePath(workingDirectory, inputPath) {
+  const hasNegation = inputPath.startsWith("!");
+  const pathWithoutNegation = hasNegation ? inputPath.substring(1) : inputPath;
+  const resolvedPath = import_node_path.default.resolve(workingDirectory, pathWithoutNegation);
+  debug(
+    `Resolving relative path ${inputPath} to ${hasNegation ? "!" : ""}${resolvedPath}`
+  );
+  return hasNegation ? `!${resolvedPath}` : resolvedPath;
+}
+function getManifestFile(manifestFileInput) {
+  if (manifestFileInput !== "") {
+    return manifestFileInput;
+  }
+  return void 0;
+}
+function getResolutionStrategy(resolutionStrategyInput) {
+  if (resolutionStrategyInput === "lowest") {
+    return "lowest";
+  }
+  if (resolutionStrategyInput === "highest" || resolutionStrategyInput === "") {
+    return "highest";
+  }
+  throw new Error(
+    `Invalid resolution-strategy: ${resolutionStrategyInput}. Must be 'highest' or 'lowest'.`
+  );
 }
 
 // src/version/resolve.ts
@@ -96850,9 +96894,9 @@ function getUvVersionFromFile(filePath) {
 
 // src/setup-uv.ts
 var sourceDir = __dirname;
-async function getPythonVersion() {
-  if (pythonVersion !== "") {
-    return pythonVersion;
+async function getPythonVersion(inputs) {
+  if (inputs.pythonVersion !== "") {
+    return inputs.pythonVersion;
   }
   let output = "";
   const options = {
@@ -96864,7 +96908,7 @@ async function getPythonVersion() {
     silent: !isDebug()
   };
   try {
-    const execArgs = ["python", "find", "--directory", workingDirectory];
+    const execArgs = ["python", "find", "--directory", inputs.workingDirectory];
     await exec("uv", execArgs, options);
     const pythonPath = output.trim();
     output = "";
@@ -96877,32 +96921,33 @@ async function getPythonVersion() {
   }
 }
 async function run() {
-  detectEmptyWorkdir();
-  const platform2 = await getPlatform();
-  const arch3 = getArch();
   try {
+    const inputs = loadInputs();
+    detectEmptyWorkdir(inputs);
+    const platform2 = await getPlatform();
+    const arch3 = getArch();
     if (platform2 === void 0) {
       throw new Error(`Unsupported platform: ${process.platform}`);
     }
     if (arch3 === void 0) {
       throw new Error(`Unsupported architecture: ${process.arch}`);
     }
-    const setupResult = await setupUv(platform2, arch3, checkSum, githubToken);
-    addToolBinToPath();
+    const setupResult = await setupUv(inputs, platform2, arch3);
+    addToolBinToPath(inputs);
     addUvToPathAndOutput(setupResult.uvDir);
-    setToolDir();
-    addPythonDirToPath();
-    setupPython();
-    await activateEnvironment2();
-    addMatchers();
-    setCacheDir();
+    setToolDir(inputs);
+    addPythonDirToPath(inputs);
+    setupPython(inputs);
+    await activateEnvironment(inputs);
+    addMatchers(inputs);
+    setCacheDir(inputs);
     setOutput("uv-version", setupResult.version);
     saveState(STATE_UV_VERSION, setupResult.version);
     info(`Successfully installed uv version ${setupResult.version}`);
-    const pythonVersion2 = await getPythonVersion();
-    setOutput("python-version", pythonVersion2);
-    if (enableCache) {
-      await restoreCache3(pythonVersion2);
+    const detectedPythonVersion = await getPythonVersion(inputs);
+    setOutput("python-version", detectedPythonVersion);
+    if (inputs.enableCache) {
+      await restoreCache2(inputs, detectedPythonVersion);
     }
     await new Promise((resolve3) => setTimeout(resolve3, 50));
     process.exit(0);
@@ -96910,9 +96955,9 @@ async function run() {
     setFailed(err.message);
   }
 }
-function detectEmptyWorkdir() {
-  if (import_node_fs8.default.readdirSync(workingDirectory).length === 0) {
-    if (ignoreEmptyWorkdir) {
+function detectEmptyWorkdir(inputs) {
+  if (import_node_fs8.default.readdirSync(inputs.workingDirectory).length === 0) {
+    if (inputs.ignoreEmptyWorkdir) {
       info(
         "Empty workdir detected. Ignoring because ignore-empty-workdir is enabled"
       );
@@ -96923,8 +96968,8 @@ function detectEmptyWorkdir() {
     }
   }
 }
-async function setupUv(platform2, arch3, checkSum2, githubToken2) {
-  const resolvedVersion = await determineVersion();
+async function setupUv(inputs, platform2, arch3) {
+  const resolvedVersion = await determineVersion(inputs);
   const toolCacheResult = tryGetFromToolCache(arch3, resolvedVersion);
   if (toolCacheResult.installedPath) {
     info(`Found uv in tool-cache for ${toolCacheResult.version}`);
@@ -96937,40 +96982,40 @@ async function setupUv(platform2, arch3, checkSum2, githubToken2) {
     platform2,
     arch3,
     resolvedVersion,
-    checkSum2,
-    githubToken2,
-    manifestFile
+    inputs.checksum,
+    inputs.githubToken,
+    inputs.manifestFile
   );
   return {
     uvDir: downloadResult.cachedToolDir,
     version: downloadResult.version
   };
 }
-async function determineVersion() {
+async function determineVersion(inputs) {
   return await resolveVersion(
-    getRequestedVersion(),
-    manifestFile,
-    resolutionStrategy
+    getRequestedVersion(inputs),
+    inputs.manifestFile,
+    inputs.resolutionStrategy
   );
 }
-function getRequestedVersion() {
-  if (version3 !== "") {
-    return version3;
+function getRequestedVersion(inputs) {
+  if (inputs.version !== "") {
+    return inputs.version;
   }
-  if (versionFile !== "") {
-    const versionFromFile = getUvVersionFromFile(versionFile);
+  if (inputs.versionFile !== "") {
+    const versionFromFile = getUvVersionFromFile(inputs.versionFile);
     if (versionFromFile === void 0) {
       throw new Error(
-        `Could not determine uv version from file: ${versionFile}`
+        `Could not determine uv version from file: ${inputs.versionFile}`
       );
     }
     return versionFromFile;
   }
   const versionFromUvToml = getUvVersionFromFile(
-    `${workingDirectory}${path15.sep}uv.toml`
+    `${inputs.workingDirectory}${path15.sep}uv.toml`
   );
   const versionFromPyproject = getUvVersionFromFile(
-    `${workingDirectory}${path15.sep}pyproject.toml`
+    `${inputs.workingDirectory}${path15.sep}pyproject.toml`
   );
   if (versionFromUvToml === void 0 && versionFromPyproject === void 0) {
     info(
@@ -96990,15 +97035,17 @@ function addUvToPathAndOutput(cachedPath) {
     info(`Added ${cachedPath} to the path`);
   }
 }
-function addToolBinToPath() {
-  if (toolBinDir !== void 0) {
-    exportVariable("UV_TOOL_BIN_DIR", toolBinDir);
-    info(`Set UV_TOOL_BIN_DIR to ${toolBinDir}`);
+function addToolBinToPath(inputs) {
+  if (inputs.toolBinDir !== void 0) {
+    exportVariable("UV_TOOL_BIN_DIR", inputs.toolBinDir);
+    info(`Set UV_TOOL_BIN_DIR to ${inputs.toolBinDir}`);
     if (process.env.UV_NO_MODIFY_PATH !== void 0) {
-      info(`UV_NO_MODIFY_PATH is set, not adding ${toolBinDir} to path`);
+      info(
+        `UV_NO_MODIFY_PATH is set, not adding ${inputs.toolBinDir} to path`
+      );
     } else {
-      addPath(toolBinDir);
-      info(`Added ${toolBinDir} to the path`);
+      addPath(inputs.toolBinDir);
+      info(`Added ${inputs.toolBinDir} to the path`);
     }
   } else {
     if (process.env.UV_NO_MODIFY_PATH !== void 0) {
@@ -97017,66 +97064,66 @@ function addToolBinToPath() {
     }
   }
 }
-function setToolDir() {
-  if (toolDir !== void 0) {
-    exportVariable("UV_TOOL_DIR", toolDir);
-    info(`Set UV_TOOL_DIR to ${toolDir}`);
+function setToolDir(inputs) {
+  if (inputs.toolDir !== void 0) {
+    exportVariable("UV_TOOL_DIR", inputs.toolDir);
+    info(`Set UV_TOOL_DIR to ${inputs.toolDir}`);
   }
 }
-function addPythonDirToPath() {
-  exportVariable("UV_PYTHON_INSTALL_DIR", pythonDir);
-  info(`Set UV_PYTHON_INSTALL_DIR to ${pythonDir}`);
+function addPythonDirToPath(inputs) {
+  exportVariable("UV_PYTHON_INSTALL_DIR", inputs.pythonDir);
+  info(`Set UV_PYTHON_INSTALL_DIR to ${inputs.pythonDir}`);
   if (process.env.UV_NO_MODIFY_PATH !== void 0) {
     info("UV_NO_MODIFY_PATH is set, not adding python dir to path");
   } else {
-    addPath(pythonDir);
-    info(`Added ${pythonDir} to the path`);
+    addPath(inputs.pythonDir);
+    info(`Added ${inputs.pythonDir} to the path`);
   }
 }
-function setupPython() {
-  if (pythonVersion !== "") {
-    exportVariable("UV_PYTHON", pythonVersion);
-    info(`Set UV_PYTHON to ${pythonVersion}`);
+function setupPython(inputs) {
+  if (inputs.pythonVersion !== "") {
+    exportVariable("UV_PYTHON", inputs.pythonVersion);
+    info(`Set UV_PYTHON to ${inputs.pythonVersion}`);
   }
 }
-async function activateEnvironment2() {
-  if (activateEnvironment) {
+async function activateEnvironment(inputs) {
+  if (inputs.activateEnvironment) {
     if (process.env.UV_NO_MODIFY_PATH !== void 0) {
       throw new Error(
         "UV_NO_MODIFY_PATH and activate-environment cannot be used together."
       );
     }
-    info(`Creating and activating python venv at ${venvPath}...`);
+    info(`Creating and activating python venv at ${inputs.venvPath}...`);
     await exec("uv", [
       "venv",
-      venvPath,
+      inputs.venvPath,
       "--directory",
-      workingDirectory,
+      inputs.workingDirectory,
       "--clear"
     ]);
-    let venvBinPath = `${venvPath}${path15.sep}bin`;
+    let venvBinPath = `${inputs.venvPath}${path15.sep}bin`;
     if (process.platform === "win32") {
-      venvBinPath = `${venvPath}${path15.sep}Scripts`;
+      venvBinPath = `${inputs.venvPath}${path15.sep}Scripts`;
     }
     addPath(path15.resolve(venvBinPath));
-    exportVariable("VIRTUAL_ENV", venvPath);
-    setOutput("venv", venvPath);
+    exportVariable("VIRTUAL_ENV", inputs.venvPath);
+    setOutput("venv", inputs.venvPath);
   }
 }
-function setCacheDir() {
-  if (cacheLocalPath !== void 0) {
-    if (cacheLocalPath.source === 1 /* Config */) {
+function setCacheDir(inputs) {
+  if (inputs.cacheLocalPath !== void 0) {
+    if (inputs.cacheLocalPath.source === 1 /* Config */) {
       info(
         "Using cache-dir from uv config file, not modifying UV_CACHE_DIR"
       );
       return;
     }
-    exportVariable("UV_CACHE_DIR", cacheLocalPath.path);
-    info(`Set UV_CACHE_DIR to ${cacheLocalPath.path}`);
+    exportVariable("UV_CACHE_DIR", inputs.cacheLocalPath.path);
+    info(`Set UV_CACHE_DIR to ${inputs.cacheLocalPath.path}`);
   }
 }
-function addMatchers() {
-  if (addProblemMatchers) {
+function addMatchers(inputs) {
+  if (inputs.addProblemMatchers) {
     const matchersPath = path15.join(sourceDir, "..", "..", ".github");
     info(`##[add-matcher]${path15.join(matchersPath, "python.json")}`);
   }

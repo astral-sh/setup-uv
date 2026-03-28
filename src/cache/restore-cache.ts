@@ -1,15 +1,7 @@
 import * as cache from "@actions/cache";
 import * as core from "@actions/core";
 import { hashFiles } from "../hash/hash-files";
-import {
-  cacheDependencyGlob,
-  cacheLocalPath,
-  cachePython,
-  cacheSuffix,
-  pruneCache,
-  pythonDir,
-  restoreCache as shouldRestoreCache,
-} from "../utils/inputs";
+import type { SetupInputs } from "../utils/inputs";
 import { getArch, getOSNameVersion, getPlatform } from "../utils/platforms";
 
 export const STATE_CACHE_KEY = "cache-key";
@@ -18,18 +10,21 @@ export const STATE_PYTHON_CACHE_MATCHED_KEY = "python-cache-matched-key";
 
 const CACHE_VERSION = "2";
 
-export async function restoreCache(pythonVersion?: string): Promise<void> {
-  const cacheKey = await computeKeys(pythonVersion);
+export async function restoreCache(
+  inputs: SetupInputs,
+  pythonVersion?: string,
+): Promise<void> {
+  const cacheKey = await computeKeys(inputs, pythonVersion);
   core.saveState(STATE_CACHE_KEY, cacheKey);
   core.setOutput("cache-key", cacheKey);
 
-  if (!shouldRestoreCache) {
+  if (!inputs.restoreCache) {
     core.info("restore-cache is false. Skipping restore cache step.");
     core.setOutput("python-cache-hit", false);
     return;
   }
 
-  if (cacheLocalPath === undefined) {
+  if (inputs.cacheLocalPath === undefined) {
     throw new Error(
       "cache-local-path is not set. Cannot restore cache without a valid cache path.",
     );
@@ -37,15 +32,15 @@ export async function restoreCache(pythonVersion?: string): Promise<void> {
 
   await restoreCacheFromKey(
     cacheKey,
-    cacheLocalPath.path,
+    inputs.cacheLocalPath.path,
     STATE_CACHE_MATCHED_KEY,
     "cache-hit",
   );
 
-  if (cachePython) {
+  if (inputs.cachePython) {
     await restoreCacheFromKey(
       `${cacheKey}-python`,
-      pythonDir,
+      inputs.pythonDir,
       STATE_PYTHON_CACHE_MATCHED_KEY,
       "python-cache-hit",
     );
@@ -76,28 +71,34 @@ async function restoreCacheFromKey(
   handleMatchResult(matchedKey, cacheKey, stateKey, outputKey);
 }
 
-async function computeKeys(pythonVersion?: string): Promise<string> {
+async function computeKeys(
+  inputs: SetupInputs,
+  pythonVersion?: string,
+): Promise<string> {
   let cacheDependencyPathHash = "-";
-  if (cacheDependencyGlob !== "") {
+  if (inputs.cacheDependencyGlob !== "") {
     core.info(
-      `Searching files using cache dependency glob: ${cacheDependencyGlob.split("\n").join(",")}`,
+      `Searching files using cache dependency glob: ${inputs.cacheDependencyGlob.split("\n").join(",")}`,
     );
-    cacheDependencyPathHash += await hashFiles(cacheDependencyGlob, true);
+    cacheDependencyPathHash += await hashFiles(
+      inputs.cacheDependencyGlob,
+      true,
+    );
     if (cacheDependencyPathHash === "-") {
       core.warning(
-        `No file matched to [${cacheDependencyGlob.split("\n").join(",")}]. The cache will never get invalidated. Make sure you have checked out the target repository and configured the cache-dependency-glob input correctly.`,
+        `No file matched to [${inputs.cacheDependencyGlob.split("\n").join(",")}]. The cache will never get invalidated. Make sure you have checked out the target repository and configured the cache-dependency-glob input correctly.`,
       );
     }
   }
   if (cacheDependencyPathHash === "-") {
     cacheDependencyPathHash = "-no-dependency-glob";
   }
-  const suffix = cacheSuffix ? `-${cacheSuffix}` : "";
+  const suffix = inputs.cacheSuffix ? `-${inputs.cacheSuffix}` : "";
   const version = pythonVersion ?? "unknown";
   const platform = await getPlatform();
   const osNameVersion = getOSNameVersion();
-  const pruned = pruneCache ? "-pruned" : "";
-  const python = cachePython ? "-py" : "";
+  const pruned = inputs.pruneCache ? "-pruned" : "";
+  const python = inputs.cachePython ? "-py" : "";
   return `setup-uv-${CACHE_VERSION}-${getArch()}-${platform}-${osNameVersion}-${version}${pruned}${python}${cacheDependencyPathHash}${suffix}`;
 }
 

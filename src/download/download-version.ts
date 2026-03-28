@@ -33,7 +33,7 @@ export async function downloadVersion(
   platform: Platform,
   arch: Architecture,
   version: string,
-  checkSum: string | undefined,
+  checksum: string | undefined,
   githubToken: string,
   manifestUrl?: string,
 ): Promise<{ version: string; cachedToolDir: string }> {
@@ -47,10 +47,10 @@ export async function downloadVersion(
 
   // For the default astral-sh/versions source, checksum validation relies on
   // user input or the built-in KNOWN_CHECKSUMS table, not manifest sha256 values.
-  const checksum =
+  const resolvedChecksum =
     manifestUrl === undefined
-      ? checkSum
-      : resolveChecksum(checkSum, artifact.checksum);
+      ? checksum
+      : resolveChecksum(checksum, artifact.checksum);
 
   const mirrorUrl = rewriteToMirror(artifact.downloadUrl);
   const downloadUrl = mirrorUrl ?? artifact.downloadUrl;
@@ -64,7 +64,7 @@ export async function downloadVersion(
       platform,
       arch,
       version,
-      checksum,
+      resolvedChecksum,
       downloadToken,
     );
   } catch (err) {
@@ -82,7 +82,7 @@ export async function downloadVersion(
       platform,
       arch,
       version,
-      checksum,
+      resolvedChecksum,
       githubToken,
     );
   }
@@ -161,11 +161,11 @@ function getMissingArtifactMessage(
 }
 
 function resolveChecksum(
-  checkSum: string | undefined,
+  checksum: string | undefined,
   manifestChecksum: string,
 ): string {
-  return checkSum !== undefined && checkSum !== ""
-    ? checkSum
+  return checksum !== undefined && checksum !== ""
+    ? checksum
     : manifestChecksum;
 }
 
