@@ -96557,19 +96557,12 @@ function getConfigValueFromTomlFile(filePath, key) {
 function loadInputs() {
   const workingDirectory = getInput("working-directory");
   const version3 = getInput("version");
-  const versionFile = getVersionFile(
-    workingDirectory,
-    getInput("version-file")
-  );
+  const versionFile = getVersionFile(workingDirectory);
   const pythonVersion = getInput("python-version");
   const activateEnvironment2 = getBooleanInput("activate-environment");
-  const venvPath = getVenvPath(
-    workingDirectory,
-    getInput("venv-path"),
-    activateEnvironment2
-  );
+  const venvPath = getVenvPath(workingDirectory, activateEnvironment2);
   const checksum = getInput("checksum");
-  const enableCache = getEnableCache(getInput("enable-cache"));
+  const enableCache = getEnableCache();
   const restoreCache3 = getInput("restore-cache") === "true";
   const saveCache2 = getInput("save-cache") === "true";
   const cacheSuffix = getInput("cache-suffix") || "";
@@ -96578,26 +96571,18 @@ function loadInputs() {
     versionFile,
     enableCache
   );
-  const cacheDependencyGlob = getCacheDependencyGlob(
-    workingDirectory,
-    getInput("cache-dependency-glob")
-  );
+  const cacheDependencyGlob = getCacheDependencyGlob(workingDirectory);
   const pruneCache = getInput("prune-cache") === "true";
   const cachePython = getInput("cache-python") === "true";
   const ignoreNothingToCache = getInput("ignore-nothing-to-cache") === "true";
   const ignoreEmptyWorkdir = getInput("ignore-empty-workdir") === "true";
-  const toolBinDir = getToolBinDir(
-    workingDirectory,
-    getInput("tool-bin-dir")
-  );
-  const toolDir = getToolDir(workingDirectory, getInput("tool-dir"));
+  const toolBinDir = getToolBinDir(workingDirectory);
+  const toolDir = getToolDir(workingDirectory);
   const pythonDir = getUvPythonDir();
   const githubToken = getInput("github-token");
-  const manifestFile = getManifestFile(getInput("manifest-file"));
+  const manifestFile = getManifestFile();
   const addProblemMatchers = getInput("add-problem-matchers") === "true";
-  const resolutionStrategy = getResolutionStrategy(
-    getInput("resolution-strategy")
-  );
+  const resolutionStrategy = getResolutionStrategy();
   return {
     activateEnvironment: activateEnvironment2,
     addProblemMatchers,
@@ -96625,14 +96610,16 @@ function loadInputs() {
     workingDirectory
   };
 }
-function getVersionFile(workingDirectory, versionFileInput) {
+function getVersionFile(workingDirectory) {
+  const versionFileInput = getInput("version-file");
   if (versionFileInput !== "") {
     const tildeExpanded = expandTilde(versionFileInput);
     return resolveRelativePath(workingDirectory, tildeExpanded);
   }
   return versionFileInput;
 }
-function getVenvPath(workingDirectory, venvPathInput, activateEnvironment2) {
+function getVenvPath(workingDirectory, activateEnvironment2) {
+  const venvPathInput = getInput("venv-path");
   if (venvPathInput !== "") {
     if (!activateEnvironment2) {
       warning("venv-path is only used when activate-environment is true");
@@ -96642,13 +96629,15 @@ function getVenvPath(workingDirectory, venvPathInput, activateEnvironment2) {
   }
   return normalizePath(resolveRelativePath(workingDirectory, ".venv"));
 }
-function getEnableCache(enableCacheInput) {
+function getEnableCache() {
+  const enableCacheInput = getInput("enable-cache");
   if (enableCacheInput === "auto") {
     return process.env.RUNNER_ENVIRONMENT === "github-hosted";
   }
   return enableCacheInput === "true";
 }
-function getToolBinDir(workingDirectory, toolBinDirInput) {
+function getToolBinDir(workingDirectory) {
+  const toolBinDirInput = getInput("tool-bin-dir");
   if (toolBinDirInput !== "") {
     const tildeExpanded = expandTilde(toolBinDirInput);
     return resolveRelativePath(workingDirectory, tildeExpanded);
@@ -96663,7 +96652,8 @@ function getToolBinDir(workingDirectory, toolBinDirInput) {
   }
   return void 0;
 }
-function getToolDir(workingDirectory, toolDirInput) {
+function getToolDir(workingDirectory) {
+  const toolDirInput = getInput("tool-dir");
   if (toolDirInput !== "") {
     const tildeExpanded = expandTilde(toolDirInput);
     return resolveRelativePath(workingDirectory, tildeExpanded);
@@ -96759,7 +96749,8 @@ function getUvPythonDir() {
     "Could not determine UV_PYTHON_INSTALL_DIR. Please make sure RUNNER_TEMP is set or provide the UV_PYTHON_INSTALL_DIR environment variable"
   );
 }
-function getCacheDependencyGlob(workingDirectory, cacheDependencyGlobInput) {
+function getCacheDependencyGlob(workingDirectory) {
+  const cacheDependencyGlobInput = getInput("cache-dependency-glob");
   if (cacheDependencyGlobInput !== "") {
     return cacheDependencyGlobInput.split("\n").map((part) => part.trim()).map((part) => expandTilde(part)).map((part) => resolveRelativePath(workingDirectory, part)).join("\n");
   }
@@ -96789,13 +96780,15 @@ function resolveRelativePath(workingDirectory, inputPath) {
   );
   return hasNegation ? `!${resolvedPath}` : resolvedPath;
 }
-function getManifestFile(manifestFileInput) {
+function getManifestFile() {
+  const manifestFileInput = getInput("manifest-file");
   if (manifestFileInput !== "") {
     return manifestFileInput;
   }
   return void 0;
 }
-function getResolutionStrategy(resolutionStrategyInput) {
+function getResolutionStrategy() {
+  const resolutionStrategyInput = getInput("resolution-strategy");
   if (resolutionStrategyInput === "lowest") {
     return "lowest";
   }

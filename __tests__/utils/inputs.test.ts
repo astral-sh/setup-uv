@@ -36,7 +36,7 @@ jest.unstable_mockModule("@actions/core", () => ({
 
 const { CacheLocalSource, loadInputs } = await import("../../src/utils/inputs");
 
-function createTempProject(files: Record<string, string>): string {
+function createTempProject(files: Record<string, string> = {}): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "setup-uv-inputs-test-"));
   tempDirs.push(dir);
 
@@ -60,11 +60,8 @@ function resetEnvironment(): void {
 }
 
 function restoreEnvironment(): void {
-  while (tempDirs.length > 0) {
-    const dir = tempDirs.pop();
-    if (dir !== undefined) {
-      fs.rmSync(dir, { force: true, recursive: true });
-    }
+  for (const dir of tempDirs.splice(0)) {
+    fs.rmSync(dir, { force: true, recursive: true });
   }
 
   process.env.HOME = ORIGINAL_HOME;
@@ -74,13 +71,8 @@ function restoreEnvironment(): void {
   process.env.UV_PYTHON_INSTALL_DIR = ORIGINAL_UV_PYTHON_INSTALL_DIR;
 }
 
-beforeEach(() => {
-  resetEnvironment();
-});
-
-afterEach(() => {
-  restoreEnvironment();
-});
+beforeEach(resetEnvironment);
+afterEach(restoreEnvironment);
 
 describe("loadInputs", () => {
   it("loads defaults for a github-hosted runner", () => {
@@ -125,7 +117,7 @@ cache-dir = "/tmp/pyproject-toml-defined-cache-path"
   });
 
   it("uses UV_CACHE_DIR from the environment", () => {
-    mockInputs["working-directory"] = createTempProject({});
+    mockInputs["working-directory"] = createTempProject();
     process.env.UV_CACHE_DIR = "/env/cache-dir";
 
     const inputs = loadInputs();
