@@ -1,5 +1,4 @@
 import * as core from "@actions/core";
-import * as semver from "semver";
 import { VERSIONS_MANIFEST_URL } from "../utils/constants";
 import { fetch } from "../utils/fetch";
 import { selectDefaultVariant } from "./variant-selection";
@@ -99,19 +98,11 @@ export function parseManifest(
 export async function getLatestVersion(
   manifestUrl: string = VERSIONS_MANIFEST_URL,
 ): Promise<string> {
-  const versions = await fetchManifest(manifestUrl);
-  const [firstVersion, ...remainingVersions] = versions.map(
-    (versionData) => versionData.version,
-  );
+  const latestVersion = (await fetchManifest(manifestUrl))[0]?.version;
 
-  if (firstVersion === undefined) {
+  if (latestVersion === undefined) {
     throw new Error("No versions found in manifest data");
   }
-
-  const latestVersion = remainingVersions.reduce(
-    (latest, current) => (semver.gt(current, latest) ? current : latest),
-    firstVersion,
-  );
 
   core.debug(`Latest version from manifest: ${latestVersion}`);
   return latestVersion;

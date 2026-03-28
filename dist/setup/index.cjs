@@ -20058,8 +20058,8 @@ var require_gt = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/gt.js"(exports2, module2) {
     "use strict";
     var compare = require_compare();
-    var gt3 = (a, b, loose) => compare(a, b, loose) > 0;
-    module2.exports = gt3;
+    var gt2 = (a, b, loose) => compare(a, b, loose) > 0;
+    module2.exports = gt2;
   }
 });
 
@@ -20119,7 +20119,7 @@ var require_cmp = __commonJS({
     "use strict";
     var eq = require_eq();
     var neq = require_neq();
-    var gt3 = require_gt();
+    var gt2 = require_gt();
     var gte = require_gte();
     var lt = require_lt();
     var lte = require_lte();
@@ -20148,7 +20148,7 @@ var require_cmp = __commonJS({
         case "!=":
           return neq(a, b, loose);
         case ">":
-          return gt3(a, b, loose);
+          return gt2(a, b, loose);
         case ">=":
           return gte(a, b, loose);
         case "<":
@@ -20828,7 +20828,7 @@ var require_min_version = __commonJS({
     "use strict";
     var SemVer = require_semver();
     var Range = require_range();
-    var gt3 = require_gt();
+    var gt2 = require_gt();
     var minVersion = (range2, loose) => {
       range2 = new Range(range2, loose);
       let minver = new SemVer("0.0.0");
@@ -20856,7 +20856,7 @@ var require_min_version = __commonJS({
             /* fallthrough */
             case "":
             case ">=":
-              if (!setMin || gt3(compver, setMin)) {
+              if (!setMin || gt2(compver, setMin)) {
                 setMin = compver;
               }
               break;
@@ -20868,7 +20868,7 @@ var require_min_version = __commonJS({
               throw new Error(`Unexpected operation: ${comparator.operator}`);
           }
         });
-        if (setMin && (!minver || gt3(minver, setMin))) {
+        if (setMin && (!minver || gt2(minver, setMin))) {
           minver = setMin;
         }
       }
@@ -20906,7 +20906,7 @@ var require_outside = __commonJS({
     var { ANY } = Comparator;
     var Range = require_range();
     var satisfies4 = require_satisfies();
-    var gt3 = require_gt();
+    var gt2 = require_gt();
     var lt = require_lt();
     var lte = require_lte();
     var gte = require_gte();
@@ -20916,7 +20916,7 @@ var require_outside = __commonJS({
       let gtfn, ltefn, ltfn, comp26, ecomp;
       switch (hilo) {
         case ">":
-          gtfn = gt3;
+          gtfn = gt2;
           ltefn = lte;
           ltfn = lt;
           comp26 = ">";
@@ -20925,7 +20925,7 @@ var require_outside = __commonJS({
         case "<":
           gtfn = lt;
           ltefn = gte;
-          ltfn = gt3;
+          ltfn = gt2;
           comp26 = "<";
           ecomp = "<=";
           break;
@@ -21103,10 +21103,10 @@ var require_subset = __commonJS({
         }
       }
       const eqSet = /* @__PURE__ */ new Set();
-      let gt3, lt;
+      let gt2, lt;
       for (const c of sub) {
         if (c.operator === ">" || c.operator === ">=") {
-          gt3 = higherGT(gt3, c, options);
+          gt2 = higherGT(gt2, c, options);
         } else if (c.operator === "<" || c.operator === "<=") {
           lt = lowerLT(lt, c, options);
         } else {
@@ -21117,16 +21117,16 @@ var require_subset = __commonJS({
         return null;
       }
       let gtltComp;
-      if (gt3 && lt) {
-        gtltComp = compare(gt3.semver, lt.semver, options);
+      if (gt2 && lt) {
+        gtltComp = compare(gt2.semver, lt.semver, options);
         if (gtltComp > 0) {
           return null;
-        } else if (gtltComp === 0 && (gt3.operator !== ">=" || lt.operator !== "<=")) {
+        } else if (gtltComp === 0 && (gt2.operator !== ">=" || lt.operator !== "<=")) {
           return null;
         }
       }
       for (const eq of eqSet) {
-        if (gt3 && !satisfies4(eq, String(gt3), options)) {
+        if (gt2 && !satisfies4(eq, String(gt2), options)) {
           return null;
         }
         if (lt && !satisfies4(eq, String(lt), options)) {
@@ -21142,25 +21142,25 @@ var require_subset = __commonJS({
       let higher, lower;
       let hasDomLT, hasDomGT;
       let needDomLTPre = lt && !options.includePrerelease && lt.semver.prerelease.length ? lt.semver : false;
-      let needDomGTPre = gt3 && !options.includePrerelease && gt3.semver.prerelease.length ? gt3.semver : false;
+      let needDomGTPre = gt2 && !options.includePrerelease && gt2.semver.prerelease.length ? gt2.semver : false;
       if (needDomLTPre && needDomLTPre.prerelease.length === 1 && lt.operator === "<" && needDomLTPre.prerelease[0] === 0) {
         needDomLTPre = false;
       }
       for (const c of dom) {
         hasDomGT = hasDomGT || c.operator === ">" || c.operator === ">=";
         hasDomLT = hasDomLT || c.operator === "<" || c.operator === "<=";
-        if (gt3) {
+        if (gt2) {
           if (needDomGTPre) {
             if (c.semver.prerelease && c.semver.prerelease.length && c.semver.major === needDomGTPre.major && c.semver.minor === needDomGTPre.minor && c.semver.patch === needDomGTPre.patch) {
               needDomGTPre = false;
             }
           }
           if (c.operator === ">" || c.operator === ">=") {
-            higher = higherGT(gt3, c, options);
-            if (higher === c && higher !== gt3) {
+            higher = higherGT(gt2, c, options);
+            if (higher === c && higher !== gt2) {
               return false;
             }
-          } else if (gt3.operator === ">=" && !satisfies4(gt3.semver, String(c), options)) {
+          } else if (gt2.operator === ">=" && !satisfies4(gt2.semver, String(c), options)) {
             return false;
           }
         }
@@ -21179,14 +21179,14 @@ var require_subset = __commonJS({
             return false;
           }
         }
-        if (!c.operator && (lt || gt3) && gtltComp !== 0) {
+        if (!c.operator && (lt || gt2) && gtltComp !== 0) {
           return false;
         }
       }
-      if (gt3 && hasDomLT && !lt && gtltComp !== 0) {
+      if (gt2 && hasDomLT && !lt && gtltComp !== 0) {
         return false;
       }
-      if (lt && hasDomGT && !gt3 && gtltComp !== 0) {
+      if (lt && hasDomGT && !gt2 && gtltComp !== 0) {
         return false;
       }
       if (needDomGTPre || needDomLTPre) {
@@ -21235,7 +21235,7 @@ var require_semver2 = __commonJS({
     var compareBuild = require_compare_build();
     var sort = require_sort();
     var rsort = require_rsort();
-    var gt3 = require_gt();
+    var gt2 = require_gt();
     var lt = require_lt();
     var eq = require_eq();
     var neq = require_neq();
@@ -21273,7 +21273,7 @@ var require_semver2 = __commonJS({
       compareBuild,
       sort,
       rsort,
-      gt: gt3,
+      gt: gt2,
       lt,
       eq,
       neq,
@@ -27668,8 +27668,8 @@ var require_gt2 = __commonJS({
   "node_modules/@actions/tool-cache/node_modules/semver/functions/gt.js"(exports2, module2) {
     "use strict";
     var compare = require_compare2();
-    var gt3 = (a, b, loose) => compare(a, b, loose) > 0;
-    module2.exports = gt3;
+    var gt2 = (a, b, loose) => compare(a, b, loose) > 0;
+    module2.exports = gt2;
   }
 });
 
@@ -27729,7 +27729,7 @@ var require_cmp2 = __commonJS({
     "use strict";
     var eq = require_eq2();
     var neq = require_neq2();
-    var gt3 = require_gt2();
+    var gt2 = require_gt2();
     var gte = require_gte2();
     var lt = require_lt2();
     var lte = require_lte2();
@@ -27758,7 +27758,7 @@ var require_cmp2 = __commonJS({
         case "!=":
           return neq(a, b, loose);
         case ">":
-          return gt3(a, b, loose);
+          return gt2(a, b, loose);
         case ">=":
           return gte(a, b, loose);
         case "<":
@@ -28438,7 +28438,7 @@ var require_min_version2 = __commonJS({
     "use strict";
     var SemVer = require_semver3();
     var Range = require_range2();
-    var gt3 = require_gt2();
+    var gt2 = require_gt2();
     var minVersion = (range2, loose) => {
       range2 = new Range(range2, loose);
       let minver = new SemVer("0.0.0");
@@ -28466,7 +28466,7 @@ var require_min_version2 = __commonJS({
             /* fallthrough */
             case "":
             case ">=":
-              if (!setMin || gt3(compver, setMin)) {
+              if (!setMin || gt2(compver, setMin)) {
                 setMin = compver;
               }
               break;
@@ -28478,7 +28478,7 @@ var require_min_version2 = __commonJS({
               throw new Error(`Unexpected operation: ${comparator.operator}`);
           }
         });
-        if (setMin && (!minver || gt3(minver, setMin))) {
+        if (setMin && (!minver || gt2(minver, setMin))) {
           minver = setMin;
         }
       }
@@ -28516,7 +28516,7 @@ var require_outside2 = __commonJS({
     var { ANY } = Comparator;
     var Range = require_range2();
     var satisfies4 = require_satisfies2();
-    var gt3 = require_gt2();
+    var gt2 = require_gt2();
     var lt = require_lt2();
     var lte = require_lte2();
     var gte = require_gte2();
@@ -28526,7 +28526,7 @@ var require_outside2 = __commonJS({
       let gtfn, ltefn, ltfn, comp26, ecomp;
       switch (hilo) {
         case ">":
-          gtfn = gt3;
+          gtfn = gt2;
           ltefn = lte;
           ltfn = lt;
           comp26 = ">";
@@ -28535,7 +28535,7 @@ var require_outside2 = __commonJS({
         case "<":
           gtfn = lt;
           ltefn = gte;
-          ltfn = gt3;
+          ltfn = gt2;
           comp26 = "<";
           ecomp = "<=";
           break;
@@ -28713,10 +28713,10 @@ var require_subset2 = __commonJS({
         }
       }
       const eqSet = /* @__PURE__ */ new Set();
-      let gt3, lt;
+      let gt2, lt;
       for (const c of sub) {
         if (c.operator === ">" || c.operator === ">=") {
-          gt3 = higherGT(gt3, c, options);
+          gt2 = higherGT(gt2, c, options);
         } else if (c.operator === "<" || c.operator === "<=") {
           lt = lowerLT(lt, c, options);
         } else {
@@ -28727,16 +28727,16 @@ var require_subset2 = __commonJS({
         return null;
       }
       let gtltComp;
-      if (gt3 && lt) {
-        gtltComp = compare(gt3.semver, lt.semver, options);
+      if (gt2 && lt) {
+        gtltComp = compare(gt2.semver, lt.semver, options);
         if (gtltComp > 0) {
           return null;
-        } else if (gtltComp === 0 && (gt3.operator !== ">=" || lt.operator !== "<=")) {
+        } else if (gtltComp === 0 && (gt2.operator !== ">=" || lt.operator !== "<=")) {
           return null;
         }
       }
       for (const eq of eqSet) {
-        if (gt3 && !satisfies4(eq, String(gt3), options)) {
+        if (gt2 && !satisfies4(eq, String(gt2), options)) {
           return null;
         }
         if (lt && !satisfies4(eq, String(lt), options)) {
@@ -28752,25 +28752,25 @@ var require_subset2 = __commonJS({
       let higher, lower;
       let hasDomLT, hasDomGT;
       let needDomLTPre = lt && !options.includePrerelease && lt.semver.prerelease.length ? lt.semver : false;
-      let needDomGTPre = gt3 && !options.includePrerelease && gt3.semver.prerelease.length ? gt3.semver : false;
+      let needDomGTPre = gt2 && !options.includePrerelease && gt2.semver.prerelease.length ? gt2.semver : false;
       if (needDomLTPre && needDomLTPre.prerelease.length === 1 && lt.operator === "<" && needDomLTPre.prerelease[0] === 0) {
         needDomLTPre = false;
       }
       for (const c of dom) {
         hasDomGT = hasDomGT || c.operator === ">" || c.operator === ">=";
         hasDomLT = hasDomLT || c.operator === "<" || c.operator === "<=";
-        if (gt3) {
+        if (gt2) {
           if (needDomGTPre) {
             if (c.semver.prerelease && c.semver.prerelease.length && c.semver.major === needDomGTPre.major && c.semver.minor === needDomGTPre.minor && c.semver.patch === needDomGTPre.patch) {
               needDomGTPre = false;
             }
           }
           if (c.operator === ">" || c.operator === ">=") {
-            higher = higherGT(gt3, c, options);
-            if (higher === c && higher !== gt3) {
+            higher = higherGT(gt2, c, options);
+            if (higher === c && higher !== gt2) {
               return false;
             }
-          } else if (gt3.operator === ">=" && !satisfies4(gt3.semver, String(c), options)) {
+          } else if (gt2.operator === ">=" && !satisfies4(gt2.semver, String(c), options)) {
             return false;
           }
         }
@@ -28789,14 +28789,14 @@ var require_subset2 = __commonJS({
             return false;
           }
         }
-        if (!c.operator && (lt || gt3) && gtltComp !== 0) {
+        if (!c.operator && (lt || gt2) && gtltComp !== 0) {
           return false;
         }
       }
-      if (gt3 && hasDomLT && !lt && gtltComp !== 0) {
+      if (gt2 && hasDomLT && !lt && gtltComp !== 0) {
         return false;
       }
-      if (lt && hasDomGT && !gt3 && gtltComp !== 0) {
+      if (lt && hasDomGT && !gt2 && gtltComp !== 0) {
         return false;
       }
       if (needDomGTPre || needDomLTPre) {
@@ -28845,7 +28845,7 @@ var require_semver4 = __commonJS({
     var compareBuild = require_compare_build2();
     var sort = require_sort2();
     var rsort = require_rsort2();
-    var gt3 = require_gt2();
+    var gt2 = require_gt2();
     var lt = require_lt2();
     var eq = require_eq2();
     var neq = require_neq2();
@@ -28883,7 +28883,7 @@ var require_semver4 = __commonJS({
       compareBuild,
       sort,
       rsort,
-      gt: gt3,
+      gt: gt2,
       lt,
       eq,
       neq,
@@ -29114,13 +29114,13 @@ var require_operator = __commonJS({
       eq,
       ne,
       ge,
-      gt: gt3,
+      gt: gt2,
       "<": lt,
       "<=": le,
       "==": eq,
       "!=": ne,
       ">=": ge,
-      ">": gt3,
+      ">": gt2,
       "===": arbitrary
     };
     function lt(version3, other) {
@@ -29138,7 +29138,7 @@ var require_operator = __commonJS({
     function ge(version3, other) {
       return compare(version3, other) >= 0;
     }
-    function gt3(version3, other) {
+    function gt2(version3, other) {
       return compare(version3, other) > 0;
     }
     function arbitrary(version3, other) {
@@ -29521,7 +29521,7 @@ var require_semantic = __commonJS({
 var require_pep440 = __commonJS({
   "node_modules/@renovatebot/pep440/index.js"(exports2, module2) {
     var { valid: valid2, clean: clean3, explain, parse: parse3 } = require_version();
-    var { lt, le, eq, ne, ge, gt: gt3, compare, rcompare } = require_operator();
+    var { lt, le, eq, ne, ge, gt: gt2, compare, rcompare } = require_operator();
     var {
       filter,
       maxSatisfying: maxSatisfying3,
@@ -29546,7 +29546,7 @@ var require_pep440 = __commonJS({
       neq: ne,
       ge,
       gte: ge,
-      gt: gt3,
+      gt: gt2,
       compare,
       rcompare,
       // range
@@ -30046,8 +30046,8 @@ var require_semver5 = __commonJS({
         return exports2.compareBuild(b, a, loose);
       });
     }
-    exports2.gt = gt3;
-    function gt3(a, b, loose) {
+    exports2.gt = gt2;
+    function gt2(a, b, loose) {
       return compare(a, b, loose) > 0;
     }
     exports2.lt = lt;
@@ -30092,7 +30092,7 @@ var require_semver5 = __commonJS({
         case "!=":
           return neq(a, b, loose);
         case ">":
-          return gt3(a, b, loose);
+          return gt2(a, b, loose);
         case ">=":
           return gte(a, b, loose);
         case "<":
@@ -30590,7 +30590,7 @@ var require_semver5 = __commonJS({
             /* fallthrough */
             case "":
             case ">=":
-              if (!minver || gt3(minver, compver)) {
+              if (!minver || gt2(minver, compver)) {
                 minver = compver;
               }
               break;
@@ -30631,7 +30631,7 @@ var require_semver5 = __commonJS({
       var gtfn, ltefn, ltfn, comp26, ecomp;
       switch (hilo) {
         case ">":
-          gtfn = gt3;
+          gtfn = gt2;
           ltefn = lte;
           ltfn = lt;
           comp26 = ">";
@@ -30640,7 +30640,7 @@ var require_semver5 = __commonJS({
         case "<":
           gtfn = lt;
           ltefn = gte;
-          ltfn = gt3;
+          ltfn = gt2;
           comp26 = "<";
           ecomp = "<=";
           break;
@@ -90965,7 +90965,7 @@ function _getGlobal(key, defaultValue) {
 
 // src/download/download-version.ts
 var pep440 = __toESM(require_pep440(), 1);
-var semver5 = __toESM(require_semver5(), 1);
+var semver4 = __toESM(require_semver5(), 1);
 
 // src/utils/constants.ts
 var TOOL_CACHE_NAME = "uv";
@@ -95511,9 +95511,6 @@ async function validateFileCheckSum(filePath, expected) {
   });
 }
 
-// src/download/manifest.ts
-var semver4 = __toESM(require_semver5(), 1);
-
 // src/utils/fetch.ts
 var import_undici2 = __toESM(require_undici2(), 1);
 function getProxyAgent() {
@@ -95615,17 +95612,10 @@ function parseManifest(data, sourceDescription) {
   return versions;
 }
 async function getLatestVersion(manifestUrl = VERSIONS_MANIFEST_URL) {
-  const versions = await fetchManifest(manifestUrl);
-  const [firstVersion, ...remainingVersions] = versions.map(
-    (versionData) => versionData.version
-  );
-  if (firstVersion === void 0) {
+  const latestVersion = (await fetchManifest(manifestUrl))[0]?.version;
+  if (latestVersion === void 0) {
     throw new Error("No versions found in manifest data");
   }
-  const latestVersion = remainingVersions.reduce(
-    (latest, current) => semver4.gt(current, latest) ? current : latest,
-    firstVersion
-  );
   debug(`Latest version from manifest: ${latestVersion}`);
   return latestVersion;
 }
@@ -95833,7 +95823,7 @@ function maxSatisfying2(versions, version3) {
   return void 0;
 }
 function minSatisfying3(versions, version3) {
-  const minSemver = semver5.minSatisfying(versions, version3);
+  const minSemver = semver4.minSatisfying(versions, version3);
   if (minSemver !== null) {
     debug(`Found a version that satisfies the semver range: ${minSemver}`);
     return minSemver;

@@ -19064,8 +19064,8 @@ var require_semver = __commonJS({
         return exports2.compareBuild(b, a, loose);
       });
     }
-    exports2.gt = gt2;
-    function gt2(a, b, loose) {
+    exports2.gt = gt;
+    function gt(a, b, loose) {
       return compare(a, b, loose) > 0;
     }
     exports2.lt = lt;
@@ -19110,7 +19110,7 @@ var require_semver = __commonJS({
         case "!=":
           return neq(a, b, loose);
         case ">":
-          return gt2(a, b, loose);
+          return gt(a, b, loose);
         case ">=":
           return gte(a, b, loose);
         case "<":
@@ -19608,7 +19608,7 @@ var require_semver = __commonJS({
             /* fallthrough */
             case "":
             case ">=":
-              if (!minver || gt2(minver, compver)) {
+              if (!minver || gt(minver, compver)) {
                 minver = compver;
               }
               break;
@@ -19649,7 +19649,7 @@ var require_semver = __commonJS({
       var gtfn, ltefn, ltfn, comp, ecomp;
       switch (hilo) {
         case ">":
-          gtfn = gt2;
+          gtfn = gt;
           ltefn = lte2;
           ltfn = lt;
           comp = ">";
@@ -19658,7 +19658,7 @@ var require_semver = __commonJS({
         case "<":
           gtfn = lt;
           ltefn = gte;
-          ltfn = gt2;
+          ltfn = gt;
           comp = "<";
           ecomp = "<=";
           break;
@@ -44945,7 +44945,7 @@ function info(message) {
 }
 
 // src/update-known-checksums.ts
-var semver2 = __toESM(require_semver(), 1);
+var semver = __toESM(require_semver(), 1);
 
 // src/download/checksum/known-checksums.ts
 var KNOWN_CHECKSUMS = {
@@ -49463,9 +49463,6 @@ async function updateChecksums(filePath, checksumEntries) {
   await import_node_fs.promises.writeFile(filePath, content);
 }
 
-// src/download/manifest.ts
-var semver = __toESM(require_semver(), 1);
-
 // src/utils/constants.ts
 var VERSIONS_MANIFEST_URL = "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson";
 
@@ -49544,17 +49541,10 @@ function parseManifest(data, sourceDescription) {
   return versions;
 }
 async function getLatestVersion(manifestUrl = VERSIONS_MANIFEST_URL) {
-  const versions = await fetchManifest(manifestUrl);
-  const [firstVersion, ...remainingVersions] = versions.map(
-    (versionData) => versionData.version
-  );
-  if (firstVersion === void 0) {
+  const latestVersion = (await fetchManifest(manifestUrl))[0]?.version;
+  if (latestVersion === void 0) {
     throw new Error("No versions found in manifest data");
   }
-  const latestVersion = remainingVersions.reduce(
-    (latest, current) => semver.gt(current, latest) ? current : latest,
-    firstVersion
-  );
   debug(`Latest version from manifest: ${latestVersion}`);
   return latestVersion;
 }
@@ -49589,7 +49579,7 @@ async function run() {
   }
   const latestVersion = await getLatestVersion();
   const latestKnownVersion = getLatestKnownVersionFromChecksums();
-  if (semver2.lte(latestVersion, latestKnownVersion)) {
+  if (semver.lte(latestVersion, latestKnownVersion)) {
     info(
       `Latest release (${latestVersion}) is not newer than the latest known version (${latestKnownVersion}). Skipping update.`
     );
@@ -49608,7 +49598,7 @@ function getLatestKnownVersionFromChecksums() {
       versions.add(version);
     }
   }
-  const latestVersion = [...versions].sort(semver2.rcompare)[0];
+  const latestVersion = [...versions].sort(semver.rcompare)[0];
   if (!latestVersion) {
     throw new Error("Could not determine latest known version from checksums.");
   }
