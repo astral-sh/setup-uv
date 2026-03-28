@@ -17,11 +17,12 @@ const {
   fetchManifest,
   getAllVersions,
   getArtifact,
+  getLatestVersion,
   parseManifest,
 } = await import("../../src/download/manifest");
 
-const sampleManifestResponse = `{"version":"0.9.25","artifacts":[{"platform":"aarch64-apple-darwin","variant":"default","url":"https://github.com/astral-sh/uv/releases/download/0.9.25/uv-aarch64-apple-darwin.tar.gz","archive_format":"tar.gz","sha256":"606b3c6949d971709f2526fa0d9f0fd23ccf60e09f117999b406b424af18a6a6"}]}
-{"version":"0.9.26","artifacts":[{"platform":"aarch64-apple-darwin","variant":"default","url":"https://github.com/astral-sh/uv/releases/download/0.9.26/uv-aarch64-apple-darwin.tar.gz","archive_format":"tar.gz","sha256":"fcf0a9ea6599c6ae28a4c854ac6da76f2c889354d7c36ce136ef071f7ab9721f"},{"platform":"x86_64-pc-windows-msvc","variant":"default","url":"https://github.com/astral-sh/uv/releases/download/0.9.26/uv-x86_64-pc-windows-msvc.zip","archive_format":"zip","sha256":"eb02fd95d8e0eed462b4a67ecdd320d865b38c560bffcda9a0b87ec944bdf036"}]}`;
+const sampleManifestResponse = `{"version":"0.9.26","artifacts":[{"platform":"aarch64-apple-darwin","variant":"default","url":"https://github.com/astral-sh/uv/releases/download/0.9.26/uv-aarch64-apple-darwin.tar.gz","archive_format":"tar.gz","sha256":"fcf0a9ea6599c6ae28a4c854ac6da76f2c889354d7c36ce136ef071f7ab9721f"},{"platform":"x86_64-pc-windows-msvc","variant":"default","url":"https://github.com/astral-sh/uv/releases/download/0.9.26/uv-x86_64-pc-windows-msvc.zip","archive_format":"zip","sha256":"eb02fd95d8e0eed462b4a67ecdd320d865b38c560bffcda9a0b87ec944bdf036"}]}
+{"version":"0.9.25","artifacts":[{"platform":"aarch64-apple-darwin","variant":"default","url":"https://github.com/astral-sh/uv/releases/download/0.9.25/uv-aarch64-apple-darwin.tar.gz","archive_format":"tar.gz","sha256":"606b3c6949d971709f2526fa0d9f0fd23ccf60e09f117999b406b424af18a6a6"}]}`;
 
 const multiVariantManifestResponse = `{"version":"0.9.26","artifacts":[{"platform":"aarch64-apple-darwin","variant":"python-managed","url":"https://github.com/astral-sh/uv/releases/download/0.9.26/uv-aarch64-apple-darwin-managed.tar.gz","archive_format":"tar.gz","sha256":"managed-checksum"},{"platform":"aarch64-apple-darwin","variant":"default","url":"https://github.com/astral-sh/uv/releases/download/0.9.26/uv-aarch64-apple-darwin.zip","archive_format":"zip","sha256":"default-checksum"}]}`;
 
@@ -54,8 +55,8 @@ describe("manifest", () => {
       const versions = await fetchManifest();
 
       expect(versions).toHaveLength(2);
-      expect(versions[0]?.version).toBe("0.9.25");
-      expect(versions[1]?.version).toBe("0.9.26");
+      expect(versions[0]?.version).toBe("0.9.26");
+      expect(versions[1]?.version).toBe("0.9.25");
     });
 
     it("throws on a failed fetch", async () => {
@@ -90,7 +91,19 @@ describe("manifest", () => {
         "https://example.com/custom.ndjson",
       );
 
-      expect(versions).toEqual(["0.9.25", "0.9.26"]);
+      expect(versions).toEqual(["0.9.26", "0.9.25"]);
+    });
+  });
+
+  describe("getLatestVersion", () => {
+    it("returns the first version string", async () => {
+      mockFetch.mockResolvedValue(
+        createMockResponse(true, 200, "OK", sampleManifestResponse),
+      );
+
+      await expect(
+        getLatestVersion("https://example.com/custom.ndjson"),
+      ).resolves.toBe("0.9.26");
     });
   });
 
