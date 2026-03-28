@@ -17,7 +17,6 @@ const {
   fetchManifest,
   getAllVersions,
   getArtifact,
-  getLatestVersion,
   parseManifest,
 } = await import("../../src/download/manifest");
 
