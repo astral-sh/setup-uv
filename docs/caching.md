@@ -213,7 +213,12 @@ To force managed Python installs, set `UV_PYTHON_PREFERENCE=only-managed`.
 
 ## Ignore nothing to cache
 
-By default, the action will fail if caching is enabled but there is nothing to upload (the uv cache directory does not exist).
+By default, the action will fail if caching is enabled but there is nothing to upload (the uv cache directory does not exist) with an error like
+
+```console
+Error: Cache path /home/runner/.cache/uv does not exist on disk. This likely indicates that there are no dependencies to cache. Consider disabling the cache input if it is not needed.
+```
+
 If you want to ignore this, set the `ignore-nothing-to-cache` input to `true`.
 
 ```yaml
