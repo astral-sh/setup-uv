@@ -39,7 +39,7 @@
     "undici": "^7.24.2"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.7",
+    "@biomejs/biome": "^2.4.9",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^25.5.0",
     "@types/semver": "^7.7.1",
