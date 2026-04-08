@@ -128,6 +128,7 @@ async function setupUv(
     resolvedVersion,
     inputs.checksum,
     inputs.githubToken,
+    inputs.useMirror,
     inputs.manifestFile,
   );
 

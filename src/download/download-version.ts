@@ -35,6 +35,7 @@ export async function downloadVersion(
   version: string,
   checksum: string | undefined,
   githubToken: string,
+  useMirror: boolean,
   manifestUrl?: string,
 ): Promise<{ version: string; cachedToolDir: string }> {
   const artifact = await getArtifact(version, arch, platform, manifestUrl);
@@ -52,7 +53,9 @@ export async function downloadVersion(
       ? checksum
       : resolveChecksum(checksum, artifact.checksum);
 
-  const mirrorUrl = rewriteToMirror(artifact.downloadUrl);
+  const mirrorUrl = useMirror
+    ? rewriteToMirror(artifact.downloadUrl)
+    : undefined;
   const downloadUrl = mirrorUrl ?? artifact.downloadUrl;
   // Don't send the GitHub token to the Astral mirror.
   const downloadToken = mirrorUrl !== undefined ? undefined : githubToken;

@@ -121,6 +121,7 @@ describe("download-version", () => {
           "0.9.26",
           undefined,
           "token",
+          true,
         ),
       ).rejects.toThrow("manifest unavailable");
 
@@ -138,6 +139,7 @@ describe("download-version", () => {
           "0.9.26",
           undefined,
           "token",
+          true,
         ),
       ).rejects.toThrow(
         "Could not find artifact for version 0.9.26, arch x86_64, platform unknown-linux-gnu in https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson .",
@@ -160,6 +162,7 @@ describe("download-version", () => {
         "0.9.26",
         undefined,
         "token",
+        true,
       );
 
       expect(mockValidateChecksum).toHaveBeenCalledWith(
@@ -185,12 +188,37 @@ describe("download-version", () => {
         "0.9.26",
         undefined,
         "token",
+        true,
       );
 
       expect(mockDownloadTool).toHaveBeenCalledWith(
         "https://releases.astral.sh/github/uv/releases/download/0.9.26/uv-x86_64-unknown-linux-gnu.tar.gz",
         undefined,
         undefined,
+      );
+    });
+
+    it("doesn't rewrite GitHub Releases URLs to the Astral mirror if not use-mirror set", async () => {
+      mockGetArtifact.mockResolvedValue({
+        archiveFormat: "tar.gz",
+        checksum: "abc123",
+        downloadUrl:
+          "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-x86_64-unknown-linux-gnu.tar.gz",
+      });
+
+      await downloadVersion(
+        "unknown-linux-gnu",
+        "x86_64",
+        "0.9.26",
+        undefined,
+        "token",
+        false,
+      );
+
+      expect(mockDownloadTool).toHaveBeenCalledWith(
+        "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-x86_64-unknown-linux-gnu.tar.gz",
+        undefined,
+        "token",
       );
     });
 
@@ -207,6 +235,7 @@ describe("download-version", () => {
         "0.9.26",
         undefined,
         "token",
+        true,
       );
 
       expect(mockDownloadTool).toHaveBeenCalledWith(
@@ -234,6 +263,7 @@ describe("download-version", () => {
         "0.9.26",
         undefined,
         "token",
+        true,
       );
 
       expect(mockDownloadTool).toHaveBeenCalledTimes(2);
@@ -270,6 +300,7 @@ describe("download-version", () => {
           "0.9.26",
           undefined,
           "token",
+          true,
         ),
       ).rejects.toThrow("download failed");
 
@@ -289,6 +320,7 @@ describe("download-version", () => {
         "0.9.26",
         "",
         "token",
+        true,
         "https://example.com/custom.ndjson",
       );
 
@@ -314,6 +346,7 @@ describe("download-version", () => {
         "0.9.26",
         "user-checksum",
         "token",
+        true,
         "https://example.com/custom.ndjson",
       );
 

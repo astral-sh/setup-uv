@@ -41,6 +41,7 @@ export interface SetupInputs {
   manifestFile?: string;
   addProblemMatchers: boolean;
   resolutionStrategy: ResolutionStrategy;
+  useMirror: boolean;
 }
 
 export function loadInputs(): SetupInputs {
@@ -73,6 +74,7 @@ export function loadInputs(): SetupInputs {
   const manifestFile = getManifestFile();
   const addProblemMatchers = core.getInput("add-problem-matchers") === "true";
   const resolutionStrategy = getResolutionStrategy();
+  const useMirror = core.getInput("use-mirror") === "true";
 
   return {
     activateEnvironment,
@@ -95,6 +97,7 @@ export function loadInputs(): SetupInputs {
     saveCache,
     toolBinDir,
     toolDir,
+    useMirror,
     venvPath,
     version,
     versionFile,

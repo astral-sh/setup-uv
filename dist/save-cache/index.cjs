@@ -62985,6 +62985,7 @@ function loadInputs() {
   const manifestFile = getManifestFile();
   const addProblemMatchers = getInput("add-problem-matchers") === "true";
   const resolutionStrategy = getResolutionStrategy();
+  const useMirror = getInput("use-mirror") === "true";
   return {
     activateEnvironment,
     addProblemMatchers,
@@ -63006,6 +63007,7 @@ function loadInputs() {
     saveCache: saveCache4,
     toolBinDir,
     toolDir,
+    useMirror,
     venvPath,
     version: version3,
     versionFile,

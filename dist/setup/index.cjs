@@ -95702,7 +95702,7 @@ function tryGetFromToolCache(arch3, version3) {
   const installedPath = find(TOOL_CACHE_NAME, resolvedVersion, arch3);
   return { installedPath, version: resolvedVersion };
 }
-async function downloadVersion(platform2, arch3, version3, checksum, githubToken, manifestUrl) {
+async function downloadVersion(platform2, arch3, version3, checksum, githubToken, useMirror, manifestUrl) {
   const artifact = await getArtifact(version3, arch3, platform2, manifestUrl);
   if (!artifact) {
     throw new Error(
@@ -95710,7 +95710,7 @@ async function downloadVersion(platform2, arch3, version3, checksum, githubToken
     );
   }
   const resolvedChecksum = manifestUrl === void 0 ? checksum : resolveChecksum(checksum, artifact.checksum);
-  const mirrorUrl = rewriteToMirror(artifact.downloadUrl);
+  const mirrorUrl = useMirror ? rewriteToMirror(artifact.downloadUrl) : void 0;
   const downloadUrl = mirrorUrl ?? artifact.downloadUrl;
   const downloadToken = mirrorUrl !== void 0 ? void 0 : githubToken;
   try {
@@ -96591,6 +96591,7 @@ function loadInputs() {
   const manifestFile = getManifestFile();
   const addProblemMatchers = getInput("add-problem-matchers") === "true";
   const resolutionStrategy = getResolutionStrategy();
+  const useMirror = getInput("use-mirror") === "true";
   return {
     activateEnvironment: activateEnvironment2,
     addProblemMatchers,
@@ -96612,6 +96613,7 @@ function loadInputs() {
     saveCache: saveCache2,
     toolBinDir,
     toolDir,
+    useMirror,
     venvPath,
     version: version3,
     versionFile,
@@ -96985,6 +96987,7 @@ async function setupUv(inputs, platform2, arch3) {
     resolvedVersion,
     inputs.checksum,
     inputs.githubToken,
+    inputs.useMirror,
     inputs.manifestFile
   );
   return {

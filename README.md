@@ -119,6 +119,9 @@ Have a look under [Advanced Configuration](#advanced-configuration) for detailed
 
     # Add problem matchers
     add-problem-matchers: "true"
+
+    # Attempt to retrieve from the Astral mirror first or use Github releases
+    use-mirror: "true"
 ```
 
 ### Outputs

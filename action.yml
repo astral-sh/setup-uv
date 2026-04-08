@@ -83,6 +83,10 @@ inputs:
   resolution-strategy:
     description: "Resolution strategy to use when resolving version ranges. 'highest' uses the latest compatible version, 'lowest' uses the oldest compatible version."
     default: "highest"
+  use-mirror:
+    description: "Whether to attempt to download from Astral mirror first or use the Github releases artifacts."
+    default: true
+
 outputs:
   uv-version:
     description: "The installed uv version. Useful when using latest."

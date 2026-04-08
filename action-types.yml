@@ -57,6 +57,8 @@ inputs:
     allowed-values:
       - highest
       - lowest
+  use-mirror:
+    type: boolean
 
 outputs:
   uv-version:
