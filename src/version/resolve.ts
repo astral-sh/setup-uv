@@ -1,34 +1,183 @@
-import fs from "node:fs";
 import * as core from "@actions/core";
-import { getConfigValueFromTomlFile } from "../utils/config-file";
-import { getUvVersionFromRequirementsFile } from "./requirements-file";
-import { getUvVersionFromToolVersions } from "./tool-versions-file";
+import * as tc from "@actions/tool-cache";
+import * as pep440 from "@renovatebot/pep440";
+import * as semver from "semver";
+import { getAllVersions, getLatestVersion } from "../download/manifest";
+import type { ResolutionStrategy } from "../utils/inputs";
+import {
+  type ParsedVersionSpecifier,
+  parseVersionSpecifier,
+} from "./specifier";
+import type { ResolveUvVersionOptions } from "./types";
+import { resolveVersionRequest } from "./version-request-resolver";
 
-export function getUvVersionFromFile(filePath: string): string | undefined {
-  core.info(`Trying to find version for uv in: ${filePath}`);
-  if (!fs.existsSync(filePath)) {
-    core.info(`Could not find file: ${filePath}`);
-    return undefined;
-  }
-  let uvVersion: string | undefined;
-  try {
-    uvVersion = getUvVersionFromToolVersions(filePath);
-    if (uvVersion === undefined) {
-      uvVersion = getConfigValueFromTomlFile(filePath, "required-version");
+interface ConcreteVersionResolutionContext {
+  manifestUrl?: string;
+  parsedSpecifier: ParsedVersionSpecifier;
+  resolutionStrategy: ResolutionStrategy;
+}
+
+interface ConcreteVersionResolver {
+  resolve(
+    context: ConcreteVersionResolutionContext,
+  ): Promise<string | undefined>;
+}
+
+class ExactVersionResolver implements ConcreteVersionResolver {
+  async resolve(
+    context: ConcreteVersionResolutionContext,
+  ): Promise<string | undefined> {
+    if (context.parsedSpecifier.kind !== "exact") {
+      return undefined;
     }
-    if (uvVersion === undefined) {
-      uvVersion = getUvVersionFromRequirementsFile(filePath);
+
+    core.debug(
+      `Version ${context.parsedSpecifier.normalized} is an explicit version.`,
+    );
+    return context.parsedSpecifier.normalized;
+  }
+}
+
+class LatestVersionResolver implements ConcreteVersionResolver {
+  async resolve(
+    context: ConcreteVersionResolutionContext,
+  ): Promise<string | undefined> {
+    const shouldUseLatestVersion =
+      context.parsedSpecifier.kind === "latest" ||
+      (context.parsedSpecifier.kind === "range" &&
+        context.parsedSpecifier.isSimpleMinimumVersionSpecifier &&
+        context.resolutionStrategy === "highest");
+
+    if (!shouldUseLatestVersion) {
+      return undefined;
     }
-  } catch (err) {
-    const message = (err as Error).message;
-    core.warning(`Error while parsing ${filePath}: ${message}`);
-    return undefined;
+
+    if (
+      context.parsedSpecifier.kind === "range" &&
+      context.parsedSpecifier.isSimpleMinimumVersionSpecifier
+    ) {
+      core.info("Found minimum version specifier, using latest version");
+    }
+
+    const latestVersion = await getLatestVersion(context.manifestUrl);
+
+    if (
+      context.parsedSpecifier.kind === "range" &&
+      context.parsedSpecifier.isSimpleMinimumVersionSpecifier &&
+      !pep440.satisfies(latestVersion, context.parsedSpecifier.raw)
+    ) {
+      throw new Error(`No version found for ${context.parsedSpecifier.raw}`);
+    }
+
+    return latestVersion;
   }
-  if (uvVersion?.startsWith("==")) {
-    uvVersion = uvVersion.slice(2);
+}
+
+class RangeVersionResolver implements ConcreteVersionResolver {
+  async resolve(
+    context: ConcreteVersionResolutionContext,
+  ): Promise<string | undefined> {
+    if (context.parsedSpecifier.kind !== "range") {
+      return undefined;
+    }
+
+    const availableVersions = await getAllVersions(context.manifestUrl);
+    core.debug(`Available versions: ${availableVersions}`);
+
+    const resolvedVersion =
+      context.resolutionStrategy === "lowest"
+        ? minSatisfying(availableVersions, context.parsedSpecifier.normalized)
+        : maxSatisfying(availableVersions, context.parsedSpecifier.normalized);
+
+    if (resolvedVersion === undefined) {
+      throw new Error(`No version found for ${context.parsedSpecifier.raw}`);
+    }
+
+    return resolvedVersion;
   }
-  if (uvVersion !== undefined) {
-    core.info(`Found version for uv in ${filePath}: ${uvVersion}`);
+}
+
+const CONCRETE_VERSION_RESOLVERS: ConcreteVersionResolver[] = [
+  new ExactVersionResolver(),
+  new LatestVersionResolver(),
+  new RangeVersionResolver(),
+];
+
+export async function resolveUvVersion(
+  options: ResolveUvVersionOptions,
+): Promise<string> {
+  const request = resolveVersionRequest(options);
+  const resolutionStrategy = options.resolutionStrategy ?? "highest";
+  const version = await resolveVersion(
+    request.specifier,
+    options.manifestFile,
+    resolutionStrategy,
+  );
+
+  return version;
+}
+
+export async function resolveVersion(
+  versionInput: string,
+  manifestUrl: string | undefined,
+  resolutionStrategy: ResolutionStrategy = "highest",
+): Promise<string> {
+  core.debug(`Resolving version: ${versionInput}`);
+
+  const context: ConcreteVersionResolutionContext = {
+    manifestUrl,
+    parsedSpecifier: parseVersionSpecifier(versionInput),
+    resolutionStrategy,
+  };
+
+  for (const resolver of CONCRETE_VERSION_RESOLVERS) {
+    const version = await resolver.resolve(context);
+    if (version !== undefined) {
+      return version;
+    }
   }
-  return uvVersion;
+
+  throw new Error(`No version found for ${versionInput}`);
+}
+
+function maxSatisfying(
+  versions: string[],
+  version: string,
+): string | undefined {
+  const maxSemver = tc.evaluateVersions(versions, version);
+  if (maxSemver !== "") {
+    core.debug(`Found a version that satisfies the semver range: ${maxSemver}`);
+    return maxSemver;
+  }
+
+  const maxPep440 = pep440.maxSatisfying(versions, version);
+  if (maxPep440 !== null) {
+    core.debug(
+      `Found a version that satisfies the pep440 specifier: ${maxPep440}`,
+    );
+    return maxPep440;
+  }
+
+  return undefined;
+}
+
+function minSatisfying(
+  versions: string[],
+  version: string,
+): string | undefined {
+  const minSemver = semver.minSatisfying(versions, version);
+  if (minSemver !== null) {
+    core.debug(`Found a version that satisfies the semver range: ${minSemver}`);
+    return minSemver;
+  }
+
+  const minPep440 = pep440.minSatisfying(versions, version);
+  if (minPep440 !== null) {
+    core.debug(
+      `Found a version that satisfies the pep440 specifier: ${minPep440}`,
+    );
+    return minPep440;
+  }
+
+  return undefined;
 }
