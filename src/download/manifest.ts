@@ -111,6 +111,9 @@ export async function getLatestVersion(
 export async function getAllVersions(
   manifestUrl: string = VERSIONS_MANIFEST_URL,
 ): Promise<string[]> {
+  core.info(
+    `Getting available versions from ${manifestSource(manifestUrl)} ...`,
+  );
   const versions = await fetchManifest(manifestUrl);
   return versions.map((versionData) => versionData.version);
 }
@@ -163,6 +166,14 @@ export function clearManifestCache(manifestUrl?: string): void {
   }
 
   cachedManifestData.delete(manifestUrl);
+}
+
+function manifestSource(manifestUrl: string): string {
+  if (manifestUrl === VERSIONS_MANIFEST_URL) {
+    return VERSIONS_MANIFEST_URL;
+  }
+
+  return `manifest-file ${manifestUrl}`;
 }
 
 function isManifestVersion(value: unknown): value is ManifestVersion {

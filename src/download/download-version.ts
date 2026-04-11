@@ -2,8 +2,6 @@ import { promises as fs } from "node:fs";
 import * as path from "node:path";
 import * as core from "@actions/core";
 import * as tc from "@actions/tool-cache";
-import * as pep440 from "@renovatebot/pep440";
-import * as semver from "semver";
 import {
   ASTRAL_MIRROR_PREFIX,
   GITHUB_RELEASES_PREFIX,
@@ -12,7 +10,9 @@ import {
 } from "../utils/constants";
 import type { Architecture, Platform } from "../utils/platforms";
 import { validateChecksum } from "./checksum/checksum";
-import { getAllVersions, getArtifact, getLatestVersion } from "./manifest";
+import { getArtifact } from "./manifest";
+
+export { resolveVersion } from "../version/resolve";
 
 export function tryGetFromToolCache(
   arch: Architecture,
@@ -171,103 +171,4 @@ function resolveChecksum(
 
 function getExtension(platform: Platform): string {
   return platform === "pc-windows-msvc" ? ".zip" : ".tar.gz";
-}
-
-export async function resolveVersion(
-  versionInput: string,
-  manifestUrl: string | undefined,
-  resolutionStrategy: "highest" | "lowest" = "highest",
-): Promise<string> {
-  core.debug(`Resolving version: ${versionInput}`);
-  const isSimpleMinimumVersionSpecifier =
-    versionInput.includes(">") && !versionInput.includes(",");
-  const resolveVersionSpecifierToLatest =
-    isSimpleMinimumVersionSpecifier && resolutionStrategy === "highest";
-
-  if (resolveVersionSpecifierToLatest) {
-    core.info("Found minimum version specifier, using latest version");
-  }
-
-  const version =
-    versionInput === "latest" || resolveVersionSpecifierToLatest
-      ? await getLatestVersion(manifestUrl)
-      : versionInput;
-
-  if (tc.isExplicitVersion(version)) {
-    core.debug(`Version ${version} is an explicit version.`);
-    if (
-      resolveVersionSpecifierToLatest &&
-      !pep440.satisfies(version, versionInput)
-    ) {
-      throw new Error(`No version found for ${versionInput}`);
-    }
-    return version;
-  }
-
-  const availableVersions = await getAvailableVersions(manifestUrl);
-  core.debug(`Available versions: ${availableVersions}`);
-  const resolvedVersion =
-    resolutionStrategy === "lowest"
-      ? minSatisfying(availableVersions, version)
-      : maxSatisfying(availableVersions, version);
-
-  if (resolvedVersion === undefined) {
-    throw new Error(`No version found for ${version}`);
-  }
-
-  return resolvedVersion;
-}
-
-async function getAvailableVersions(
-  manifestUrl: string | undefined,
-): Promise<string[]> {
-  if (manifestUrl !== undefined) {
-    core.info(
-      `Getting available versions from manifest-file ${manifestUrl} ...`,
-    );
-  } else {
-    core.info(`Getting available versions from ${VERSIONS_MANIFEST_URL} ...`);
-  }
-
-  return await getAllVersions(manifestUrl);
-}
-
-function maxSatisfying(
-  versions: string[],
-  version: string,
-): string | undefined {
-  const maxSemver = tc.evaluateVersions(versions, version);
-  if (maxSemver !== "") {
-    core.debug(`Found a version that satisfies the semver range: ${maxSemver}`);
-    return maxSemver;
-  }
-  const maxPep440 = pep440.maxSatisfying(versions, version);
-  if (maxPep440 !== null) {
-    core.debug(
-      `Found a version that satisfies the pep440 specifier: ${maxPep440}`,
-    );
-    return maxPep440;
-  }
-  return undefined;
-}
-
-function minSatisfying(
-  versions: string[],
-  version: string,
-): string | undefined {
-  // For semver, we need to use a different approach since tc.evaluateVersions only returns max
-  // Let's use semver directly for min satisfying
-  const minSemver = semver.minSatisfying(versions, version);
-  if (minSemver !== null) {
-    core.debug(`Found a version that satisfies the semver range: ${minSemver}`);
-    return minSemver;
-  }
-  const minPep440 = pep440.minSatisfying(versions, version);
-  if (minPep440 !== null) {
-    core.debug(
-      `Found a version that satisfies the pep440 specifier: ${minPep440}`,
-    );
-    return minPep440;
-  }
-  return undefined;
 }

@@ -95,6 +95,35 @@ describe("download-version", () => {
       expect(mockGetAllVersions).toHaveBeenCalledWith(undefined);
     });
 
+    it("treats == exact pins as explicit versions", async () => {
+      const version = await resolveVersion("==0.9.26", undefined);
+
+      expect(version).toBe("0.9.26");
+      expect(mockGetAllVersions).not.toHaveBeenCalled();
+      expect(mockGetLatestVersion).not.toHaveBeenCalled();
+    });
+
+    it("uses latest for minimum-only ranges when using the highest strategy", async () => {
+      mockGetLatestVersion.mockResolvedValue("0.9.26");
+
+      const version = await resolveVersion(">=0.9.0", undefined, "highest");
+
+      expect(version).toBe("0.9.26");
+      expect(mockGetLatestVersion).toHaveBeenCalledTimes(1);
+      expect(mockGetLatestVersion).toHaveBeenCalledWith(undefined);
+      expect(mockGetAllVersions).not.toHaveBeenCalled();
+    });
+
+    it("uses the lowest compatible version when requested", async () => {
+      mockGetAllVersions.mockResolvedValue(["0.9.26", "0.9.25"]);
+
+      const version = await resolveVersion("^0.9.0", undefined, "lowest");
+
+      expect(version).toBe("0.9.25");
+      expect(mockGetAllVersions).toHaveBeenCalledTimes(1);
+      expect(mockGetAllVersions).toHaveBeenCalledWith(undefined);
+    });
+
     it("uses manifest-file when provided", async () => {
       mockGetAllVersions.mockResolvedValue(["0.9.26", "0.9.25"]);
 

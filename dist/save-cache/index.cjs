@@ -62947,6 +62947,12 @@ function getConfigValueFromTomlFile(filePath, key) {
     return void 0;
   }
   const fileContent = import_node_fs2.default.readFileSync(filePath, "utf-8");
+  return getConfigValueFromTomlContent(filePath, fileContent, key);
+}
+function getConfigValueFromTomlContent(filePath, fileContent, key) {
+  if (!filePath.endsWith(".toml")) {
+    return void 0;
+  }
   if (filePath.endsWith("pyproject.toml")) {
     const tomlContent2 = parse2(fileContent);
     return tomlContent2?.tool?.uv?.[key];

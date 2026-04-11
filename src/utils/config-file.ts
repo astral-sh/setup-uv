@@ -8,7 +8,19 @@ export function getConfigValueFromTomlFile(
   if (!fs.existsSync(filePath) || !filePath.endsWith(".toml")) {
     return undefined;
   }
+
   const fileContent = fs.readFileSync(filePath, "utf-8");
+  return getConfigValueFromTomlContent(filePath, fileContent, key);
+}
+
+export function getConfigValueFromTomlContent(
+  filePath: string,
+  fileContent: string,
+  key: string,
+): string | undefined {
+  if (!filePath.endsWith(".toml")) {
+    return undefined;
+  }
 
   if (filePath.endsWith("pyproject.toml")) {
     const tomlContent = toml.parse(fileContent) as {
@@ -16,6 +28,7 @@ export function getConfigValueFromTomlFile(
     };
     return tomlContent?.tool?.uv?.[key];
   }
+
   const tomlContent = toml.parse(fileContent) as Record<
     string,
     string | undefined

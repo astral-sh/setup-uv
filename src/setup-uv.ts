@@ -5,7 +5,6 @@ import * as exec from "@actions/exec";
 import { restoreCache } from "./cache/restore-cache";
 import {
   downloadVersion,
-  resolveVersion,
   tryGetFromToolCache,
 } from "./download/download-version";
 import { STATE_UV_PATH, STATE_UV_VERSION } from "./utils/constants";
@@ -16,7 +15,7 @@ import {
   getPlatform,
   type Platform,
 } from "./utils/platforms";
-import { getUvVersionFromFile } from "./version/resolve";
+import { resolveUvVersion } from "./version/resolve";
 
 const sourceDir = __dirname;
 
@@ -112,7 +111,13 @@ async function setupUv(
   platform: Platform,
   arch: Architecture,
 ): Promise<{ uvDir: string; version: string }> {
-  const resolvedVersion = await determineVersion(inputs);
+  const resolvedVersion = await resolveUvVersion({
+    manifestFile: inputs.manifestFile,
+    resolutionStrategy: inputs.resolutionStrategy,
+    version: inputs.version,
+    versionFile: inputs.versionFile,
+    workingDirectory: inputs.workingDirectory,
+  });
   const toolCacheResult = tryGetFromToolCache(arch, resolvedVersion);
   if (toolCacheResult.installedPath) {
     core.info(`Found uv in tool-cache for ${toolCacheResult.version}`);
@@ -135,45 +140,6 @@ async function setupUv(
     uvDir: downloadResult.cachedToolDir,
     version: downloadResult.version,
   };
-}
-
-async function determineVersion(inputs: SetupInputs): Promise<string> {
-  return await resolveVersion(
-    getRequestedVersion(inputs),
-    inputs.manifestFile,
-    inputs.resolutionStrategy,
-  );
-}
-
-function getRequestedVersion(inputs: SetupInputs): string {
-  if (inputs.version !== "") {
-    return inputs.version;
-  }
-
-  if (inputs.versionFile !== "") {
-    const versionFromFile = getUvVersionFromFile(inputs.versionFile);
-    if (versionFromFile === undefined) {
-      throw new Error(
-        `Could not determine uv version from file: ${inputs.versionFile}`,
-      );
-    }
-    return versionFromFile;
-  }
-
-  const versionFromUvToml = getUvVersionFromFile(
-    `${inputs.workingDirectory}${path.sep}uv.toml`,
-  );
-  const versionFromPyproject = getUvVersionFromFile(
-    `${inputs.workingDirectory}${path.sep}pyproject.toml`,
-  );
-
-  if (versionFromUvToml === undefined && versionFromPyproject === undefined) {
-    core.info(
-      "Could not determine uv version from uv.toml or pyproject.toml. Falling back to latest.",
-    );
-  }
-
-  return versionFromUvToml || versionFromPyproject || "latest";
 }
 
 function addUvToPathAndOutput(cachedPath: string): void {

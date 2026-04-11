@@ -5,31 +5,23 @@ export function getUvVersionFromRequirementsFile(
   filePath: string,
 ): string | undefined {
   const fileContent = fs.readFileSync(filePath, "utf-8");
+
   if (filePath.endsWith(".txt")) {
-    return getUvVersionFromAllDependencies(fileContent.split("\n"));
+    return getUvVersionFromRequirementsText(fileContent);
   }
-  const dependencies = parsePyprojectDependencies(fileContent);
-  return getUvVersionFromAllDependencies(dependencies);
+
+  return getUvVersionFromPyprojectContent(fileContent);
 }
-function getUvVersionFromAllDependencies(
-  allDependencies: string[],
+
+export function getUvVersionFromRequirementsText(
+  fileContent: string,
 ): string | undefined {
-  return allDependencies
-    .find((dep: string) => dep.match(/^uv[=<>~!]/))
-    ?.match(/^uv([=<>~!]+\S*)/)?.[1]
-    .trim();
+  return getUvVersionFromAllDependencies(fileContent.split("\n"));
 }
 
-interface Pyproject {
-  project?: {
-    dependencies?: string[];
-    "optional-dependencies"?: Record<string, string[]>;
-  };
-  "dependency-groups"?: Record<string, Array<string | object>>;
-}
-
-function parsePyprojectDependencies(pyprojectContent: string): string[] {
-  const pyproject: Pyproject = toml.parse(pyprojectContent);
+export function getUvVersionFromParsedPyproject(
+  pyproject: Pyproject,
+): string | undefined {
   const dependencies: string[] = pyproject?.project?.dependencies || [];
   const optionalDependencies: string[] = Object.values(
     pyproject?.project?.["optional-dependencies"] || {},
@@ -39,5 +31,39 @@ function parsePyprojectDependencies(pyprojectContent: string): string[] {
   )
     .flat()
     .filter((item: string | object) => typeof item === "string");
-  return dependencies.concat(optionalDependencies, devDependencies);
+
+  return getUvVersionFromAllDependencies(
+    dependencies.concat(optionalDependencies, devDependencies),
+  );
+}
+
+export function getUvVersionFromPyprojectContent(
+  pyprojectContent: string,
+): string | undefined {
+  const pyproject = parsePyprojectContent(pyprojectContent);
+  return getUvVersionFromParsedPyproject(pyproject);
+}
+
+export interface Pyproject {
+  project?: {
+    dependencies?: string[];
+    "optional-dependencies"?: Record<string, string[]>;
+  };
+  "dependency-groups"?: Record<string, Array<string | object>>;
+  tool?: {
+    uv?: Record<string, string | undefined>;
+  };
+}
+
+export function parsePyprojectContent(pyprojectContent: string): Pyproject {
+  return toml.parse(pyprojectContent) as Pyproject;
+}
+
+function getUvVersionFromAllDependencies(
+  allDependencies: string[],
+): string | undefined {
+  return allDependencies
+    .find((dep: string) => dep.match(/^uv[=<>~!]/))
+    ?.match(/^uv([=<>~!]+\S*)/)?.[1]
+    .trim();
 }

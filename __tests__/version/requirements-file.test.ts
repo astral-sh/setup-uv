@@ -1,5 +1,5 @@
 import { expect, test } from "@jest/globals";
-import { getUvVersionFromFile } from "../../src/version/resolve";
+import { getUvVersionFromFile } from "../../src/version/file-parser";
 
 test("ignores dependencies starting with uv", async () => {
   const parsedVersion = getUvVersionFromFile(
