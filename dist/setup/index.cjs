@@ -96970,6 +96970,7 @@ function loadInputs() {
   const versionFile = getVersionFile(workingDirectory);
   const pythonVersion = getInput("python-version");
   const activateEnvironment2 = getBooleanInput("activate-environment");
+  const noProject = getBooleanInput("no-project");
   const venvPath = getVenvPath(workingDirectory, activateEnvironment2);
   const checksum = getInput("checksum");
   const enableCache = getEnableCache();
@@ -97006,6 +97007,7 @@ function loadInputs() {
     ignoreEmptyWorkdir,
     ignoreNothingToCache,
     manifestFile,
+    noProject,
     pruneCache,
     pythonDir,
     pythonVersion,
@@ -97385,13 +97387,17 @@ async function activateEnvironment(inputs) {
       );
     }
     info(`Creating and activating python venv at ${inputs.venvPath}...`);
-    await exec("uv", [
+    const venvArgs = [
       "venv",
       inputs.venvPath,
       "--directory",
       inputs.workingDirectory,
       "--clear"
-    ]);
+    ];
+    if (inputs.noProject) {
+      venvArgs.push("--no-project");
+    }
+    await exec("uv", venvArgs);
     let venvBinPath = `${inputs.venvPath}${path16.sep}bin`;
     if (process.platform === "win32") {
       venvBinPath = `${inputs.venvPath}${path16.sep}Scripts`;

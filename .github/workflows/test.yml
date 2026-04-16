@@ -430,6 +430,49 @@ jobs:
           PY
         shell: bash
 
+  test-activate-environment-no-project:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Create incompatible pyproject.toml
+        run: |
+          cat > pyproject.toml <<'EOF'
+          [project]
+          name = "test-no-project"
+          version = "0.1.0"
+
+          [dependency-groups]
+          dev = [
+              "-e file:///${PROJECT_ROOT}/projects/pkg",
+          ]
+          EOF
+        shell: bash
+      - name: Install latest version with no-project
+        id: setup-uv
+        uses: ./
+        with:
+          python-version: 3.13.1t
+          activate-environment: true
+          no-project: true
+      - name: Verify packages can be installed
+        run: uv pip install pip
+        shell: bash
+      - name: Verify output venv is set
+        run: |
+          if [ -z "$UV_VENV" ]; then
+            echo "output venv is not set"
+            exit 1
+          fi
+          if [ ! -d "$UV_VENV" ]; then
+            echo "output venv not point to a directory: $UV_VENV"
+            exit 1
+          fi
+        shell: bash
+        env:
+          UV_VENV: ${{ steps.setup-uv.outputs.venv }}
+
   test-debian-unstable:
     runs-on: ubuntu-latest
     container: debian:unstable
@@ -1057,6 +1100,7 @@ jobs:
       - test-python-version
       - test-activate-environment
       - test-activate-environment-custom-path
+      - test-activate-environment-no-project
       - test-debian-unstable
       - test-musl
       - test-cache-key-os-version
