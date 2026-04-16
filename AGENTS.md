@@ -7,7 +7,7 @@ This repository is a TypeScript-based GitHub Action for installing `uv` in GitHu
   1. `npm ci --ignore-scripts`
   2. `npm run all`
 - `npm run check` uses Biome (not ESLint/Prettier) and rewrites files in place.
-- User-facing changes are usually multi-file changes. If you add or change inputs, outputs, or behavior, update `action.yml`, the implementation in `src/`, tests in `__tests__/`, relevant docs/README, and then re-package.
+- User-facing changes are usually multi-file changes. If you add or change inputs, outputs, or behavior, update `action.yml`, `action-types.yml`, the implementation in `src/`, tests in `__tests__/`, relevant docs/README, and then re-package.
 - The easiest areas to regress are version resolution and caching. When touching them, add or update tests for precedence, cache invalidation, and cross-platform path behavior.
 - Workflow edits have extra CI-only checks (`actionlint` and `zizmor`); `npm run all` does not cover them.
 - Source is authored with bundler-friendly TypeScript, but published action artifacts in `dist/` are bundled as CommonJS for maximum GitHub Actions runtime compatibility with `@actions/*` dependencies.
