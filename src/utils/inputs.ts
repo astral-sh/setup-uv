@@ -22,6 +22,7 @@ export interface SetupInputs {
   versionFile: string;
   pythonVersion: string;
   activateEnvironment: boolean;
+  noProject: boolean;
   venvPath: string;
   checksum: string;
   enableCache: boolean;
@@ -49,6 +50,7 @@ export function loadInputs(): SetupInputs {
   const versionFile = getVersionFile(workingDirectory);
   const pythonVersion = core.getInput("python-version");
   const activateEnvironment = core.getBooleanInput("activate-environment");
+  const noProject = core.getBooleanInput("no-project");
   const venvPath = getVenvPath(workingDirectory, activateEnvironment);
   const checksum = core.getInput("checksum");
   const enableCache = getEnableCache();
@@ -87,6 +89,7 @@ export function loadInputs(): SetupInputs {
     ignoreEmptyWorkdir,
     ignoreNothingToCache,
     manifestFile,
+    noProject,
     pruneCache,
     pythonDir,
     pythonVersion,

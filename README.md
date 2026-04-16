@@ -62,6 +62,9 @@ Have a look under [Advanced Configuration](#advanced-configuration) for detailed
     # Custom path for the virtual environment when using activate-environment (default: .venv in the working directory)
     venv-path: ""
 
+    # Pass --no-project when creating the venv with activate-environment.
+    no-project: "false"
+
     # The directory to execute all commands in and look for files such as pyproject.toml
     working-directory: ""
 

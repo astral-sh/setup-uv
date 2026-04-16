@@ -18,6 +18,9 @@ inputs:
   venv-path:
     description: "Custom path for the virtual environment when using activate-environment. Defaults to '.venv' in the working directory."
     default: ""
+  no-project:
+    description: "Pass --no-project when creating the venv with activate-environment."
+    default: "false"
   working-directory:
     description: "The directory to execute all commands in and look for files such as pyproject.toml"
     default: ${{ github.workspace }}

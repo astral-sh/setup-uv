@@ -62968,6 +62968,7 @@ function loadInputs() {
   const versionFile = getVersionFile(workingDirectory);
   const pythonVersion = getInput("python-version");
   const activateEnvironment = getBooleanInput("activate-environment");
+  const noProject = getBooleanInput("no-project");
   const venvPath = getVenvPath(workingDirectory, activateEnvironment);
   const checksum = getInput("checksum");
   const enableCache = getEnableCache();
@@ -63004,6 +63005,7 @@ function loadInputs() {
     ignoreEmptyWorkdir,
     ignoreNothingToCache,
     manifestFile,
+    noProject,
     pruneCache: pruneCache2,
     pythonDir,
     pythonVersion,

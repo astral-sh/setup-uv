@@ -218,13 +218,17 @@ async function activateEnvironment(inputs: SetupInputs): Promise<void> {
     }
 
     core.info(`Creating and activating python venv at ${inputs.venvPath}...`);
-    await exec.exec("uv", [
+    const venvArgs = [
       "venv",
       inputs.venvPath,
       "--directory",
       inputs.workingDirectory,
       "--clear",
-    ]);
+    ];
+    if (inputs.noProject) {
+      venvArgs.push("--no-project");
+    }
+    await exec.exec("uv", venvArgs);
 
     let venvBinPath = `${inputs.venvPath}${path.sep}bin`;
     if (process.platform === "win32") {

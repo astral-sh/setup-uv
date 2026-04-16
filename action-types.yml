@@ -11,6 +11,8 @@ inputs:
     type: boolean
   venv-path:
     type: string
+  no-project:
+    type: boolean
   working-directory:
     type: string
   checksum:
