@@ -1,0 +1,69 @@
+name: "Update docs"
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions: {}
+
+jobs:
+  update-docs:
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: true
+      - name: Get tag info
+        id: tag-info
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          COMMIT_SHA=$(git rev-list -n 1 "$TAG_NAME")
+          echo "tag=$TAG_NAME" >> "$GITHUB_OUTPUT"
+          echo "sha=$COMMIT_SHA" >> "$GITHUB_OUTPUT"
+      - name: Update references in docs
+        run: |
+          OLD_REF=$(grep -oh 'astral-sh/setup-uv@[a-f0-9]\{40\} # v[0-9][^ ]*' README.md docs/*.md | head -1)
+          OLD_SHA=$(echo "$OLD_REF" | sed 's/astral-sh\/setup-uv@\([a-f0-9]*\) # .*/\1/')
+          OLD_VERSION=$(echo "$OLD_REF" | sed 's/astral-sh\/setup-uv@[a-f0-9]* # \(v[^ ]*\)/\1/')
+          echo "Replacing $OLD_SHA # $OLD_VERSION with $NEW_SHA # $NEW_VERSION"
+          find README.md docs/ -type f \( -name "*.md" \) -exec \
+            sed -i "s|$OLD_SHA # $OLD_VERSION|$NEW_SHA # $NEW_VERSION|g" {} +
+        env:
+          NEW_SHA: ${{ steps.tag-info.outputs.sha }}
+          NEW_VERSION: ${{ steps.tag-info.outputs.tag }}
+      - name: Check for changes
+        id: changes-exist
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+              echo "changes-exist=true" >> "$GITHUB_OUTPUT"
+          else
+              echo "changes-exist=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Commit and push changes
+        if: ${{ steps.changes-exist.outputs.changes-exist == 'true' }}
+        id: commit-and-push
+        continue-on-error: true
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+          git add .
+          git commit -m "docs: update version references to $NEW_VERSION"
+          git push origin HEAD:refs/heads/main
+        env:
+          NEW_VERSION: ${{ steps.tag-info.outputs.tag }}
+      - name: Create Pull Request
+        if: ${{ steps.changes-exist.outputs.changes-exist == 'true' && steps.commit-and-push.outcome != 'success' }}
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
+        with:
+          commit-message: "docs: update version references to ${{ steps.tag-info.outputs.tag }}"
+          title: "docs: update version references to ${{ steps.tag-info.outputs.tag }}"
+          body: |
+            Update `uses: astral-sh/setup-uv@...` references in documentation to
+            `${{ steps.tag-info.outputs.sha }} # ${{ steps.tag-info.outputs.tag }}`.
+          base: main
+          labels: "automated-pr,update-docs"
+          branch: update-docs-${{ steps.tag-info.outputs.tag }}
+          delete-branch: true
