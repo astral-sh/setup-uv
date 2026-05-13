@@ -97395,7 +97395,7 @@ async function run() {
     if (inputs.enableCache) {
       await restoreCache2(inputs, detectedPythonVersion);
     }
-    await new Promise((resolve3) => setTimeout(resolve3, 50));
+    await new Promise((resolve3) => setTimeout(resolve3, 100));
     process.exit(0);
   } catch (err) {
     setFailed(err.message);
