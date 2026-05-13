@@ -63220,7 +63220,7 @@ async function run() {
       } else {
         info("save-cache is false. Skipping save cache step.");
       }
-      await new Promise((resolve2) => setTimeout(resolve2, 50));
+      await new Promise((resolve2) => setTimeout(resolve2, 100));
       process.exit(0);
     }
   } catch (error2) {

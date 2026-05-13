@@ -84,8 +84,8 @@ async function run(): Promise<void> {
     if (inputs.enableCache) {
       await restoreCache(inputs, detectedPythonVersion);
     }
-    // https://github.com/nodejs/node/issues/56645#issuecomment-3077594952
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    // https://github.com/nodejs/node/issues/56645#issuecomment-3924958861
+    await new Promise((resolve) => setTimeout(resolve, 100));
     process.exit(0);
   } catch (err) {
     core.setFailed((err as Error).message);
