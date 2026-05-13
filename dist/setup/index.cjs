@@ -97007,7 +97007,6 @@ async function downloadVersion(platform2, arch3, version3, checksum, githubToken
   const resolvedChecksum = manifestUrl === void 0 ? checksum : resolveChecksum(checksum, artifact.checksum);
   const mirrorUrl = rewriteToMirror(artifact.downloadUrl);
   const downloadUrl = mirrorUrl ?? artifact.downloadUrl;
-  const downloadToken = mirrorUrl !== void 0 ? void 0 : githubToken;
   try {
     return await downloadArtifact(
       downloadUrl,
@@ -97016,7 +97015,7 @@ async function downloadVersion(platform2, arch3, version3, checksum, githubToken
       arch3,
       version3,
       resolvedChecksum,
-      downloadToken
+      githubTokenForUrl(downloadUrl, githubToken)
     );
   } catch (err) {
     if (mirrorUrl === void 0) {
@@ -97032,7 +97031,7 @@ async function downloadVersion(platform2, arch3, version3, checksum, githubToken
       arch3,
       version3,
       resolvedChecksum,
-      githubToken
+      githubTokenForUrl(artifact.downloadUrl, githubToken)
     );
   }
 }
@@ -97041,6 +97040,13 @@ function rewriteToMirror(url2) {
     return void 0;
   }
   return ASTRAL_MIRROR_PREFIX + url2.slice(GITHUB_RELEASES_PREFIX.length);
+}
+function githubTokenForUrl(downloadUrl, githubToken) {
+  try {
+    return new URL(downloadUrl).origin === "https://github.com" ? githubToken : void 0;
+  } catch {
+    return void 0;
+  }
 }
 async function downloadArtifact(downloadUrl, artifactName, platform2, arch3, version3, checksum, githubToken) {
   info(`Downloading uv from "${downloadUrl}" ...`);

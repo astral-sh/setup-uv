@@ -54,8 +54,6 @@ export async function downloadVersion(
 
   const mirrorUrl = rewriteToMirror(artifact.downloadUrl);
   const downloadUrl = mirrorUrl ?? artifact.downloadUrl;
-  // Don't send the GitHub token to the Astral mirror.
-  const downloadToken = mirrorUrl !== undefined ? undefined : githubToken;
 
   try {
     return await downloadArtifact(
@@ -65,7 +63,7 @@ export async function downloadVersion(
       arch,
       version,
       resolvedChecksum,
-      downloadToken,
+      githubTokenForUrl(downloadUrl, githubToken),
     );
   } catch (err) {
     if (mirrorUrl === undefined) {
@@ -83,7 +81,7 @@ export async function downloadVersion(
       arch,
       version,
       resolvedChecksum,
-      githubToken,
+      githubTokenForUrl(artifact.downloadUrl, githubToken),
     );
   }
 }
@@ -98,6 +96,19 @@ export function rewriteToMirror(url: string): string | undefined {
   }
 
   return ASTRAL_MIRROR_PREFIX + url.slice(GITHUB_RELEASES_PREFIX.length);
+}
+
+function githubTokenForUrl(
+  downloadUrl: string,
+  githubToken: string,
+): string | undefined {
+  try {
+    return new URL(downloadUrl).origin === "https://github.com"
+      ? githubToken
+      : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 async function downloadArtifact(

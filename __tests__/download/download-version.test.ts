@@ -223,7 +223,7 @@ describe("download-version", () => {
       );
     });
 
-    it("does not rewrite non-GitHub URLs", async () => {
+    it("does not send the token to non-GitHub URLs from the default manifest", async () => {
       mockGetArtifact.mockResolvedValue({
         archiveFormat: "tar.gz",
         checksum: "abc123",
@@ -241,7 +241,29 @@ describe("download-version", () => {
       expect(mockDownloadTool).toHaveBeenCalledWith(
         "https://example.com/uv.tar.gz",
         undefined,
+        undefined,
+      );
+    });
+
+    it("does not send the token to GitHub lookalike hosts", async () => {
+      mockGetArtifact.mockResolvedValue({
+        archiveFormat: "tar.gz",
+        checksum: "abc123",
+        downloadUrl: "https://github.com.evil.test/uv.tar.gz",
+      });
+
+      await downloadVersion(
+        "unknown-linux-gnu",
+        "x86_64",
+        "0.9.26",
+        undefined,
         "token",
+      );
+
+      expect(mockDownloadTool).toHaveBeenCalledWith(
+        "https://github.com.evil.test/uv.tar.gz",
+        undefined,
+        undefined,
       );
     });
 
