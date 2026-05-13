@@ -54,7 +54,6 @@ export async function downloadVersion(
 
   const mirrorUrl = rewriteToMirror(artifact.downloadUrl);
   const downloadUrl = mirrorUrl ?? artifact.downloadUrl;
-  const downloadToken = githubTokenForUrl(downloadUrl, githubToken);
 
   try {
     return await downloadArtifact(
@@ -64,7 +63,7 @@ export async function downloadVersion(
       arch,
       version,
       resolvedChecksum,
-      downloadToken,
+      githubTokenForUrl(downloadUrl, githubToken),
     );
   } catch (err) {
     if (mirrorUrl === undefined) {

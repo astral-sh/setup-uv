@@ -96989,7 +96989,6 @@ async function downloadVersion(platform2, arch3, version3, checksum, githubToken
   const resolvedChecksum = manifestUrl === void 0 ? checksum : resolveChecksum(checksum, artifact.checksum);
   const mirrorUrl = rewriteToMirror(artifact.downloadUrl);
   const downloadUrl = mirrorUrl ?? artifact.downloadUrl;
-  const downloadToken = githubTokenForUrl(downloadUrl, githubToken);
   try {
     return await downloadArtifact(
       downloadUrl,
@@ -96998,7 +96997,7 @@ async function downloadVersion(platform2, arch3, version3, checksum, githubToken
       arch3,
       version3,
       resolvedChecksum,
-      downloadToken
+      githubTokenForUrl(downloadUrl, githubToken)
     );
   } catch (err) {
     if (mirrorUrl === void 0) {
