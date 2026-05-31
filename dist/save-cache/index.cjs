@@ -63211,6 +63211,22 @@ function getResolutionStrategy() {
 }
 
 // src/save-cache.ts
+function formatUnexpectedFailure(error2) {
+  if (error2 instanceof Error) {
+    return error2.stack ?? error2.message;
+  }
+  return String(error2);
+}
+function failUnexpectedly(event, error2) {
+  setFailed(`${event}: ${formatUnexpectedFailure(error2)}`);
+  process.exit(1);
+}
+process.on("uncaughtException", (error2) => {
+  failUnexpectedly("Uncaught exception", error2);
+});
+process.on("unhandledRejection", (reason) => {
+  failUnexpectedly("Unhandled promise rejection", reason);
+});
 async function run() {
   try {
     const inputs = loadInputs();
