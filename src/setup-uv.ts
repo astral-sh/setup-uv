@@ -19,6 +19,26 @@ import { resolveUvVersion } from "./version/resolve";
 
 const sourceDir = __dirname;
 
+function formatUnexpectedFailure(error: unknown): string {
+  if (error instanceof Error) {
+    return error.stack ?? error.message;
+  }
+  return String(error);
+}
+
+function failUnexpectedly(event: string, error: unknown): never {
+  core.setFailed(`${event}: ${formatUnexpectedFailure(error)}`);
+  process.exit(1);
+}
+
+process.on("uncaughtException", (error) => {
+  failUnexpectedly("Uncaught exception", error);
+});
+
+process.on("unhandledRejection", (reason) => {
+  failUnexpectedly("Unhandled promise rejection", reason);
+});
+
 async function getPythonVersion(inputs: SetupInputs): Promise<string> {
   if (inputs.pythonVersion !== "") {
     return inputs.pythonVersion;
