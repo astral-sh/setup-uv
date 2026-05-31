@@ -10,6 +10,7 @@ import {
   getLatestVersion,
   type ManifestVersion,
 } from "./download/manifest";
+import * as log from "./utils/logging";
 
 const VERSION_IN_CHECKSUM_KEY_PATTERN =
   /-(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?)$/;
@@ -26,7 +27,7 @@ async function run(): Promise<void> {
   const latestKnownVersion = getLatestKnownVersionFromChecksums();
 
   if (semver.lte(latestVersion, latestKnownVersion)) {
-    core.info(
+    log.info(
       `Latest release (${latestVersion}) is not newer than the latest known version (${latestKnownVersion}). Skipping update.`,
     );
     return;

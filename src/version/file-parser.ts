@@ -1,6 +1,6 @@
 import fs from "node:fs";
-import * as core from "@actions/core";
 import { getConfigValueFromTomlContent } from "../utils/config-file";
+import * as log from "../utils/logging";
 import {
   getUvVersionFromParsedPyproject,
   getUvVersionFromRequirementsText,
@@ -62,10 +62,10 @@ const VERSION_FILE_PARSERS: VersionFileParser[] = [
 export function getParsedVersionFile(
   filePath: string,
 ): ParsedVersionFile | undefined {
-  core.info(`Trying to find version for uv in: ${filePath}`);
+  log.info(`Trying to find version for uv in: ${filePath}`);
 
   if (!fs.existsSync(filePath)) {
-    core.info(`Could not find file: ${filePath}`);
+    log.info(`Could not find file: ${filePath}`);
     return undefined;
   }
 
@@ -81,15 +81,13 @@ export function getParsedVersionFile(
     }
 
     const normalizedSpecifier = normalizeVersionSpecifier(specifier);
-    core.info(`Found version for uv in ${filePath}: ${normalizedSpecifier}`);
+    log.info(`Found version for uv in ${filePath}: ${normalizedSpecifier}`);
     return {
       format: parser.format,
       specifier: normalizedSpecifier,
     };
   } catch (error) {
-    core.warning(
-      `Error while parsing ${filePath}: ${(error as Error).message}`,
-    );
+    log.warning(`Error while parsing ${filePath}: ${(error as Error).message}`);
     return undefined;
   }
 }

@@ -1,6 +1,7 @@
 import path from "node:path";
 import * as core from "@actions/core";
 import { getConfigValueFromTomlFile } from "./config-file";
+import * as log from "./logging";
 
 export enum CacheLocalSource {
   Input,
@@ -42,6 +43,7 @@ export interface SetupInputs {
   manifestFile?: string;
   downloadFromAstralMirror: boolean;
   addProblemMatchers: boolean;
+  quiet: boolean;
   resolutionStrategy: ResolutionStrategy;
 }
 
@@ -77,6 +79,7 @@ export function loadInputs(): SetupInputs {
   const downloadFromAstralMirror =
     core.getInput("download-from-astral-mirror") === "true";
   const addProblemMatchers = core.getInput("add-problem-matchers") === "true";
+  const quiet = core.getInput("quiet") === "true";
   const resolutionStrategy = getResolutionStrategy();
 
   return {
@@ -97,6 +100,7 @@ export function loadInputs(): SetupInputs {
     pruneCache,
     pythonDir,
     pythonVersion,
+    quiet,
     resolutionStrategy,
     restoreCache,
     saveCache,
@@ -125,7 +129,7 @@ function getVenvPath(
   const venvPathInput = core.getInput("venv-path");
   if (venvPathInput !== "") {
     if (!activateEnvironment) {
-      core.warning("venv-path is only used when activate-environment is true");
+      log.warning("venv-path is only used when activate-environment is true");
     }
     const tildeExpanded = expandTilde(venvPathInput);
     return normalizePath(resolveRelativePath(workingDirectory, tildeExpanded));
@@ -196,7 +200,7 @@ function getCacheLocalPath(
     return { path: cacheDirFromConfig, source: CacheLocalSource.Config };
   }
   if (process.env.UV_CACHE_DIR !== undefined) {
-    core.info(`UV_CACHE_DIR is already set to ${process.env.UV_CACHE_DIR}`);
+    log.info(`UV_CACHE_DIR is already set to ${process.env.UV_CACHE_DIR}`);
     return { path: process.env.UV_CACHE_DIR, source: CacheLocalSource.Env };
   }
   if (enableCache) {
@@ -233,12 +237,12 @@ function getCacheDirFromConfig(
     try {
       const cacheDir = getConfigValueFromTomlFile(resolvedPath, "cache-dir");
       if (cacheDir !== undefined) {
-        core.info(`Found cache-dir in ${resolvedPath}: ${cacheDir}`);
+        log.info(`Found cache-dir in ${resolvedPath}: ${cacheDir}`);
         return cacheDir;
       }
     } catch (err) {
       const message = (err as Error).message;
-      core.warning(`Error while parsing ${filePath}: ${message}`);
+      log.warning(`Error while parsing ${filePath}: ${message}`);
       return undefined;
     }
   }
@@ -247,7 +251,7 @@ function getCacheDirFromConfig(
 
 export function getUvPythonDir(): string {
   if (process.env.UV_PYTHON_INSTALL_DIR !== undefined) {
-    core.info(
+    log.info(
       `UV_PYTHON_INSTALL_DIR is already set to ${process.env.UV_PYTHON_INSTALL_DIR}`,
     );
     return process.env.UV_PYTHON_INSTALL_DIR;

@@ -4,6 +4,7 @@ import * as pep440 from "@renovatebot/pep440";
 import * as semver from "semver";
 import { getAllVersions, getLatestVersion } from "../download/manifest";
 import type { ResolutionStrategy } from "../utils/inputs";
+import * as log from "../utils/logging";
 import {
   type ParsedVersionSpecifier,
   parseVersionSpecifier,
@@ -56,7 +57,7 @@ class LatestVersionResolver implements ConcreteVersionResolver {
       context.parsedSpecifier.kind === "range" &&
       context.parsedSpecifier.isSimpleMinimumVersionSpecifier
     ) {
-      core.info("Found minimum version specifier, using latest version");
+      log.info("Found minimum version specifier, using latest version");
     }
 
     const latestVersion = await getLatestVersion(context.manifestUrl);
