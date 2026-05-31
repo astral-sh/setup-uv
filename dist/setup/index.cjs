@@ -95790,10 +95790,16 @@ function getProxyAgent() {
   }
   return void 0;
 }
-var fetch = async (url2, opts) => await (0, import_undici2.fetch)(url2, {
-  dispatcher: getProxyAgent(),
-  ...opts
-});
+var fetch = async (url2, opts) => {
+  const timeoutSignal = AbortSignal.timeout(5e3);
+  const existingSignal = opts.signal;
+  const mergedSignal = existingSignal ? AbortSignal.any([timeoutSignal, existingSignal]) : timeoutSignal;
+  return await (0, import_undici2.fetch)(url2, {
+    dispatcher: getProxyAgent(),
+    ...opts,
+    signal: mergedSignal
+  });
+};
 
 // src/download/variant-selection.ts
 function selectDefaultVariant(entries, duplicateEntryDescription) {

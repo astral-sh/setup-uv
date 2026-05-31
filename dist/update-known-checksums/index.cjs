@@ -49749,10 +49749,16 @@ function getProxyAgent() {
   }
   return void 0;
 }
-var fetch = async (url, opts) => await (0, import_undici2.fetch)(url, {
-  dispatcher: getProxyAgent(),
-  ...opts
-});
+var fetch = async (url, opts) => {
+  const timeoutSignal = AbortSignal.timeout(5e3);
+  const existingSignal = opts.signal;
+  const mergedSignal = existingSignal ? AbortSignal.any([timeoutSignal, existingSignal]) : timeoutSignal;
+  return await (0, import_undici2.fetch)(url, {
+    dispatcher: getProxyAgent(),
+    ...opts,
+    signal: mergedSignal
+  });
+};
 
 // src/download/manifest.ts
 var cachedManifestData = /* @__PURE__ */ new Map();
