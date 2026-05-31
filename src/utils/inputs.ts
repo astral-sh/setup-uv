@@ -40,6 +40,7 @@ export interface SetupInputs {
   pythonDir: string;
   githubToken: string;
   manifestFile?: string;
+  downloadFromAstralMirror: boolean;
   addProblemMatchers: boolean;
   resolutionStrategy: ResolutionStrategy;
 }
@@ -73,6 +74,8 @@ export function loadInputs(): SetupInputs {
   const pythonDir = getUvPythonDir();
   const githubToken = core.getInput("github-token");
   const manifestFile = getManifestFile();
+  const downloadFromAstralMirror =
+    core.getInput("download-from-astral-mirror") === "true";
   const addProblemMatchers = core.getInput("add-problem-matchers") === "true";
   const resolutionStrategy = getResolutionStrategy();
 
@@ -84,6 +87,7 @@ export function loadInputs(): SetupInputs {
     cachePython,
     cacheSuffix,
     checksum,
+    downloadFromAstralMirror,
     enableCache,
     githubToken,
     ignoreEmptyWorkdir,

@@ -62990,6 +62990,7 @@ function loadInputs() {
   const pythonDir = getUvPythonDir();
   const githubToken = getInput("github-token");
   const manifestFile = getManifestFile();
+  const downloadFromAstralMirror = getInput("download-from-astral-mirror") === "true";
   const addProblemMatchers = getInput("add-problem-matchers") === "true";
   const resolutionStrategy = getResolutionStrategy();
   return {
@@ -63000,6 +63001,7 @@ function loadInputs() {
     cachePython,
     cacheSuffix,
     checksum,
+    downloadFromAstralMirror,
     enableCache,
     githubToken,
     ignoreEmptyWorkdir,

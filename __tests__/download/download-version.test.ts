@@ -376,6 +376,32 @@ describe("download-version", () => {
         "0.9.26",
       );
     });
+
+    it("skips the Astral mirror when downloadFromAstralMirror is false", async () => {
+      mockGetArtifact.mockResolvedValue({
+        archiveFormat: "tar.gz",
+        checksum: "abc123",
+        downloadUrl:
+          "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-x86_64-unknown-linux-gnu.tar.gz",
+      });
+
+      await downloadVersion(
+        "unknown-linux-gnu",
+        "x86_64",
+        "0.9.26",
+        undefined,
+        "token",
+        undefined,
+        false,
+      );
+
+      expect(mockDownloadTool).toHaveBeenCalledWith(
+        "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-x86_64-unknown-linux-gnu.tar.gz",
+        undefined,
+        "token",
+      );
+      expect(mockDownloadTool).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("rewriteToMirror", () => {

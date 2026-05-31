@@ -861,6 +861,20 @@ jobs:
             exit 1
           fi
 
+  test-download-from-astral-mirror-false:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Install with download-from-astral-mirror disabled
+        id: setup-uv
+        uses: ./
+        with:
+          download-from-astral-mirror: false
+      - name: Verify uv is installed
+        run: uv --version
+
   test-absolute-path:
     runs-on: ubuntu-latest
     steps:
@@ -1119,6 +1133,7 @@ jobs:
       - test-restore-cache-restore-cache-false
       - test-no-python-version
       - test-custom-manifest-file
+      - test-download-from-astral-mirror-false
       - test-absolute-path
       - test-relative-path
       - test-cache-prune-force
