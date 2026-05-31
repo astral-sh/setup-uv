@@ -154,6 +154,7 @@ async function setupUv(
     inputs.checksum,
     inputs.githubToken,
     inputs.manifestFile,
+    inputs.downloadFromAstralMirror,
   );
 
   return {

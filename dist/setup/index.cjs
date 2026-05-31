@@ -97057,7 +97057,7 @@ function tryGetFromToolCache(arch3, version3) {
   const installedPath = find(TOOL_CACHE_NAME, resolvedVersion, arch3);
   return { installedPath, version: resolvedVersion };
 }
-async function downloadVersion(platform2, arch3, version3, checksum, githubToken, manifestUrl) {
+async function downloadVersion(platform2, arch3, version3, checksum, githubToken, manifestUrl, downloadFromAstralMirror = true) {
   const artifact = await getArtifact(version3, arch3, platform2, manifestUrl);
   if (!artifact) {
     throw new Error(
@@ -97065,7 +97065,7 @@ async function downloadVersion(platform2, arch3, version3, checksum, githubToken
     );
   }
   const resolvedChecksum = manifestUrl === void 0 ? checksum : resolveChecksum(checksum, artifact.checksum);
-  const mirrorUrl = rewriteToMirror(artifact.downloadUrl);
+  const mirrorUrl = downloadFromAstralMirror ? rewriteToMirror(artifact.downloadUrl) : void 0;
   const downloadUrl = mirrorUrl ?? artifact.downloadUrl;
   try {
     return await downloadArtifact(
@@ -97184,6 +97184,7 @@ function loadInputs() {
   const pythonDir = getUvPythonDir();
   const githubToken = getInput("github-token");
   const manifestFile = getManifestFile();
+  const downloadFromAstralMirror = getInput("download-from-astral-mirror") === "true";
   const addProblemMatchers = getInput("add-problem-matchers") === "true";
   const resolutionStrategy = getResolutionStrategy();
   return {
@@ -97194,6 +97195,7 @@ function loadInputs() {
     cachePython,
     cacheSuffix,
     checksum,
+    downloadFromAstralMirror,
     enableCache,
     githubToken,
     ignoreEmptyWorkdir,
@@ -97518,7 +97520,8 @@ async function setupUv(inputs, platform2, arch3) {
     resolvedVersion,
     inputs.checksum,
     inputs.githubToken,
-    inputs.manifestFile
+    inputs.manifestFile,
+    inputs.downloadFromAstralMirror
   );
   return {
     uvDir: downloadResult.cachedToolDir,

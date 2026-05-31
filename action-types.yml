@@ -52,6 +52,8 @@ inputs:
     type: string
   manifest-file:
     type: string
+  download-from-astral-mirror:
+    type: boolean
   add-problem-matchers:
     type: boolean
   resolution-strategy:
