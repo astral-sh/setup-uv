@@ -11,6 +11,26 @@ import {
 import { STATE_UV_PATH, STATE_UV_VERSION } from "./utils/constants";
 import { loadInputs, type SetupInputs } from "./utils/inputs";
 
+function formatUnexpectedFailure(error: unknown): string {
+  if (error instanceof Error) {
+    return error.stack ?? error.message;
+  }
+  return String(error);
+}
+
+function failUnexpectedly(event: string, error: unknown): never {
+  core.setFailed(`${event}: ${formatUnexpectedFailure(error)}`);
+  process.exit(1);
+}
+
+process.on("uncaughtException", (error) => {
+  failUnexpectedly("Uncaught exception", error);
+});
+
+process.on("unhandledRejection", (reason) => {
+  failUnexpectedly("Unhandled promise rejection", reason);
+});
+
 export async function run(): Promise<void> {
   try {
     const inputs = loadInputs();
