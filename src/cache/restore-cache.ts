@@ -2,6 +2,7 @@ import * as cache from "@actions/cache";
 import * as core from "@actions/core";
 import { hashFiles } from "../hash/hash-files";
 import type { SetupInputs } from "../utils/inputs";
+import * as log from "../utils/logging";
 import { getArch, getOSNameVersion, getPlatform } from "../utils/platforms";
 
 export const STATE_CACHE_KEY = "cache-key";
@@ -19,7 +20,7 @@ export async function restoreCache(
   core.setOutput("cache-key", cacheKey);
 
   if (!inputs.restoreCache) {
-    core.info("restore-cache is false. Skipping restore cache step.");
+    log.info("restore-cache is false. Skipping restore cache step.");
     core.setOutput("python-cache-hit", false);
     return;
   }
@@ -55,7 +56,7 @@ async function restoreCacheFromKey(
   stateKey: string,
   outputKey: string,
 ): Promise<void> {
-  core.info(
+  log.info(
     `Trying to restore cache from GitHub Actions cache with key: ${cacheKey}`,
   );
   let matchedKey: string | undefined;
@@ -63,7 +64,7 @@ async function restoreCacheFromKey(
     matchedKey = await cache.restoreCache([cachePath], cacheKey);
   } catch (err) {
     const message = (err as Error).message;
-    core.warning(message);
+    log.warning(message);
     core.setOutput(outputKey, false);
     return;
   }
@@ -77,7 +78,7 @@ async function computeKeys(
 ): Promise<string> {
   let cacheDependencyPathHash = "-";
   if (inputs.cacheDependencyGlob !== "") {
-    core.info(
+    log.info(
       `Searching files using cache dependency glob: ${inputs.cacheDependencyGlob.split("\n").join(",")}`,
     );
     cacheDependencyPathHash += await hashFiles(
@@ -85,7 +86,7 @@ async function computeKeys(
       true,
     );
     if (cacheDependencyPathHash === "-") {
-      core.warning(
+      log.warning(
         `No file matched to [${inputs.cacheDependencyGlob.split("\n").join(",")}]. The cache will never get invalidated. Make sure you have checked out the target repository and configured the cache-dependency-glob input correctly.`,
       );
     }
@@ -109,12 +110,12 @@ function handleMatchResult(
   outputKey: string,
 ): void {
   if (!matchedKey) {
-    core.info(`No GitHub Actions cache found for key: ${primaryKey}`);
+    log.info(`No GitHub Actions cache found for key: ${primaryKey}`);
     core.setOutput(outputKey, false);
     return;
   }
 
   core.saveState(stateKey, matchedKey);
-  core.info(`cache restored from GitHub Actions cache with key: ${matchedKey}`);
+  log.info(`cache restored from GitHub Actions cache with key: ${matchedKey}`);
   core.setOutput(outputKey, true);
 }

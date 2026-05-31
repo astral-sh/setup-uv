@@ -132,7 +132,7 @@ var require_tunnel = __commonJS({
         connectOptions.headers = connectOptions.headers || {};
         connectOptions.headers["Proxy-Authorization"] = "Basic " + new Buffer(connectOptions.proxyAuth).toString("base64");
       }
-      debug2("making CONNECT request");
+      debug3("making CONNECT request");
       var connectReq = self2.request(connectOptions);
       connectReq.useChunkedEncodingByDefault = false;
       connectReq.once("response", onResponse);
@@ -152,7 +152,7 @@ var require_tunnel = __commonJS({
         connectReq.removeAllListeners();
         socket.removeAllListeners();
         if (res.statusCode !== 200) {
-          debug2(
+          debug3(
             "tunneling socket could not be established, statusCode=%d",
             res.statusCode
           );
@@ -164,7 +164,7 @@ var require_tunnel = __commonJS({
           return;
         }
         if (head.length > 0) {
-          debug2("got illegal response body from proxy");
+          debug3("got illegal response body from proxy");
           socket.destroy();
           var error2 = new Error("got illegal response body from proxy");
           error2.code = "ECONNRESET";
@@ -172,13 +172,13 @@ var require_tunnel = __commonJS({
           self2.removeSocket(placeholder);
           return;
         }
-        debug2("tunneling connection has established");
+        debug3("tunneling connection has established");
         self2.sockets[self2.sockets.indexOf(placeholder)] = socket;
         return cb(socket);
       }
       function onError(cause) {
         connectReq.removeAllListeners();
-        debug2(
+        debug3(
           "tunneling socket could not be established, cause=%s\n",
           cause.message,
           cause.stack
@@ -240,9 +240,9 @@ var require_tunnel = __commonJS({
       }
       return target;
     }
-    var debug2;
+    var debug3;
     if (process.env.NODE_DEBUG && /\btunnel\b/.test(process.env.NODE_DEBUG)) {
-      debug2 = function() {
+      debug3 = function() {
         var args = Array.prototype.slice.call(arguments);
         if (typeof args[0] === "string") {
           args[0] = "TUNNEL: " + args[0];
@@ -252,10 +252,10 @@ var require_tunnel = __commonJS({
         console.error.apply(console, args);
       };
     } else {
-      debug2 = function() {
+      debug3 = function() {
       };
     }
-    exports2.debug = debug2;
+    exports2.debug = debug3;
   }
 });
 
@@ -18935,7 +18935,7 @@ var require_minimatch = __commonJS({
       }
       this.parseNegate();
       var set = this.globSet = this.braceExpand();
-      if (options.debug) this.debug = function debug2() {
+      if (options.debug) this.debug = function debug3() {
         console.error.apply(console, arguments);
       };
       this.debug(this.pattern, set);
@@ -19413,9 +19413,9 @@ var require_constants6 = __commonJS({
 var require_debug = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/internal/debug.js"(exports2, module2) {
     "use strict";
-    var debug2 = typeof process === "object" && process.env && process.env.NODE_DEBUG && /\bsemver\b/i.test(process.env.NODE_DEBUG) ? (...args) => console.error("SEMVER", ...args) : () => {
+    var debug3 = typeof process === "object" && process.env && process.env.NODE_DEBUG && /\bsemver\b/i.test(process.env.NODE_DEBUG) ? (...args) => console.error("SEMVER", ...args) : () => {
     };
-    module2.exports = debug2;
+    module2.exports = debug3;
   }
 });
 
@@ -19428,7 +19428,7 @@ var require_re = __commonJS({
       MAX_SAFE_BUILD_LENGTH,
       MAX_LENGTH
     } = require_constants6();
-    var debug2 = require_debug();
+    var debug3 = require_debug();
     exports2 = module2.exports = {};
     var re = exports2.re = [];
     var safeRe = exports2.safeRe = [];
@@ -19451,7 +19451,7 @@ var require_re = __commonJS({
     var createToken = (name, value, isGlobal) => {
       const safe = makeSafeRegex(value);
       const index = R++;
-      debug2(name, index, value);
+      debug3(name, index, value);
       t[name] = index;
       src[index] = value;
       safeSrc[index] = safe;
@@ -19555,7 +19555,7 @@ var require_identifiers = __commonJS({
 var require_semver = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/classes/semver.js"(exports2, module2) {
     "use strict";
-    var debug2 = require_debug();
+    var debug3 = require_debug();
     var { MAX_LENGTH, MAX_SAFE_INTEGER } = require_constants6();
     var { safeRe: re, t } = require_re();
     var parseOptions = require_parse_options();
@@ -19577,7 +19577,7 @@ var require_semver = __commonJS({
             `version is longer than ${MAX_LENGTH} characters`
           );
         }
-        debug2("SemVer", version3, options);
+        debug3("SemVer", version3, options);
         this.options = options;
         this.loose = !!options.loose;
         this.includePrerelease = !!options.includePrerelease;
@@ -19625,7 +19625,7 @@ var require_semver = __commonJS({
         return this.version;
       }
       compare(other) {
-        debug2("SemVer.compare", this.version, this.options, other);
+        debug3("SemVer.compare", this.version, this.options, other);
         if (!(other instanceof _SemVer)) {
           if (typeof other === "string" && other === this.version) {
             return 0;
@@ -19676,7 +19676,7 @@ var require_semver = __commonJS({
         do {
           const a = this.prerelease[i];
           const b = other.prerelease[i];
-          debug2("prerelease compare", i, a, b);
+          debug3("prerelease compare", i, a, b);
           if (a === void 0 && b === void 0) {
             return 0;
           } else if (b === void 0) {
@@ -19698,7 +19698,7 @@ var require_semver = __commonJS({
         do {
           const a = this.build[i];
           const b = other.build[i];
-          debug2("build compare", i, a, b);
+          debug3("build compare", i, a, b);
           if (a === void 0 && b === void 0) {
             return 0;
           } else if (b === void 0) {
@@ -20326,21 +20326,21 @@ var require_range = __commonJS({
         const loose = this.options.loose;
         const hr = loose ? re[t.HYPHENRANGELOOSE] : re[t.HYPHENRANGE];
         range2 = range2.replace(hr, hyphenReplace(this.options.includePrerelease));
-        debug2("hyphen replace", range2);
+        debug3("hyphen replace", range2);
         range2 = range2.replace(re[t.COMPARATORTRIM], comparatorTrimReplace);
-        debug2("comparator trim", range2);
+        debug3("comparator trim", range2);
         range2 = range2.replace(re[t.TILDETRIM], tildeTrimReplace);
-        debug2("tilde trim", range2);
+        debug3("tilde trim", range2);
         range2 = range2.replace(re[t.CARETTRIM], caretTrimReplace);
-        debug2("caret trim", range2);
+        debug3("caret trim", range2);
         let rangeList = range2.split(" ").map((comp26) => parseComparator(comp26, this.options)).join(" ").split(/\s+/).map((comp26) => replaceGTE0(comp26, this.options));
         if (loose) {
           rangeList = rangeList.filter((comp26) => {
-            debug2("loose invalid filter", comp26, this.options);
+            debug3("loose invalid filter", comp26, this.options);
             return !!comp26.match(re[t.COMPARATORLOOSE]);
           });
         }
-        debug2("range list", rangeList);
+        debug3("range list", rangeList);
         const rangeMap = /* @__PURE__ */ new Map();
         const comparators = rangeList.map((comp26) => new Comparator(comp26, this.options));
         for (const comp26 of comparators) {
@@ -20395,7 +20395,7 @@ var require_range = __commonJS({
     var cache = new LRU();
     var parseOptions = require_parse_options();
     var Comparator = require_comparator();
-    var debug2 = require_debug();
+    var debug3 = require_debug();
     var SemVer = require_semver();
     var {
       safeRe: re,
@@ -20421,15 +20421,15 @@ var require_range = __commonJS({
     };
     var parseComparator = (comp26, options) => {
       comp26 = comp26.replace(re[t.BUILD], "");
-      debug2("comp", comp26, options);
+      debug3("comp", comp26, options);
       comp26 = replaceCarets(comp26, options);
-      debug2("caret", comp26);
+      debug3("caret", comp26);
       comp26 = replaceTildes(comp26, options);
-      debug2("tildes", comp26);
+      debug3("tildes", comp26);
       comp26 = replaceXRanges(comp26, options);
-      debug2("xrange", comp26);
+      debug3("xrange", comp26);
       comp26 = replaceStars(comp26, options);
-      debug2("stars", comp26);
+      debug3("stars", comp26);
       return comp26;
     };
     var isX = (id) => !id || id.toLowerCase() === "x" || id === "*";
@@ -20439,7 +20439,7 @@ var require_range = __commonJS({
     var replaceTilde = (comp26, options) => {
       const r = options.loose ? re[t.TILDELOOSE] : re[t.TILDE];
       return comp26.replace(r, (_, M, m, p, pr) => {
-        debug2("tilde", comp26, _, M, m, p, pr);
+        debug3("tilde", comp26, _, M, m, p, pr);
         let ret;
         if (isX(M)) {
           ret = "";
@@ -20448,12 +20448,12 @@ var require_range = __commonJS({
         } else if (isX(p)) {
           ret = `>=${M}.${m}.0 <${M}.${+m + 1}.0-0`;
         } else if (pr) {
-          debug2("replaceTilde pr", pr);
+          debug3("replaceTilde pr", pr);
           ret = `>=${M}.${m}.${p}-${pr} <${M}.${+m + 1}.0-0`;
         } else {
           ret = `>=${M}.${m}.${p} <${M}.${+m + 1}.0-0`;
         }
-        debug2("tilde return", ret);
+        debug3("tilde return", ret);
         return ret;
       });
     };
@@ -20461,11 +20461,11 @@ var require_range = __commonJS({
       return comp26.trim().split(/\s+/).map((c) => replaceCaret(c, options)).join(" ");
     };
     var replaceCaret = (comp26, options) => {
-      debug2("caret", comp26, options);
+      debug3("caret", comp26, options);
       const r = options.loose ? re[t.CARETLOOSE] : re[t.CARET];
       const z = options.includePrerelease ? "-0" : "";
       return comp26.replace(r, (_, M, m, p, pr) => {
-        debug2("caret", comp26, _, M, m, p, pr);
+        debug3("caret", comp26, _, M, m, p, pr);
         let ret;
         if (isX(M)) {
           ret = "";
@@ -20478,7 +20478,7 @@ var require_range = __commonJS({
             ret = `>=${M}.${m}.0${z} <${+M + 1}.0.0-0`;
           }
         } else if (pr) {
-          debug2("replaceCaret pr", pr);
+          debug3("replaceCaret pr", pr);
           if (M === "0") {
             if (m === "0") {
               ret = `>=${M}.${m}.${p}-${pr} <${M}.${m}.${+p + 1}-0`;
@@ -20489,7 +20489,7 @@ var require_range = __commonJS({
             ret = `>=${M}.${m}.${p}-${pr} <${+M + 1}.0.0-0`;
           }
         } else {
-          debug2("no pr");
+          debug3("no pr");
           if (M === "0") {
             if (m === "0") {
               ret = `>=${M}.${m}.${p}${z} <${M}.${m}.${+p + 1}-0`;
@@ -20500,19 +20500,19 @@ var require_range = __commonJS({
             ret = `>=${M}.${m}.${p} <${+M + 1}.0.0-0`;
           }
         }
-        debug2("caret return", ret);
+        debug3("caret return", ret);
         return ret;
       });
     };
     var replaceXRanges = (comp26, options) => {
-      debug2("replaceXRanges", comp26, options);
+      debug3("replaceXRanges", comp26, options);
       return comp26.split(/\s+/).map((c) => replaceXRange(c, options)).join(" ");
     };
     var replaceXRange = (comp26, options) => {
       comp26 = comp26.trim();
       const r = options.loose ? re[t.XRANGELOOSE] : re[t.XRANGE];
       return comp26.replace(r, (ret, gtlt, M, m, p, pr) => {
-        debug2("xRange", comp26, ret, gtlt, M, m, p, pr);
+        debug3("xRange", comp26, ret, gtlt, M, m, p, pr);
         const xM = isX(M);
         const xm = xM || isX(m);
         const xp = xm || isX(p);
@@ -20559,16 +20559,16 @@ var require_range = __commonJS({
         } else if (xp) {
           ret = `>=${M}.${m}.0${pr} <${M}.${+m + 1}.0-0`;
         }
-        debug2("xRange return", ret);
+        debug3("xRange return", ret);
         return ret;
       });
     };
     var replaceStars = (comp26, options) => {
-      debug2("replaceStars", comp26, options);
+      debug3("replaceStars", comp26, options);
       return comp26.trim().replace(re[t.STAR], "");
     };
     var replaceGTE0 = (comp26, options) => {
-      debug2("replaceGTE0", comp26, options);
+      debug3("replaceGTE0", comp26, options);
       return comp26.trim().replace(re[options.includePrerelease ? t.GTE0PRE : t.GTE0], "");
     };
     var hyphenReplace = (incPr) => ($0, from, fM, fm, fp, fpr, fb, to, tM, tm, tp, tpr) => {
@@ -20606,7 +20606,7 @@ var require_range = __commonJS({
       }
       if (version3.prerelease.length && !options.includePrerelease) {
         for (let i = 0; i < set.length; i++) {
-          debug2(set[i].semver);
+          debug3(set[i].semver);
           if (set[i].semver === Comparator.ANY) {
             continue;
           }
@@ -20643,7 +20643,7 @@ var require_comparator = __commonJS({
           }
         }
         comp26 = comp26.trim().split(/\s+/).join(" ");
-        debug2("comparator", comp26, options);
+        debug3("comparator", comp26, options);
         this.options = options;
         this.loose = !!options.loose;
         this.parse(comp26);
@@ -20652,7 +20652,7 @@ var require_comparator = __commonJS({
         } else {
           this.value = this.operator + this.semver.version;
         }
-        debug2("comp", this);
+        debug3("comp", this);
       }
       parse(comp26) {
         const r = this.options.loose ? re[t.COMPARATORLOOSE] : re[t.COMPARATOR];
@@ -20674,7 +20674,7 @@ var require_comparator = __commonJS({
         return this.value;
       }
       test(version3) {
-        debug2("Comparator.test", version3, this.options.loose);
+        debug3("Comparator.test", version3, this.options.loose);
         if (this.semver === ANY || version3 === ANY) {
           return true;
         }
@@ -20731,7 +20731,7 @@ var require_comparator = __commonJS({
     var parseOptions = require_parse_options();
     var { safeRe: re, t } = require_re();
     var cmp = require_cmp();
-    var debug2 = require_debug();
+    var debug3 = require_debug();
     var SemVer = require_semver();
     var Range = require_range();
   }
@@ -21455,11 +21455,11 @@ var require_common = __commonJS({
         let enableOverride = null;
         let namespacesCache;
         let enabledCache;
-        function debug2(...args) {
-          if (!debug2.enabled) {
+        function debug3(...args) {
+          if (!debug3.enabled) {
             return;
           }
-          const self2 = debug2;
+          const self2 = debug3;
           const curr = Number(/* @__PURE__ */ new Date());
           const ms = curr - (prevTime || curr);
           self2.diff = ms;
@@ -21489,12 +21489,12 @@ var require_common = __commonJS({
           const logFn = self2.log || createDebug.log;
           logFn.apply(self2, args);
         }
-        debug2.namespace = namespace;
-        debug2.useColors = createDebug.useColors();
-        debug2.color = createDebug.selectColor(namespace);
-        debug2.extend = extend2;
-        debug2.destroy = createDebug.destroy;
-        Object.defineProperty(debug2, "enabled", {
+        debug3.namespace = namespace;
+        debug3.useColors = createDebug.useColors();
+        debug3.color = createDebug.selectColor(namespace);
+        debug3.extend = extend2;
+        debug3.destroy = createDebug.destroy;
+        Object.defineProperty(debug3, "enabled", {
           enumerable: true,
           configurable: false,
           get: () => {
@@ -21512,9 +21512,9 @@ var require_common = __commonJS({
           }
         });
         if (typeof createDebug.init === "function") {
-          createDebug.init(debug2);
+          createDebug.init(debug3);
         }
-        return debug2;
+        return debug3;
       }
       function extend2(namespace, delimiter4) {
         const newDebug = createDebug(this.namespace + (typeof delimiter4 === "undefined" ? ":" : delimiter4) + namespace);
@@ -22024,11 +22024,11 @@ var require_node = __commonJS({
     function load() {
       return process.env.DEBUG;
     }
-    function init(debug2) {
-      debug2.inspectOpts = {};
+    function init(debug3) {
+      debug3.inspectOpts = {};
       const keys = Object.keys(exports2.inspectOpts);
       for (let i = 0; i < keys.length; i++) {
-        debug2.inspectOpts[keys[i]] = exports2.inspectOpts[keys[i]];
+        debug3.inspectOpts[keys[i]] = exports2.inspectOpts[keys[i]];
       }
     }
     module2.exports = require_common()(exports2);
@@ -22291,7 +22291,7 @@ var require_parse_proxy_response = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.parseProxyResponse = void 0;
     var debug_1 = __importDefault(require_src());
-    var debug2 = (0, debug_1.default)("https-proxy-agent:parse-proxy-response");
+    var debug3 = (0, debug_1.default)("https-proxy-agent:parse-proxy-response");
     function parseProxyResponse(socket) {
       return new Promise((resolve3, reject) => {
         let buffersLength = 0;
@@ -22310,12 +22310,12 @@ var require_parse_proxy_response = __commonJS({
         }
         function onend() {
           cleanup();
-          debug2("onend");
+          debug3("onend");
           reject(new Error("Proxy connection ended before receiving CONNECT response"));
         }
         function onerror(err) {
           cleanup();
-          debug2("onerror %o", err);
+          debug3("onerror %o", err);
           reject(err);
         }
         function ondata(b) {
@@ -22324,7 +22324,7 @@ var require_parse_proxy_response = __commonJS({
           const buffered = Buffer.concat(buffers, buffersLength);
           const endOfHeaders = buffered.indexOf("\r\n\r\n");
           if (endOfHeaders === -1) {
-            debug2("have not received end of HTTP headers yet...");
+            debug3("have not received end of HTTP headers yet...");
             read();
             return;
           }
@@ -22357,7 +22357,7 @@ var require_parse_proxy_response = __commonJS({
               headers[key] = value;
             }
           }
-          debug2("got proxy server response: %o %o", firstLine, headers);
+          debug3("got proxy server response: %o %o", firstLine, headers);
           cleanup();
           resolve3({
             connect: {
@@ -22420,7 +22420,7 @@ var require_dist2 = __commonJS({
     var agent_base_1 = require_dist();
     var url_1 = require("url");
     var parse_proxy_response_1 = require_parse_proxy_response();
-    var debug2 = (0, debug_1.default)("https-proxy-agent");
+    var debug3 = (0, debug_1.default)("https-proxy-agent");
     var setServernameFromNonIpHost = (options) => {
       if (options.servername === void 0 && options.host && !net.isIP(options.host)) {
         return {
@@ -22436,7 +22436,7 @@ var require_dist2 = __commonJS({
         this.options = { path: void 0 };
         this.proxy = typeof proxy === "string" ? new url_1.URL(proxy) : proxy;
         this.proxyHeaders = opts?.headers ?? {};
-        debug2("Creating new HttpsProxyAgent instance: %o", this.proxy.href);
+        debug3("Creating new HttpsProxyAgent instance: %o", this.proxy.href);
         const host = (this.proxy.hostname || this.proxy.host).replace(/^\[|\]$/g, "");
         const port = this.proxy.port ? parseInt(this.proxy.port, 10) : this.proxy.protocol === "https:" ? 443 : 80;
         this.connectOpts = {
@@ -22458,10 +22458,10 @@ var require_dist2 = __commonJS({
         }
         let socket;
         if (proxy.protocol === "https:") {
-          debug2("Creating `tls.Socket`: %o", this.connectOpts);
+          debug3("Creating `tls.Socket`: %o", this.connectOpts);
           socket = tls.connect(setServernameFromNonIpHost(this.connectOpts));
         } else {
-          debug2("Creating `net.Socket`: %o", this.connectOpts);
+          debug3("Creating `net.Socket`: %o", this.connectOpts);
           socket = net.connect(this.connectOpts);
         }
         const headers = typeof this.proxyHeaders === "function" ? this.proxyHeaders() : { ...this.proxyHeaders };
@@ -22489,7 +22489,7 @@ var require_dist2 = __commonJS({
         if (connect.statusCode === 200) {
           req.once("socket", resume);
           if (opts.secureEndpoint) {
-            debug2("Upgrading socket connection to TLS");
+            debug3("Upgrading socket connection to TLS");
             return tls.connect({
               ...omit(setServernameFromNonIpHost(opts), "host", "path", "port"),
               socket
@@ -22501,7 +22501,7 @@ var require_dist2 = __commonJS({
         const fakeSocket = new net.Socket({ writable: false });
         fakeSocket.readable = true;
         req.once("socket", (s) => {
-          debug2("Replaying proxy buffer for failed request");
+          debug3("Replaying proxy buffer for failed request");
           (0, assert_1.default)(s.listenerCount("data") > 0);
           s.push(buffered);
           s.push(null);
@@ -22569,13 +22569,13 @@ var require_dist3 = __commonJS({
     var events_1 = require("events");
     var agent_base_1 = require_dist();
     var url_1 = require("url");
-    var debug2 = (0, debug_1.default)("http-proxy-agent");
+    var debug3 = (0, debug_1.default)("http-proxy-agent");
     var HttpProxyAgent2 = class extends agent_base_1.Agent {
       constructor(proxy, opts) {
         super(opts);
         this.proxy = typeof proxy === "string" ? new url_1.URL(proxy) : proxy;
         this.proxyHeaders = opts?.headers ?? {};
-        debug2("Creating new HttpProxyAgent instance: %o", this.proxy.href);
+        debug3("Creating new HttpProxyAgent instance: %o", this.proxy.href);
         const host = (this.proxy.hostname || this.proxy.host).replace(/^\[|\]$/g, "");
         const port = this.proxy.port ? parseInt(this.proxy.port, 10) : this.proxy.protocol === "https:" ? 443 : 80;
         this.connectOpts = {
@@ -22621,21 +22621,21 @@ var require_dist3 = __commonJS({
         }
         let first;
         let endOfHeaders;
-        debug2("Regenerating stored HTTP header string for request");
+        debug3("Regenerating stored HTTP header string for request");
         req._implicitHeader();
         if (req.outputData && req.outputData.length > 0) {
-          debug2("Patching connection write() output buffer with updated header");
+          debug3("Patching connection write() output buffer with updated header");
           first = req.outputData[0].data;
           endOfHeaders = first.indexOf("\r\n\r\n") + 4;
           req.outputData[0].data = req._header + first.substring(endOfHeaders);
-          debug2("Output buffer: %o", req.outputData[0].data);
+          debug3("Output buffer: %o", req.outputData[0].data);
         }
         let socket;
         if (this.proxy.protocol === "https:") {
-          debug2("Creating `tls.Socket`: %o", this.connectOpts);
+          debug3("Creating `tls.Socket`: %o", this.connectOpts);
           socket = tls.connect(this.connectOpts);
         } else {
-          debug2("Creating `net.Socket`: %o", this.connectOpts);
+          debug3("Creating `net.Socket`: %o", this.connectOpts);
           socket = net.connect(this.connectOpts);
         }
         await (0, events_1.once)(socket, "connect");
@@ -24038,9 +24038,9 @@ var require_reflection_type_check = __commonJS({
     var reflection_info_1 = require_reflection_info();
     var oneof_1 = require_oneof();
     var ReflectionTypeCheck = class {
-      constructor(info2) {
+      constructor(info3) {
         var _a;
-        this.fields = (_a = info2.fields) !== null && _a !== void 0 ? _a : [];
+        this.fields = (_a = info3.fields) !== null && _a !== void 0 ? _a : [];
       }
       prepare() {
         if (this.data)
@@ -24286,8 +24286,8 @@ var require_reflection_json_reader = __commonJS({
     var assert_1 = require_assert();
     var reflection_long_convert_1 = require_reflection_long_convert();
     var ReflectionJsonReader = class {
-      constructor(info2) {
-        this.info = info2;
+      constructor(info3) {
+        this.info = info3;
       }
       prepare() {
         var _a;
@@ -24583,9 +24583,9 @@ var require_reflection_json_writer = __commonJS({
     var reflection_info_1 = require_reflection_info();
     var assert_1 = require_assert();
     var ReflectionJsonWriter = class {
-      constructor(info2) {
+      constructor(info3) {
         var _a;
-        this.fields = (_a = info2.fields) !== null && _a !== void 0 ? _a : [];
+        this.fields = (_a = info3.fields) !== null && _a !== void 0 ? _a : [];
       }
       /**
        * Converts the message to a JSON object, based on the field descriptors.
@@ -24838,8 +24838,8 @@ var require_reflection_binary_reader = __commonJS({
     var reflection_long_convert_1 = require_reflection_long_convert();
     var reflection_scalar_default_1 = require_reflection_scalar_default();
     var ReflectionBinaryReader = class {
-      constructor(info2) {
-        this.info = info2;
+      constructor(info3) {
+        this.info = info3;
       }
       prepare() {
         var _a;
@@ -25012,8 +25012,8 @@ var require_reflection_binary_writer = __commonJS({
     var assert_1 = require_assert();
     var pb_long_1 = require_pb_long();
     var ReflectionBinaryWriter = class {
-      constructor(info2) {
-        this.info = info2;
+      constructor(info3) {
+        this.info = info3;
       }
       prepare() {
         if (!this.fields) {
@@ -25263,9 +25263,9 @@ var require_reflection_merge_partial = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.reflectionMergePartial = void 0;
-    function reflectionMergePartial4(info2, target, source) {
+    function reflectionMergePartial4(info3, target, source) {
       let fieldValue, input = source, output;
-      for (let field of info2.fields) {
+      for (let field of info3.fields) {
         let name = field.localName;
         if (field.oneof) {
           const group = input[field.oneof];
@@ -25334,12 +25334,12 @@ var require_reflection_equals = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.reflectionEquals = void 0;
     var reflection_info_1 = require_reflection_info();
-    function reflectionEquals(info2, a, b) {
+    function reflectionEquals(info3, a, b) {
       if (a === b)
         return true;
       if (!a || !b)
         return false;
-      for (let field of info2.fields) {
+      for (let field of info3.fields) {
         let localName = field.localName;
         let val_a = field.oneof ? a[field.oneof][localName] : a[localName];
         let val_b = field.oneof ? b[field.oneof][localName] : b[localName];
@@ -27023,9 +27023,9 @@ var require_constants7 = __commonJS({
 var require_debug2 = __commonJS({
   "node_modules/@actions/tool-cache/node_modules/semver/internal/debug.js"(exports2, module2) {
     "use strict";
-    var debug2 = typeof process === "object" && process.env && process.env.NODE_DEBUG && /\bsemver\b/i.test(process.env.NODE_DEBUG) ? (...args) => console.error("SEMVER", ...args) : () => {
+    var debug3 = typeof process === "object" && process.env && process.env.NODE_DEBUG && /\bsemver\b/i.test(process.env.NODE_DEBUG) ? (...args) => console.error("SEMVER", ...args) : () => {
     };
-    module2.exports = debug2;
+    module2.exports = debug3;
   }
 });
 
@@ -27038,7 +27038,7 @@ var require_re2 = __commonJS({
       MAX_SAFE_BUILD_LENGTH,
       MAX_LENGTH
     } = require_constants7();
-    var debug2 = require_debug2();
+    var debug3 = require_debug2();
     exports2 = module2.exports = {};
     var re = exports2.re = [];
     var safeRe = exports2.safeRe = [];
@@ -27061,7 +27061,7 @@ var require_re2 = __commonJS({
     var createToken = (name, value, isGlobal) => {
       const safe = makeSafeRegex(value);
       const index = R++;
-      debug2(name, index, value);
+      debug3(name, index, value);
       t[name] = index;
       src[index] = value;
       safeSrc[index] = safe;
@@ -27165,7 +27165,7 @@ var require_identifiers2 = __commonJS({
 var require_semver3 = __commonJS({
   "node_modules/@actions/tool-cache/node_modules/semver/classes/semver.js"(exports2, module2) {
     "use strict";
-    var debug2 = require_debug2();
+    var debug3 = require_debug2();
     var { MAX_LENGTH, MAX_SAFE_INTEGER } = require_constants7();
     var { safeRe: re, t } = require_re2();
     var parseOptions = require_parse_options2();
@@ -27187,7 +27187,7 @@ var require_semver3 = __commonJS({
             `version is longer than ${MAX_LENGTH} characters`
           );
         }
-        debug2("SemVer", version3, options);
+        debug3("SemVer", version3, options);
         this.options = options;
         this.loose = !!options.loose;
         this.includePrerelease = !!options.includePrerelease;
@@ -27235,7 +27235,7 @@ var require_semver3 = __commonJS({
         return this.version;
       }
       compare(other) {
-        debug2("SemVer.compare", this.version, this.options, other);
+        debug3("SemVer.compare", this.version, this.options, other);
         if (!(other instanceof _SemVer)) {
           if (typeof other === "string" && other === this.version) {
             return 0;
@@ -27286,7 +27286,7 @@ var require_semver3 = __commonJS({
         do {
           const a = this.prerelease[i];
           const b = other.prerelease[i];
-          debug2("prerelease compare", i, a, b);
+          debug3("prerelease compare", i, a, b);
           if (a === void 0 && b === void 0) {
             return 0;
           } else if (b === void 0) {
@@ -27308,7 +27308,7 @@ var require_semver3 = __commonJS({
         do {
           const a = this.build[i];
           const b = other.build[i];
-          debug2("build compare", i, a, b);
+          debug3("build compare", i, a, b);
           if (a === void 0 && b === void 0) {
             return 0;
           } else if (b === void 0) {
@@ -27936,21 +27936,21 @@ var require_range2 = __commonJS({
         const loose = this.options.loose;
         const hr = loose ? re[t.HYPHENRANGELOOSE] : re[t.HYPHENRANGE];
         range2 = range2.replace(hr, hyphenReplace(this.options.includePrerelease));
-        debug2("hyphen replace", range2);
+        debug3("hyphen replace", range2);
         range2 = range2.replace(re[t.COMPARATORTRIM], comparatorTrimReplace);
-        debug2("comparator trim", range2);
+        debug3("comparator trim", range2);
         range2 = range2.replace(re[t.TILDETRIM], tildeTrimReplace);
-        debug2("tilde trim", range2);
+        debug3("tilde trim", range2);
         range2 = range2.replace(re[t.CARETTRIM], caretTrimReplace);
-        debug2("caret trim", range2);
+        debug3("caret trim", range2);
         let rangeList = range2.split(" ").map((comp26) => parseComparator(comp26, this.options)).join(" ").split(/\s+/).map((comp26) => replaceGTE0(comp26, this.options));
         if (loose) {
           rangeList = rangeList.filter((comp26) => {
-            debug2("loose invalid filter", comp26, this.options);
+            debug3("loose invalid filter", comp26, this.options);
             return !!comp26.match(re[t.COMPARATORLOOSE]);
           });
         }
-        debug2("range list", rangeList);
+        debug3("range list", rangeList);
         const rangeMap = /* @__PURE__ */ new Map();
         const comparators = rangeList.map((comp26) => new Comparator(comp26, this.options));
         for (const comp26 of comparators) {
@@ -28005,7 +28005,7 @@ var require_range2 = __commonJS({
     var cache = new LRU();
     var parseOptions = require_parse_options2();
     var Comparator = require_comparator2();
-    var debug2 = require_debug2();
+    var debug3 = require_debug2();
     var SemVer = require_semver3();
     var {
       safeRe: re,
@@ -28031,15 +28031,15 @@ var require_range2 = __commonJS({
     };
     var parseComparator = (comp26, options) => {
       comp26 = comp26.replace(re[t.BUILD], "");
-      debug2("comp", comp26, options);
+      debug3("comp", comp26, options);
       comp26 = replaceCarets(comp26, options);
-      debug2("caret", comp26);
+      debug3("caret", comp26);
       comp26 = replaceTildes(comp26, options);
-      debug2("tildes", comp26);
+      debug3("tildes", comp26);
       comp26 = replaceXRanges(comp26, options);
-      debug2("xrange", comp26);
+      debug3("xrange", comp26);
       comp26 = replaceStars(comp26, options);
-      debug2("stars", comp26);
+      debug3("stars", comp26);
       return comp26;
     };
     var isX = (id) => !id || id.toLowerCase() === "x" || id === "*";
@@ -28049,7 +28049,7 @@ var require_range2 = __commonJS({
     var replaceTilde = (comp26, options) => {
       const r = options.loose ? re[t.TILDELOOSE] : re[t.TILDE];
       return comp26.replace(r, (_, M, m, p, pr) => {
-        debug2("tilde", comp26, _, M, m, p, pr);
+        debug3("tilde", comp26, _, M, m, p, pr);
         let ret;
         if (isX(M)) {
           ret = "";
@@ -28058,12 +28058,12 @@ var require_range2 = __commonJS({
         } else if (isX(p)) {
           ret = `>=${M}.${m}.0 <${M}.${+m + 1}.0-0`;
         } else if (pr) {
-          debug2("replaceTilde pr", pr);
+          debug3("replaceTilde pr", pr);
           ret = `>=${M}.${m}.${p}-${pr} <${M}.${+m + 1}.0-0`;
         } else {
           ret = `>=${M}.${m}.${p} <${M}.${+m + 1}.0-0`;
         }
-        debug2("tilde return", ret);
+        debug3("tilde return", ret);
         return ret;
       });
     };
@@ -28071,11 +28071,11 @@ var require_range2 = __commonJS({
       return comp26.trim().split(/\s+/).map((c) => replaceCaret(c, options)).join(" ");
     };
     var replaceCaret = (comp26, options) => {
-      debug2("caret", comp26, options);
+      debug3("caret", comp26, options);
       const r = options.loose ? re[t.CARETLOOSE] : re[t.CARET];
       const z = options.includePrerelease ? "-0" : "";
       return comp26.replace(r, (_, M, m, p, pr) => {
-        debug2("caret", comp26, _, M, m, p, pr);
+        debug3("caret", comp26, _, M, m, p, pr);
         let ret;
         if (isX(M)) {
           ret = "";
@@ -28088,7 +28088,7 @@ var require_range2 = __commonJS({
             ret = `>=${M}.${m}.0${z} <${+M + 1}.0.0-0`;
           }
         } else if (pr) {
-          debug2("replaceCaret pr", pr);
+          debug3("replaceCaret pr", pr);
           if (M === "0") {
             if (m === "0") {
               ret = `>=${M}.${m}.${p}-${pr} <${M}.${m}.${+p + 1}-0`;
@@ -28099,7 +28099,7 @@ var require_range2 = __commonJS({
             ret = `>=${M}.${m}.${p}-${pr} <${+M + 1}.0.0-0`;
           }
         } else {
-          debug2("no pr");
+          debug3("no pr");
           if (M === "0") {
             if (m === "0") {
               ret = `>=${M}.${m}.${p}${z} <${M}.${m}.${+p + 1}-0`;
@@ -28110,19 +28110,19 @@ var require_range2 = __commonJS({
             ret = `>=${M}.${m}.${p} <${+M + 1}.0.0-0`;
           }
         }
-        debug2("caret return", ret);
+        debug3("caret return", ret);
         return ret;
       });
     };
     var replaceXRanges = (comp26, options) => {
-      debug2("replaceXRanges", comp26, options);
+      debug3("replaceXRanges", comp26, options);
       return comp26.split(/\s+/).map((c) => replaceXRange(c, options)).join(" ");
     };
     var replaceXRange = (comp26, options) => {
       comp26 = comp26.trim();
       const r = options.loose ? re[t.XRANGELOOSE] : re[t.XRANGE];
       return comp26.replace(r, (ret, gtlt, M, m, p, pr) => {
-        debug2("xRange", comp26, ret, gtlt, M, m, p, pr);
+        debug3("xRange", comp26, ret, gtlt, M, m, p, pr);
         const xM = isX(M);
         const xm = xM || isX(m);
         const xp = xm || isX(p);
@@ -28169,16 +28169,16 @@ var require_range2 = __commonJS({
         } else if (xp) {
           ret = `>=${M}.${m}.0${pr} <${M}.${+m + 1}.0-0`;
         }
-        debug2("xRange return", ret);
+        debug3("xRange return", ret);
         return ret;
       });
     };
     var replaceStars = (comp26, options) => {
-      debug2("replaceStars", comp26, options);
+      debug3("replaceStars", comp26, options);
       return comp26.trim().replace(re[t.STAR], "");
     };
     var replaceGTE0 = (comp26, options) => {
-      debug2("replaceGTE0", comp26, options);
+      debug3("replaceGTE0", comp26, options);
       return comp26.trim().replace(re[options.includePrerelease ? t.GTE0PRE : t.GTE0], "");
     };
     var hyphenReplace = (incPr) => ($0, from, fM, fm, fp, fpr, fb, to, tM, tm, tp, tpr) => {
@@ -28216,7 +28216,7 @@ var require_range2 = __commonJS({
       }
       if (version3.prerelease.length && !options.includePrerelease) {
         for (let i = 0; i < set.length; i++) {
-          debug2(set[i].semver);
+          debug3(set[i].semver);
           if (set[i].semver === Comparator.ANY) {
             continue;
           }
@@ -28253,7 +28253,7 @@ var require_comparator2 = __commonJS({
           }
         }
         comp26 = comp26.trim().split(/\s+/).join(" ");
-        debug2("comparator", comp26, options);
+        debug3("comparator", comp26, options);
         this.options = options;
         this.loose = !!options.loose;
         this.parse(comp26);
@@ -28262,7 +28262,7 @@ var require_comparator2 = __commonJS({
         } else {
           this.value = this.operator + this.semver.version;
         }
-        debug2("comp", this);
+        debug3("comp", this);
       }
       parse(comp26) {
         const r = this.options.loose ? re[t.COMPARATORLOOSE] : re[t.COMPARATOR];
@@ -28284,7 +28284,7 @@ var require_comparator2 = __commonJS({
         return this.value;
       }
       test(version3) {
-        debug2("Comparator.test", version3, this.options.loose);
+        debug3("Comparator.test", version3, this.options.loose);
         if (this.semver === ANY || version3 === ANY) {
           return true;
         }
@@ -28341,7 +28341,7 @@ var require_comparator2 = __commonJS({
     var parseOptions = require_parse_options2();
     var { safeRe: re, t } = require_re2();
     var cmp = require_cmp2();
-    var debug2 = require_debug2();
+    var debug3 = require_debug2();
     var SemVer = require_semver3();
     var Range = require_range2();
   }
@@ -38692,7 +38692,7 @@ var require_socks5_client = __commonJS({
     var { InvalidArgumentError, Socks5ProxyError } = require_errors2();
     var { debuglog } = require("node:util");
     var { parseAddress } = require_socks5_utils();
-    var debug2 = debuglog("undici:socks5");
+    var debug3 = debuglog("undici:socks5");
     var SOCKS_VERSION = 5;
     var AUTH_METHODS = {
       NO_AUTH: 0,
@@ -38753,7 +38753,7 @@ var require_socks5_client = __commonJS({
        * Handle incoming data from the socket
        */
       onData(data) {
-        debug2("received data", data.length, "bytes in state", this.state);
+        debug3("received data", data.length, "bytes in state", this.state);
         this.buffer = Buffer3.concat([this.buffer, data]);
         try {
           switch (this.state) {
@@ -38775,7 +38775,7 @@ var require_socks5_client = __commonJS({
        * Handle socket errors
        */
       onError(err) {
-        debug2("socket error", err);
+        debug3("socket error", err);
         this.state = STATES.ERROR;
         this.emit("error", err);
         this.destroy();
@@ -38784,7 +38784,7 @@ var require_socks5_client = __commonJS({
        * Handle socket close
        */
       onClose() {
-        debug2("socket closed");
+        debug3("socket closed");
         this.state = STATES.CLOSED;
         this.emit("close");
       }
@@ -38803,7 +38803,7 @@ var require_socks5_client = __commonJS({
         if (this.state !== STATES.INITIAL) {
           throw new InvalidArgumentError("Handshake already started");
         }
-        debug2("starting handshake with", this.authMethods.length, "auth methods");
+        debug3("starting handshake with", this.authMethods.length, "auth methods");
         this.state = STATES.HANDSHAKING;
         const request = Buffer3.alloc(2 + this.authMethods.length);
         request[0] = SOCKS_VERSION;
@@ -38829,7 +38829,7 @@ var require_socks5_client = __commonJS({
           throw new Socks5ProxyError("No acceptable authentication method", "UND_ERR_SOCKS5_AUTH_REJECTED");
         }
         this.buffer = this.buffer.subarray(2);
-        debug2("server selected auth method", method);
+        debug3("server selected auth method", method);
         if (method === AUTH_METHODS.NO_AUTH) {
           this.emit("authenticated");
         } else if (method === AUTH_METHODS.USERNAME_PASSWORD) {
@@ -38847,7 +38847,7 @@ var require_socks5_client = __commonJS({
         if (!username || !password) {
           throw new InvalidArgumentError("Username and password required for authentication");
         }
-        debug2("sending username/password auth");
+        debug3("sending username/password auth");
         const usernameBuffer = Buffer3.from(username);
         const passwordBuffer = Buffer3.from(password);
         if (usernameBuffer.length > 255 || passwordBuffer.length > 255) {
@@ -38877,7 +38877,7 @@ var require_socks5_client = __commonJS({
           throw new Socks5ProxyError("Authentication failed", "UND_ERR_SOCKS5_AUTH_FAILED");
         }
         this.buffer = this.buffer.subarray(2);
-        debug2("authentication successful");
+        debug3("authentication successful");
         this.emit("authenticated");
       }
       /**
@@ -38889,7 +38889,7 @@ var require_socks5_client = __commonJS({
         if (this.state === STATES.CONNECTED) {
           throw new InvalidArgumentError("Already connected");
         }
-        debug2("connecting to", address, port);
+        debug3("connecting to", address, port);
         this.state = STATES.CONNECTING;
         const request = this.buildConnectRequest(COMMANDS.CONNECT, address, port);
         this.socket.write(request);
@@ -38963,7 +38963,7 @@ var require_socks5_client = __commonJS({
         const boundPort = this.buffer.readUInt16BE(offset);
         this.buffer = this.buffer.subarray(responseLength);
         this.state = STATES.CONNECTED;
-        debug2("connected, bound address:", boundAddress, "port:", boundPort);
+        debug3("connected, bound address:", boundAddress, "port:", boundPort);
         this.emit("connected", { address: boundAddress, port: boundPort });
       }
       /**
@@ -39017,7 +39017,7 @@ var require_socks5_proxy_agent = __commonJS({
     var Pool = require_pool2();
     var buildConnector = require_connect2();
     var { debuglog } = require("node:util");
-    var debug2 = debuglog("undici:socks5-proxy");
+    var debug3 = debuglog("undici:socks5-proxy");
     var kProxyUrl = /* @__PURE__ */ Symbol("proxy url");
     var kProxyHeaders = /* @__PURE__ */ Symbol("proxy headers");
     var kProxyAuth = /* @__PURE__ */ Symbol("proxy auth");
@@ -39059,7 +39059,7 @@ var require_socks5_proxy_agent = __commonJS({
       async createSocks5Connection(targetHost, targetPort) {
         const proxyHost = this[kProxyUrl].hostname;
         const proxyPort = parseInt(this[kProxyUrl].port) || 1080;
-        debug2("creating SOCKS5 connection to", proxyHost, proxyPort);
+        debug3("creating SOCKS5 connection to", proxyHost, proxyPort);
         const socket = await new Promise((resolve3, reject) => {
           const onConnect = () => {
             socket2.removeListener("error", onError);
@@ -39078,7 +39078,7 @@ var require_socks5_proxy_agent = __commonJS({
         });
         const socks5Client = new Socks5Client(socket, this[kProxyAuth]);
         socks5Client.on("error", (err) => {
-          debug2("SOCKS5 error:", err);
+          debug3("SOCKS5 error:", err);
           socket.destroy();
         });
         await socks5Client.handshake();
@@ -39109,8 +39109,8 @@ var require_socks5_proxy_agent = __commonJS({
           const timeout = setTimeout(() => {
             reject(new Error("SOCKS5 connection timeout"));
           }, 5e3);
-          const onConnected = (info2) => {
-            debug2("SOCKS5 tunnel established to", targetHost, targetPort, "via", info2);
+          const onConnected = (info3) => {
+            debug3("SOCKS5 tunnel established to", targetHost, targetPort, "via", info3);
             clearTimeout(timeout);
             socks5Client.removeListener("error", onError);
             resolve3();
@@ -39130,7 +39130,7 @@ var require_socks5_proxy_agent = __commonJS({
        */
       async [kDispatch](opts, handler) {
         const { origin } = opts;
-        debug2("dispatching request to", origin, "via SOCKS5");
+        debug3("dispatching request to", origin, "via SOCKS5");
         try {
           if (!this[kPool] || this[kPool].destroyed || this[kPool].closed) {
             this[kPool] = new Pool(origin, {
@@ -39141,14 +39141,14 @@ var require_socks5_proxy_agent = __commonJS({
                   const url2 = new URL3(origin);
                   const targetHost = url2.hostname;
                   const targetPort = parseInt(url2.port) || (url2.protocol === "https:" ? 443 : 80);
-                  debug2("establishing SOCKS5 connection to", targetHost, targetPort);
+                  debug3("establishing SOCKS5 connection to", targetHost, targetPort);
                   const socket = await this.createSocks5Connection(targetHost, targetPort);
                   let finalSocket = socket;
                   if (url2.protocol === "https:") {
                     if (!tls) {
                       tls = require("node:tls");
                     }
-                    debug2("upgrading to TLS");
+                    debug3("upgrading to TLS");
                     finalSocket = tls.connect({
                       socket,
                       servername: targetHost,
@@ -39161,7 +39161,7 @@ var require_socks5_proxy_agent = __commonJS({
                   }
                   callback(null, finalSocket);
                 } catch (err) {
-                  debug2("SOCKS5 connection error:", err);
+                  debug3("SOCKS5 connection error:", err);
                   callback(err);
                 }
               }
@@ -39169,7 +39169,7 @@ var require_socks5_proxy_agent = __commonJS({
           }
           return this[kPool][kDispatch](opts, handler);
         } catch (err) {
-          debug2("dispatch error:", err);
+          debug3("dispatch error:", err);
           if (typeof handler.onError === "function") {
             handler.onError(err);
           } else {
@@ -54309,15 +54309,15 @@ var require_pep440 = __commonJS({
 var require_semver5 = __commonJS({
   "node_modules/semver/semver.js"(exports2, module2) {
     exports2 = module2.exports = SemVer;
-    var debug2;
+    var debug3;
     if (typeof process === "object" && process.env && process.env.NODE_DEBUG && /\bsemver\b/i.test(process.env.NODE_DEBUG)) {
-      debug2 = function() {
+      debug3 = function() {
         var args = Array.prototype.slice.call(arguments, 0);
         args.unshift("SEMVER");
         console.log.apply(console, args);
       };
     } else {
-      debug2 = function() {
+      debug3 = function() {
       };
     }
     exports2.SEMVER_SPEC_VERSION = "2.0.0";
@@ -54435,7 +54435,7 @@ var require_semver5 = __commonJS({
     tok("STAR");
     src[t.STAR] = "(<|>)?=?\\s*\\*";
     for (i = 0; i < R; i++) {
-      debug2(i, src[i]);
+      debug3(i, src[i]);
       if (!re[i]) {
         re[i] = new RegExp(src[i]);
         safeRe[i] = new RegExp(makeSafeRe(src[i]));
@@ -54502,7 +54502,7 @@ var require_semver5 = __commonJS({
       if (!(this instanceof SemVer)) {
         return new SemVer(version3, options);
       }
-      debug2("SemVer", version3, options);
+      debug3("SemVer", version3, options);
       this.options = options;
       this.loose = !!options.loose;
       var m = version3.trim().match(options.loose ? safeRe[t.LOOSE] : safeRe[t.FULL]);
@@ -54549,7 +54549,7 @@ var require_semver5 = __commonJS({
       return this.version;
     };
     SemVer.prototype.compare = function(other) {
-      debug2("SemVer.compare", this.version, this.options, other);
+      debug3("SemVer.compare", this.version, this.options, other);
       if (!(other instanceof SemVer)) {
         other = new SemVer(other, this.options);
       }
@@ -54576,7 +54576,7 @@ var require_semver5 = __commonJS({
       do {
         var a = this.prerelease[i2];
         var b = other.prerelease[i2];
-        debug2("prerelease compare", i2, a, b);
+        debug3("prerelease compare", i2, a, b);
         if (a === void 0 && b === void 0) {
           return 0;
         } else if (b === void 0) {
@@ -54598,7 +54598,7 @@ var require_semver5 = __commonJS({
       do {
         var a = this.build[i2];
         var b = other.build[i2];
-        debug2("prerelease compare", i2, a, b);
+        debug3("prerelease compare", i2, a, b);
         if (a === void 0 && b === void 0) {
           return 0;
         } else if (b === void 0) {
@@ -54862,7 +54862,7 @@ var require_semver5 = __commonJS({
         return new Comparator(comp26, options);
       }
       comp26 = comp26.trim().split(/\s+/).join(" ");
-      debug2("comparator", comp26, options);
+      debug3("comparator", comp26, options);
       this.options = options;
       this.loose = !!options.loose;
       this.parse(comp26);
@@ -54871,7 +54871,7 @@ var require_semver5 = __commonJS({
       } else {
         this.value = this.operator + this.semver.version;
       }
-      debug2("comp", this);
+      debug3("comp", this);
     }
     var ANY = {};
     Comparator.prototype.parse = function(comp26) {
@@ -54894,7 +54894,7 @@ var require_semver5 = __commonJS({
       return this.value;
     };
     Comparator.prototype.test = function(version3) {
-      debug2("Comparator.test", version3, this.options.loose);
+      debug3("Comparator.test", version3, this.options.loose);
       if (this.semver === ANY || version3 === ANY) {
         return true;
       }
@@ -54987,9 +54987,9 @@ var require_semver5 = __commonJS({
       var loose = this.options.loose;
       var hr = loose ? safeRe[t.HYPHENRANGELOOSE] : safeRe[t.HYPHENRANGE];
       range2 = range2.replace(hr, hyphenReplace);
-      debug2("hyphen replace", range2);
+      debug3("hyphen replace", range2);
       range2 = range2.replace(safeRe[t.COMPARATORTRIM], comparatorTrimReplace);
-      debug2("comparator trim", range2, safeRe[t.COMPARATORTRIM]);
+      debug3("comparator trim", range2, safeRe[t.COMPARATORTRIM]);
       range2 = range2.replace(safeRe[t.TILDETRIM], tildeTrimReplace);
       range2 = range2.replace(safeRe[t.CARETTRIM], caretTrimReplace);
       range2 = range2.split(/\s+/).join(" ");
@@ -55042,15 +55042,15 @@ var require_semver5 = __commonJS({
       });
     }
     function parseComparator(comp26, options) {
-      debug2("comp", comp26, options);
+      debug3("comp", comp26, options);
       comp26 = replaceCarets(comp26, options);
-      debug2("caret", comp26);
+      debug3("caret", comp26);
       comp26 = replaceTildes(comp26, options);
-      debug2("tildes", comp26);
+      debug3("tildes", comp26);
       comp26 = replaceXRanges(comp26, options);
-      debug2("xrange", comp26);
+      debug3("xrange", comp26);
       comp26 = replaceStars(comp26, options);
-      debug2("stars", comp26);
+      debug3("stars", comp26);
       return comp26;
     }
     function isX(id) {
@@ -55064,7 +55064,7 @@ var require_semver5 = __commonJS({
     function replaceTilde(comp26, options) {
       var r = options.loose ? safeRe[t.TILDELOOSE] : safeRe[t.TILDE];
       return comp26.replace(r, function(_, M, m, p, pr) {
-        debug2("tilde", comp26, _, M, m, p, pr);
+        debug3("tilde", comp26, _, M, m, p, pr);
         var ret;
         if (isX(M)) {
           ret = "";
@@ -55073,12 +55073,12 @@ var require_semver5 = __commonJS({
         } else if (isX(p)) {
           ret = ">=" + M + "." + m + ".0 <" + M + "." + (+m + 1) + ".0";
         } else if (pr) {
-          debug2("replaceTilde pr", pr);
+          debug3("replaceTilde pr", pr);
           ret = ">=" + M + "." + m + "." + p + "-" + pr + " <" + M + "." + (+m + 1) + ".0";
         } else {
           ret = ">=" + M + "." + m + "." + p + " <" + M + "." + (+m + 1) + ".0";
         }
-        debug2("tilde return", ret);
+        debug3("tilde return", ret);
         return ret;
       });
     }
@@ -55088,10 +55088,10 @@ var require_semver5 = __commonJS({
       }).join(" ");
     }
     function replaceCaret(comp26, options) {
-      debug2("caret", comp26, options);
+      debug3("caret", comp26, options);
       var r = options.loose ? safeRe[t.CARETLOOSE] : safeRe[t.CARET];
       return comp26.replace(r, function(_, M, m, p, pr) {
-        debug2("caret", comp26, _, M, m, p, pr);
+        debug3("caret", comp26, _, M, m, p, pr);
         var ret;
         if (isX(M)) {
           ret = "";
@@ -55104,7 +55104,7 @@ var require_semver5 = __commonJS({
             ret = ">=" + M + "." + m + ".0 <" + (+M + 1) + ".0.0";
           }
         } else if (pr) {
-          debug2("replaceCaret pr", pr);
+          debug3("replaceCaret pr", pr);
           if (M === "0") {
             if (m === "0") {
               ret = ">=" + M + "." + m + "." + p + "-" + pr + " <" + M + "." + m + "." + (+p + 1);
@@ -55115,7 +55115,7 @@ var require_semver5 = __commonJS({
             ret = ">=" + M + "." + m + "." + p + "-" + pr + " <" + (+M + 1) + ".0.0";
           }
         } else {
-          debug2("no pr");
+          debug3("no pr");
           if (M === "0") {
             if (m === "0") {
               ret = ">=" + M + "." + m + "." + p + " <" + M + "." + m + "." + (+p + 1);
@@ -55126,12 +55126,12 @@ var require_semver5 = __commonJS({
             ret = ">=" + M + "." + m + "." + p + " <" + (+M + 1) + ".0.0";
           }
         }
-        debug2("caret return", ret);
+        debug3("caret return", ret);
         return ret;
       });
     }
     function replaceXRanges(comp26, options) {
-      debug2("replaceXRanges", comp26, options);
+      debug3("replaceXRanges", comp26, options);
       return comp26.split(/\s+/).map(function(comp27) {
         return replaceXRange(comp27, options);
       }).join(" ");
@@ -55140,7 +55140,7 @@ var require_semver5 = __commonJS({
       comp26 = comp26.trim();
       var r = options.loose ? safeRe[t.XRANGELOOSE] : safeRe[t.XRANGE];
       return comp26.replace(r, function(ret, gtlt, M, m, p, pr) {
-        debug2("xRange", comp26, ret, gtlt, M, m, p, pr);
+        debug3("xRange", comp26, ret, gtlt, M, m, p, pr);
         var xM = isX(M);
         var xm = xM || isX(m);
         var xp = xm || isX(p);
@@ -55184,12 +55184,12 @@ var require_semver5 = __commonJS({
         } else if (xp) {
           ret = ">=" + M + "." + m + ".0" + pr + " <" + M + "." + (+m + 1) + ".0" + pr;
         }
-        debug2("xRange return", ret);
+        debug3("xRange return", ret);
         return ret;
       });
     }
     function replaceStars(comp26, options) {
-      debug2("replaceStars", comp26, options);
+      debug3("replaceStars", comp26, options);
       return comp26.trim().replace(safeRe[t.STAR], "");
     }
     function hyphenReplace($0, from, fM, fm, fp, fpr, fb, to, tM, tm, tp, tpr, tb) {
@@ -55241,7 +55241,7 @@ var require_semver5 = __commonJS({
       }
       if (version3.prerelease.length && !options.includePrerelease) {
         for (i2 = 0; i2 < set.length; i2++) {
-          debug2(set[i2].semver);
+          debug3(set[i2].semver);
           if (set[i2].semver === ANY) {
             continue;
           }
@@ -55895,12 +55895,12 @@ var HttpClient = class {
         throw new Error("Client has already been disposed.");
       }
       const parsedUrl = new URL(requestUrl);
-      let info2 = this._prepareRequest(verb, parsedUrl, headers);
+      let info3 = this._prepareRequest(verb, parsedUrl, headers);
       const maxTries = this._allowRetries && RetryableHttpVerbs.includes(verb) ? this._maxRetries + 1 : 1;
       let numTries = 0;
       let response;
       do {
-        response = yield this.requestRaw(info2, data);
+        response = yield this.requestRaw(info3, data);
         if (response && response.message && response.message.statusCode === HttpCodes.Unauthorized) {
           let authenticationHandler;
           for (const handler of this.handlers) {
@@ -55910,7 +55910,7 @@ var HttpClient = class {
             }
           }
           if (authenticationHandler) {
-            return authenticationHandler.handleAuthentication(this, info2, data);
+            return authenticationHandler.handleAuthentication(this, info3, data);
           } else {
             return response;
           }
@@ -55933,8 +55933,8 @@ var HttpClient = class {
               }
             }
           }
-          info2 = this._prepareRequest(verb, parsedRedirectUrl, headers);
-          response = yield this.requestRaw(info2, data);
+          info3 = this._prepareRequest(verb, parsedRedirectUrl, headers);
+          response = yield this.requestRaw(info3, data);
           redirectsRemaining--;
         }
         if (!response.message.statusCode || !HttpResponseRetryCodes.includes(response.message.statusCode)) {
@@ -55963,7 +55963,7 @@ var HttpClient = class {
    * @param info
    * @param data
    */
-  requestRaw(info2, data) {
+  requestRaw(info3, data) {
     return __awaiter(this, void 0, void 0, function* () {
       return new Promise((resolve3, reject) => {
         function callbackForResult(err, res) {
@@ -55975,7 +55975,7 @@ var HttpClient = class {
             resolve3(res);
           }
         }
-        this.requestRawWithCallback(info2, data, callbackForResult);
+        this.requestRawWithCallback(info3, data, callbackForResult);
       });
     });
   }
@@ -55985,12 +55985,12 @@ var HttpClient = class {
    * @param data
    * @param onResult
    */
-  requestRawWithCallback(info2, data, onResult) {
+  requestRawWithCallback(info3, data, onResult) {
     if (typeof data === "string") {
-      if (!info2.options.headers) {
-        info2.options.headers = {};
+      if (!info3.options.headers) {
+        info3.options.headers = {};
       }
-      info2.options.headers["Content-Length"] = Buffer.byteLength(data, "utf8");
+      info3.options.headers["Content-Length"] = Buffer.byteLength(data, "utf8");
     }
     let callbackCalled = false;
     function handleResult(err, res) {
@@ -55999,7 +55999,7 @@ var HttpClient = class {
         onResult(err, res);
       }
     }
-    const req = info2.httpModule.request(info2.options, (msg) => {
+    const req = info3.httpModule.request(info3.options, (msg) => {
       const res = new HttpClientResponse(msg);
       handleResult(void 0, res);
     });
@@ -56011,7 +56011,7 @@ var HttpClient = class {
       if (socket) {
         socket.end();
       }
-      handleResult(new Error(`Request timeout: ${info2.options.path}`));
+      handleResult(new Error(`Request timeout: ${info3.options.path}`));
     });
     req.on("error", function(err) {
       handleResult(err);
@@ -56047,27 +56047,27 @@ var HttpClient = class {
     return this._getProxyAgentDispatcher(parsedUrl, proxyUrl);
   }
   _prepareRequest(method, requestUrl, headers) {
-    const info2 = {};
-    info2.parsedUrl = requestUrl;
-    const usingSsl = info2.parsedUrl.protocol === "https:";
-    info2.httpModule = usingSsl ? https : http;
+    const info3 = {};
+    info3.parsedUrl = requestUrl;
+    const usingSsl = info3.parsedUrl.protocol === "https:";
+    info3.httpModule = usingSsl ? https : http;
     const defaultPort = usingSsl ? 443 : 80;
-    info2.options = {};
-    info2.options.host = info2.parsedUrl.hostname;
-    info2.options.port = info2.parsedUrl.port ? parseInt(info2.parsedUrl.port) : defaultPort;
-    info2.options.path = (info2.parsedUrl.pathname || "") + (info2.parsedUrl.search || "");
-    info2.options.method = method;
-    info2.options.headers = this._mergeHeaders(headers);
+    info3.options = {};
+    info3.options.host = info3.parsedUrl.hostname;
+    info3.options.port = info3.parsedUrl.port ? parseInt(info3.parsedUrl.port) : defaultPort;
+    info3.options.path = (info3.parsedUrl.pathname || "") + (info3.parsedUrl.search || "");
+    info3.options.method = method;
+    info3.options.headers = this._mergeHeaders(headers);
     if (this.userAgent != null) {
-      info2.options.headers["user-agent"] = this.userAgent;
+      info3.options.headers["user-agent"] = this.userAgent;
     }
-    info2.options.agent = this._getAgent(info2.parsedUrl);
+    info3.options.agent = this._getAgent(info3.parsedUrl);
     if (this.handlers) {
       for (const handler of this.handlers) {
-        handler.prepareRequest(info2.options);
+        handler.prepareRequest(info3.options);
       }
     }
-    return info2;
+    return info3;
   }
   _mergeHeaders(headers) {
     if (this.requestOptions && this.requestOptions.headers) {
@@ -58522,14 +58522,14 @@ function disable() {
   return result;
 }
 function createDebugger(namespace) {
-  const newDebugger = Object.assign(debug2, {
+  const newDebugger = Object.assign(debug3, {
     enabled: enabled(namespace),
     destroy,
     log: debugObj.log,
     namespace,
     extend
   });
-  function debug2(...args) {
+  function debug3(...args) {
     if (!newDebugger.enabled) {
       return;
     }
@@ -62019,12 +62019,12 @@ function getOperationRequestInfo(request) {
   if (hasOriginalRequest(request)) {
     return getOperationRequestInfo(request[originalRequestSymbol]);
   }
-  let info2 = state2.operationRequestMap.get(request);
-  if (!info2) {
-    info2 = {};
-    state2.operationRequestMap.set(request, info2);
+  let info3 = state2.operationRequestMap.get(request);
+  if (!info3) {
+    info3 = {};
+    state2.operationRequestMap.set(request, info3);
   }
-  return info2;
+  return info3;
 }
 
 // node_modules/@azure/core-client/dist/esm/deserializationPolicy.js
@@ -90289,10 +90289,28 @@ var crypto4 = __toESM(require("node:crypto"), 1);
 var fs7 = __toESM(require("node:fs"), 1);
 var stream2 = __toESM(require("node:stream"), 1);
 var util5 = __toESM(require("node:util"), 1);
+
+// src/utils/logging.ts
+var quiet;
+function isQuiet() {
+  if (quiet === void 0) {
+    quiet = typeof getInput === "function" && getInput("quiet") === "true";
+  }
+  return quiet;
+}
+function info2(msg) {
+  if (!isQuiet()) {
+    info(msg);
+  }
+}
+var warning2 = warning;
+var debug2 = debug;
+
+// src/hash/hash-files.ts
 async function hashFiles2(pattern, verbose = false) {
   const globber = await create(pattern);
   let hasMatch = false;
-  const writeDelegate = verbose ? info : debug;
+  const writeDelegate = verbose ? info2 : debug2;
   const result = crypto4.createHash("sha256");
   let count = 0;
   for await (const file of globber.globGenerator()) {
@@ -90445,7 +90463,7 @@ async function restoreCache2(inputs, pythonVersion) {
   saveState(STATE_CACHE_KEY, cacheKey);
   setOutput("cache-key", cacheKey);
   if (!inputs.restoreCache) {
-    info("restore-cache is false. Skipping restore cache step.");
+    info2("restore-cache is false. Skipping restore cache step.");
     setOutput("python-cache-hit", false);
     return;
   }
@@ -90472,7 +90490,7 @@ async function restoreCache2(inputs, pythonVersion) {
   }
 }
 async function restoreCacheFromKey(cacheKey, cachePath, stateKey, outputKey) {
-  info(
+  info2(
     `Trying to restore cache from GitHub Actions cache with key: ${cacheKey}`
   );
   let matchedKey;
@@ -90480,7 +90498,7 @@ async function restoreCacheFromKey(cacheKey, cachePath, stateKey, outputKey) {
     matchedKey = await restoreCache([cachePath], cacheKey);
   } catch (err) {
     const message = err.message;
-    warning(message);
+    warning2(message);
     setOutput(outputKey, false);
     return;
   }
@@ -90489,7 +90507,7 @@ async function restoreCacheFromKey(cacheKey, cachePath, stateKey, outputKey) {
 async function computeKeys(inputs, pythonVersion) {
   let cacheDependencyPathHash = "-";
   if (inputs.cacheDependencyGlob !== "") {
-    info(
+    info2(
       `Searching files using cache dependency glob: ${inputs.cacheDependencyGlob.split("\n").join(",")}`
     );
     cacheDependencyPathHash += await hashFiles2(
@@ -90497,7 +90515,7 @@ async function computeKeys(inputs, pythonVersion) {
       true
     );
     if (cacheDependencyPathHash === "-") {
-      warning(
+      warning2(
         `No file matched to [${inputs.cacheDependencyGlob.split("\n").join(",")}]. The cache will never get invalidated. Make sure you have checked out the target repository and configured the cache-dependency-glob input correctly.`
       );
     }
@@ -90515,12 +90533,12 @@ async function computeKeys(inputs, pythonVersion) {
 }
 function handleMatchResult(matchedKey, primaryKey, stateKey, outputKey) {
   if (!matchedKey) {
-    info(`No GitHub Actions cache found for key: ${primaryKey}`);
+    info2(`No GitHub Actions cache found for key: ${primaryKey}`);
     setOutput(outputKey, false);
     return;
   }
   saveState(stateKey, matchedKey);
-  info(`cache restored from GitHub Actions cache with key: ${matchedKey}`);
+  info2(`cache restored from GitHub Actions cache with key: ${matchedKey}`);
   setOutput(outputKey, true);
 }
 
@@ -95835,7 +95853,7 @@ async function fetchManifest(manifestUrl = VERSIONS_MANIFEST_URL) {
     debug(`Using cached manifest data from ${manifestUrl}`);
     return cachedVersions;
   }
-  info(`Fetching manifest data from ${manifestUrl} ...`);
+  info2(`Fetching manifest data from ${manifestUrl} ...`);
   const response = await fetch(manifestUrl, {});
   if (!response.ok) {
     throw new Error(
@@ -95892,7 +95910,7 @@ async function getLatestVersion(manifestUrl = VERSIONS_MANIFEST_URL) {
   return latestVersion;
 }
 async function getAllVersions(manifestUrl = VERSIONS_MANIFEST_URL) {
-  info(
+  info2(
     `Getting available versions from ${manifestSource(manifestUrl)} ...`
   );
   const versions = await fetchManifest(manifestUrl);
@@ -96796,9 +96814,9 @@ var VERSION_FILE_PARSERS = [
   }
 ];
 function getParsedVersionFile(filePath) {
-  info(`Trying to find version for uv in: ${filePath}`);
+  info2(`Trying to find version for uv in: ${filePath}`);
   if (!import_node_fs5.default.existsSync(filePath)) {
-    info(`Could not find file: ${filePath}`);
+    info2(`Could not find file: ${filePath}`);
     return void 0;
   }
   const parser = getVersionFileParser(filePath);
@@ -96811,15 +96829,13 @@ function getParsedVersionFile(filePath) {
       return void 0;
     }
     const normalizedSpecifier = normalizeVersionSpecifier(specifier);
-    info(`Found version for uv in ${filePath}: ${normalizedSpecifier}`);
+    info2(`Found version for uv in ${filePath}: ${normalizedSpecifier}`);
     return {
       format: parser.format,
       specifier: normalizedSpecifier
     };
   } catch (error2) {
-    warning(
-      `Error while parsing ${filePath}: ${error2.message}`
-    );
+    warning2(`Error while parsing ${filePath}: ${error2.message}`);
     return void 0;
   }
 }
@@ -96904,7 +96920,7 @@ var WorkspaceVersionResolver = class {
         specifier: versionFile.specifier
       };
     }
-    info(
+    info2(
       "Could not determine uv version from uv.toml or pyproject.toml. Falling back to latest."
     );
     return void 0;
@@ -96961,7 +96977,7 @@ var LatestVersionResolver2 = class {
       return void 0;
     }
     if (context3.parsedSpecifier.kind === "range" && context3.parsedSpecifier.isSimpleMinimumVersionSpecifier) {
-      info("Found minimum version specifier, using latest version");
+      info2("Found minimum version specifier, using latest version");
     }
     const latestVersion = await getLatestVersion(context3.manifestUrl);
     if (context3.parsedSpecifier.kind === "range" && context3.parsedSpecifier.isSimpleMinimumVersionSpecifier && !pep440.satisfies(latestVersion, context3.parsedSpecifier.raw)) {
@@ -97081,7 +97097,7 @@ async function downloadVersion(platform2, arch3, version3, checksum, githubToken
     if (mirrorUrl === void 0) {
       throw err;
     }
-    warning(
+    warning2(
       `Failed to download from mirror, falling back to GitHub Releases: ${err.message}`
     );
     return await downloadArtifact(
@@ -97109,7 +97125,7 @@ function githubTokenForUrl(downloadUrl, githubToken) {
   }
 }
 async function downloadArtifact(downloadUrl, artifactName, platform2, arch3, version3, checksum, githubToken) {
-  info(`Downloading uv from "${downloadUrl}" ...`);
+  info2(`Downloading uv from "${downloadUrl}" ...`);
   const downloadPath = await downloadTool(
     downloadUrl,
     void 0,
@@ -97121,7 +97137,7 @@ async function downloadArtifact(downloadUrl, artifactName, platform2, arch3, ver
     try {
       uvDir = await extractTar2(downloadPath, void 0, "x");
     } catch (err) {
-      info(
+      info2(
         `Extracting with tar failed, falling back to zip extraction: ${err.message}`
       );
       const extension = getExtension(platform2);
@@ -97186,6 +97202,7 @@ function loadInputs() {
   const manifestFile = getManifestFile();
   const downloadFromAstralMirror = getInput("download-from-astral-mirror") === "true";
   const addProblemMatchers = getInput("add-problem-matchers") === "true";
+  const quiet2 = getInput("quiet") === "true";
   const resolutionStrategy = getResolutionStrategy();
   return {
     activateEnvironment: activateEnvironment2,
@@ -97205,6 +97222,7 @@ function loadInputs() {
     pruneCache,
     pythonDir,
     pythonVersion,
+    quiet: quiet2,
     resolutionStrategy,
     restoreCache: restoreCache3,
     saveCache: saveCache2,
@@ -97228,7 +97246,7 @@ function getVenvPath(workingDirectory, activateEnvironment2) {
   const venvPathInput = getInput("venv-path");
   if (venvPathInput !== "") {
     if (!activateEnvironment2) {
-      warning("venv-path is only used when activate-environment is true");
+      warning2("venv-path is only used when activate-environment is true");
     }
     const tildeExpanded = expandTilde(venvPathInput);
     return normalizePath(resolveRelativePath(workingDirectory, tildeExpanded));
@@ -97291,7 +97309,7 @@ function getCacheLocalPath(workingDirectory, versionFile, enableCache) {
     return { path: cacheDirFromConfig, source: 1 /* Config */ };
   }
   if (process.env.UV_CACHE_DIR !== void 0) {
-    info(`UV_CACHE_DIR is already set to ${process.env.UV_CACHE_DIR}`);
+    info2(`UV_CACHE_DIR is already set to ${process.env.UV_CACHE_DIR}`);
     return { path: process.env.UV_CACHE_DIR, source: 2 /* Env */ };
   }
   if (enableCache) {
@@ -97324,12 +97342,12 @@ function getCacheDirFromConfig(workingDirectory, versionFile) {
     try {
       const cacheDir2 = getConfigValueFromTomlFile(resolvedPath, "cache-dir");
       if (cacheDir2 !== void 0) {
-        info(`Found cache-dir in ${resolvedPath}: ${cacheDir2}`);
+        info2(`Found cache-dir in ${resolvedPath}: ${cacheDir2}`);
         return cacheDir2;
       }
     } catch (err) {
       const message = err.message;
-      warning(`Error while parsing ${filePath}: ${message}`);
+      warning2(`Error while parsing ${filePath}: ${message}`);
       return void 0;
     }
   }
@@ -97337,7 +97355,7 @@ function getCacheDirFromConfig(workingDirectory, versionFile) {
 }
 function getUvPythonDir() {
   if (process.env.UV_PYTHON_INSTALL_DIR !== void 0) {
-    info(
+    info2(
       `UV_PYTHON_INSTALL_DIR is already set to ${process.env.UV_PYTHON_INSTALL_DIR}`
     );
     return process.env.UV_PYTHON_INSTALL_DIR;
@@ -97473,7 +97491,7 @@ async function run() {
     setCacheDir(inputs);
     setOutput("uv-version", setupResult.version);
     saveState(STATE_UV_VERSION, setupResult.version);
-    info(`Successfully installed uv version ${setupResult.version}`);
+    info2(`Successfully installed uv version ${setupResult.version}`);
     const detectedPythonVersion = await getPythonVersion(inputs);
     setOutput("python-version", detectedPythonVersion);
     if (inputs.enableCache) {
@@ -97488,11 +97506,11 @@ async function run() {
 function detectEmptyWorkdir(inputs) {
   if (import_node_fs7.default.readdirSync(inputs.workingDirectory).length === 0) {
     if (inputs.ignoreEmptyWorkdir) {
-      info(
+      info2(
         "Empty workdir detected. Ignoring because ignore-empty-workdir is enabled"
       );
     } else {
-      warning(
+      warning2(
         "Empty workdir detected. This may cause unexpected behavior. You can enable ignore-empty-workdir to mute this warning."
       );
     }
@@ -97508,7 +97526,7 @@ async function setupUv(inputs, platform2, arch3) {
   });
   const toolCacheResult = tryGetFromToolCache(arch3, resolvedVersion);
   if (toolCacheResult.installedPath) {
-    info(`Found uv in tool-cache for ${toolCacheResult.version}`);
+    info2(`Found uv in tool-cache for ${toolCacheResult.version}`);
     return {
       uvDir: toolCacheResult.installedPath,
       version: toolCacheResult.version
@@ -97533,61 +97551,61 @@ function addUvToPathAndOutput(cachedPath) {
   saveState(STATE_UV_PATH, `${cachedPath}${path16.sep}uv`);
   setOutput("uvx-path", `${cachedPath}${path16.sep}uvx`);
   if (process.env.UV_NO_MODIFY_PATH !== void 0) {
-    info("UV_NO_MODIFY_PATH is set, not modifying PATH");
+    info2("UV_NO_MODIFY_PATH is set, not modifying PATH");
   } else {
     addPath(cachedPath);
-    info(`Added ${cachedPath} to the path`);
+    info2(`Added ${cachedPath} to the path`);
   }
 }
 function addToolBinToPath(inputs) {
   if (inputs.toolBinDir !== void 0) {
     exportVariable("UV_TOOL_BIN_DIR", inputs.toolBinDir);
-    info(`Set UV_TOOL_BIN_DIR to ${inputs.toolBinDir}`);
+    info2(`Set UV_TOOL_BIN_DIR to ${inputs.toolBinDir}`);
     if (process.env.UV_NO_MODIFY_PATH !== void 0) {
-      info(
+      info2(
         `UV_NO_MODIFY_PATH is set, not adding ${inputs.toolBinDir} to path`
       );
     } else {
       addPath(inputs.toolBinDir);
-      info(`Added ${inputs.toolBinDir} to the path`);
+      info2(`Added ${inputs.toolBinDir} to the path`);
     }
   } else {
     if (process.env.UV_NO_MODIFY_PATH !== void 0) {
-      info("UV_NO_MODIFY_PATH is set, not adding user local bin to path");
+      info2("UV_NO_MODIFY_PATH is set, not adding user local bin to path");
       return;
     }
     if (process.env.XDG_BIN_HOME !== void 0) {
       addPath(process.env.XDG_BIN_HOME);
-      info(`Added ${process.env.XDG_BIN_HOME} to the path`);
+      info2(`Added ${process.env.XDG_BIN_HOME} to the path`);
     } else if (process.env.XDG_DATA_HOME !== void 0) {
       addPath(`${process.env.XDG_DATA_HOME}/../bin`);
-      info(`Added ${process.env.XDG_DATA_HOME}/../bin to the path`);
+      info2(`Added ${process.env.XDG_DATA_HOME}/../bin to the path`);
     } else {
       addPath(`${process.env.HOME}/.local/bin`);
-      info(`Added ${process.env.HOME}/.local/bin to the path`);
+      info2(`Added ${process.env.HOME}/.local/bin to the path`);
     }
   }
 }
 function setToolDir(inputs) {
   if (inputs.toolDir !== void 0) {
     exportVariable("UV_TOOL_DIR", inputs.toolDir);
-    info(`Set UV_TOOL_DIR to ${inputs.toolDir}`);
+    info2(`Set UV_TOOL_DIR to ${inputs.toolDir}`);
   }
 }
 function addPythonDirToPath(inputs) {
   exportVariable("UV_PYTHON_INSTALL_DIR", inputs.pythonDir);
-  info(`Set UV_PYTHON_INSTALL_DIR to ${inputs.pythonDir}`);
+  info2(`Set UV_PYTHON_INSTALL_DIR to ${inputs.pythonDir}`);
   if (process.env.UV_NO_MODIFY_PATH !== void 0) {
-    info("UV_NO_MODIFY_PATH is set, not adding python dir to path");
+    info2("UV_NO_MODIFY_PATH is set, not adding python dir to path");
   } else {
     addPath(inputs.pythonDir);
-    info(`Added ${inputs.pythonDir} to the path`);
+    info2(`Added ${inputs.pythonDir} to the path`);
   }
 }
 function setupPython(inputs) {
   if (inputs.pythonVersion !== "") {
     exportVariable("UV_PYTHON", inputs.pythonVersion);
-    info(`Set UV_PYTHON to ${inputs.pythonVersion}`);
+    info2(`Set UV_PYTHON to ${inputs.pythonVersion}`);
   }
 }
 async function activateEnvironment(inputs) {
@@ -97597,7 +97615,7 @@ async function activateEnvironment(inputs) {
         "UV_NO_MODIFY_PATH and activate-environment cannot be used together."
       );
     }
-    info(`Creating and activating python venv at ${inputs.venvPath}...`);
+    info2(`Creating and activating python venv at ${inputs.venvPath}...`);
     const venvArgs = [
       "venv",
       inputs.venvPath,
@@ -97621,13 +97639,13 @@ async function activateEnvironment(inputs) {
 function setCacheDir(inputs) {
   if (inputs.cacheLocalPath !== void 0) {
     if (inputs.cacheLocalPath.source === 1 /* Config */) {
-      info(
+      info2(
         "Using cache-dir from uv config file, not modifying UV_CACHE_DIR"
       );
       return;
     }
     exportVariable("UV_CACHE_DIR", inputs.cacheLocalPath.path);
-    info(`Set UV_CACHE_DIR to ${inputs.cacheLocalPath.path}`);
+    info2(`Set UV_CACHE_DIR to ${inputs.cacheLocalPath.path}`);
   }
 }
 function addMatchers(inputs) {

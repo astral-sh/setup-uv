@@ -10,6 +10,7 @@ import {
 } from "./cache/restore-cache";
 import { STATE_UV_PATH, STATE_UV_VERSION } from "./utils/constants";
 import { loadInputs, type SetupInputs } from "./utils/inputs";
+import * as log from "./utils/logging";
 
 function formatUnexpectedFailure(error: unknown): string {
   if (error instanceof Error) {
@@ -38,7 +39,7 @@ export async function run(): Promise<void> {
       if (inputs.saveCache) {
         await saveCache(inputs);
       } else {
-        core.info("save-cache is false. Skipping save cache step.");
+        log.info("save-cache is false. Skipping save cache step.");
       }
       // https://github.com/nodejs/node/issues/56645#issuecomment-3924958861
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -61,11 +62,11 @@ async function saveCache(inputs: SetupInputs): Promise<void> {
   const matchedKey = core.getState(STATE_CACHE_MATCHED_KEY);
 
   if (!cacheKey) {
-    core.warning("Error retrieving cache key from state.");
+    log.warning("Error retrieving cache key from state.");
     return;
   }
   if (matchedKey === cacheKey) {
-    core.info(`Cache hit occurred on key ${cacheKey}, not saving cache.`);
+    log.info(`Cache hit occurred on key ${cacheKey}, not saving cache.`);
   } else {
     if (inputs.pruneCache) {
       await pruneCache();
@@ -74,7 +75,7 @@ async function saveCache(inputs: SetupInputs): Promise<void> {
     const actualCachePath = getUvCachePath(inputs);
     if (!fs.existsSync(actualCachePath)) {
       if (inputs.ignoreNothingToCache) {
-        core.info(
+        log.info(
           "No cacheable uv cache paths were found. Ignoring because ignore-nothing-to-cache is enabled.",
         );
       } else {
@@ -94,7 +95,7 @@ async function saveCache(inputs: SetupInputs): Promise<void> {
 
   if (inputs.cachePython) {
     if (!fs.existsSync(inputs.pythonDir)) {
-      core.warning(
+      log.warning(
         `Python cache path ${inputs.pythonDir} does not exist on disk. Skipping Python cache save because no managed Python installation was found. If you want uv to install managed Python instead of using a system interpreter, set UV_PYTHON_PREFERENCE=only-managed.`,
       );
       return;
@@ -121,7 +122,7 @@ async function pruneCache(): Promise<void> {
     execArgs.push("--force");
   }
 
-  core.info("Pruning cache...");
+  log.info("Pruning cache...");
   const uvPath = core.getState(STATE_UV_PATH);
   await exec.exec(uvPath, execArgs, options);
 }
@@ -136,7 +137,7 @@ function getUvCachePath(inputs: SetupInputs): string {
     process.env.UV_CACHE_DIR &&
     process.env.UV_CACHE_DIR !== inputs.cacheLocalPath.path
   ) {
-    core.warning(
+    log.warning(
       `The environment variable UV_CACHE_DIR has been changed to "${process.env.UV_CACHE_DIR}", by an action or step running after astral-sh/setup-uv. This can lead to unexpected behavior. If you expected this to happen set the cache-local-path input to "${process.env.UV_CACHE_DIR}" instead of "${inputs.cacheLocalPath.path}".`,
     );
     return process.env.UV_CACHE_DIR;
@@ -153,15 +154,13 @@ async function saveCacheToKey(
   const matchedKey = core.getState(stateKey);
 
   if (matchedKey === cacheKey) {
-    core.info(
-      `${cacheName} hit occurred on key ${cacheKey}, not saving cache.`,
-    );
+    log.info(`${cacheName} hit occurred on key ${cacheKey}, not saving cache.`);
     return;
   }
 
-  core.info(`Including ${cacheName} path: ${cachePath}`);
+  log.info(`Including ${cacheName} path: ${cachePath}`);
   await cache.saveCache([cachePath], cacheKey);
-  core.info(`${cacheName} saved with key: ${cacheKey}`);
+  log.info(`${cacheName} saved with key: ${cacheKey}`);
 }
 
 run();

@@ -1,6 +1,7 @@
 import * as core from "@actions/core";
 import { VERSIONS_MANIFEST_URL } from "../utils/constants";
 import { fetch } from "../utils/fetch";
+import * as log from "../utils/logging";
 import { selectDefaultVariant } from "./variant-selection";
 
 export interface ManifestArtifact {
@@ -33,7 +34,7 @@ export async function fetchManifest(
     return cachedVersions;
   }
 
-  core.info(`Fetching manifest data from ${manifestUrl} ...`);
+  log.info(`Fetching manifest data from ${manifestUrl} ...`);
   const response = await fetch(manifestUrl, {});
   if (!response.ok) {
     throw new Error(
@@ -111,7 +112,7 @@ export async function getLatestVersion(
 export async function getAllVersions(
   manifestUrl: string = VERSIONS_MANIFEST_URL,
 ): Promise<string[]> {
-  core.info(
+  log.info(
     `Getting available versions from ${manifestSource(manifestUrl)} ...`,
   );
   const versions = await fetchManifest(manifestUrl);

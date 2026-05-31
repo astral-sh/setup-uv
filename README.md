@@ -125,6 +125,9 @@ Have a look under [Advanced Configuration](#advanced-configuration) for detailed
 
     # Add problem matchers
     add-problem-matchers: "true"
+
+    # Suppress info-level log output. Only warnings and errors are shown
+    quiet: "false"
 ```
 
 ### Outputs

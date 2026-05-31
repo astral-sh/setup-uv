@@ -86,6 +86,9 @@ inputs:
   add-problem-matchers:
     description: "Add problem matchers."
     default: "true"
+  quiet:
+    description: "Suppress info-level log output. Only warnings and errors are shown."
+    default: "false"
   resolution-strategy:
     description: "Resolution strategy to use when resolving version ranges. 'highest' uses the latest compatible version, 'lowest' uses the oldest compatible version."
     default: "highest"

@@ -133,7 +133,7 @@ var require_tunnel = __commonJS({
         connectOptions.headers = connectOptions.headers || {};
         connectOptions.headers["Proxy-Authorization"] = "Basic " + new Buffer(connectOptions.proxyAuth).toString("base64");
       }
-      debug2("making CONNECT request");
+      debug3("making CONNECT request");
       var connectReq = self2.request(connectOptions);
       connectReq.useChunkedEncodingByDefault = false;
       connectReq.once("response", onResponse);
@@ -153,7 +153,7 @@ var require_tunnel = __commonJS({
         connectReq.removeAllListeners();
         socket.removeAllListeners();
         if (res.statusCode !== 200) {
-          debug2(
+          debug3(
             "tunneling socket could not be established, statusCode=%d",
             res.statusCode
           );
@@ -165,7 +165,7 @@ var require_tunnel = __commonJS({
           return;
         }
         if (head.length > 0) {
-          debug2("got illegal response body from proxy");
+          debug3("got illegal response body from proxy");
           socket.destroy();
           var error2 = new Error("got illegal response body from proxy");
           error2.code = "ECONNRESET";
@@ -173,13 +173,13 @@ var require_tunnel = __commonJS({
           self2.removeSocket(placeholder);
           return;
         }
-        debug2("tunneling connection has established");
+        debug3("tunneling connection has established");
         self2.sockets[self2.sockets.indexOf(placeholder)] = socket;
         return cb(socket);
       }
       function onError(cause) {
         connectReq.removeAllListeners();
-        debug2(
+        debug3(
           "tunneling socket could not be established, cause=%s\n",
           cause.message,
           cause.stack
@@ -241,9 +241,9 @@ var require_tunnel = __commonJS({
       }
       return target;
     }
-    var debug2;
+    var debug3;
     if (process.env.NODE_DEBUG && /\btunnel\b/.test(process.env.NODE_DEBUG)) {
-      debug2 = function() {
+      debug3 = function() {
         var args = Array.prototype.slice.call(arguments);
         if (typeof args[0] === "string") {
           args[0] = "TUNNEL: " + args[0];
@@ -253,10 +253,10 @@ var require_tunnel = __commonJS({
         console.error.apply(console, args);
       };
     } else {
-      debug2 = function() {
+      debug3 = function() {
       };
     }
-    exports2.debug = debug2;
+    exports2.debug = debug3;
   }
 });
 
@@ -18936,7 +18936,7 @@ var require_minimatch = __commonJS({
       }
       this.parseNegate();
       var set = this.globSet = this.braceExpand();
-      if (options.debug) this.debug = function debug2() {
+      if (options.debug) this.debug = function debug3() {
         console.error.apply(console, arguments);
       };
       this.debug(this.pattern, set);
@@ -19414,9 +19414,9 @@ var require_constants6 = __commonJS({
 var require_debug = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/internal/debug.js"(exports2, module2) {
     "use strict";
-    var debug2 = typeof process === "object" && process.env && process.env.NODE_DEBUG && /\bsemver\b/i.test(process.env.NODE_DEBUG) ? (...args) => console.error("SEMVER", ...args) : () => {
+    var debug3 = typeof process === "object" && process.env && process.env.NODE_DEBUG && /\bsemver\b/i.test(process.env.NODE_DEBUG) ? (...args) => console.error("SEMVER", ...args) : () => {
     };
-    module2.exports = debug2;
+    module2.exports = debug3;
   }
 });
 
@@ -19429,7 +19429,7 @@ var require_re = __commonJS({
       MAX_SAFE_BUILD_LENGTH,
       MAX_LENGTH
     } = require_constants6();
-    var debug2 = require_debug();
+    var debug3 = require_debug();
     exports2 = module2.exports = {};
     var re = exports2.re = [];
     var safeRe = exports2.safeRe = [];
@@ -19452,7 +19452,7 @@ var require_re = __commonJS({
     var createToken = (name, value, isGlobal) => {
       const safe = makeSafeRegex(value);
       const index = R++;
-      debug2(name, index, value);
+      debug3(name, index, value);
       t[name] = index;
       src[index] = value;
       safeSrc[index] = safe;
@@ -19556,7 +19556,7 @@ var require_identifiers = __commonJS({
 var require_semver = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/classes/semver.js"(exports2, module2) {
     "use strict";
-    var debug2 = require_debug();
+    var debug3 = require_debug();
     var { MAX_LENGTH, MAX_SAFE_INTEGER } = require_constants6();
     var { safeRe: re, t } = require_re();
     var parseOptions = require_parse_options();
@@ -19578,7 +19578,7 @@ var require_semver = __commonJS({
             `version is longer than ${MAX_LENGTH} characters`
           );
         }
-        debug2("SemVer", version3, options);
+        debug3("SemVer", version3, options);
         this.options = options;
         this.loose = !!options.loose;
         this.includePrerelease = !!options.includePrerelease;
@@ -19626,7 +19626,7 @@ var require_semver = __commonJS({
         return this.version;
       }
       compare(other) {
-        debug2("SemVer.compare", this.version, this.options, other);
+        debug3("SemVer.compare", this.version, this.options, other);
         if (!(other instanceof _SemVer)) {
           if (typeof other === "string" && other === this.version) {
             return 0;
@@ -19677,7 +19677,7 @@ var require_semver = __commonJS({
         do {
           const a = this.prerelease[i];
           const b = other.prerelease[i];
-          debug2("prerelease compare", i, a, b);
+          debug3("prerelease compare", i, a, b);
           if (a === void 0 && b === void 0) {
             return 0;
           } else if (b === void 0) {
@@ -19699,7 +19699,7 @@ var require_semver = __commonJS({
         do {
           const a = this.build[i];
           const b = other.build[i];
-          debug2("build compare", i, a, b);
+          debug3("build compare", i, a, b);
           if (a === void 0 && b === void 0) {
             return 0;
           } else if (b === void 0) {
@@ -20327,21 +20327,21 @@ var require_range = __commonJS({
         const loose = this.options.loose;
         const hr = loose ? re[t.HYPHENRANGELOOSE] : re[t.HYPHENRANGE];
         range2 = range2.replace(hr, hyphenReplace(this.options.includePrerelease));
-        debug2("hyphen replace", range2);
+        debug3("hyphen replace", range2);
         range2 = range2.replace(re[t.COMPARATORTRIM], comparatorTrimReplace);
-        debug2("comparator trim", range2);
+        debug3("comparator trim", range2);
         range2 = range2.replace(re[t.TILDETRIM], tildeTrimReplace);
-        debug2("tilde trim", range2);
+        debug3("tilde trim", range2);
         range2 = range2.replace(re[t.CARETTRIM], caretTrimReplace);
-        debug2("caret trim", range2);
+        debug3("caret trim", range2);
         let rangeList = range2.split(" ").map((comp26) => parseComparator(comp26, this.options)).join(" ").split(/\s+/).map((comp26) => replaceGTE0(comp26, this.options));
         if (loose) {
           rangeList = rangeList.filter((comp26) => {
-            debug2("loose invalid filter", comp26, this.options);
+            debug3("loose invalid filter", comp26, this.options);
             return !!comp26.match(re[t.COMPARATORLOOSE]);
           });
         }
-        debug2("range list", rangeList);
+        debug3("range list", rangeList);
         const rangeMap = /* @__PURE__ */ new Map();
         const comparators = rangeList.map((comp26) => new Comparator(comp26, this.options));
         for (const comp26 of comparators) {
@@ -20396,7 +20396,7 @@ var require_range = __commonJS({
     var cache = new LRU();
     var parseOptions = require_parse_options();
     var Comparator = require_comparator();
-    var debug2 = require_debug();
+    var debug3 = require_debug();
     var SemVer = require_semver();
     var {
       safeRe: re,
@@ -20422,15 +20422,15 @@ var require_range = __commonJS({
     };
     var parseComparator = (comp26, options) => {
       comp26 = comp26.replace(re[t.BUILD], "");
-      debug2("comp", comp26, options);
+      debug3("comp", comp26, options);
       comp26 = replaceCarets(comp26, options);
-      debug2("caret", comp26);
+      debug3("caret", comp26);
       comp26 = replaceTildes(comp26, options);
-      debug2("tildes", comp26);
+      debug3("tildes", comp26);
       comp26 = replaceXRanges(comp26, options);
-      debug2("xrange", comp26);
+      debug3("xrange", comp26);
       comp26 = replaceStars(comp26, options);
-      debug2("stars", comp26);
+      debug3("stars", comp26);
       return comp26;
     };
     var isX = (id) => !id || id.toLowerCase() === "x" || id === "*";
@@ -20440,7 +20440,7 @@ var require_range = __commonJS({
     var replaceTilde = (comp26, options) => {
       const r = options.loose ? re[t.TILDELOOSE] : re[t.TILDE];
       return comp26.replace(r, (_, M, m, p, pr) => {
-        debug2("tilde", comp26, _, M, m, p, pr);
+        debug3("tilde", comp26, _, M, m, p, pr);
         let ret;
         if (isX(M)) {
           ret = "";
@@ -20449,12 +20449,12 @@ var require_range = __commonJS({
         } else if (isX(p)) {
           ret = `>=${M}.${m}.0 <${M}.${+m + 1}.0-0`;
         } else if (pr) {
-          debug2("replaceTilde pr", pr);
+          debug3("replaceTilde pr", pr);
           ret = `>=${M}.${m}.${p}-${pr} <${M}.${+m + 1}.0-0`;
         } else {
           ret = `>=${M}.${m}.${p} <${M}.${+m + 1}.0-0`;
         }
-        debug2("tilde return", ret);
+        debug3("tilde return", ret);
         return ret;
       });
     };
@@ -20462,11 +20462,11 @@ var require_range = __commonJS({
       return comp26.trim().split(/\s+/).map((c) => replaceCaret(c, options)).join(" ");
     };
     var replaceCaret = (comp26, options) => {
-      debug2("caret", comp26, options);
+      debug3("caret", comp26, options);
       const r = options.loose ? re[t.CARETLOOSE] : re[t.CARET];
       const z = options.includePrerelease ? "-0" : "";
       return comp26.replace(r, (_, M, m, p, pr) => {
-        debug2("caret", comp26, _, M, m, p, pr);
+        debug3("caret", comp26, _, M, m, p, pr);
         let ret;
         if (isX(M)) {
           ret = "";
@@ -20479,7 +20479,7 @@ var require_range = __commonJS({
             ret = `>=${M}.${m}.0${z} <${+M + 1}.0.0-0`;
           }
         } else if (pr) {
-          debug2("replaceCaret pr", pr);
+          debug3("replaceCaret pr", pr);
           if (M === "0") {
             if (m === "0") {
               ret = `>=${M}.${m}.${p}-${pr} <${M}.${m}.${+p + 1}-0`;
@@ -20490,7 +20490,7 @@ var require_range = __commonJS({
             ret = `>=${M}.${m}.${p}-${pr} <${+M + 1}.0.0-0`;
           }
         } else {
-          debug2("no pr");
+          debug3("no pr");
           if (M === "0") {
             if (m === "0") {
               ret = `>=${M}.${m}.${p}${z} <${M}.${m}.${+p + 1}-0`;
@@ -20501,19 +20501,19 @@ var require_range = __commonJS({
             ret = `>=${M}.${m}.${p} <${+M + 1}.0.0-0`;
           }
         }
-        debug2("caret return", ret);
+        debug3("caret return", ret);
         return ret;
       });
     };
     var replaceXRanges = (comp26, options) => {
-      debug2("replaceXRanges", comp26, options);
+      debug3("replaceXRanges", comp26, options);
       return comp26.split(/\s+/).map((c) => replaceXRange(c, options)).join(" ");
     };
     var replaceXRange = (comp26, options) => {
       comp26 = comp26.trim();
       const r = options.loose ? re[t.XRANGELOOSE] : re[t.XRANGE];
       return comp26.replace(r, (ret, gtlt, M, m, p, pr) => {
-        debug2("xRange", comp26, ret, gtlt, M, m, p, pr);
+        debug3("xRange", comp26, ret, gtlt, M, m, p, pr);
         const xM = isX(M);
         const xm = xM || isX(m);
         const xp = xm || isX(p);
@@ -20560,16 +20560,16 @@ var require_range = __commonJS({
         } else if (xp) {
           ret = `>=${M}.${m}.0${pr} <${M}.${+m + 1}.0-0`;
         }
-        debug2("xRange return", ret);
+        debug3("xRange return", ret);
         return ret;
       });
     };
     var replaceStars = (comp26, options) => {
-      debug2("replaceStars", comp26, options);
+      debug3("replaceStars", comp26, options);
       return comp26.trim().replace(re[t.STAR], "");
     };
     var replaceGTE0 = (comp26, options) => {
-      debug2("replaceGTE0", comp26, options);
+      debug3("replaceGTE0", comp26, options);
       return comp26.trim().replace(re[options.includePrerelease ? t.GTE0PRE : t.GTE0], "");
     };
     var hyphenReplace = (incPr) => ($0, from, fM, fm, fp, fpr, fb, to, tM, tm, tp, tpr) => {
@@ -20607,7 +20607,7 @@ var require_range = __commonJS({
       }
       if (version3.prerelease.length && !options.includePrerelease) {
         for (let i = 0; i < set.length; i++) {
-          debug2(set[i].semver);
+          debug3(set[i].semver);
           if (set[i].semver === Comparator.ANY) {
             continue;
           }
@@ -20644,7 +20644,7 @@ var require_comparator = __commonJS({
           }
         }
         comp26 = comp26.trim().split(/\s+/).join(" ");
-        debug2("comparator", comp26, options);
+        debug3("comparator", comp26, options);
         this.options = options;
         this.loose = !!options.loose;
         this.parse(comp26);
@@ -20653,7 +20653,7 @@ var require_comparator = __commonJS({
         } else {
           this.value = this.operator + this.semver.version;
         }
-        debug2("comp", this);
+        debug3("comp", this);
       }
       parse(comp26) {
         const r = this.options.loose ? re[t.COMPARATORLOOSE] : re[t.COMPARATOR];
@@ -20675,7 +20675,7 @@ var require_comparator = __commonJS({
         return this.value;
       }
       test(version3) {
-        debug2("Comparator.test", version3, this.options.loose);
+        debug3("Comparator.test", version3, this.options.loose);
         if (this.semver === ANY || version3 === ANY) {
           return true;
         }
@@ -20732,7 +20732,7 @@ var require_comparator = __commonJS({
     var parseOptions = require_parse_options();
     var { safeRe: re, t } = require_re();
     var cmp = require_cmp();
-    var debug2 = require_debug();
+    var debug3 = require_debug();
     var SemVer = require_semver();
     var Range = require_range();
   }
@@ -21456,11 +21456,11 @@ var require_common = __commonJS({
         let enableOverride = null;
         let namespacesCache;
         let enabledCache;
-        function debug2(...args) {
-          if (!debug2.enabled) {
+        function debug3(...args) {
+          if (!debug3.enabled) {
             return;
           }
-          const self2 = debug2;
+          const self2 = debug3;
           const curr = Number(/* @__PURE__ */ new Date());
           const ms = curr - (prevTime || curr);
           self2.diff = ms;
@@ -21490,12 +21490,12 @@ var require_common = __commonJS({
           const logFn = self2.log || createDebug.log;
           logFn.apply(self2, args);
         }
-        debug2.namespace = namespace;
-        debug2.useColors = createDebug.useColors();
-        debug2.color = createDebug.selectColor(namespace);
-        debug2.extend = extend2;
-        debug2.destroy = createDebug.destroy;
-        Object.defineProperty(debug2, "enabled", {
+        debug3.namespace = namespace;
+        debug3.useColors = createDebug.useColors();
+        debug3.color = createDebug.selectColor(namespace);
+        debug3.extend = extend2;
+        debug3.destroy = createDebug.destroy;
+        Object.defineProperty(debug3, "enabled", {
           enumerable: true,
           configurable: false,
           get: () => {
@@ -21513,9 +21513,9 @@ var require_common = __commonJS({
           }
         });
         if (typeof createDebug.init === "function") {
-          createDebug.init(debug2);
+          createDebug.init(debug3);
         }
-        return debug2;
+        return debug3;
       }
       function extend2(namespace, delimiter3) {
         const newDebug = createDebug(this.namespace + (typeof delimiter3 === "undefined" ? ":" : delimiter3) + namespace);
@@ -22025,11 +22025,11 @@ var require_node = __commonJS({
     function load() {
       return process.env.DEBUG;
     }
-    function init(debug2) {
-      debug2.inspectOpts = {};
+    function init(debug3) {
+      debug3.inspectOpts = {};
       const keys = Object.keys(exports2.inspectOpts);
       for (let i = 0; i < keys.length; i++) {
-        debug2.inspectOpts[keys[i]] = exports2.inspectOpts[keys[i]];
+        debug3.inspectOpts[keys[i]] = exports2.inspectOpts[keys[i]];
       }
     }
     module2.exports = require_common()(exports2);
@@ -22292,7 +22292,7 @@ var require_parse_proxy_response = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.parseProxyResponse = void 0;
     var debug_1 = __importDefault(require_src());
-    var debug2 = (0, debug_1.default)("https-proxy-agent:parse-proxy-response");
+    var debug3 = (0, debug_1.default)("https-proxy-agent:parse-proxy-response");
     function parseProxyResponse(socket) {
       return new Promise((resolve2, reject) => {
         let buffersLength = 0;
@@ -22311,12 +22311,12 @@ var require_parse_proxy_response = __commonJS({
         }
         function onend() {
           cleanup();
-          debug2("onend");
+          debug3("onend");
           reject(new Error("Proxy connection ended before receiving CONNECT response"));
         }
         function onerror(err) {
           cleanup();
-          debug2("onerror %o", err);
+          debug3("onerror %o", err);
           reject(err);
         }
         function ondata(b) {
@@ -22325,7 +22325,7 @@ var require_parse_proxy_response = __commonJS({
           const buffered = Buffer.concat(buffers, buffersLength);
           const endOfHeaders = buffered.indexOf("\r\n\r\n");
           if (endOfHeaders === -1) {
-            debug2("have not received end of HTTP headers yet...");
+            debug3("have not received end of HTTP headers yet...");
             read();
             return;
           }
@@ -22358,7 +22358,7 @@ var require_parse_proxy_response = __commonJS({
               headers[key] = value;
             }
           }
-          debug2("got proxy server response: %o %o", firstLine, headers);
+          debug3("got proxy server response: %o %o", firstLine, headers);
           cleanup();
           resolve2({
             connect: {
@@ -22421,7 +22421,7 @@ var require_dist2 = __commonJS({
     var agent_base_1 = require_dist();
     var url_1 = require("url");
     var parse_proxy_response_1 = require_parse_proxy_response();
-    var debug2 = (0, debug_1.default)("https-proxy-agent");
+    var debug3 = (0, debug_1.default)("https-proxy-agent");
     var setServernameFromNonIpHost = (options) => {
       if (options.servername === void 0 && options.host && !net.isIP(options.host)) {
         return {
@@ -22437,7 +22437,7 @@ var require_dist2 = __commonJS({
         this.options = { path: void 0 };
         this.proxy = typeof proxy === "string" ? new url_1.URL(proxy) : proxy;
         this.proxyHeaders = opts?.headers ?? {};
-        debug2("Creating new HttpsProxyAgent instance: %o", this.proxy.href);
+        debug3("Creating new HttpsProxyAgent instance: %o", this.proxy.href);
         const host = (this.proxy.hostname || this.proxy.host).replace(/^\[|\]$/g, "");
         const port = this.proxy.port ? parseInt(this.proxy.port, 10) : this.proxy.protocol === "https:" ? 443 : 80;
         this.connectOpts = {
@@ -22459,10 +22459,10 @@ var require_dist2 = __commonJS({
         }
         let socket;
         if (proxy.protocol === "https:") {
-          debug2("Creating `tls.Socket`: %o", this.connectOpts);
+          debug3("Creating `tls.Socket`: %o", this.connectOpts);
           socket = tls.connect(setServernameFromNonIpHost(this.connectOpts));
         } else {
-          debug2("Creating `net.Socket`: %o", this.connectOpts);
+          debug3("Creating `net.Socket`: %o", this.connectOpts);
           socket = net.connect(this.connectOpts);
         }
         const headers = typeof this.proxyHeaders === "function" ? this.proxyHeaders() : { ...this.proxyHeaders };
@@ -22490,7 +22490,7 @@ var require_dist2 = __commonJS({
         if (connect.statusCode === 200) {
           req.once("socket", resume);
           if (opts.secureEndpoint) {
-            debug2("Upgrading socket connection to TLS");
+            debug3("Upgrading socket connection to TLS");
             return tls.connect({
               ...omit(setServernameFromNonIpHost(opts), "host", "path", "port"),
               socket
@@ -22502,7 +22502,7 @@ var require_dist2 = __commonJS({
         const fakeSocket = new net.Socket({ writable: false });
         fakeSocket.readable = true;
         req.once("socket", (s) => {
-          debug2("Replaying proxy buffer for failed request");
+          debug3("Replaying proxy buffer for failed request");
           (0, assert_1.default)(s.listenerCount("data") > 0);
           s.push(buffered);
           s.push(null);
@@ -22570,13 +22570,13 @@ var require_dist3 = __commonJS({
     var events_1 = require("events");
     var agent_base_1 = require_dist();
     var url_1 = require("url");
-    var debug2 = (0, debug_1.default)("http-proxy-agent");
+    var debug3 = (0, debug_1.default)("http-proxy-agent");
     var HttpProxyAgent2 = class extends agent_base_1.Agent {
       constructor(proxy, opts) {
         super(opts);
         this.proxy = typeof proxy === "string" ? new url_1.URL(proxy) : proxy;
         this.proxyHeaders = opts?.headers ?? {};
-        debug2("Creating new HttpProxyAgent instance: %o", this.proxy.href);
+        debug3("Creating new HttpProxyAgent instance: %o", this.proxy.href);
         const host = (this.proxy.hostname || this.proxy.host).replace(/^\[|\]$/g, "");
         const port = this.proxy.port ? parseInt(this.proxy.port, 10) : this.proxy.protocol === "https:" ? 443 : 80;
         this.connectOpts = {
@@ -22622,21 +22622,21 @@ var require_dist3 = __commonJS({
         }
         let first;
         let endOfHeaders;
-        debug2("Regenerating stored HTTP header string for request");
+        debug3("Regenerating stored HTTP header string for request");
         req._implicitHeader();
         if (req.outputData && req.outputData.length > 0) {
-          debug2("Patching connection write() output buffer with updated header");
+          debug3("Patching connection write() output buffer with updated header");
           first = req.outputData[0].data;
           endOfHeaders = first.indexOf("\r\n\r\n") + 4;
           req.outputData[0].data = req._header + first.substring(endOfHeaders);
-          debug2("Output buffer: %o", req.outputData[0].data);
+          debug3("Output buffer: %o", req.outputData[0].data);
         }
         let socket;
         if (this.proxy.protocol === "https:") {
-          debug2("Creating `tls.Socket`: %o", this.connectOpts);
+          debug3("Creating `tls.Socket`: %o", this.connectOpts);
           socket = tls.connect(this.connectOpts);
         } else {
-          debug2("Creating `net.Socket`: %o", this.connectOpts);
+          debug3("Creating `net.Socket`: %o", this.connectOpts);
           socket = net.connect(this.connectOpts);
         }
         await (0, events_1.once)(socket, "connect");
@@ -24039,9 +24039,9 @@ var require_reflection_type_check = __commonJS({
     var reflection_info_1 = require_reflection_info();
     var oneof_1 = require_oneof();
     var ReflectionTypeCheck = class {
-      constructor(info2) {
+      constructor(info3) {
         var _a;
-        this.fields = (_a = info2.fields) !== null && _a !== void 0 ? _a : [];
+        this.fields = (_a = info3.fields) !== null && _a !== void 0 ? _a : [];
       }
       prepare() {
         if (this.data)
@@ -24287,8 +24287,8 @@ var require_reflection_json_reader = __commonJS({
     var assert_1 = require_assert();
     var reflection_long_convert_1 = require_reflection_long_convert();
     var ReflectionJsonReader = class {
-      constructor(info2) {
-        this.info = info2;
+      constructor(info3) {
+        this.info = info3;
       }
       prepare() {
         var _a;
@@ -24584,9 +24584,9 @@ var require_reflection_json_writer = __commonJS({
     var reflection_info_1 = require_reflection_info();
     var assert_1 = require_assert();
     var ReflectionJsonWriter = class {
-      constructor(info2) {
+      constructor(info3) {
         var _a;
-        this.fields = (_a = info2.fields) !== null && _a !== void 0 ? _a : [];
+        this.fields = (_a = info3.fields) !== null && _a !== void 0 ? _a : [];
       }
       /**
        * Converts the message to a JSON object, based on the field descriptors.
@@ -24839,8 +24839,8 @@ var require_reflection_binary_reader = __commonJS({
     var reflection_long_convert_1 = require_reflection_long_convert();
     var reflection_scalar_default_1 = require_reflection_scalar_default();
     var ReflectionBinaryReader = class {
-      constructor(info2) {
-        this.info = info2;
+      constructor(info3) {
+        this.info = info3;
       }
       prepare() {
         var _a;
@@ -25013,8 +25013,8 @@ var require_reflection_binary_writer = __commonJS({
     var assert_1 = require_assert();
     var pb_long_1 = require_pb_long();
     var ReflectionBinaryWriter = class {
-      constructor(info2) {
-        this.info = info2;
+      constructor(info3) {
+        this.info = info3;
       }
       prepare() {
         if (!this.fields) {
@@ -25264,9 +25264,9 @@ var require_reflection_merge_partial = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.reflectionMergePartial = void 0;
-    function reflectionMergePartial4(info2, target, source) {
+    function reflectionMergePartial4(info3, target, source) {
       let fieldValue, input = source, output;
-      for (let field of info2.fields) {
+      for (let field of info3.fields) {
         let name = field.localName;
         if (field.oneof) {
           const group = input[field.oneof];
@@ -25335,12 +25335,12 @@ var require_reflection_equals = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.reflectionEquals = void 0;
     var reflection_info_1 = require_reflection_info();
-    function reflectionEquals(info2, a, b) {
+    function reflectionEquals(info3, a, b) {
       if (a === b)
         return true;
       if (!a || !b)
         return false;
-      for (let field of info2.fields) {
+      for (let field of info3.fields) {
         let localName = field.localName;
         let val_a = field.oneof ? a[field.oneof][localName] : a[localName];
         let val_b = field.oneof ? b[field.oneof][localName] : b[localName];
@@ -28045,12 +28045,12 @@ var HttpClient = class {
         throw new Error("Client has already been disposed.");
       }
       const parsedUrl = new URL(requestUrl);
-      let info2 = this._prepareRequest(verb, parsedUrl, headers);
+      let info3 = this._prepareRequest(verb, parsedUrl, headers);
       const maxTries = this._allowRetries && RetryableHttpVerbs.includes(verb) ? this._maxRetries + 1 : 1;
       let numTries = 0;
       let response;
       do {
-        response = yield this.requestRaw(info2, data);
+        response = yield this.requestRaw(info3, data);
         if (response && response.message && response.message.statusCode === HttpCodes.Unauthorized) {
           let authenticationHandler;
           for (const handler of this.handlers) {
@@ -28060,7 +28060,7 @@ var HttpClient = class {
             }
           }
           if (authenticationHandler) {
-            return authenticationHandler.handleAuthentication(this, info2, data);
+            return authenticationHandler.handleAuthentication(this, info3, data);
           } else {
             return response;
           }
@@ -28083,8 +28083,8 @@ var HttpClient = class {
               }
             }
           }
-          info2 = this._prepareRequest(verb, parsedRedirectUrl, headers);
-          response = yield this.requestRaw(info2, data);
+          info3 = this._prepareRequest(verb, parsedRedirectUrl, headers);
+          response = yield this.requestRaw(info3, data);
           redirectsRemaining--;
         }
         if (!response.message.statusCode || !HttpResponseRetryCodes.includes(response.message.statusCode)) {
@@ -28113,7 +28113,7 @@ var HttpClient = class {
    * @param info
    * @param data
    */
-  requestRaw(info2, data) {
+  requestRaw(info3, data) {
     return __awaiter(this, void 0, void 0, function* () {
       return new Promise((resolve2, reject) => {
         function callbackForResult(err, res) {
@@ -28125,7 +28125,7 @@ var HttpClient = class {
             resolve2(res);
           }
         }
-        this.requestRawWithCallback(info2, data, callbackForResult);
+        this.requestRawWithCallback(info3, data, callbackForResult);
       });
     });
   }
@@ -28135,12 +28135,12 @@ var HttpClient = class {
    * @param data
    * @param onResult
    */
-  requestRawWithCallback(info2, data, onResult) {
+  requestRawWithCallback(info3, data, onResult) {
     if (typeof data === "string") {
-      if (!info2.options.headers) {
-        info2.options.headers = {};
+      if (!info3.options.headers) {
+        info3.options.headers = {};
       }
-      info2.options.headers["Content-Length"] = Buffer.byteLength(data, "utf8");
+      info3.options.headers["Content-Length"] = Buffer.byteLength(data, "utf8");
     }
     let callbackCalled = false;
     function handleResult(err, res) {
@@ -28149,7 +28149,7 @@ var HttpClient = class {
         onResult(err, res);
       }
     }
-    const req = info2.httpModule.request(info2.options, (msg) => {
+    const req = info3.httpModule.request(info3.options, (msg) => {
       const res = new HttpClientResponse(msg);
       handleResult(void 0, res);
     });
@@ -28161,7 +28161,7 @@ var HttpClient = class {
       if (socket) {
         socket.end();
       }
-      handleResult(new Error(`Request timeout: ${info2.options.path}`));
+      handleResult(new Error(`Request timeout: ${info3.options.path}`));
     });
     req.on("error", function(err) {
       handleResult(err);
@@ -28197,27 +28197,27 @@ var HttpClient = class {
     return this._getProxyAgentDispatcher(parsedUrl, proxyUrl);
   }
   _prepareRequest(method, requestUrl, headers) {
-    const info2 = {};
-    info2.parsedUrl = requestUrl;
-    const usingSsl = info2.parsedUrl.protocol === "https:";
-    info2.httpModule = usingSsl ? https : http;
+    const info3 = {};
+    info3.parsedUrl = requestUrl;
+    const usingSsl = info3.parsedUrl.protocol === "https:";
+    info3.httpModule = usingSsl ? https : http;
     const defaultPort = usingSsl ? 443 : 80;
-    info2.options = {};
-    info2.options.host = info2.parsedUrl.hostname;
-    info2.options.port = info2.parsedUrl.port ? parseInt(info2.parsedUrl.port) : defaultPort;
-    info2.options.path = (info2.parsedUrl.pathname || "") + (info2.parsedUrl.search || "");
-    info2.options.method = method;
-    info2.options.headers = this._mergeHeaders(headers);
+    info3.options = {};
+    info3.options.host = info3.parsedUrl.hostname;
+    info3.options.port = info3.parsedUrl.port ? parseInt(info3.parsedUrl.port) : defaultPort;
+    info3.options.path = (info3.parsedUrl.pathname || "") + (info3.parsedUrl.search || "");
+    info3.options.method = method;
+    info3.options.headers = this._mergeHeaders(headers);
     if (this.userAgent != null) {
-      info2.options.headers["user-agent"] = this.userAgent;
+      info3.options.headers["user-agent"] = this.userAgent;
     }
-    info2.options.agent = this._getAgent(info2.parsedUrl);
+    info3.options.agent = this._getAgent(info3.parsedUrl);
     if (this.handlers) {
       for (const handler of this.handlers) {
-        handler.prepareRequest(info2.options);
+        handler.prepareRequest(info3.options);
       }
     }
-    return info2;
+    return info3;
   }
   _mergeHeaders(headers) {
     if (this.requestOptions && this.requestOptions.headers) {
@@ -30601,14 +30601,14 @@ function disable() {
   return result;
 }
 function createDebugger(namespace) {
-  const newDebugger = Object.assign(debug2, {
+  const newDebugger = Object.assign(debug3, {
     enabled: enabled(namespace),
     destroy,
     log: debugObj.log,
     namespace,
     extend
   });
-  function debug2(...args) {
+  function debug3(...args) {
     if (!newDebugger.enabled) {
       return;
     }
@@ -34098,12 +34098,12 @@ function getOperationRequestInfo(request) {
   if (hasOriginalRequest(request)) {
     return getOperationRequestInfo(request[originalRequestSymbol]);
   }
-  let info2 = state2.operationRequestMap.get(request);
-  if (!info2) {
-    info2 = {};
-    state2.operationRequestMap.set(request, info2);
+  let info3 = state2.operationRequestMap.get(request);
+  if (!info3) {
+    info3 = {};
+    state2.operationRequestMap.set(request, info3);
   }
-  return info2;
+  return info3;
 }
 
 // node_modules/@azure/core-client/dist/esm/deserializationPolicy.js
@@ -62241,6 +62241,21 @@ function saveCacheV2(paths_1, key_1, options_1) {
 // src/save-cache.ts
 var pep440 = __toESM(require_pep440(), 1);
 
+// src/utils/logging.ts
+var quiet;
+function isQuiet() {
+  if (quiet === void 0) {
+    quiet = typeof getInput === "function" && getInput("quiet") === "true";
+  }
+  return quiet;
+}
+function info2(msg) {
+  if (!isQuiet()) {
+    info(msg);
+  }
+}
+var warning2 = warning;
+
 // src/cache/restore-cache.ts
 var STATE_CACHE_KEY = "cache-key";
 var STATE_CACHE_MATCHED_KEY = "cache-matched-key";
@@ -62992,6 +63007,7 @@ function loadInputs() {
   const manifestFile = getManifestFile();
   const downloadFromAstralMirror = getInput("download-from-astral-mirror") === "true";
   const addProblemMatchers = getInput("add-problem-matchers") === "true";
+  const quiet2 = getInput("quiet") === "true";
   const resolutionStrategy = getResolutionStrategy();
   return {
     activateEnvironment,
@@ -63011,6 +63027,7 @@ function loadInputs() {
     pruneCache: pruneCache2,
     pythonDir,
     pythonVersion,
+    quiet: quiet2,
     resolutionStrategy,
     restoreCache: restoreCache2,
     saveCache: saveCache4,
@@ -63034,7 +63051,7 @@ function getVenvPath(workingDirectory, activateEnvironment) {
   const venvPathInput = getInput("venv-path");
   if (venvPathInput !== "") {
     if (!activateEnvironment) {
-      warning("venv-path is only used when activate-environment is true");
+      warning2("venv-path is only used when activate-environment is true");
     }
     const tildeExpanded = expandTilde(venvPathInput);
     return normalizePath(resolveRelativePath(workingDirectory, tildeExpanded));
@@ -63097,7 +63114,7 @@ function getCacheLocalPath(workingDirectory, versionFile, enableCache) {
     return { path: cacheDirFromConfig, source: 1 /* Config */ };
   }
   if (process.env.UV_CACHE_DIR !== void 0) {
-    info(`UV_CACHE_DIR is already set to ${process.env.UV_CACHE_DIR}`);
+    info2(`UV_CACHE_DIR is already set to ${process.env.UV_CACHE_DIR}`);
     return { path: process.env.UV_CACHE_DIR, source: 2 /* Env */ };
   }
   if (enableCache) {
@@ -63130,12 +63147,12 @@ function getCacheDirFromConfig(workingDirectory, versionFile) {
     try {
       const cacheDir = getConfigValueFromTomlFile(resolvedPath, "cache-dir");
       if (cacheDir !== void 0) {
-        info(`Found cache-dir in ${resolvedPath}: ${cacheDir}`);
+        info2(`Found cache-dir in ${resolvedPath}: ${cacheDir}`);
         return cacheDir;
       }
     } catch (err) {
       const message = err.message;
-      warning(`Error while parsing ${filePath}: ${message}`);
+      warning2(`Error while parsing ${filePath}: ${message}`);
       return void 0;
     }
   }
@@ -63143,7 +63160,7 @@ function getCacheDirFromConfig(workingDirectory, versionFile) {
 }
 function getUvPythonDir() {
   if (process.env.UV_PYTHON_INSTALL_DIR !== void 0) {
-    info(
+    info2(
       `UV_PYTHON_INSTALL_DIR is already set to ${process.env.UV_PYTHON_INSTALL_DIR}`
     );
     return process.env.UV_PYTHON_INSTALL_DIR;
@@ -63236,7 +63253,7 @@ async function run() {
       if (inputs.saveCache) {
         await saveCache3(inputs);
       } else {
-        info("save-cache is false. Skipping save cache step.");
+        info2("save-cache is false. Skipping save cache step.");
       }
       await new Promise((resolve2) => setTimeout(resolve2, 100));
       process.exit(0);
@@ -63250,11 +63267,11 @@ async function saveCache3(inputs) {
   const cacheKey = getState(STATE_CACHE_KEY);
   const matchedKey = getState(STATE_CACHE_MATCHED_KEY);
   if (!cacheKey) {
-    warning("Error retrieving cache key from state.");
+    warning2("Error retrieving cache key from state.");
     return;
   }
   if (matchedKey === cacheKey) {
-    info(`Cache hit occurred on key ${cacheKey}, not saving cache.`);
+    info2(`Cache hit occurred on key ${cacheKey}, not saving cache.`);
   } else {
     if (inputs.pruneCache) {
       await pruneCache();
@@ -63262,7 +63279,7 @@ async function saveCache3(inputs) {
     const actualCachePath = getUvCachePath(inputs);
     if (!fs7.existsSync(actualCachePath)) {
       if (inputs.ignoreNothingToCache) {
-        info(
+        info2(
           "No cacheable uv cache paths were found. Ignoring because ignore-nothing-to-cache is enabled."
         );
       } else {
@@ -63281,7 +63298,7 @@ async function saveCache3(inputs) {
   }
   if (inputs.cachePython) {
     if (!fs7.existsSync(inputs.pythonDir)) {
-      warning(
+      warning2(
         `Python cache path ${inputs.pythonDir} does not exist on disk. Skipping Python cache save because no managed Python installation was found. If you want uv to install managed Python instead of using a system interpreter, set UV_PYTHON_PREFERENCE=only-managed.`
       );
       return;
@@ -63304,7 +63321,7 @@ async function pruneCache() {
   if (forceSupported) {
     execArgs.push("--force");
   }
-  info("Pruning cache...");
+  info2("Pruning cache...");
   const uvPath = getState(STATE_UV_PATH);
   await exec(uvPath, execArgs, options);
 }
@@ -63315,7 +63332,7 @@ function getUvCachePath(inputs) {
     );
   }
   if (process.env.UV_CACHE_DIR && process.env.UV_CACHE_DIR !== inputs.cacheLocalPath.path) {
-    warning(
+    warning2(
       `The environment variable UV_CACHE_DIR has been changed to "${process.env.UV_CACHE_DIR}", by an action or step running after astral-sh/setup-uv. This can lead to unexpected behavior. If you expected this to happen set the cache-local-path input to "${process.env.UV_CACHE_DIR}" instead of "${inputs.cacheLocalPath.path}".`
     );
     return process.env.UV_CACHE_DIR;
@@ -63325,14 +63342,12 @@ function getUvCachePath(inputs) {
 async function saveCacheToKey(cacheKey, cachePath, stateKey, cacheName) {
   const matchedKey = getState(stateKey);
   if (matchedKey === cacheKey) {
-    info(
-      `${cacheName} hit occurred on key ${cacheKey}, not saving cache.`
-    );
+    info2(`${cacheName} hit occurred on key ${cacheKey}, not saving cache.`);
     return;
   }
-  info(`Including ${cacheName} path: ${cachePath}`);
+  info2(`Including ${cacheName} path: ${cachePath}`);
   await saveCache2([cachePath], cacheKey);
-  info(`${cacheName} saved with key: ${cacheKey}`);
+  info2(`${cacheName} saved with key: ${cacheKey}`);
 }
 run();
 // Annotate the CommonJS export names for ESM import in node:

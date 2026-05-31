@@ -1,5 +1,5 @@
 import * as path from "node:path";
-import * as core from "@actions/core";
+import * as log from "../utils/logging";
 import { getParsedVersionFile } from "./file-parser";
 import { normalizeVersionSpecifier } from "./specifier";
 import type {
@@ -111,7 +111,7 @@ export class WorkspaceVersionResolver implements VersionRequestResolver {
       };
     }
 
-    core.info(
+    log.info(
       "Could not determine uv version from uv.toml or pyproject.toml. Falling back to latest.",
     );
     return undefined;

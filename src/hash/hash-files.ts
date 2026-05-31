@@ -2,8 +2,8 @@ import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import * as stream from "node:stream";
 import * as util from "node:util";
-import * as core from "@actions/core";
 import { create } from "@actions/glob";
+import * as log from "../utils/logging";
 
 /**
  * Hashes files matching the given glob pattern.
@@ -19,7 +19,7 @@ export async function hashFiles(
 ): Promise<string> {
   const globber = await create(pattern);
   let hasMatch = false;
-  const writeDelegate = verbose ? core.info : core.debug;
+  const writeDelegate = verbose ? log.info : log.debug;
   const result = crypto.createHash("sha256");
   let count = 0;
   for await (const file of globber.globGenerator()) {
