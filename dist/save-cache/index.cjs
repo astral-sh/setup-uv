@@ -62342,9 +62342,14 @@ function skipComment(str, ptr) {
 }
 function skipVoid(str, ptr, banNewLines, banComments) {
   let c;
-  while ((c = str[ptr]) === " " || c === "	" || !banNewLines && (c === "\n" || c === "\r" && str[ptr + 1] === "\n"))
-    ptr++;
-  return banComments || c !== "#" ? ptr : skipVoid(str, skipComment(str, ptr), banNewLines);
+  while (1) {
+    while ((c = str[ptr]) === " " || c === "	" || !banNewLines && (c === "\n" || c === "\r" && str[ptr + 1] === "\n"))
+      ptr++;
+    if (banComments || c !== "#")
+      break;
+    ptr = skipComment(str, ptr);
+  }
+  return ptr;
 }
 function skipUntil(str, ptr, sep7, end, banNewLines = false) {
   if (!end) {
