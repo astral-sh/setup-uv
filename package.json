@@ -34,7 +34,7 @@
     "@actions/glob": "^0.6.1",
     "@actions/io": "^3.0.2",
     "@actions/tool-cache": "^4.0.0",
-    "@renovatebot/pep440": "^4.2.2",
+    "@renovatebot/pep440": "^5.0.0",
     "smol-toml": "^1.6.1",
     "undici": "^8.3.0"
   },
