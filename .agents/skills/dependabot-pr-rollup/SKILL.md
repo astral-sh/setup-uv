@@ -26,6 +26,7 @@ Use this skill when the user wants to:
    - Inspect `package.json` before editing.
    - Run `npm ci --ignore-scripts` before applying updates.
    - Use `npm install ... --ignore-scripts` for direct dependency changes so `package-lock.json` stays in sync.
+   - When updating `@biomejs/biome`, also update the Biome schema URL version in `biome.json` to match the installed Biome version.
 7. Run `npm run all`.
 8. If requested, commit the changed source, lockfile, and generated artifacts, then push and open a PR.
 
