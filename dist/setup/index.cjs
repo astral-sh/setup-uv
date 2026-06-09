@@ -91160,11 +91160,15 @@ function getLinuxOSNameVersion() {
       const id = parseOsReleaseValue(content, "ID");
       const versionId2 = parseOsReleaseValue(content, "VERSION_ID");
       const versionCodename = parseOsReleaseValue(content, "VERSION_CODENAME");
+      const buildId = parseOsReleaseValue(content, "BUILD_ID");
       if (id && versionId2) {
         return `${id}-${versionId2}`;
       }
       if (id && versionCodename) {
         return `${id}-${versionCodename}`;
+      }
+      if (id && buildId) {
+        return `${id}-${buildId}`;
       }
     } catch {
     }
