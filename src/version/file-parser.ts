@@ -9,6 +9,7 @@ import {
 import { normalizeVersionSpecifier } from "./specifier";
 import { getUvVersionFromToolVersions } from "./tool-versions-file";
 import type { ParsedVersionFile, VersionFileFormat } from "./types";
+import { getUvVersionFromUvLock } from "./uv-lock-file";
 
 interface VersionFileParser {
   format: VersionFileFormat;
@@ -48,6 +49,11 @@ const VERSION_FILE_PARSERS: VersionFileParser[] = [
       return getUvVersionFromParsedPyproject(pyproject);
     },
     supports: (filePath) => filePath.endsWith("pyproject.toml"),
+  },
+  {
+    format: "uv.lock",
+    parse: (filePath) => getUvVersionFromUvLock(filePath),
+    supports: (filePath) => filePath.endsWith("uv.lock"),
   },
   {
     format: "requirements",

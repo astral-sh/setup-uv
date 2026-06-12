@@ -63,6 +63,24 @@ describe("resolveVersionRequest", () => {
     });
   });
 
+  it("uses the exact uv version locked in uv.lock when it is passed via version-file", () => {
+    const workingDirectory = createTempProject({
+      "uv.lock": `version = 1\n\n[[package]]\nname = "uv"\nversion = "0.8.17"\nsource = { registry = "https://pypi.org/simple" }\n`,
+    });
+
+    const request = resolveVersionRequest({
+      versionFile: path.join(workingDirectory, "uv.lock"),
+      workingDirectory,
+    });
+
+    expect(request).toEqual({
+      format: "uv.lock",
+      source: "version-file",
+      sourcePath: path.join(workingDirectory, "uv.lock"),
+      specifier: "0.8.17",
+    });
+  });
+
   it("uses requirements.txt when it is passed via version-file", () => {
     const workingDirectory = createTempProject({
       "requirements.txt": "uv==0.6.17\nuvicorn==0.35.0\n",

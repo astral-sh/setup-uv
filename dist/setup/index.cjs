@@ -56204,7 +56204,7 @@ var require_semver5 = __commonJS({
 });
 
 // src/setup-uv.ts
-var import_node_fs7 = __toESM(require("node:fs"), 1);
+var import_node_fs8 = __toESM(require("node:fs"), 1);
 var path16 = __toESM(require("node:path"), 1);
 
 // node_modules/@actions/core/lib/command.js
@@ -91289,7 +91289,7 @@ function handleMatchResult(matchedKey, primaryKey, stateKey, outputKey) {
 }
 
 // src/download/download-version.ts
-var import_node_fs6 = require("node:fs");
+var import_node_fs7 = require("node:fs");
 var path14 = __toESM(require("node:path"), 1);
 
 // node_modules/@actions/tool-cache/lib/tool-cache.js
@@ -96830,7 +96830,7 @@ function parseVersionSpecifier(specifier) {
 var path13 = __toESM(require("node:path"), 1);
 
 // src/version/file-parser.ts
-var import_node_fs5 = __toESM(require("node:fs"), 1);
+var import_node_fs6 = __toESM(require("node:fs"), 1);
 
 // src/utils/config-file.ts
 var import_node_fs3 = __toESM(require("node:fs"), 1);
@@ -97595,6 +97595,18 @@ function getUvVersionFromToolVersions(filePath) {
   return void 0;
 }
 
+// src/version/uv-lock-file.ts
+var import_node_fs5 = __toESM(require("node:fs"), 1);
+function getUvVersionFromUvLock(filePath) {
+  const fileContent = import_node_fs5.default.readFileSync(filePath, "utf-8");
+  return getUvVersionFromUvLockContent(fileContent);
+}
+function getUvVersionFromUvLockContent(fileContent) {
+  const parsed = parse2(fileContent);
+  const uvPackage = parsed.package?.find((pkg) => pkg.name === "uv");
+  return uvPackage?.version;
+}
+
 // src/version/file-parser.ts
 var VERSION_FILE_PARSERS = [
   {
@@ -97605,7 +97617,7 @@ var VERSION_FILE_PARSERS = [
   {
     format: "uv.toml",
     parse: (filePath) => {
-      const fileContent = import_node_fs5.default.readFileSync(filePath, "utf-8");
+      const fileContent = import_node_fs6.default.readFileSync(filePath, "utf-8");
       return getConfigValueFromTomlContent(
         filePath,
         fileContent,
@@ -97617,7 +97629,7 @@ var VERSION_FILE_PARSERS = [
   {
     format: "pyproject.toml",
     parse: (filePath) => {
-      const fileContent = import_node_fs5.default.readFileSync(filePath, "utf-8");
+      const fileContent = import_node_fs6.default.readFileSync(filePath, "utf-8");
       const pyproject = parsePyprojectContent(fileContent);
       const requiredVersion = pyproject.tool?.uv?.["required-version"];
       if (requiredVersion !== void 0) {
@@ -97628,9 +97640,14 @@ var VERSION_FILE_PARSERS = [
     supports: (filePath) => filePath.endsWith("pyproject.toml")
   },
   {
+    format: "uv.lock",
+    parse: (filePath) => getUvVersionFromUvLock(filePath),
+    supports: (filePath) => filePath.endsWith("uv.lock")
+  },
+  {
     format: "requirements",
     parse: (filePath) => {
-      const fileContent = import_node_fs5.default.readFileSync(filePath, "utf-8");
+      const fileContent = import_node_fs6.default.readFileSync(filePath, "utf-8");
       return getUvVersionFromRequirementsText(fileContent);
     },
     supports: (filePath) => filePath.endsWith(".txt")
@@ -97638,7 +97655,7 @@ var VERSION_FILE_PARSERS = [
 ];
 function getParsedVersionFile(filePath) {
   info2(`Trying to find version for uv in: ${filePath}`);
-  if (!import_node_fs5.default.existsSync(filePath)) {
+  if (!import_node_fs6.default.existsSync(filePath)) {
     info2(`Could not find file: ${filePath}`);
     return void 0;
   }
@@ -97965,7 +97982,7 @@ async function downloadArtifact(downloadUrl, artifactName, platform2, arch3, ver
       );
       const extension = getExtension(platform2);
       const fullPathWithExtension = `${downloadPath}${extension}`;
-      await import_node_fs6.promises.copyFile(downloadPath, fullPathWithExtension);
+      await import_node_fs7.promises.copyFile(downloadPath, fullPathWithExtension);
       uvDir = await extractZip(fullPathWithExtension);
     }
   } else {
@@ -98327,7 +98344,7 @@ async function run() {
   }
 }
 function detectEmptyWorkdir(inputs) {
-  if (import_node_fs7.default.readdirSync(inputs.workingDirectory).length === 0) {
+  if (import_node_fs8.default.readdirSync(inputs.workingDirectory).length === 0) {
     if (inputs.ignoreEmptyWorkdir) {
       info2(
         "Empty workdir detected. Ignoring because ignore-empty-workdir is enabled"

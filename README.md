@@ -47,7 +47,7 @@ Have a look under [Advanced Configuration](#advanced-configuration) for detailed
     # The version of uv to install (default: searches for version in config files, then latest)
     version: ""
 
-    # Path to a file containing the version of uv to install (default: searches uv.toml then pyproject.toml)
+    # Path to a file containing the version of uv to install, e.g., uv.toml, pyproject.toml, .tool-versions, requirements.txt or uv.lock (default: searches uv.toml then pyproject.toml)
     version-file: ""
 
     # Resolution strategy when resolving version ranges: 'highest' or 'lowest'
