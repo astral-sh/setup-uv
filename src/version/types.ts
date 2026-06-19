@@ -11,6 +11,7 @@ export type VersionFileFormat =
   | ".tool-versions"
   | "pyproject.toml"
   | "requirements"
+  | "uv.lock"
   | "uv.toml";
 
 export interface ParsedVersionFile {

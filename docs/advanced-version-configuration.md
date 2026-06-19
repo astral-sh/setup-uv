@@ -80,3 +80,14 @@ uv defined as a dependency in `pyproject.toml` or `requirements.txt`.
   with:
     version-file: "pyproject.toml"
 ```
+
+If uv is locked as a dependency in your `uv.lock`, you can point `version-file` at the
+lockfile to install the exact pinned version. This keeps CI runs deterministic and avoids
+silently picking up a newer uv until the lockfile is updated.
+
+```yaml
+- name: Install uv based on the version locked in uv.lock
+  uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+  with:
+    version-file: "uv.lock"
+```
