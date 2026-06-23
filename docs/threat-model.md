@@ -2,7 +2,7 @@
 
 ## Overview
 
-`setup-uv` is a GitHub Action that installs or reuses `uv`, changes later-step paths and environment, may discover and execute a Python interpreter, may create or clear a virtual environment, and may restore or save caches. It runs with the workflow job's filesystem, network, token, secrets, OIDC, artifact, and release authority.
+`setup-uv` is a GitHub Action that installs or reuses `uv`, modifies `PATH` and the environment for later steps, may execute a discovered Python interpreter, may create or clear a virtual environment, and may restore or save caches. It may use `github-token` to authenticate GitHub downloads; it requires no OIDC credential or additional workflow secret.
 
 The consumer runtime is the selected ref's committed action metadata, bundles, and runner-interpreted companion files; source alone is not evidence of shipped behavior. Privileged automation that generates, updates, or publishes those artifacts is also in scope.
 
@@ -50,7 +50,7 @@ Material failures are unauthorized executable selection, credential disclosure, 
 
 Before reporting, identify the attacker and victim principals; exact controlled input; scanned action and checkout refs; runtime reachability in committed bundles; effective token, secrets/OIDC, environment gates, cache scope, and runner persistence; applicable defaults and opt-ins; validation performed or skipped; declared trust roots; baseline versus incremental capability; and concrete impact. Reproduce platform-specific behavior and distinguish the scanned ref from other versions.
 
-Missing independent attacker control, a violated guarantee, committed-runtime reachability, incremental capability, or practical impact is `NOT_APPLICABLE`, `INTENDED_BEHAVIOR`, `CORRECTNESS`, `DEFENSE_IN_DEPTH`, or `NEEDS_EVIDENCE`, not a security severity.
+A report must demonstrate independent attacker control, a violated guarantee, committed-runtime reachability, incremental capability, and practical impact; otherwise it is not a security finding and should not be reported as one.
 
 ## Attack Surface, Mitigations, and Attacker Stories
 
