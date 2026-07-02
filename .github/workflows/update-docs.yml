@@ -1,13 +1,18 @@
 name: "Update docs"
 on:
-  push:
-    tags:
-      - "v*.*.*"
+  workflow_call:
+    inputs:
+      tag:
+        description: "Release tag to update docs for (e.g., v8.2.0)"
+        required: true
+        type: string
+  workflow_dispatch:
 
 permissions: {}
 
 jobs:
   update-docs:
+    continue-on-error: ${{ github.event_name == 'workflow_call' }}
     runs-on: ubuntu-24.04-arm
     permissions:
       contents: write
@@ -15,14 +20,27 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          fetch-depth: 0
           persist-credentials: true
       - name: Get tag info
         id: tag-info
         run: |
-          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          if [ -n "$INPUT_TAG" ]; then
+            TAG_NAME="$INPUT_TAG"
+          else
+            TAG_NAME=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
+          fi
+
+          if [[ ! "$TAG_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Tag must match vMAJOR.MINOR.PATCH (e.g., v8.2.0)"
+            exit 1
+          fi
+
           COMMIT_SHA=$(git rev-list -n 1 "$TAG_NAME")
           echo "tag=$TAG_NAME" >> "$GITHUB_OUTPUT"
           echo "sha=$COMMIT_SHA" >> "$GITHUB_OUTPUT"
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
       - name: Update references in docs
         run: |
           OLD_REF=$(grep -oh 'astral-sh/setup-uv@[a-f0-9]\{40\} # v[0-9][^ ]*' README.md docs/*.md | head -1)
