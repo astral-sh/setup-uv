@@ -111,3 +111,14 @@ jobs:
 
           echo "Publishing draft release $TAG"
           gh release edit "$TAG" --draft=false
+
+  update-docs:
+    name: Update docs
+    needs:
+      - release
+    uses: ./.github/workflows/update-docs.yml
+    permissions:
+      contents: write
+      pull-requests: write
+    with:
+      tag: v${{ inputs.version }}
