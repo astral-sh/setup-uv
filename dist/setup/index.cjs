@@ -97414,7 +97414,11 @@ function parsePyprojectContent(pyprojectContent) {
   return parse4(pyprojectContent);
 }
 function getUvVersionFromAllDependencies(allDependencies) {
-  return allDependencies.find((dep) => dep.match(/^uv[=<>~!]/))?.match(/^uv([=<>~!]+\S*)/)?.[1].trim();
+  return allDependencies.map(getUvVersionFromDependency).find((version3) => version3 !== void 0);
+}
+function getUvVersionFromDependency(dependency) {
+  const dependencyWithoutMarker = dependency.split(";", 1)[0]?.trim();
+  return dependencyWithoutMarker?.match(/^uv([=<>~!]+\S*)/)?.[1].trim();
 }
 
 // src/version/tool-versions-file.ts
