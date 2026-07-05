@@ -63,7 +63,11 @@ function getUvVersionFromAllDependencies(
   allDependencies: string[],
 ): string | undefined {
   return allDependencies
-    .find((dep: string) => dep.match(/^uv[=<>~!]/))
-    ?.match(/^uv([=<>~!]+\S*)/)?.[1]
-    .trim();
+    .map(getUvVersionFromDependency)
+    .find((version): version is string => version !== undefined);
+}
+
+function getUvVersionFromDependency(dependency: string): string | undefined {
+  const dependencyWithoutMarker = dependency.split(";", 1)[0]?.trim();
+  return dependencyWithoutMarker?.match(/^uv([=<>~!]+\S*)/)?.[1].trim();
 }
