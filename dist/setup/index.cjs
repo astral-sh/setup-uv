@@ -90621,8 +90621,8 @@ async function computeKeys(inputs, pythonVersion) {
   if (cacheDependencyPathHash === "-") {
     cacheDependencyPathHash = "-no-dependency-glob";
   }
-  const suffix = inputs.cacheSuffix ? `-${inputs.cacheSuffix}` : "";
-  const version3 = pythonVersion ?? "unknown";
+  const suffix = inputs.cacheSuffix ? `-${encodeURIComponent(inputs.cacheSuffix)}` : "";
+  const version3 = encodeURIComponent(pythonVersion ?? "unknown");
   const platform2 = await getPlatform();
   const osNameVersion = getOSNameVersion();
   const pruned = inputs.pruneCache ? "-pruned" : "";
