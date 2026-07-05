@@ -6,7 +6,7 @@ This document covers advanced options for configuring which version of uv to ins
 
 ```yaml
 - name: Install the latest version of uv
-  uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+  uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v8.3.0
   with:
     version: "latest"
 ```
@@ -15,7 +15,7 @@ This document covers advanced options for configuring which version of uv to ins
 
 ```yaml
 - name: Install a specific version of uv
-  uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+  uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v8.3.0
   with:
     version: "0.4.4"
 ```
@@ -28,21 +28,21 @@ to install the latest version that satisfies the range.
 
 ```yaml
 - name: Install a semver range of uv
-  uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+  uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v8.3.0
   with:
     version: ">=0.4.0"
 ```
 
 ```yaml
 - name: Pinning a minor version of uv
-  uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+  uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v8.3.0
   with:
     version: "0.4.x"
 ```
 
 ```yaml
 - name: Install a pep440-specifier-satisfying version of uv
-  uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+  uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v8.3.0
   with:
     version: ">=0.4.25,<0.5"
 ```
@@ -54,7 +54,7 @@ You can change this behavior using the `resolution-strategy` input:
 
 ```yaml
 - name: Install the lowest compatible version of uv
-  uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+  uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v8.3.0
   with:
     version: ">=0.4.0"
     resolution-strategy: "lowest"
@@ -76,7 +76,7 @@ uv defined as a dependency in `pyproject.toml` or `requirements.txt`.
 
 ```yaml
 - name: Install uv based on the version defined in pyproject.toml
-  uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+  uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v8.3.0
   with:
     version-file: "pyproject.toml"
 ```
@@ -87,7 +87,7 @@ silently picking up a newer uv until the lockfile is updated.
 
 ```yaml
 - name: Install uv based on the version locked in uv.lock
-  uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+  uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v8.3.0
   with:
     version-file: "uv.lock"
 ```
