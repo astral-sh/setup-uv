@@ -82,6 +82,6 @@ jobs:
             Update `uses: astral-sh/setup-uv@...` references in documentation to
             `${{ steps.tag-info.outputs.sha }} # ${{ steps.tag-info.outputs.tag }}`.
           base: main
-          labels: "automated-pr,update-docs"
+          labels: "automated-pr,documentation"
           branch: update-docs-${{ steps.tag-info.outputs.tag }}
           delete-branch: true
