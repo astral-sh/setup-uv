@@ -22686,7 +22686,7 @@ var require_package = __commonJS({
   "node_modules/@actions/cache/package.json"(exports2, module2) {
     module2.exports = {
       name: "@actions/cache",
-      version: "6.0.1",
+      version: "6.1.0",
       description: "Actions cache lib",
       keywords: [
         "github",
