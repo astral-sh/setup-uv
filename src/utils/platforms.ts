@@ -102,6 +102,7 @@ export function getOSNameVersion(): string {
 
 function getLinuxOSNameVersion(): string {
   const files = ["/etc/os-release", "/usr/lib/os-release"];
+  let idWithoutVersion: string | undefined;
 
   for (const file of files) {
     try {
@@ -122,14 +123,20 @@ function getLinuxOSNameVersion(): string {
       if (id && buildId) {
         return `${id}-${buildId}`;
       }
-      // Fallback for rolling releases (e.g. void) that have no version
-      // field at all
-      if (id) {
-        return id;
+      // Remember the ID but keep looking: the next file might still
+      // provide a version field
+      if (id && idWithoutVersion === undefined) {
+        idWithoutVersion = id;
       }
     } catch {
       // Try next file
     }
+  }
+
+  // Fallback for rolling releases (e.g. void) that have no version
+  // field at all
+  if (idWithoutVersion) {
+    return idWithoutVersion;
   }
 
   throw new Error(

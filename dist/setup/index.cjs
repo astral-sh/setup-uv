@@ -90506,6 +90506,7 @@ function getOSNameVersion() {
 }
 function getLinuxOSNameVersion() {
   const files = ["/etc/os-release", "/usr/lib/os-release"];
+  let idWithoutVersion;
   for (const file of files) {
     try {
       const content = import_node_fs2.default.readFileSync(file, "utf8");
@@ -90522,11 +90523,14 @@ function getLinuxOSNameVersion() {
       if (id && buildId) {
         return `${id}-${buildId}`;
       }
-      if (id) {
-        return id;
+      if (id && idWithoutVersion === void 0) {
+        idWithoutVersion = id;
       }
     } catch {
     }
+  }
+  if (idWithoutVersion) {
+    return idWithoutVersion;
   }
   throw new Error(
     "Failed to determine Linux distribution. Could not read /etc/os-release or /usr/lib/os-release"
