@@ -122,6 +122,11 @@ function getLinuxOSNameVersion(): string {
       if (id && buildId) {
         return `${id}-${buildId}`;
       }
+      // Fallback for rolling releases (e.g. void) that have no version
+      // field at all
+      if (id) {
+        return id;
+      }
     } catch {
       // Try next file
     }

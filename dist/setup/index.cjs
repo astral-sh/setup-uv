@@ -90522,6 +90522,9 @@ function getLinuxOSNameVersion() {
       if (id && buildId) {
         return `${id}-${buildId}`;
       }
+      if (id) {
+        return id;
+      }
     } catch {
     }
   }
