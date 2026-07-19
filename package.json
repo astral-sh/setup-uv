@@ -35,15 +35,15 @@
     "@actions/io": "^3.0.2",
     "@actions/tool-cache": "^4.0.0",
     "@renovatebot/pep440": "^5.0.0",
-    "smol-toml": "^1.6.1",
+    "smol-toml": "^1.7.0",
     "undici": "^8.3.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.1",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^25.5.0",
+    "@types/node": "^26.0.1",
     "@types/semver": "^7.7.1",
-    "@vercel/ncc": "^0.44.0",
+    "@vercel/ncc": "^0.44.1",
     "esbuild": "^0.28.0",
     "jest": "^30.4.2",
     "js-yaml": "^4.1.1",

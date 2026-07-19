@@ -96745,125 +96745,6 @@ var import_node_fs6 = __toESM(require("node:fs"), 1);
 // src/utils/config-file.ts
 var import_node_fs3 = __toESM(require("node:fs"), 1);
 
-// node_modules/smol-toml/dist/error.js
-function getLineColFromPtr(string, ptr) {
-  let lines = string.slice(0, ptr).split(/\r\n|\n|\r/g);
-  return [lines.length, lines.pop().length + 1];
-}
-function makeCodeBlock(string, line, column) {
-  let lines = string.split(/\r\n|\n|\r/g);
-  let codeblock = "";
-  let numberLen = (Math.log10(line + 1) | 0) + 1;
-  for (let i = line - 1; i <= line + 1; i++) {
-    let l = lines[i - 1];
-    if (!l)
-      continue;
-    codeblock += i.toString().padEnd(numberLen, " ");
-    codeblock += ":  ";
-    codeblock += l;
-    codeblock += "\n";
-    if (i === line) {
-      codeblock += " ".repeat(numberLen + column + 2);
-      codeblock += "^\n";
-    }
-  }
-  return codeblock;
-}
-var TomlError = class extends Error {
-  line;
-  column;
-  codeblock;
-  constructor(message, options) {
-    const [line, column] = getLineColFromPtr(options.toml, options.ptr);
-    const codeblock = makeCodeBlock(options.toml, line, column);
-    super(`Invalid TOML document: ${message}
-
-${codeblock}`, options);
-    this.line = line;
-    this.column = column;
-    this.codeblock = codeblock;
-  }
-};
-
-// node_modules/smol-toml/dist/util.js
-function isEscaped(str, ptr) {
-  let i = 0;
-  while (str[ptr - ++i] === "\\")
-    ;
-  return --i && i % 2;
-}
-function indexOfNewline(str, start = 0, end = str.length) {
-  let idx = str.indexOf("\n", start);
-  if (str[idx - 1] === "\r")
-    idx--;
-  return idx <= end ? idx : -1;
-}
-function skipComment(str, ptr) {
-  for (let i = ptr; i < str.length; i++) {
-    let c = str[i];
-    if (c === "\n")
-      return i;
-    if (c === "\r" && str[i + 1] === "\n")
-      return i + 1;
-    if (c < " " && c !== "	" || c === "\x7F") {
-      throw new TomlError("control characters are not allowed in comments", {
-        toml: str,
-        ptr
-      });
-    }
-  }
-  return str.length;
-}
-function skipVoid(str, ptr, banNewLines, banComments) {
-  let c;
-  while (1) {
-    while ((c = str[ptr]) === " " || c === "	" || !banNewLines && (c === "\n" || c === "\r" && str[ptr + 1] === "\n"))
-      ptr++;
-    if (banComments || c !== "#")
-      break;
-    ptr = skipComment(str, ptr);
-  }
-  return ptr;
-}
-function skipUntil(str, ptr, sep8, end, banNewLines = false) {
-  if (!end) {
-    ptr = indexOfNewline(str, ptr);
-    return ptr < 0 ? str.length : ptr;
-  }
-  for (let i = ptr; i < str.length; i++) {
-    let c = str[i];
-    if (c === "#") {
-      i = indexOfNewline(str, i);
-    } else if (c === sep8) {
-      return i + 1;
-    } else if (c === end || banNewLines && (c === "\n" || c === "\r" && str[i + 1] === "\n")) {
-      return i;
-    }
-  }
-  throw new TomlError("cannot find end of structure", {
-    toml: str,
-    ptr
-  });
-}
-function getStringEnd(str, seek) {
-  let first = str[seek];
-  let target = first === str[seek + 1] && str[seek + 1] === str[seek + 2] ? str.slice(seek, seek + 3) : first;
-  seek += target.length - 1;
-  do
-    seek = str.indexOf(target, ++seek);
-  while (seek > -1 && first !== "'" && isEscaped(str, seek));
-  if (seek > -1) {
-    seek += target.length;
-    if (target.length > 1) {
-      if (str[seek] === first)
-        seek++;
-      if (str[seek] === first)
-        seek++;
-    }
-  }
-  return seek;
-}
-
 // node_modules/smol-toml/dist/date.js
 var DATE_TIME_RE = /^(\d{4}-\d{2}-\d{2})?[T ]?(?:(\d{2}):\d{2}(?::\d{2}(?:\.\d+)?)?)?(Z|[-+]\d{2}:\d{2})?$/i;
 var TomlDate = class _TomlDate extends Date {
@@ -96956,93 +96837,153 @@ var TomlDate = class _TomlDate extends Date {
   }
 };
 
+// node_modules/smol-toml/dist/error.js
+function getLineColFromPtr(string, ptr) {
+  let lines = string.slice(0, ptr).split(/\r\n|\n|\r/g);
+  return [lines.length, lines.pop().length + 1];
+}
+function makeCodeBlock(string, line, column) {
+  let lines = string.split(/\r\n|\n|\r/g);
+  let codeblock = "";
+  let numberLen = (Math.log10(line + 1) | 0) + 1;
+  for (let i = line - 1; i <= line + 1; i++) {
+    let l = lines[i - 1];
+    if (!l)
+      continue;
+    codeblock += i.toString().padEnd(numberLen, " ");
+    codeblock += ":  ";
+    codeblock += l;
+    codeblock += "\n";
+    if (i === line) {
+      codeblock += " ".repeat(numberLen + column + 2);
+      codeblock += "^\n";
+    }
+  }
+  return codeblock;
+}
+var TomlError = class extends Error {
+  line;
+  column;
+  codeblock;
+  constructor(message, options) {
+    const [line, column] = getLineColFromPtr(options.toml, options.ptr);
+    const codeblock = makeCodeBlock(options.toml, line, column);
+    super(`Invalid TOML document: ${message}
+
+${codeblock}`, options);
+    this.line = line;
+    this.column = column;
+    this.codeblock = codeblock;
+  }
+};
+
 // node_modules/smol-toml/dist/primitive.js
 var INT_REGEX = /^((0x[0-9a-fA-F](_?[0-9a-fA-F])*)|(([+-]|0[ob])?\d(_?\d)*))$/;
 var FLOAT_REGEX = /^[+-]?\d(_?\d)*(\.\d(_?\d)*)?([eE][+-]?\d(_?\d)*)?$/;
 var LEADING_ZERO = /^[+-]?0[0-9_]/;
-var ESCAPE_REGEX = /^[0-9a-f]{2,8}$/i;
-var ESC_MAP = {
-  b: "\b",
-  t: "	",
-  n: "\n",
-  f: "\f",
-  r: "\r",
-  e: "\x1B",
-  '"': '"',
-  "\\": "\\"
-};
-function parseString(str, ptr = 0, endPtr = str.length) {
-  let isLiteral = str[ptr] === "'";
-  let isMultiline = str[ptr++] === str[ptr] && str[ptr] === str[ptr + 1];
+function parseString(str, ptr) {
+  let c = str[ptr++];
+  let first = c;
+  let isLiteral = c === "'";
+  let isMultiline = c === str[ptr] && c === str[ptr + 1];
   if (isMultiline) {
-    endPtr -= 2;
-    if (str[ptr += 2] === "\r")
+    if (str[ptr += 2] === "\n")
       ptr++;
-    if (str[ptr] === "\n")
-      ptr++;
+    else if (str[ptr] === "\r" && str[ptr + 1] === "\n")
+      ptr += 2;
   }
-  let tmp = 0;
-  let isEscape;
   let parsed = "";
   let sliceStart = ptr;
-  while (ptr < endPtr - 1) {
-    let c = str[ptr++];
-    if (c === "\n" || c === "\r" && str[ptr] === "\n") {
-      if (!isMultiline) {
-        throw new TomlError("newlines are not allowed in strings", {
-          toml: str,
-          ptr: ptr - 1
-        });
-      }
+  let state3 = 0;
+  for (let i = ptr; i < str.length; i++) {
+    c = str[i];
+    if (isMultiline && (c === "\n" || c === "\r" && str[i + 1] === "\n")) {
+      state3 = state3 && 3;
     } else if (c < " " && c !== "	" || c === "\x7F") {
       throw new TomlError("control characters are not allowed in strings", {
         toml: str,
-        ptr: ptr - 1
+        ptr: i
       });
-    }
-    if (isEscape) {
-      isEscape = false;
+    } else if ((!state3 || state3 === 3) && c === first && (!isMultiline || str[i + 1] === first && str[i + 2] === first)) {
+      if (isMultiline) {
+        if (str[i + 3] === first)
+          i++;
+        if (str[i + 3] === first)
+          i++;
+      }
+      return [
+        // If we're in a newline escape still, then there's nothing to add.
+        // Also try to avoid concat if there's nothing to add to parsed, or nothing has been added to parsed.
+        state3 ? parsed : parsed + str.slice(sliceStart, i),
+        i + (isMultiline ? 3 : 1)
+      ];
+    } else if (!state3) {
+      if (!isLiteral && c === "\\") {
+        parsed += str.slice(sliceStart, sliceStart = i);
+        state3 = 1;
+      }
+    } else if (state3 === 1) {
       if (c === "x" || c === "u" || c === "U") {
-        let code = str.slice(ptr, ptr += c === "x" ? 2 : c === "u" ? 4 : 8);
-        if (!ESCAPE_REGEX.test(code)) {
-          throw new TomlError("invalid unicode escape", {
-            toml: str,
-            ptr: tmp
-          });
+        let value = 0;
+        let len = c === "x" ? 2 : c === "u" ? 4 : 8;
+        for (let j = 0; j < len; j++, i++) {
+          let hex = str.charCodeAt(i + 1);
+          let digit = (
+            /* 0-9 */
+            hex >= 48 && hex <= 57 ? hex - 48 : (
+              /* A-F */
+              hex >= 65 && hex <= 70 ? hex - 65 + 10 : (
+                /* a-f */
+                hex >= 97 && hex <= 102 ? hex - 97 + 10 : -1
+              )
+            )
+          );
+          if (digit < 0)
+            throw new TomlError("invalid non-hex character in unicode escape", { toml: str, ptr: i + 1 });
+          value = value << 4 | digit;
         }
-        try {
-          parsed += String.fromCodePoint(parseInt(code, 16));
-        } catch {
-          throw new TomlError("invalid unicode escape", {
-            toml: str,
-            ptr: tmp
-          });
+        if (value < 0 || value > 1114111 || value >= 55296 && value <= 57343) {
+          throw new TomlError("invalid unicode escape", { toml: str, ptr: i });
         }
-      } else if (isMultiline && (c === "\n" || c === " " || c === "	" || c === "\r")) {
-        ptr = skipVoid(str, ptr - 1, true);
-        if (str[ptr] !== "\n" && str[ptr] !== "\r") {
-          throw new TomlError("invalid escape: only line-ending whitespace may be escaped", {
-            toml: str,
-            ptr: tmp
-          });
-        }
-        ptr = skipVoid(str, ptr);
-      } else if (c in ESC_MAP) {
-        parsed += ESC_MAP[c];
+        parsed += String.fromCodePoint(value);
+        sliceStart = i + 1;
+        state3 = 0;
+      } else if (c === " " || c === "	") {
+        state3 = 2;
       } else {
-        throw new TomlError("unrecognized escape sequence", {
+        if (c === "b")
+          parsed += "\b";
+        else if (c === "t")
+          parsed += "	";
+        else if (c === "n")
+          parsed += "\n";
+        else if (c === "f")
+          parsed += "\f";
+        else if (c === "r")
+          parsed += "\r";
+        else if (c === "e")
+          parsed += "\x1B";
+        else if (c === '"')
+          parsed += '"';
+        else if (c === "\\")
+          parsed += "\\";
+        else
+          throw new TomlError("unrecognized escape sequence", { toml: str, ptr: i });
+        sliceStart = i + 1;
+        state3 = 0;
+      }
+    } else if (c !== " " && c !== "	") {
+      if (state3 === 2) {
+        throw new TomlError("invalid escape: only line-ending whitespace may be escaped", {
           toml: str,
-          ptr: tmp
+          ptr: sliceStart
         });
       }
-      sliceStart = ptr;
-    } else if (!isLiteral && c === "\\") {
-      tmp = ptr - 1;
-      isEscape = true;
-      parsed += str.slice(sliceStart, tmp);
+      state3 = !isLiteral && c === "\\" ? 1 : 0;
+      sliceStart = i;
     }
   }
-  return parsed + str.slice(sliceStart, endPtr - 1);
+  throw new TomlError("unfinished string", { toml: str, ptr });
 }
 function parseValue2(value, toml, ptr, integersAsBigInt) {
   if (value === "true")
@@ -97095,6 +97036,61 @@ function parseValue2(value, toml, ptr, integersAsBigInt) {
   return date;
 }
 
+// node_modules/smol-toml/dist/util.js
+function indexOfNewline(str, start = 0, end = str.length) {
+  let idx = str.indexOf("\n", start);
+  if (str[idx - 1] === "\r")
+    idx--;
+  return idx <= end ? idx : -1;
+}
+function skipComment(str, ptr) {
+  for (let i = ptr; i < str.length; i++) {
+    let c = str[i];
+    if (c === "\n")
+      return i;
+    if (c === "\r" && str[i + 1] === "\n")
+      return i + 1;
+    if (c < " " && c !== "	" || c === "\x7F") {
+      throw new TomlError("control characters are not allowed in comments", {
+        toml: str,
+        ptr
+      });
+    }
+  }
+  return str.length;
+}
+function skipVoid(str, ptr, banNewLines, banComments) {
+  let c;
+  while (1) {
+    while ((c = str[ptr]) === " " || c === "	" || !banNewLines && (c === "\n" || c === "\r" && str[ptr + 1] === "\n"))
+      ptr++;
+    if (banComments || c !== "#")
+      break;
+    ptr = skipComment(str, ptr);
+  }
+  return ptr;
+}
+function skipUntil(str, ptr, sep8, end, banNewLines = false) {
+  if (!end) {
+    ptr = indexOfNewline(str, ptr);
+    return ptr < 0 ? str.length : ptr;
+  }
+  for (let i = ptr; i < str.length; i++) {
+    let c = str[i];
+    if (c === "#") {
+      i = indexOfNewline(str, i);
+    } else if (c === sep8) {
+      return i + 1;
+    } else if (c === end || banNewLines && (c === "\n" || c === "\r" && str[i + 1] === "\n")) {
+      return i;
+    }
+  }
+  throw new TomlError("cannot find end of structure", {
+    toml: str,
+    ptr
+  });
+}
+
 // node_modules/smol-toml/dist/extract.js
 function sliceAndTrimEndOf(str, startPtr, endPtr) {
   let value = str.slice(startPtr, endPtr);
@@ -97128,24 +97124,23 @@ function extractValue(str, ptr, end, depth, integersAsBigInt) {
     }
     return [value, endPtr2];
   }
-  let endPtr;
   if (c === '"' || c === "'") {
-    endPtr = getStringEnd(str, ptr);
-    let parsed = parseString(str, ptr, endPtr);
+    let [parsed, endPtr2] = parseString(str, ptr);
     if (end) {
-      endPtr = skipVoid(str, endPtr);
-      if (str[endPtr] && str[endPtr] !== "," && str[endPtr] !== end && str[endPtr] !== "\n" && str[endPtr] !== "\r") {
+      endPtr2 = skipVoid(str, endPtr2);
+      if (str[endPtr2] && str[endPtr2] !== "," && str[endPtr2] !== end && str[endPtr2] !== "\n" && str[endPtr2] !== "\r") {
         throw new TomlError("unexpected character encountered", {
           toml: str,
-          ptr: endPtr
+          ptr: endPtr2
         });
       }
-      endPtr += +(str[endPtr] === ",");
+      if (str[endPtr2] === ",")
+        endPtr2++;
     }
-    return [parsed, endPtr];
+    return [parsed, endPtr2];
   }
-  endPtr = skipUntil(str, ptr, ",", end);
-  let slice = sliceAndTrimEndOf(str, ptr, endPtr - +(str[endPtr - 1] === ","));
+  let endPtr = skipUntil(str, ptr, ",", end);
+  let slice = sliceAndTrimEndOf(str, ptr, endPtr - (str[endPtr - 1] === "," ? 1 : 0));
   if (!slice[0]) {
     throw new TomlError("incomplete key-value declaration: no value specified", {
       toml: str,
@@ -97154,7 +97149,8 @@ function extractValue(str, ptr, end, depth, integersAsBigInt) {
   }
   if (end && slice[1] > -1) {
     endPtr = skipVoid(str, ptr + slice[1]);
-    endPtr += +(str[endPtr] === ",");
+    if (str[endPtr] === ",")
+      endPtr++;
   }
   return [
     parseValue2(slice[0], str, ptr, integersAsBigInt),
@@ -97184,13 +97180,7 @@ function parseKey(str, ptr, end = "=") {
             ptr
           });
         }
-        let eos = getStringEnd(str, ptr);
-        if (eos < 0) {
-          throw new TomlError("unfinished string encountered", {
-            toml: str,
-            ptr
-          });
-        }
+        let [part, eos] = parseString(str, ptr);
         dot = str.indexOf(".", eos);
         let strEnd = str.slice(eos, dot < 0 || dot > endPtr ? endPtr : dot);
         let newLine = indexOfNewline(strEnd);
@@ -97215,7 +97205,7 @@ function parseKey(str, ptr, end = "=") {
             });
           }
         }
-        parsed.push(parseString(str, ptr, eos));
+        parsed.push(part);
       } else {
         dot = str.indexOf(".", ptr);
         let part = str.slice(ptr, dot < 0 || dot > endPtr ? endPtr : dot);
@@ -98419,10 +98409,10 @@ undici/lib/web/websocket/frame.js:
 undici/lib/web/websocket/frame.js:
   (*! ws. MIT License. Einar Otto Stangvik <einaros@gmail.com> *)
 
-smol-toml/dist/error.js:
-smol-toml/dist/util.js:
 smol-toml/dist/date.js:
+smol-toml/dist/error.js:
 smol-toml/dist/primitive.js:
+smol-toml/dist/util.js:
 smol-toml/dist/extract.js:
 smol-toml/dist/struct.js:
 smol-toml/dist/parse.js:
