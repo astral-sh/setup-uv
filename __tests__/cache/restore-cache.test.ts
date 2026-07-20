@@ -62,13 +62,13 @@ describe("restoreCache", () => {
     expect(cacheKey).toContain("-tests-3.10%2C3.11");
   });
 
-  it("keeps cache keys unchanged for exact Python versions and simple suffixes", async () => {
+  it("uses an unpruned cache key by default", async () => {
     const inputs = createSetupInputs({ cacheSuffix: "tests-3.11" });
 
     await restoreCache(inputs, "3.11");
 
     expect(cacheKeyOutput()).toBe(
-      "setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.11-pruned-dependencyhash-tests-3.11",
+      "setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.11-dependencyhash-tests-3.11",
     );
   });
 });
