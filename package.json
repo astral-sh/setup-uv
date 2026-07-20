@@ -44,7 +44,7 @@
     "@types/node": "^26.0.1",
     "@types/semver": "^7.7.1",
     "@vercel/ncc": "^0.44.1",
-    "esbuild": "^0.28.0",
+    "esbuild": "^0.28.1",
     "jest": "^30.4.2",
     "js-yaml": "^4.1.1",
     "ts-jest": "^29.4.11",
