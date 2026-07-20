@@ -33,8 +33,8 @@ The computed cache key is available as the `cache-key` output:
 ## Enable caching
 
 > [!NOTE]
-> The cache is pruned before it is uploaded to the GitHub Actions cache. This can lead to
-> a small or empty cache. See [Disable cache pruning](#disable-cache-pruning) for more details.
+> The entire uv cache is uploaded to the GitHub Actions cache by default. To reduce the cache size,
+> see [Enable cache pruning](#enable-cache-pruning).
 
 If you enable caching, the [uv cache](https://docs.astral.sh/uv/concepts/cache/) will be uploaded to
 the GitHub Actions cache. This can speed up runs that reuse the cache by several minutes.
@@ -173,30 +173,29 @@ It defaults to `setup-uv-cache` in the `TMP` dir, `D:\a\_temp\setup-uv-cache` on
     cache-local-path: "/path/to/cache"
 ```
 
-## Disable cache pruning
+## Enable cache pruning
 
-By default, the uv cache is pruned after every run, removing pre-built wheels, but retaining any
-wheels that were built from source. On GitHub-hosted runners, it's typically faster to omit those
-pre-built wheels from the cache (and instead re-download them from the registry on each run).
-However, on self-hosted or local runners, preserving the cache may be more efficient. See
-the [documentation](https://docs.astral.sh/uv/concepts/cache/#caching-in-continuous-integration) for
-more information.
+By default, the entire uv cache is persisted across runs. On GitHub-hosted runners, it's typically
+faster to prune the cache before saving it, removing pre-built wheels, but retaining any wheels that
+were built from source. The pre-built wheels are then re-downloaded from the registry on each run.
+See the [documentation](https://docs.astral.sh/uv/concepts/cache/#caching-in-continuous-integration)
+for more information.
 
-If you want to persist the entire cache across runs, disable cache pruning with the `prune-cache`
-input.
+If you want to prune the cache before saving it, enable cache pruning with the `prune-cache` input.
 
 ```yaml
-- name: Don't prune the cache before saving it
+- name: Prune the cache before saving it
   uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
   with:
     enable-cache: true
-    prune-cache: false
+    prune-cache: true
 ```
 
 ## Cache Python installs
 
 By default, the Python install dir (`uv python dir` / `UV_PYTHON_INSTALL_DIR`) is not cached,
-for the same reason that the dependency cache is pruned.
+for the same reason that pruning the dependency cache can improve performance on GitHub-hosted
+runners.
 If you want to cache Python installs along with your dependencies, set the `cache-python` input to `true`.
 
 Note that this only caches Python versions that uv actually installs into `UV_PYTHON_INSTALL_DIR`

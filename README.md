@@ -100,7 +100,7 @@ Have a look under [Advanced Configuration](#advanced-configuration) for detailed
     cache-local-path: ""
 
     # Prune cache before saving
-    prune-cache: "true"
+    prune-cache: "false"
 
     # Upload managed Python installations to the GitHub Actions cache
     cache-python: "false"

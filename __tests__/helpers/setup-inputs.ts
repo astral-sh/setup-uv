@@ -20,7 +20,7 @@ export function createSetupInputs(
     ignoreEmptyWorkdir: false,
     ignoreNothingToCache: false,
     noProject: false,
-    pruneCache: true,
+    pruneCache: false,
     pythonDir: "/tmp/uv-python-dir",
     pythonVersion: "",
     quiet: false,
