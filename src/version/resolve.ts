@@ -2,7 +2,12 @@ import * as core from "@actions/core";
 import * as tc from "@actions/tool-cache";
 import * as pep440 from "@renovatebot/pep440";
 import * as semver from "semver";
-import { getAllVersions, getLatestVersion } from "../download/manifest";
+import {
+  getAllVersions,
+  getFirstMatchingVersion,
+  getLatestVersion,
+} from "../download/manifest";
+import { VERSIONS_MANIFEST_URL } from "../utils/constants";
 import type { ResolutionStrategy } from "../utils/inputs";
 import * as log from "../utils/logging";
 import {
@@ -82,13 +87,26 @@ class RangeVersionResolver implements ConcreteVersionResolver {
       return undefined;
     }
 
-    const availableVersions = await getAllVersions(context.manifestUrl);
-    core.debug(`Available versions: ${availableVersions}`);
-
-    const resolvedVersion =
-      context.resolutionStrategy === "lowest"
-        ? minSatisfying(availableVersions, context.parsedSpecifier.normalized)
-        : maxSatisfying(availableVersions, context.parsedSpecifier.normalized);
+    let resolvedVersion: string | undefined;
+    if (
+      context.resolutionStrategy === "highest" &&
+      (context.manifestUrl === undefined ||
+        context.manifestUrl === VERSIONS_MANIFEST_URL)
+    ) {
+      resolvedVersion = await findHighestSatisfyingVersion(
+        context.parsedSpecifier.normalized,
+      );
+    } else {
+      const availableVersions = await getAllVersions(context.manifestUrl);
+      core.debug(`Available versions: ${availableVersions}`);
+      resolvedVersion =
+        context.resolutionStrategy === "lowest"
+          ? minSatisfying(availableVersions, context.parsedSpecifier.normalized)
+          : maxSatisfying(
+              availableVersions,
+              context.parsedSpecifier.normalized,
+            );
+    }
 
     if (resolvedVersion === undefined) {
       throw new Error(`No version found for ${context.parsedSpecifier.raw}`);
@@ -139,6 +157,35 @@ export async function resolveVersion(
   }
 
   throw new Error(`No version found for ${versionInput}`);
+}
+
+async function findHighestSatisfyingVersion(
+  versionSpecifier: string,
+): Promise<string | undefined> {
+  // This fast path assumes uv releases are semver-monotonic: newer manifest
+  // entries always have higher versions, with no lower-version backports.
+  const semverRange = semver.validRange(versionSpecifier);
+  if (semverRange !== null) {
+    const semverMatch = await getFirstMatchingVersion((version) =>
+      semver.satisfies(version, semverRange),
+    );
+    if (semverMatch !== undefined) {
+      core.debug(
+        `Found a version that satisfies the semver range: ${semverMatch}`,
+      );
+      return semverMatch;
+    }
+  }
+
+  const pep440Match = await getFirstMatchingVersion((version) =>
+    pep440.satisfies(version, versionSpecifier),
+  );
+  if (pep440Match !== undefined) {
+    core.debug(
+      `Found a version that satisfies the pep440 specifier: ${pep440Match}`,
+    );
+  }
+  return pep440Match;
 }
 
 function maxSatisfying(

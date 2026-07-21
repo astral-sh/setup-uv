@@ -9157,7 +9157,7 @@ var require_readable = __commonJS({
   "node_modules/@actions/http-client/node_modules/undici/lib/api/readable.js"(exports2, module2) {
     "use strict";
     var assert = require("node:assert");
-    var { Readable } = require("node:stream");
+    var { Readable: Readable2 } = require("node:stream");
     var { RequestAbortedError, NotSupportedError, InvalidArgumentError, AbortError } = require_errors();
     var util = require_util();
     var { ReadableStreamFrom } = require_util();
@@ -9169,7 +9169,7 @@ var require_readable = __commonJS({
     var kContentLength = /* @__PURE__ */ Symbol("kContentLength");
     var noop = () => {
     };
-    var BodyReadable = class extends Readable {
+    var BodyReadable = class extends Readable2 {
       constructor({
         resume,
         abort,
@@ -9511,7 +9511,7 @@ var require_api_request = __commonJS({
   "node_modules/@actions/http-client/node_modules/undici/lib/api/api-request.js"(exports2, module2) {
     "use strict";
     var assert = require("node:assert");
-    var { Readable } = require_readable();
+    var { Readable: Readable2 } = require_readable();
     var { InvalidArgumentError, RequestAbortedError } = require_errors();
     var util = require_util();
     var { getResolveErrorBodyCallback } = require_util3();
@@ -9606,7 +9606,7 @@ var require_api_request = __commonJS({
         const parsedHeaders = responseHeaders === "raw" ? util.parseHeaders(rawHeaders) : headers;
         const contentType = parsedHeaders["content-type"];
         const contentLength = parsedHeaders["content-length"];
-        const res = new Readable({
+        const res = new Readable2({
           resume,
           abort,
           contentType,
@@ -9921,7 +9921,7 @@ var require_api_pipeline = __commonJS({
   "node_modules/@actions/http-client/node_modules/undici/lib/api/api-pipeline.js"(exports2, module2) {
     "use strict";
     var {
-      Readable,
+      Readable: Readable2,
       Duplex,
       PassThrough
     } = require("node:stream");
@@ -9935,7 +9935,7 @@ var require_api_pipeline = __commonJS({
     var { addSignal, removeSignal } = require_abort_signal();
     var assert = require("node:assert");
     var kResume = /* @__PURE__ */ Symbol("resume");
-    var PipelineRequest = class extends Readable {
+    var PipelineRequest = class extends Readable2 {
       constructor() {
         super({ autoDestroy: true });
         this[kResume] = null;
@@ -9952,7 +9952,7 @@ var require_api_pipeline = __commonJS({
         callback(err);
       }
     };
-    var PipelineResponse = class extends Readable {
+    var PipelineResponse = class extends Readable2 {
       constructor(resume) {
         super({ autoDestroy: true });
         this[kResume] = resume;
@@ -13277,7 +13277,7 @@ var require_fetch = __commonJS({
       subresourceSet
     } = require_constants3();
     var EE = require("node:events");
-    var { Readable, pipeline, finished } = require("node:stream");
+    var { Readable: Readable2, pipeline, finished } = require("node:stream");
     var { addAbortListener, isErrored, isReadable, bufferToLowerCasedHeaderName } = require_util();
     var { dataURLProcessor, serializeAMimeType, minimizeSupportedMimeType } = require_data_url();
     var { getGlobalDispatcher } = require_global2();
@@ -14178,7 +14178,7 @@ var require_fetch = __commonJS({
                 headersList.append(bufferToLowerCasedHeaderName(rawHeaders[i]), rawHeaders[i + 1].toString("latin1"), true);
               }
               location = headersList.get("location", true);
-              this.body = new Readable({ read: resume });
+              this.body = new Readable2({ read: resume });
               const decoders = [];
               const willFollow = location && request.redirect === "follow" && redirectStatusSet.has(status);
               if (request.method !== "HEAD" && request.method !== "CONNECT" && !nullBodyStatus.includes(status) && !willFollow) {
@@ -31244,7 +31244,7 @@ var require_readable2 = __commonJS({
     "use strict";
     var assert = require("node:assert");
     var { addAbortListener } = require("node:events");
-    var { Readable } = require("node:stream");
+    var { Readable: Readable2 } = require("node:stream");
     var { RequestAbortedError, NotSupportedError, InvalidArgumentError, AbortError } = require_errors2();
     var util = require_util9();
     var { ReadableStreamFrom } = require_util9();
@@ -31258,7 +31258,7 @@ var require_readable2 = __commonJS({
     var kBytesRead = /* @__PURE__ */ Symbol("kBytesRead");
     var noop = () => {
     };
-    var BodyReadable = class extends Readable {
+    var BodyReadable = class extends Readable2 {
       /**
        * @param {object} opts
        * @param {(this: Readable, size: number) => void} opts.resume
@@ -31647,7 +31647,7 @@ var require_api_request2 = __commonJS({
     "use strict";
     var assert = require("node:assert");
     var { AsyncResource } = require("node:async_hooks");
-    var { Readable } = require_readable2();
+    var { Readable: Readable2 } = require_readable2();
     var { InvalidArgumentError, RequestAbortedError } = require_errors2();
     var util = require_util9();
     function noop() {
@@ -31731,7 +31731,7 @@ var require_api_request2 = __commonJS({
         const parsedHeaders = headers;
         const contentType = parsedHeaders?.["content-type"];
         const contentLength = parsedHeaders?.["content-length"];
-        const res = new Readable({
+        const res = new Readable2({
           resume: () => controller.resume(),
           abort: (reason) => controller.abort(reason),
           contentType,
@@ -32107,7 +32107,7 @@ var require_api_pipeline2 = __commonJS({
   "node_modules/undici/lib/api/api-pipeline.js"(exports2, module2) {
     "use strict";
     var {
-      Readable,
+      Readable: Readable2,
       Duplex,
       PassThrough
     } = require("node:stream");
@@ -32124,7 +32124,7 @@ var require_api_pipeline2 = __commonJS({
     function noop() {
     }
     var kResume = /* @__PURE__ */ Symbol("resume");
-    var PipelineRequest = class extends Readable {
+    var PipelineRequest = class extends Readable2 {
       constructor() {
         super({ autoDestroy: true });
         this[kResume] = null;
@@ -32142,7 +32142,7 @@ var require_api_pipeline2 = __commonJS({
         callback(err);
       }
     };
-    var PipelineResponse = class extends Readable {
+    var PipelineResponse = class extends Readable2 {
       constructor(resume) {
         super({ autoDestroy: true });
         this[kResume] = resume;
@@ -36759,7 +36759,7 @@ var require_cache3 = __commonJS({
   "node_modules/undici/lib/interceptor/cache.js"(exports2, module2) {
     "use strict";
     var assert = require("node:assert");
-    var { Readable } = require("node:stream");
+    var { Readable: Readable2 } = require("node:stream");
     var util = require_util9();
     var CacheHandler = require_cache_handler();
     var MemoryCacheStore = require_memory_cache_store();
@@ -36855,7 +36855,7 @@ var require_cache3 = __commonJS({
       return dispatch(opts, new CacheHandler(globalOpts, cacheKey, handler));
     }
     function sendCachedValue(handler, opts, result, age, context, isStale2) {
-      const stream = util.isStream(result.body) ? result.body : Readable.from(result.body ?? []);
+      const stream = util.isStream(result.body) ? result.body : Readable2.from(result.body ?? []);
       assert(!stream.destroyed, "stream should not be destroyed");
       assert(!stream.readableDidRead, "stream should not be readableDidRead");
       const controller = {
@@ -39978,7 +39978,7 @@ var require_fetch2 = __commonJS({
       subresourceSet
     } = require_constants8();
     var EE = require("node:events");
-    var { Readable, pipeline, finished, isErrored, isReadable } = require("node:stream");
+    var { Readable: Readable2, pipeline, finished, isErrored, isReadable } = require("node:stream");
     var { addAbortListener, bufferToLowerCasedHeaderName } = require_util9();
     var { dataURLProcessor, serializeAMimeType, minimizeSupportedMimeType } = require_data_url2();
     var { getGlobalDispatcher } = require_global4();
@@ -40940,7 +40940,7 @@ var require_fetch2 = __commonJS({
                 const headersList = new HeadersList();
                 appendHeadersListFromResponseHeaders(headersList, headers, rawHeaders);
                 const location = headersList.get("location", true);
-                this.body = new Readable({ read: () => controller.resume() });
+                this.body = new Readable2({ read: () => controller.resume() });
                 const willFollow = location && request.redirect === "follow" && redirectStatusSet.has(status);
                 const decoders = [];
                 if (request.method !== "HEAD" && request.method !== "CONNECT" && !nullBodyStatus.includes(status) && !willFollow) {
@@ -50701,6 +50701,10 @@ async function updateChecksums(filePath, checksumEntries) {
   await import_node_fs.promises.writeFile(filePath, content);
 }
 
+// src/download/manifest.ts
+var import_node_readline = require("node:readline");
+var import_node_stream = require("node:stream");
+
 // src/utils/constants.ts
 var VERSIONS_MANIFEST_URL = "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson";
 
@@ -50745,21 +50749,15 @@ function info2(msg) {
 // src/download/manifest.ts
 var cachedManifestData = /* @__PURE__ */ new Map();
 async function fetchManifest(manifestUrl = VERSIONS_MANIFEST_URL) {
-  const cachedVersions = cachedManifestData.get(manifestUrl);
-  if (cachedVersions !== void 0) {
+  const cachedManifest = cachedManifestData.get(manifestUrl);
+  if (cachedManifest?.complete === true) {
     debug(`Using cached manifest data from ${manifestUrl}`);
-    return cachedVersions;
+    return cachedManifest.versions;
   }
-  info2(`Fetching manifest data from ${manifestUrl} ...`);
-  const response = await fetch(manifestUrl, {});
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch manifest data: ${response.status} ${response.statusText}`
-    );
-  }
+  const response = await fetchManifestResponse(manifestUrl);
   const body = await response.text();
   const versions = parseManifest(body, manifestUrl);
-  cachedManifestData.set(manifestUrl, versions);
+  cachedManifestData.set(manifestUrl, { complete: true, versions });
   return versions;
 }
 function parseManifest(data, sourceDescription) {
@@ -50767,31 +50765,14 @@ function parseManifest(data, sourceDescription) {
   if (trimmed === "") {
     throw new Error(`Manifest at ${sourceDescription} is empty.`);
   }
-  if (trimmed.startsWith("[")) {
-    throw new Error(
-      `Legacy JSON array manifests are no longer supported in ${sourceDescription}. Use the astral-sh/versions manifest format instead.`
-    );
-  }
+  rejectLegacyManifest(trimmed, sourceDescription);
   const versions = [];
   for (const [index, line] of data.split("\n").entries()) {
     const record = line.trim();
     if (record === "") {
       continue;
     }
-    let parsed;
-    try {
-      parsed = JSON.parse(record);
-    } catch (error2) {
-      throw new Error(
-        `Failed to parse manifest data from ${sourceDescription} at line ${index + 1}: ${error2.message}`
-      );
-    }
-    if (!isManifestVersion(parsed)) {
-      throw new Error(
-        `Invalid manifest record in ${sourceDescription} at line ${index + 1}.`
-      );
-    }
-    versions.push(parsed);
+    versions.push(parseManifestRecord(record, sourceDescription, index + 1));
   }
   if (versions.length === 0) {
     throw new Error(`No manifest data found in ${sourceDescription}.`);
@@ -50799,12 +50780,103 @@ function parseManifest(data, sourceDescription) {
   return versions;
 }
 async function getLatestVersion(manifestUrl = VERSIONS_MANIFEST_URL) {
-  const latestVersion = (await fetchManifest(manifestUrl))[0]?.version;
+  const latestVersion = manifestUrl === VERSIONS_MANIFEST_URL ? (await findManifestVersion(() => true))?.version : (await fetchManifest(manifestUrl))[0]?.version;
   if (latestVersion === void 0) {
     throw new Error("No versions found in manifest data");
   }
   debug(`Latest version from manifest: ${latestVersion}`);
   return latestVersion;
+}
+async function fetchManifestResponse(manifestUrl) {
+  info2(`Fetching manifest data from ${manifestUrl} ...`);
+  const response = await fetch(manifestUrl, {});
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch manifest data: ${response.status} ${response.statusText}`
+    );
+  }
+  return response;
+}
+async function findManifestVersion(predicate) {
+  const cachedManifest = cachedManifestData.get(VERSIONS_MANIFEST_URL);
+  const cachedVersion = cachedManifest?.versions.find(predicate);
+  if (cachedVersion !== void 0 || cachedManifest?.complete === true) {
+    return cachedVersion;
+  }
+  const response = await fetchManifestResponse(VERSIONS_MANIFEST_URL);
+  if (response.body === null) {
+    const versions2 = parseManifest(
+      await response.text(),
+      VERSIONS_MANIFEST_URL
+    );
+    cachedManifestData.set(VERSIONS_MANIFEST_URL, {
+      complete: true,
+      versions: versions2
+    });
+    return versions2.find(predicate);
+  }
+  const input = import_node_stream.Readable.fromWeb(response.body);
+  const lines = (0, import_node_readline.createInterface)({ crlfDelay: Number.POSITIVE_INFINITY, input });
+  const versions = [];
+  let complete = false;
+  let lineNumber = 0;
+  let matchedVersion;
+  try {
+    for await (const line of lines) {
+      lineNumber += 1;
+      const record = line.trim();
+      if (record === "") {
+        continue;
+      }
+      if (versions.length === 0) {
+        rejectLegacyManifest(record, VERSIONS_MANIFEST_URL);
+      }
+      const versionData = parseManifestRecord(
+        record,
+        VERSIONS_MANIFEST_URL,
+        lineNumber
+      );
+      versions.push(versionData);
+      if (predicate(versionData)) {
+        matchedVersion = versionData;
+        break;
+      }
+    }
+    complete = matchedVersion === void 0;
+  } finally {
+    lines.close();
+    if (!complete) {
+      input.destroy();
+    }
+  }
+  if (versions.length === 0) {
+    throw new Error(`Manifest at ${VERSIONS_MANIFEST_URL} is empty.`);
+  }
+  cachedManifestData.set(VERSIONS_MANIFEST_URL, { complete, versions });
+  return matchedVersion;
+}
+function parseManifestRecord(record, sourceDescription, lineNumber) {
+  let parsed;
+  try {
+    parsed = JSON.parse(record);
+  } catch (error2) {
+    throw new Error(
+      `Failed to parse manifest data from ${sourceDescription} at line ${lineNumber}: ${error2.message}`
+    );
+  }
+  if (!isManifestVersion(parsed)) {
+    throw new Error(
+      `Invalid manifest record in ${sourceDescription} at line ${lineNumber}.`
+    );
+  }
+  return parsed;
+}
+function rejectLegacyManifest(data, sourceDescription) {
+  if (data.startsWith("[")) {
+    throw new Error(
+      `Legacy JSON array manifests are no longer supported in ${sourceDescription}. Use the astral-sh/versions manifest format instead.`
+    );
+  }
 }
 function isManifestVersion(value) {
   if (!isRecord(value)) {

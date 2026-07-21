@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import * as semver from "semver";
+import { VERSIONS_MANIFEST_URL } from "../../src/utils/constants";
 
 const mockInfo = jest.fn();
 const mockWarning = jest.fn();
@@ -36,11 +37,14 @@ const mockGetLatestVersion = jest.fn<any>();
 // biome-ignore lint/suspicious/noExplicitAny: Mock requires flexible typing in tests.
 const mockGetAllVersions = jest.fn<any>();
 // biome-ignore lint/suspicious/noExplicitAny: Mock requires flexible typing in tests.
+const mockGetFirstMatchingVersion = jest.fn<any>();
+// biome-ignore lint/suspicious/noExplicitAny: Mock requires flexible typing in tests.
 const mockGetArtifact = jest.fn<any>();
 
 jest.unstable_mockModule("../../src/download/manifest", () => ({
   getAllVersions: mockGetAllVersions,
   getArtifact: mockGetArtifact,
+  getFirstMatchingVersion: mockGetFirstMatchingVersion,
   getLatestVersion: mockGetLatestVersion,
 }));
 
@@ -65,6 +69,7 @@ describe("download-version", () => {
     mockCacheDir.mockReset();
     mockGetLatestVersion.mockReset();
     mockGetAllVersions.mockReset();
+    mockGetFirstMatchingVersion.mockReset();
     mockGetArtifact.mockReset();
     mockValidateChecksum.mockReset();
 
@@ -85,14 +90,43 @@ describe("download-version", () => {
       expect(mockGetLatestVersion).toHaveBeenCalledWith(undefined);
     });
 
-    it("uses the default manifest to resolve available versions", async () => {
-      mockGetAllVersions.mockResolvedValue(["0.9.26", "0.9.25"]);
+    it("stops at the first matching version in the default manifest", async () => {
+      mockGetFirstMatchingVersion.mockImplementation(
+        (predicate: (version: string) => boolean) =>
+          ["0.9.26", "0.9.25"].find(predicate),
+      );
 
       const version = await resolveVersion("^0.9.0", undefined);
 
       expect(version).toBe("0.9.26");
-      expect(mockGetAllVersions).toHaveBeenCalledTimes(1);
-      expect(mockGetAllVersions).toHaveBeenCalledWith(undefined);
+      expect(mockGetFirstMatchingVersion).toHaveBeenCalledTimes(1);
+      expect(mockGetAllVersions).not.toHaveBeenCalled();
+    });
+
+    it("streams ranges when the default manifest URL is explicit", async () => {
+      mockGetFirstMatchingVersion.mockImplementation(
+        (predicate: (version: string) => boolean) =>
+          ["0.9.26", "0.9.25"].find(predicate),
+      );
+
+      const version = await resolveVersion("^0.9.0", VERSIONS_MANIFEST_URL);
+
+      expect(version).toBe("0.9.26");
+      expect(mockGetFirstMatchingVersion).toHaveBeenCalledTimes(1);
+      expect(mockGetAllVersions).not.toHaveBeenCalled();
+    });
+
+    it("streams PEP 440 ranges from the default manifest", async () => {
+      mockGetFirstMatchingVersion.mockImplementation(
+        (predicate: (version: string) => boolean) =>
+          ["0.9.26", "0.9.25"].find(predicate),
+      );
+
+      const version = await resolveVersion("!=0.9.26", undefined);
+
+      expect(version).toBe("0.9.25");
+      expect(mockGetFirstMatchingVersion).toHaveBeenCalledTimes(1);
+      expect(mockGetAllVersions).not.toHaveBeenCalled();
     });
 
     it("treats == exact pins as explicit versions", async () => {
