@@ -1,3 +1,5 @@
+import { createInterface } from "node:readline";
+import { Readable } from "node:stream";
 import * as core from "@actions/core";
 import { VERSIONS_MANIFEST_URL } from "../utils/constants";
 import { fetch } from "../utils/fetch";
@@ -23,28 +25,26 @@ export interface ArtifactResult {
   downloadUrl: string;
 }
 
-const cachedManifestData = new Map<string, ManifestVersion[]>();
+interface CachedManifest {
+  complete: boolean;
+  versions: ManifestVersion[];
+}
+
+const cachedManifestData = new Map<string, CachedManifest>();
 
 export async function fetchManifest(
   manifestUrl: string = VERSIONS_MANIFEST_URL,
 ): Promise<ManifestVersion[]> {
-  const cachedVersions = cachedManifestData.get(manifestUrl);
-  if (cachedVersions !== undefined) {
+  const cachedManifest = cachedManifestData.get(manifestUrl);
+  if (cachedManifest?.complete === true) {
     core.debug(`Using cached manifest data from ${manifestUrl}`);
-    return cachedVersions;
+    return cachedManifest.versions;
   }
 
-  log.info(`Fetching manifest data from ${manifestUrl} ...`);
-  const response = await fetch(manifestUrl, {});
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch manifest data: ${response.status} ${response.statusText}`,
-    );
-  }
-
+  const response = await fetchManifestResponse(manifestUrl);
   const body = await response.text();
   const versions = parseManifest(body, manifestUrl);
-  cachedManifestData.set(manifestUrl, versions);
+  cachedManifestData.set(manifestUrl, { complete: true, versions });
   return versions;
 }
 
@@ -57,11 +57,7 @@ export function parseManifest(
     throw new Error(`Manifest at ${sourceDescription} is empty.`);
   }
 
-  if (trimmed.startsWith("[")) {
-    throw new Error(
-      `Legacy JSON array manifests are no longer supported in ${sourceDescription}. Use the astral-sh/versions manifest format instead.`,
-    );
-  }
+  rejectLegacyManifest(trimmed, sourceDescription);
 
   const versions: ManifestVersion[] = [];
 
@@ -71,22 +67,7 @@ export function parseManifest(
       continue;
     }
 
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(record);
-    } catch (error) {
-      throw new Error(
-        `Failed to parse manifest data from ${sourceDescription} at line ${index + 1}: ${(error as Error).message}`,
-      );
-    }
-
-    if (!isManifestVersion(parsed)) {
-      throw new Error(
-        `Invalid manifest record in ${sourceDescription} at line ${index + 1}.`,
-      );
-    }
-
-    versions.push(parsed);
+    versions.push(parseManifestRecord(record, sourceDescription, index + 1));
   }
 
   if (versions.length === 0) {
@@ -99,7 +80,10 @@ export function parseManifest(
 export async function getLatestVersion(
   manifestUrl: string = VERSIONS_MANIFEST_URL,
 ): Promise<string> {
-  const latestVersion = (await fetchManifest(manifestUrl))[0]?.version;
+  const latestVersion =
+    manifestUrl === VERSIONS_MANIFEST_URL
+      ? (await findManifestVersion(() => true))?.version
+      : (await fetchManifest(manifestUrl))[0]?.version;
 
   if (latestVersion === undefined) {
     throw new Error("No versions found in manifest data");
@@ -107,6 +91,16 @@ export async function getLatestVersion(
 
   core.debug(`Latest version from manifest: ${latestVersion}`);
   return latestVersion;
+}
+
+// The default manifest is guaranteed to be ordered newest-first:
+// https://github.com/astral-sh/versions#format
+export async function getFirstMatchingVersion(
+  predicate: (version: string) => boolean,
+): Promise<string | undefined> {
+  return (
+    await findManifestVersion((versionData) => predicate(versionData.version))
+  )?.version;
 }
 
 export async function getAllVersions(
@@ -125,10 +119,12 @@ export async function getArtifact(
   platform: string,
   manifestUrl: string = VERSIONS_MANIFEST_URL,
 ): Promise<ArtifactResult | undefined> {
-  const versions = await fetchManifest(manifestUrl);
-  const versionData = versions.find(
-    (candidate) => candidate.version === version,
-  );
+  const versionData =
+    manifestUrl === VERSIONS_MANIFEST_URL
+      ? await findManifestVersion((candidate) => candidate.version === version)
+      : (await fetchManifest(manifestUrl)).find(
+          (candidate) => candidate.version === version,
+        );
   if (!versionData) {
     core.debug(`Version ${version} not found in manifest ${manifestUrl}`);
     return undefined;
@@ -169,12 +165,124 @@ export function clearManifestCache(manifestUrl?: string): void {
   cachedManifestData.delete(manifestUrl);
 }
 
+async function fetchManifestResponse(manifestUrl: string) {
+  log.info(`Fetching manifest data from ${manifestUrl} ...`);
+  const response = await fetch(manifestUrl, {});
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch manifest data: ${response.status} ${response.statusText}`,
+    );
+  }
+
+  return response;
+}
+
+async function findManifestVersion(
+  predicate: (versionData: ManifestVersion) => boolean,
+): Promise<ManifestVersion | undefined> {
+  const cachedManifest = cachedManifestData.get(VERSIONS_MANIFEST_URL);
+  const cachedVersion = cachedManifest?.versions.find(predicate);
+  if (cachedVersion !== undefined || cachedManifest?.complete === true) {
+    return cachedVersion;
+  }
+
+  const response = await fetchManifestResponse(VERSIONS_MANIFEST_URL);
+  if (response.body === null) {
+    const versions = parseManifest(
+      await response.text(),
+      VERSIONS_MANIFEST_URL,
+    );
+    cachedManifestData.set(VERSIONS_MANIFEST_URL, {
+      complete: true,
+      versions,
+    });
+    return versions.find(predicate);
+  }
+
+  const input = Readable.fromWeb(response.body);
+  const lines = createInterface({ crlfDelay: Number.POSITIVE_INFINITY, input });
+  const versions: ManifestVersion[] = [];
+  let complete = false;
+  let lineNumber = 0;
+  let matchedVersion: ManifestVersion | undefined;
+
+  try {
+    for await (const line of lines) {
+      lineNumber += 1;
+      const record = line.trim();
+      if (record === "") {
+        continue;
+      }
+
+      if (versions.length === 0) {
+        rejectLegacyManifest(record, VERSIONS_MANIFEST_URL);
+      }
+
+      const versionData = parseManifestRecord(
+        record,
+        VERSIONS_MANIFEST_URL,
+        lineNumber,
+      );
+      versions.push(versionData);
+      if (predicate(versionData)) {
+        matchedVersion = versionData;
+        break;
+      }
+    }
+
+    complete = matchedVersion === undefined;
+  } finally {
+    lines.close();
+    if (!complete) {
+      input.destroy();
+    }
+  }
+
+  if (versions.length === 0) {
+    throw new Error(`Manifest at ${VERSIONS_MANIFEST_URL} is empty.`);
+  }
+
+  cachedManifestData.set(VERSIONS_MANIFEST_URL, { complete, versions });
+  return matchedVersion;
+}
+
 function manifestSource(manifestUrl: string): string {
   if (manifestUrl === VERSIONS_MANIFEST_URL) {
     return VERSIONS_MANIFEST_URL;
   }
 
   return `manifest-file ${manifestUrl}`;
+}
+
+function parseManifestRecord(
+  record: string,
+  sourceDescription: string,
+  lineNumber: number,
+): ManifestVersion {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(record);
+  } catch (error) {
+    throw new Error(
+      `Failed to parse manifest data from ${sourceDescription} at line ${lineNumber}: ${(error as Error).message}`,
+    );
+  }
+
+  if (!isManifestVersion(parsed)) {
+    throw new Error(
+      `Invalid manifest record in ${sourceDescription} at line ${lineNumber}.`,
+    );
+  }
+
+  return parsed;
+}
+
+function rejectLegacyManifest(data: string, sourceDescription: string): void {
+  if (data.startsWith("[")) {
+    throw new Error(
+      `Legacy JSON array manifests are no longer supported in ${sourceDescription}. Use the astral-sh/versions manifest format instead.`,
+    );
+  }
 }
 
 function isManifestVersion(value: unknown): value is ManifestVersion {
