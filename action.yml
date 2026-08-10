@@ -33,7 +33,7 @@ inputs:
     required: false
     default: ${{ github.token }}
   enable-cache:
-    description: "Enable uploading of the uv cache"
+    description: "Enable the GitHub Actions cache for uv. 'auto' enables caching on GitHub-hosted runners except for release, tag push, pull_request_target, and workflow_run events."
     default: "auto"
   cache-dependency-glob:
     description:

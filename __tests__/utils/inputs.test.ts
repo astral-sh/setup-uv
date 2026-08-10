@@ -12,6 +12,8 @@ import {
 
 let mockInputs: Record<string, string> = {};
 const tempDirs: string[] = [];
+const ORIGINAL_GITHUB_EVENT_NAME = process.env.GITHUB_EVENT_NAME;
+const ORIGINAL_GITHUB_REF = process.env.GITHUB_REF;
 const ORIGINAL_HOME = process.env.HOME;
 const ORIGINAL_RUNNER_ENVIRONMENT = process.env.RUNNER_ENVIRONMENT;
 const ORIGINAL_RUNNER_TEMP = process.env.RUNNER_TEMP;
@@ -52,6 +54,8 @@ function createTempProject(files: Record<string, string> = {}): string {
 function resetEnvironment(): void {
   jest.clearAllMocks();
   mockInputs = {};
+  delete process.env.GITHUB_EVENT_NAME;
+  delete process.env.GITHUB_REF;
   process.env.HOME = "/home/testuser";
   delete process.env.RUNNER_ENVIRONMENT;
   delete process.env.RUNNER_TEMP;
@@ -64,6 +68,8 @@ function restoreEnvironment(): void {
     fs.rmSync(dir, { force: true, recursive: true });
   }
 
+  process.env.GITHUB_EVENT_NAME = ORIGINAL_GITHUB_EVENT_NAME;
+  process.env.GITHUB_REF = ORIGINAL_GITHUB_REF;
   process.env.HOME = ORIGINAL_HOME;
   process.env.RUNNER_ENVIRONMENT = ORIGINAL_RUNNER_ENVIRONMENT;
   process.env.RUNNER_TEMP = ORIGINAL_RUNNER_TEMP;
@@ -92,6 +98,64 @@ describe("loadInputs", () => {
     expect(inputs.venvPath).toBe("/workspace/.venv");
     expect(inputs.manifestFile).toBeUndefined();
     expect(inputs.resolutionStrategy).toBe("highest");
+  });
+
+  it.each([
+    "pull_request_target",
+    "workflow_run",
+    "release",
+  ])("disables automatic caching for the %s event", (eventName) => {
+    mockInputs["working-directory"] = "/workspace";
+    mockInputs["enable-cache"] = "auto";
+    process.env.RUNNER_ENVIRONMENT = "github-hosted";
+    process.env.RUNNER_TEMP = "/runner-temp";
+    process.env.GITHUB_EVENT_NAME = eventName;
+
+    const inputs = loadInputs();
+
+    expect(inputs.enableCache).toBe(false);
+    expect(mockInfo).toHaveBeenCalledWith(
+      `Caching is disabled for the ${eventName} event`,
+    );
+  });
+
+  it("disables automatic caching for tag pushes", () => {
+    mockInputs["working-directory"] = "/workspace";
+    mockInputs["enable-cache"] = "auto";
+    process.env.RUNNER_ENVIRONMENT = "github-hosted";
+    process.env.RUNNER_TEMP = "/runner-temp";
+    process.env.GITHUB_EVENT_NAME = "push";
+    process.env.GITHUB_REF = "refs/tags/v1.0.0";
+
+    const inputs = loadInputs();
+
+    expect(inputs.enableCache).toBe(false);
+    expect(mockInfo).toHaveBeenCalledWith("Caching is disabled for tag pushes");
+  });
+
+  it("enables automatic caching for branch pushes", () => {
+    mockInputs["working-directory"] = "/workspace";
+    mockInputs["enable-cache"] = "auto";
+    process.env.RUNNER_ENVIRONMENT = "github-hosted";
+    process.env.RUNNER_TEMP = "/runner-temp";
+    process.env.GITHUB_EVENT_NAME = "push";
+    process.env.GITHUB_REF = "refs/heads/main";
+
+    const inputs = loadInputs();
+
+    expect(inputs.enableCache).toBe(true);
+  });
+
+  it("honors explicitly enabled caching for sensitive events", () => {
+    mockInputs["working-directory"] = "/workspace";
+    mockInputs["enable-cache"] = "true";
+    process.env.RUNNER_ENVIRONMENT = "github-hosted";
+    process.env.RUNNER_TEMP = "/runner-temp";
+    process.env.GITHUB_EVENT_NAME = "release";
+
+    const inputs = loadInputs();
+
+    expect(inputs.enableCache).toBe(true);
   });
 
   it("uses cache-dir from pyproject.toml when present", () => {

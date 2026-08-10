@@ -140,7 +140,27 @@ function getVenvPath(
 function getEnableCache(): boolean {
   const enableCacheInput = core.getInput("enable-cache");
   if (enableCacheInput === "auto") {
-    return process.env.RUNNER_ENVIRONMENT === "github-hosted";
+    if (process.env.RUNNER_ENVIRONMENT !== "github-hosted") {
+      return false;
+    }
+
+    const eventName = process.env.GITHUB_EVENT_NAME;
+    const isTagPush =
+      eventName === "push" && process.env.GITHUB_REF?.startsWith("refs/tags/");
+    if (isTagPush) {
+      log.info("Caching is disabled for tag pushes");
+      return false;
+    }
+    if (
+      eventName === "pull_request_target" ||
+      eventName === "workflow_run" ||
+      eventName === "release"
+    ) {
+      log.info(`Caching is disabled for the ${eventName} event`);
+      return false;
+    }
+
+    return true;
   }
   return enableCacheInput === "true";
 }
