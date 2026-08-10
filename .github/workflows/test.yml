@@ -1086,6 +1086,14 @@ jobs:
         run: gh act -j test-uvx -P ubuntu-latest=catthehacker/ubuntu:act-latest
         env:
           GH_TOKEN: ${{ github.token }}
+      - name: Verify workflow_run disables automatic caching with act
+        run: |
+          gh act workflow_run \
+            -W __tests__/workflows/workflow-run.yml \
+            -P ubuntu-latest=catthehacker/ubuntu:act-latest \
+            --env RUNNER_ENVIRONMENT=github-hosted
+        env:
+          GH_TOKEN: ${{ github.token }}
 
   validate-typings:
     runs-on: "ubuntu-latest"

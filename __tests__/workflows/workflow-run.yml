@@ -1,20 +1,17 @@
-name: "test workflow_run"
+name: "test workflow_run caching"
 
-on: # zizmor: ignore[dangerous-triggers] this workflow only tests trusted code from the default branch
+on: # zizmor: ignore[dangerous-triggers] this workflow is a test fixture executed by act only
   workflow_run:
     workflows:
       - test
     types:
       - completed
-    branches:
-      - main
 
 permissions:
   contents: read
 
 jobs:
   test-cache-disabled:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -29,6 +26,10 @@ jobs:
         run: |
           if [ "$GITHUB_EVENT_NAME" != "workflow_run" ]; then
             echo "Expected workflow_run event, got: $GITHUB_EVENT_NAME"
+            exit 1
+          fi
+          if [ "$RUNNER_ENVIRONMENT" != "github-hosted" ]; then
+            echo "Expected a simulated GitHub-hosted runner, got: $RUNNER_ENVIRONMENT"
             exit 1
           fi
           if [ -n "$CACHE_KEY" ]; then
