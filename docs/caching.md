@@ -38,7 +38,10 @@ The computed cache key is available as the `cache-key` output:
 
 If you enable caching, the [uv cache](https://docs.astral.sh/uv/concepts/cache/) will be uploaded to
 the GitHub Actions cache. This can speed up runs that reuse the cache by several minutes.
-Caching is enabled by default on GitHub-hosted runners.
+With the default `enable-cache: auto`, caching is enabled on GitHub-hosted runners except for
+`release`, tag push, `pull_request_target`, and `workflow_run` events. Caching is disabled for these
+events to prevent insecure or release-sensitive jobs from restoring potentially poisoned caches.
+Set `enable-cache: true` to explicitly enable caching for any event.
 
 > [!TIP]
 >

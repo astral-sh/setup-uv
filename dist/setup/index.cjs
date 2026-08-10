@@ -98255,7 +98255,20 @@ function getVenvPath(workingDirectory, activateEnvironment2) {
 function getEnableCache() {
   const enableCacheInput = getInput("enable-cache");
   if (enableCacheInput === "auto") {
-    return process.env.RUNNER_ENVIRONMENT === "github-hosted";
+    if (process.env.RUNNER_ENVIRONMENT !== "github-hosted") {
+      return false;
+    }
+    const eventName = process.env.GITHUB_EVENT_NAME;
+    const isTagPush = eventName === "push" && process.env.GITHUB_REF?.startsWith("refs/tags/");
+    if (isTagPush) {
+      info2("Caching is disabled for tag pushes");
+      return false;
+    }
+    if (eventName === "pull_request_target" || eventName === "workflow_run" || eventName === "release") {
+      info2(`Caching is disabled for the ${eventName} event`);
+      return false;
+    }
+    return true;
   }
   return enableCacheInput === "true";
 }

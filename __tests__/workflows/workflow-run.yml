@@ -1,0 +1,42 @@
+name: "test workflow_run caching"
+
+on: # zizmor: ignore[dangerous-triggers] this workflow is a test fixture executed by act only
+  workflow_run:
+    workflows:
+      - test
+    types:
+      - completed
+
+permissions:
+  contents: read
+
+jobs:
+  test-cache-disabled:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Setup uv with automatic caching
+        id: setup-uv
+        uses: ./
+      - name: Verify automatic caching is disabled
+        env:
+          CACHE_KEY: ${{ steps.setup-uv.outputs.cache-key }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" != "workflow_run" ]; then
+            echo "Expected workflow_run event, got: $GITHUB_EVENT_NAME"
+            exit 1
+          fi
+          if [ "$RUNNER_ENVIRONMENT" != "github-hosted" ]; then
+            echo "Expected a simulated GitHub-hosted runner, got: $RUNNER_ENVIRONMENT"
+            exit 1
+          fi
+          if [ -n "$CACHE_KEY" ]; then
+            echo "Cache key should not be set for a workflow_run event: $CACHE_KEY"
+            exit 1
+          fi
+          if [ -n "$UV_CACHE_DIR" ]; then
+            echo "UV_CACHE_DIR should not be set for a workflow_run event: $UV_CACHE_DIR"
+            exit 1
+          fi

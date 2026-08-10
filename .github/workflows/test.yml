@@ -1087,6 +1087,25 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
+  test-workflow-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install act
+        run: gh extension install https://github.com/nektos/gh-act
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Verify workflow_run disables automatic caching with act
+        run: |
+          gh act workflow_run \
+            -W __tests__/workflows/workflow-run.yml \
+            -P ubuntu-latest=catthehacker/ubuntu:act-latest \
+            --env RUNNER_ENVIRONMENT=github-hosted
+        env:
+          GH_TOKEN: ${{ github.token }}
+
   validate-typings:
     runs-on: "ubuntu-latest"
     steps:
@@ -1143,6 +1162,7 @@ jobs:
       - test-restore-python-installs
       - test-python-install-dir
       - test-act
+      - test-workflow-run
       - validate-typings
     if: always()
     steps:
