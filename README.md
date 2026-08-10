@@ -44,7 +44,7 @@ Have a look under [Advanced Configuration](#advanced-configuration) for detailed
 - name: Install uv with all available options
   uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
   with:
-    # The version of uv to install (default: searches for version in config files, then latest)
+    # The version of uv to install, e.g., "0.5.0", "latest", or "latest-known" (default: searches for version in config files, then latest)
     version: ""
 
     # Path to a file containing the version of uv to install, e.g., uv.toml, pyproject.toml, .tool-versions, requirements.txt or uv.lock (default: searches uv.toml then pyproject.toml)

@@ -4,8 +4,9 @@ This document covers advanced customization options including checksum validatio
 
 ## Validate checksum
 
-You can specify a checksum to validate the downloaded executable. Checksums up to the default version
-are automatically verified by this action. The sha256 hashes can be found on the
+You can specify a checksum to validate the downloaded executable. Checksums bundled with this action
+are used automatically when available. When using the default manifest, set `version: "latest-known"`
+to select the newest version with a bundled checksum. The sha256 hashes can be found on the
 [releases page](https://github.com/astral-sh/uv/releases) of the uv repo.
 
 ```yaml

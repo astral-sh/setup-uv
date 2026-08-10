@@ -4,7 +4,7 @@ description:
 author: "astral-sh"
 inputs:
   version:
-    description: "The version of uv to install e.g., `0.5.0` Defaults to the version in pyproject.toml or 'latest'."
+    description: "The version of uv to install, e.g., `0.5.0`, `latest`, or `latest-known`. Defaults to the version in pyproject.toml or `latest`."
     default: ""
   version-file:
     description: "Path to a file containing the version of uv to install, e.g., uv.toml, pyproject.toml, .tool-versions, requirements.txt or uv.lock. Defaults to searching for uv.toml and if not found pyproject.toml."
