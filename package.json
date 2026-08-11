@@ -35,11 +35,11 @@
     "@actions/io": "^3.0.2",
     "@actions/tool-cache": "^4.0.0",
     "@renovatebot/pep440": "^5.0.0",
-    "smol-toml": "^1.7.0",
-    "undici": "^8.7.0"
+    "smol-toml": "^1.7.1",
+    "undici": "^8.10.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.4",
+    "@biomejs/biome": "^2.5.6",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^26.1.1",
     "@types/semver": "^7.7.1",
