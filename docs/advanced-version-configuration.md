@@ -11,7 +11,7 @@ This document covers advanced options for configuring which version of uv to ins
     version: "latest"
 ```
 
-## Install the latest version with a built-in checksum
+## Install the latest version with a checksum verified by this action
 
 Use `latest-known` to install the newest uv version whose checksums were bundled with the version of setup-uv used by your workflow. Version resolution is performed locally without fetching the latest release, so updating setup-uv also updates the version selected by `latest-known`.
 
