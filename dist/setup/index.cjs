@@ -56054,7 +56054,7 @@ var require_semver5 = __commonJS({
 });
 
 // src/setup-uv.ts
-var import_node_fs8 = __toESM(require("node:fs"), 1);
+var import_node_fs9 = __toESM(require("node:fs"), 1);
 var path16 = __toESM(require("node:path"), 1);
 
 // node_modules/@actions/core/lib/command.js
@@ -98258,28 +98258,58 @@ function getUvVersionFromDependency(dependency) {
 // src/version/tool-versions-file.ts
 var import_node_fs4 = __toESM(require("node:fs"), 1);
 function getUvVersionFromToolVersions(filePath) {
+  const versions = getToolVersions(filePath, "uv");
+  if (versions === void 0 || versions.length !== 1) {
+    return void 0;
+  }
+  const version3 = stripVersionPrefix(versions[0]);
+  if (version3.startsWith("ref")) {
+    warning(
+      "The ref syntax of .tool-versions is not supported. Please use a released version instead."
+    );
+    return void 0;
+  }
+  return version3;
+}
+function getPythonVersionFromToolVersions(filePath) {
+  const versions = getToolVersions(filePath, "python");
+  if (versions === void 0 || versions.length === 0) {
+    return void 0;
+  }
+  if (versions.length > 1) {
+    warning(
+      "Multiple Python versions in .tool-versions are not supported. The Python entry will be ignored."
+    );
+    return void 0;
+  }
+  const version3 = stripVersionPrefix(versions[0]);
+  if (version3 === "system" || version3.startsWith("ref:") || version3.startsWith("path:")) {
+    warning(
+      `The Python version ${versions[0]} in .tool-versions is not supported. The Python entry will be ignored.`
+    );
+    return void 0;
+  }
+  return version3;
+}
+function getToolVersions(filePath, toolName) {
   if (!filePath.endsWith(".tool-versions")) {
     return void 0;
   }
   const fileContents = import_node_fs4.default.readFileSync(filePath, "utf8");
-  const lines = fileContents.split("\n");
-  for (const line of lines) {
-    if (line.trim().startsWith("#")) {
+  for (const line of fileContents.split("\n")) {
+    const content = line.split("#", 1)[0].trim();
+    if (content === "") {
       continue;
     }
-    const match2 = line.match(/^\s*uv\s*v?\s*(?<version>[^\s]+)\s*$/);
-    if (match2) {
-      const matchedVersion = match2.groups?.version.trim();
-      if (matchedVersion?.startsWith("ref")) {
-        warning(
-          "The ref syntax of .tool-versions is not supported. Please use a released version instead."
-        );
-        return void 0;
-      }
-      return matchedVersion;
+    const [tool, ...versions] = content.split(/\s+/);
+    if (tool === toolName) {
+      return versions;
     }
   }
   return void 0;
+}
+function stripVersionPrefix(version3) {
+  return version3.startsWith("v") ? version3.slice(1) : version3;
 }
 
 // src/version/uv-lock-file.ts
@@ -98734,12 +98764,13 @@ function getExtension(platform2) {
 }
 
 // src/utils/inputs.ts
+var import_node_fs8 = __toESM(require("node:fs"), 1);
 var import_node_path = __toESM(require("node:path"), 1);
 function loadInputs() {
   const workingDirectory = getInput("working-directory");
   const version3 = getInput("version");
   const versionFile = getVersionFile(workingDirectory);
-  const pythonVersion = getInput("python-version");
+  const pythonVersion = getPythonVersion(versionFile);
   const activateEnvironment2 = getBooleanInput("activate-environment");
   const noProject = getBooleanInput("no-project");
   const venvPath = getVenvPath(workingDirectory, activateEnvironment2);
@@ -98804,6 +98835,26 @@ function getVersionFile(workingDirectory) {
     return resolveRelativePath(workingDirectory, tildeExpanded);
   }
   return versionFileInput;
+}
+function getPythonVersion(versionFile) {
+  const pythonVersionInput = getInput("python-version");
+  if (pythonVersionInput !== "") {
+    return pythonVersionInput;
+  }
+  if (process.env.UV_PYTHON !== void 0 && process.env.UV_PYTHON !== "") {
+    return "";
+  }
+  if (versionFile === "" || !import_node_fs8.default.existsSync(versionFile)) {
+    return "";
+  }
+  try {
+    return getPythonVersionFromToolVersions(versionFile) ?? "";
+  } catch (err) {
+    warning2(
+      `Error while parsing Python version from ${versionFile}: ${err.message}`
+    );
+    return "";
+  }
 }
 function getVenvPath(workingDirectory, activateEnvironment2) {
   const venvPathInput = getInput("venv-path");
@@ -99018,7 +99069,7 @@ process.on("uncaughtException", (error2) => {
 process.on("unhandledRejection", (reason) => {
   failUnexpectedly("Unhandled promise rejection", reason);
 });
-async function getPythonVersion(inputs) {
+async function getPythonVersion2(inputs) {
   if (inputs.pythonVersion !== "") {
     return inputs.pythonVersion;
   }
@@ -99068,7 +99119,7 @@ async function run() {
     setOutput("uv-version", setupResult.version);
     saveState(STATE_UV_VERSION, setupResult.version);
     info2(`Successfully installed uv version ${setupResult.version}`);
-    const detectedPythonVersion = await getPythonVersion(inputs);
+    const detectedPythonVersion = await getPythonVersion2(inputs);
     setOutput("python-version", detectedPythonVersion);
     if (inputs.enableCache) {
       await restoreCache2(inputs, detectedPythonVersion);
@@ -99080,7 +99131,7 @@ async function run() {
   }
 }
 function detectEmptyWorkdir(inputs) {
-  if (import_node_fs8.default.readdirSync(inputs.workingDirectory).length === 0) {
+  if (import_node_fs9.default.readdirSync(inputs.workingDirectory).length === 0) {
     if (inputs.ignoreEmptyWorkdir) {
       info2(
         "Empty workdir detected. Ignoring because ignore-empty-workdir is enabled"

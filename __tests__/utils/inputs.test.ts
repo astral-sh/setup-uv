@@ -18,6 +18,7 @@ const ORIGINAL_HOME = process.env.HOME;
 const ORIGINAL_RUNNER_ENVIRONMENT = process.env.RUNNER_ENVIRONMENT;
 const ORIGINAL_RUNNER_TEMP = process.env.RUNNER_TEMP;
 const ORIGINAL_UV_CACHE_DIR = process.env.UV_CACHE_DIR;
+const ORIGINAL_UV_PYTHON = process.env.UV_PYTHON;
 const ORIGINAL_UV_PYTHON_INSTALL_DIR = process.env.UV_PYTHON_INSTALL_DIR;
 
 const mockDebug = jest.fn();
@@ -60,6 +61,7 @@ function resetEnvironment(): void {
   delete process.env.RUNNER_ENVIRONMENT;
   delete process.env.RUNNER_TEMP;
   delete process.env.UV_CACHE_DIR;
+  delete process.env.UV_PYTHON;
   delete process.env.UV_PYTHON_INSTALL_DIR;
 }
 
@@ -74,6 +76,7 @@ function restoreEnvironment(): void {
   process.env.RUNNER_ENVIRONMENT = ORIGINAL_RUNNER_ENVIRONMENT;
   process.env.RUNNER_TEMP = ORIGINAL_RUNNER_TEMP;
   process.env.UV_CACHE_DIR = ORIGINAL_UV_CACHE_DIR;
+  process.env.UV_PYTHON = ORIGINAL_UV_PYTHON;
   process.env.UV_PYTHON_INSTALL_DIR = ORIGINAL_UV_PYTHON_INSTALL_DIR;
 }
 
@@ -98,6 +101,52 @@ describe("loadInputs", () => {
     expect(inputs.venvPath).toBe("/workspace/.venv");
     expect(inputs.manifestFile).toBeUndefined();
     expect(inputs.resolutionStrategy).toBe("highest");
+  });
+
+  it("uses the Python version from an explicitly selected .tool-versions file", () => {
+    mockInputs["working-directory"] = createTempProject({
+      ".tool-versions": "uv 0.12.3\npython 3.13.1t\n",
+    });
+    mockInputs["version-file"] = ".tool-versions";
+
+    const inputs = loadInputs();
+
+    expect(inputs.pythonVersion).toBe("3.13.1t");
+  });
+
+  it("prefers the python-version input over .tool-versions", () => {
+    mockInputs["working-directory"] = createTempProject({
+      ".tool-versions": "uv 0.12.3\npython 3.13\n",
+    });
+    mockInputs["version-file"] = ".tool-versions";
+    mockInputs["python-version"] = "3.12";
+
+    const inputs = loadInputs();
+
+    expect(inputs.pythonVersion).toBe("3.12");
+  });
+
+  it("preserves UV_PYTHON instead of overriding it from .tool-versions", () => {
+    mockInputs["working-directory"] = createTempProject({
+      ".tool-versions": "uv 0.12.3\npython 3.13\n",
+    });
+    mockInputs["version-file"] = ".tool-versions";
+    process.env.UV_PYTHON = "3.11";
+
+    const inputs = loadInputs();
+
+    expect(inputs.pythonVersion).toBe("");
+    expect(process.env.UV_PYTHON).toBe("3.11");
+  });
+
+  it("does not discover .tool-versions from the working directory", () => {
+    mockInputs["working-directory"] = createTempProject({
+      ".tool-versions": "uv 0.12.3\npython 3.13\n",
+    });
+
+    const inputs = loadInputs();
+
+    expect(inputs.pythonVersion).toBe("");
   });
 
   it.each(["pull_request_target", "workflow_run", "release"])(
