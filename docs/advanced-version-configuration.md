@@ -85,7 +85,10 @@ You can use the `version-file` input to specify a file that contains the version
 This can either be a `pyproject.toml` or `uv.toml` file which defines a `required-version` or
 uv defined as a dependency in `pyproject.toml` or `requirements.txt`.
 
-[asdf](https://asdf-vm.com/) `.tool-versions` is also supported, but without the `ref` syntax.
+[asdf](https://asdf-vm.com/) `.tool-versions` is also supported for selecting uv. If neither
+`python-version` nor `UV_PYTHON` is set, the `python` entry from the selected file is also exported
+as `UV_PYTHON`. Only a single Python version is supported; multiple fallback versions and the asdf
+`ref:`, `path:`, and `system` forms are ignored with a warning.
 
 ```yaml
 - name: Install uv based on the version defined in pyproject.toml

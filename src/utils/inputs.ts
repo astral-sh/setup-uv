@@ -1,5 +1,7 @@
+import fs from "node:fs";
 import path from "node:path";
 import * as core from "@actions/core";
+import { getPythonVersionFromToolVersions } from "../version/tool-versions-file";
 import { getConfigValueFromTomlFile } from "./config-file";
 import * as log from "./logging";
 
@@ -51,7 +53,7 @@ export function loadInputs(): SetupInputs {
   const workingDirectory = core.getInput("working-directory");
   const version = core.getInput("version");
   const versionFile = getVersionFile(workingDirectory);
-  const pythonVersion = core.getInput("python-version");
+  const pythonVersion = getPythonVersion(versionFile);
   const activateEnvironment = core.getBooleanInput("activate-environment");
   const noProject = core.getBooleanInput("no-project");
   const venvPath = getVenvPath(workingDirectory, activateEnvironment);
@@ -120,6 +122,28 @@ function getVersionFile(workingDirectory: string): string {
     return resolveRelativePath(workingDirectory, tildeExpanded);
   }
   return versionFileInput;
+}
+
+function getPythonVersion(versionFile: string): string {
+  const pythonVersionInput = core.getInput("python-version");
+  if (pythonVersionInput !== "") {
+    return pythonVersionInput;
+  }
+  if (process.env.UV_PYTHON !== undefined && process.env.UV_PYTHON !== "") {
+    return "";
+  }
+  if (versionFile === "" || !fs.existsSync(versionFile)) {
+    return "";
+  }
+
+  try {
+    return getPythonVersionFromToolVersions(versionFile) ?? "";
+  } catch (err) {
+    log.warning(
+      `Error while parsing Python version from ${versionFile}: ${(err as Error).message}`,
+    );
+    return "";
+  }
 }
 
 function getVenvPath(

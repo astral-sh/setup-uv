@@ -234,6 +234,31 @@ jobs:
             exit 1
           fi
 
+  test-tool-versions-python-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install versions from .tool-versions
+        id: setup-uv
+        uses: ./
+        with:
+          version-file: "__tests__/fixtures/.tool-versions"
+      - name: Verify Python version from .tool-versions
+        run: |
+          if [ "$UV_PYTHON" != "3.13.1t" ]; then
+            echo "Wrong UV_PYTHON: $UV_PYTHON"
+            exit 1
+          fi
+          if [ "$PYTHON_VERSION" != "3.13.1t" ]; then
+            echo "Wrong python-version output: $PYTHON_VERSION"
+            exit 1
+          fi
+        shell: bash
+        env:
+          PYTHON_VERSION: ${{ steps.setup-uv.outputs.python-version }}
+
   test-malformed-pyproject-file-fallback:
     runs-on: ubuntu-latest
     steps:
@@ -1126,6 +1151,7 @@ jobs:
       - test-from-working-directory-version
       - test-malformed-pyproject-file-fallback
       - test-version-file-version
+      - test-tool-versions-python-version
       - test-checksum
       - test-with-explicit-token
       - test-uvx

@@ -131,7 +131,7 @@ If you want to ignore this, set the `ignore-empty-workdir` input to `true`.
 
 This action sets several environment variables that influence uv's behavior and can be used by subsequent steps:
 
-- `UV_PYTHON`: Set when `python-version` input is specified. Controls which Python version uv uses.
+- `UV_PYTHON`: Set when `python-version` is specified or the selected `.tool-versions` file contains a supported `python` entry. Controls which Python version uv uses.
 - `UV_CACHE_DIR`: Set when caching is enabled (unless already configured in uv config files). Controls where uv stores its cache.
 - `UV_TOOL_DIR`: Set when `tool-dir` input is specified. Controls where uv installs tool environments.
 - `UV_TOOL_BIN_DIR`: Set when `tool-bin-dir` input is specified. Controls where uv installs tool binaries.
@@ -142,6 +142,7 @@ This action sets several environment variables that influence uv's behavior and 
 
 - `UV_NO_MODIFY_PATH`: If set, prevents the action from modifying PATH. Cannot be used with `activate-environment`.
 - `UV_CACHE_DIR`: If already set, the action will respect it instead of setting its own cache directory.
+- `UV_PYTHON`: If already set and `python-version` is not specified, the action will respect it instead of using the `python` entry from `.tool-versions`.
 
 ```yaml
 - name: Example using environment variables

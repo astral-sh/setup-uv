@@ -26998,7 +26998,7 @@ __export(save_cache_exports, {
   run: () => run
 });
 module.exports = __toCommonJS(save_cache_exports);
-var fs7 = __toESM(require("node:fs"), 1);
+var fs9 = __toESM(require("node:fs"), 1);
 
 // node_modules/@actions/core/lib/command.js
 var os = __toESM(require("os"), 1);
@@ -61845,10 +61845,54 @@ var STATE_UV_PATH = "uv-path";
 var STATE_UV_VERSION = "uv-version";
 
 // src/utils/inputs.ts
+var import_node_fs4 = __toESM(require("node:fs"), 1);
 var import_node_path = __toESM(require("node:path"), 1);
 
-// src/utils/config-file.ts
+// src/version/tool-versions-file.ts
 var import_node_fs2 = __toESM(require("node:fs"), 1);
+function getPythonVersionFromToolVersions(filePath) {
+  const versions = getToolVersions(filePath, "python");
+  if (versions === void 0 || versions.length === 0) {
+    return void 0;
+  }
+  if (versions.length > 1) {
+    warning(
+      "Multiple Python versions in .tool-versions are not supported. The Python entry will be ignored."
+    );
+    return void 0;
+  }
+  const version3 = stripVersionPrefix(versions[0]);
+  if (version3 === "system" || version3.startsWith("ref:") || version3.startsWith("path:")) {
+    warning(
+      `The Python version ${versions[0]} in .tool-versions is not supported. The Python entry will be ignored.`
+    );
+    return void 0;
+  }
+  return version3;
+}
+function getToolVersions(filePath, toolName) {
+  if (!filePath.endsWith(".tool-versions")) {
+    return void 0;
+  }
+  const fileContents = import_node_fs2.default.readFileSync(filePath, "utf8");
+  for (const line of fileContents.split("\n")) {
+    const content = line.split("#", 1)[0].trim();
+    if (content === "") {
+      continue;
+    }
+    const [tool, ...versions] = content.split(/\s+/);
+    if (tool === toolName) {
+      return versions;
+    }
+  }
+  return void 0;
+}
+function stripVersionPrefix(version3) {
+  return version3.startsWith("v") ? version3.slice(1) : version3;
+}
+
+// src/utils/config-file.ts
+var import_node_fs3 = __toESM(require("node:fs"), 1);
 
 // node_modules/smol-toml/dist/date.js
 var DATE_TIME_RE = /^(\d{4}-\d{2}-\d{2})?[T ]?(?:(\d{2}):\d{2}(?::\d{2}(?:\.\d+)?)?)?(Z|[-+]\d{2}:\d{2})?$/i;
@@ -62532,10 +62576,10 @@ function parse3(toml, { maxDepth = 1e3, integersAsBigInt } = {}) {
 
 // src/utils/config-file.ts
 function getConfigValueFromTomlFile(filePath, key) {
-  if (!import_node_fs2.default.existsSync(filePath) || !filePath.endsWith(".toml")) {
+  if (!import_node_fs3.default.existsSync(filePath) || !filePath.endsWith(".toml")) {
     return void 0;
   }
-  const fileContent = import_node_fs2.default.readFileSync(filePath, "utf-8");
+  const fileContent = import_node_fs3.default.readFileSync(filePath, "utf-8");
   return getConfigValueFromTomlContent(filePath, fileContent, key);
 }
 function getConfigValueFromTomlContent(filePath, fileContent, key) {
@@ -62555,7 +62599,7 @@ function loadInputs() {
   const workingDirectory = getInput("working-directory");
   const version3 = getInput("version");
   const versionFile = getVersionFile(workingDirectory);
-  const pythonVersion = getInput("python-version");
+  const pythonVersion = getPythonVersion(versionFile);
   const activateEnvironment = getBooleanInput("activate-environment");
   const noProject = getBooleanInput("no-project");
   const venvPath = getVenvPath(workingDirectory, activateEnvironment);
@@ -62620,6 +62664,26 @@ function getVersionFile(workingDirectory) {
     return resolveRelativePath(workingDirectory, tildeExpanded);
   }
   return versionFileInput;
+}
+function getPythonVersion(versionFile) {
+  const pythonVersionInput = getInput("python-version");
+  if (pythonVersionInput !== "") {
+    return pythonVersionInput;
+  }
+  if (process.env.UV_PYTHON !== void 0 && process.env.UV_PYTHON !== "") {
+    return "";
+  }
+  if (versionFile === "" || !import_node_fs4.default.existsSync(versionFile)) {
+    return "";
+  }
+  try {
+    return getPythonVersionFromToolVersions(versionFile) ?? "";
+  } catch (err) {
+    warning2(
+      `Error while parsing Python version from ${versionFile}: ${err.message}`
+    );
+    return "";
+  }
 }
 function getVenvPath(workingDirectory, activateEnvironment) {
   const venvPathInput = getInput("venv-path");
@@ -62864,7 +62928,7 @@ async function saveCache3(inputs) {
       await pruneCache();
     }
     const actualCachePath = getUvCachePath(inputs);
-    if (!fs7.existsSync(actualCachePath)) {
+    if (!fs9.existsSync(actualCachePath)) {
       if (inputs.ignoreNothingToCache) {
         info2(
           "No cacheable uv cache paths were found. Ignoring because ignore-nothing-to-cache is enabled."
@@ -62884,7 +62948,7 @@ async function saveCache3(inputs) {
     }
   }
   if (inputs.cachePython) {
-    if (!fs7.existsSync(inputs.pythonDir)) {
+    if (!fs9.existsSync(inputs.pythonDir)) {
       warning2(
         `Python cache path ${inputs.pythonDir} does not exist on disk. Skipping Python cache save because no managed Python installation was found. If you want uv to install managed Python instead of using a system interpreter, set UV_PYTHON_PREFERENCE=only-managed.`
       );

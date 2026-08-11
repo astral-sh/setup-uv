@@ -47,13 +47,13 @@ Have a look under [Advanced Configuration](#advanced-configuration) for detailed
     # The version of uv to install, e.g., "0.5.0", "latest", or "latest-known" (default: searches for version in config files, then latest)
     version: ""
 
-    # Path to a file containing the version of uv to install, e.g., uv.toml, pyproject.toml, .tool-versions, requirements.txt or uv.lock (default: searches uv.toml then pyproject.toml)
+    # Path to a file containing the version of uv to install, e.g., uv.toml, pyproject.toml, .tool-versions, requirements.txt or uv.lock. A selected .tool-versions file can also provide the Python version (default: searches uv.toml then pyproject.toml)
     version-file: ""
 
     # Resolution strategy when resolving version ranges: 'highest' or 'lowest'
     resolution-strategy: "highest"
 
-    # The version of Python to set UV_PYTHON to
+    # The version of Python to set UV_PYTHON to (overrides the Python version from .tool-versions)
     python-version: ""
 
     # Use uv venv to activate a venv ready to be used by later steps
@@ -144,7 +144,25 @@ Have a look under [Advanced Configuration](#advanced-configuration) for detailed
 
 You can use the input `python-version` to set the environment variable `UV_PYTHON` for the rest of your workflow
 
-This will override any python version specifications in `pyproject.toml` and `.python-version`
+This will override any python version specifications in `pyproject.toml`, `.python-version`, and
+an explicitly selected `.tool-versions` file.
+
+When `version-file` points to `.tool-versions`, its `python` entry is used if neither
+`python-version` nor `UV_PYTHON` is set:
+
+```text
+uv 0.12.3
+python 3.13
+```
+
+```yaml
+- uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+  with:
+    version-file: ".tool-versions"
+```
+
+Only a single Python version is supported. Multiple fallback versions and the asdf `ref:`, `path:`,
+and `system` forms are ignored with a warning.
 
 ```yaml
 - name: Install the latest version of uv and set the python version to 3.13t
