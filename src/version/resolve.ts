@@ -2,6 +2,7 @@ import * as core from "@actions/core";
 import * as tc from "@actions/tool-cache";
 import * as pep440 from "@renovatebot/pep440";
 import * as semver from "semver";
+import { getLatestKnownVersion } from "../download/checksum/known-version";
 import {
   getAllVersions,
   getFirstMatchingVersion,
@@ -142,6 +143,10 @@ export async function resolveVersion(
   resolutionStrategy: ResolutionStrategy = "highest",
 ): Promise<string> {
   core.debug(`Resolving version: ${versionInput}`);
+
+  if (versionInput.trim() === "latest-known") {
+    return getLatestKnownVersion();
+  }
 
   const context: ConcreteVersionResolutionContext = {
     manifestUrl,

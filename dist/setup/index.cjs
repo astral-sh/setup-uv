@@ -20008,8 +20008,8 @@ var require_rcompare = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/rcompare.js"(exports2, module2) {
     "use strict";
     var compare2 = require_compare();
-    var rcompare2 = (a, b, loose) => compare2(b, a, loose);
-    module2.exports = rcompare2;
+    var rcompare3 = (a, b, loose) => compare2(b, a, loose);
+    module2.exports = rcompare3;
   }
 });
 
@@ -21234,7 +21234,7 @@ var require_semver2 = __commonJS({
     var patch2 = require_patch();
     var prerelease = require_prerelease();
     var compare2 = require_compare();
-    var rcompare2 = require_rcompare();
+    var rcompare3 = require_rcompare();
     var compareLoose = require_compare_loose();
     var compareBuild = require_compare_build();
     var sort = require_sort();
@@ -21272,7 +21272,7 @@ var require_semver2 = __commonJS({
       patch: patch2,
       prerelease,
       compare: compare2,
-      rcompare: rcompare2,
+      rcompare: rcompare3,
       compareLoose,
       compareBuild,
       sort,
@@ -27618,8 +27618,8 @@ var require_rcompare2 = __commonJS({
   "node_modules/@actions/tool-cache/node_modules/semver/functions/rcompare.js"(exports2, module2) {
     "use strict";
     var compare2 = require_compare2();
-    var rcompare2 = (a, b, loose) => compare2(b, a, loose);
-    module2.exports = rcompare2;
+    var rcompare3 = (a, b, loose) => compare2(b, a, loose);
+    module2.exports = rcompare3;
   }
 });
 
@@ -28844,7 +28844,7 @@ var require_semver4 = __commonJS({
     var patch2 = require_patch2();
     var prerelease = require_prerelease2();
     var compare2 = require_compare2();
-    var rcompare2 = require_rcompare2();
+    var rcompare3 = require_rcompare2();
     var compareLoose = require_compare_loose2();
     var compareBuild = require_compare_build2();
     var sort = require_sort2();
@@ -28882,7 +28882,7 @@ var require_semver4 = __commonJS({
       patch: patch2,
       prerelease,
       compare: compare2,
-      rcompare: rcompare2,
+      rcompare: rcompare3,
       compareLoose,
       compareBuild,
       sort,
@@ -54868,8 +54868,8 @@ var require_semver5 = __commonJS({
       var versionB = new SemVer(b, loose);
       return versionA.compare(versionB) || versionA.compareBuild(versionB);
     }
-    exports2.rcompare = rcompare2;
-    function rcompare2(a, b, loose) {
+    exports2.rcompare = rcompare3;
+    function rcompare3(a, b, loose) {
       return compare2(b, a, loose);
     }
     exports2.sort = sort;
@@ -96923,7 +96923,25 @@ function contains(specifier, input) {
 }
 
 // src/version/resolve.ts
+var semver5 = __toESM(require_semver5(), 1);
+
+// src/download/checksum/known-version.ts
 var semver4 = __toESM(require_semver5(), 1);
+var VERSION_IN_CHECKSUM_KEY_PATTERN = /-(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?)$/;
+function getLatestKnownVersion() {
+  const versions = /* @__PURE__ */ new Set();
+  for (const key of Object.keys(KNOWN_CHECKSUMS)) {
+    const version3 = key.match(VERSION_IN_CHECKSUM_KEY_PATTERN)?.[1];
+    if (version3 !== void 0) {
+      versions.add(version3);
+    }
+  }
+  const latestVersion = [...versions].sort(semver4.rcompare)[0];
+  if (!latestVersion) {
+    throw new Error("Could not determine latest known version from checksums.");
+  }
+  return latestVersion;
+}
 
 // src/version/specifier.ts
 function normalizeVersionSpecifier(specifier) {
@@ -97993,6 +98011,9 @@ async function resolveUvVersion(options) {
 }
 async function resolveVersion(versionInput, manifestUrl, resolutionStrategy = "highest") {
   debug(`Resolving version: ${versionInput}`);
+  if (versionInput.trim() === "latest-known") {
+    return getLatestKnownVersion();
+  }
   const context3 = {
     manifestUrl,
     parsedSpecifier: parseVersionSpecifier(versionInput),
@@ -98007,10 +98028,10 @@ async function resolveVersion(versionInput, manifestUrl, resolutionStrategy = "h
   throw new Error(`No version found for ${versionInput}`);
 }
 async function findHighestSatisfyingVersion(versionSpecifier) {
-  const semverRange = semver4.validRange(versionSpecifier);
+  const semverRange = semver5.validRange(versionSpecifier);
   if (semverRange !== null) {
     const semverMatch = await getFirstMatchingVersion(
-      (version3) => semver4.satisfies(version3, semverRange)
+      (version3) => semver5.satisfies(version3, semverRange)
     );
     if (semverMatch !== void 0) {
       debug(
@@ -98045,7 +98066,7 @@ function maxSatisfying2(versions, version3) {
   return void 0;
 }
 function minSatisfying3(versions, version3) {
-  const minSemver = semver4.minSatisfying(versions, version3);
+  const minSemver = semver5.minSatisfying(versions, version3);
   if (minSemver !== null) {
     debug(`Found a version that satisfies the semver range: ${minSemver}`);
     return minSemver;

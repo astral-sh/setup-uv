@@ -45701,6 +45701,9 @@ function info(message) {
 }
 
 // src/update-known-checksums.ts
+var semver2 = __toESM(require_semver(), 1);
+
+// src/download/checksum/known-version.ts
 var semver = __toESM(require_semver(), 1);
 
 // src/download/checksum/known-checksums.ts
@@ -50833,6 +50836,23 @@ var KNOWN_CHECKSUMS = {
   "x86_64-unknown-linux-musl-0.0.5": "705bbe04a93a9d4d9db5224c2f980a88bba272538a33a78ea2e966f46b4d5eb7"
 };
 
+// src/download/checksum/known-version.ts
+var VERSION_IN_CHECKSUM_KEY_PATTERN = /-(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?)$/;
+function getLatestKnownVersion() {
+  const versions = /* @__PURE__ */ new Set();
+  for (const key of Object.keys(KNOWN_CHECKSUMS)) {
+    const version = key.match(VERSION_IN_CHECKSUM_KEY_PATTERN)?.[1];
+    if (version !== void 0) {
+      versions.add(version);
+    }
+  }
+  const latestVersion = [...versions].sort(semver.rcompare)[0];
+  if (!latestVersion) {
+    throw new Error("Could not determine latest known version from checksums.");
+  }
+  return latestVersion;
+}
+
 // src/download/checksum/update-known-checksums.ts
 var import_node_fs = require("node:fs");
 async function updateChecksums(filePath, checksumEntries) {
@@ -51047,7 +51067,6 @@ function isRecord(value) {
 }
 
 // src/update-known-checksums.ts
-var VERSION_IN_CHECKSUM_KEY_PATTERN = /-(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?)$/;
 async function run() {
   const checksumFilePath = process.argv.slice(2)[0];
   if (!checksumFilePath) {
@@ -51056,8 +51075,8 @@ async function run() {
     );
   }
   const latestVersion = await getLatestVersion();
-  const latestKnownVersion = getLatestKnownVersionFromChecksums();
-  if (semver.lte(latestVersion, latestKnownVersion)) {
+  const latestKnownVersion = getLatestKnownVersion();
+  if (semver2.lte(latestVersion, latestKnownVersion)) {
     info2(
       `Latest release (${latestVersion}) is not newer than the latest known version (${latestKnownVersion}). Skipping update.`
     );
@@ -51067,23 +51086,6 @@ async function run() {
   const checksumEntries = extractChecksumsFromManifest(versions);
   await updateChecksums(checksumFilePath, checksumEntries);
   setOutput("latest-version", latestVersion);
-}
-function getLatestKnownVersionFromChecksums() {
-  const versions = /* @__PURE__ */ new Set();
-  for (const key of Object.keys(KNOWN_CHECKSUMS)) {
-    const version = extractVersionFromChecksumKey(key);
-    if (version !== void 0) {
-      versions.add(version);
-    }
-  }
-  const latestVersion = [...versions].sort(semver.rcompare)[0];
-  if (!latestVersion) {
-    throw new Error("Could not determine latest known version from checksums.");
-  }
-  return latestVersion;
-}
-function extractVersionFromChecksumKey(key) {
-  return key.match(VERSION_IN_CHECKSUM_KEY_PATTERN)?.[1];
 }
 function extractChecksumsFromManifest(versions) {
   const checksums = [];

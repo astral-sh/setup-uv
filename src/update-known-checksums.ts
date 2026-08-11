@@ -1,6 +1,6 @@
 import * as core from "@actions/core";
 import * as semver from "semver";
-import { KNOWN_CHECKSUMS } from "./download/checksum/known-checksums";
+import { getLatestKnownVersion } from "./download/checksum/known-version";
 import {
   type ChecksumEntry,
   updateChecksums,
@@ -12,9 +12,6 @@ import {
 } from "./download/manifest";
 import * as log from "./utils/logging";
 
-const VERSION_IN_CHECKSUM_KEY_PATTERN =
-  /-(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?)$/;
-
 async function run(): Promise<void> {
   const checksumFilePath = process.argv.slice(2)[0];
   if (!checksumFilePath) {
@@ -24,7 +21,7 @@ async function run(): Promise<void> {
   }
 
   const latestVersion = await getLatestVersion();
-  const latestKnownVersion = getLatestKnownVersionFromChecksums();
+  const latestKnownVersion = getLatestKnownVersion();
 
   if (semver.lte(latestVersion, latestKnownVersion)) {
     log.info(
@@ -38,28 +35,6 @@ async function run(): Promise<void> {
   await updateChecksums(checksumFilePath, checksumEntries);
 
   core.setOutput("latest-version", latestVersion);
-}
-
-function getLatestKnownVersionFromChecksums(): string {
-  const versions = new Set<string>();
-
-  for (const key of Object.keys(KNOWN_CHECKSUMS)) {
-    const version = extractVersionFromChecksumKey(key);
-    if (version !== undefined) {
-      versions.add(version);
-    }
-  }
-
-  const latestVersion = [...versions].sort(semver.rcompare)[0];
-  if (!latestVersion) {
-    throw new Error("Could not determine latest known version from checksums.");
-  }
-
-  return latestVersion;
-}
-
-function extractVersionFromChecksumKey(key: string): string | undefined {
-  return key.match(VERSION_IN_CHECKSUM_KEY_PATTERN)?.[1];
 }
 
 function extractChecksumsFromManifest(

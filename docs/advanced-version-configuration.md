@@ -11,6 +11,19 @@ This document covers advanced options for configuring which version of uv to ins
     version: "latest"
 ```
 
+## Install the latest version with a checksum verified by this action
+
+Use `latest-known` to install the newest uv version whose checksums were bundled with the version of setup-uv used by your workflow. Version resolution is performed locally without fetching the latest release, so updating setup-uv also updates the version selected by `latest-known`.
+
+When `manifest-file` is set, `latest-known` still selects a version from setup-uv's bundled checksum table, but the artifact and checksum come from the custom manifest.
+
+```yaml
+- name: Install the latest version of uv known to setup-uv
+  uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+  with:
+    version: "latest-known"
+```
+
 ## Install a specific version
 
 ```yaml
