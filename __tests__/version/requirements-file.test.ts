@@ -15,15 +15,18 @@ test("ignores dependencies starting with uv", async () => {
 test.each([
   ["without space before marker", "uv==0.11.20; sys_platform != 'emscripten'"],
   ["with space before marker", "uv==0.11.20 ; sys_platform != 'emscripten'"],
-])("strips PEP 508 markers from pyproject dependency groups %s", (_, dependency) => {
-  const parsedVersion = getUvVersionFromPyprojectContent(`[dependency-groups]
+])(
+  "strips PEP 508 markers from pyproject dependency groups %s",
+  (_, dependency) => {
+    const parsedVersion = getUvVersionFromPyprojectContent(`[dependency-groups]
 test = [
   "${dependency}",
 ]
 `);
 
-  expect(parsedVersion).toBe("==0.11.20");
-});
+    expect(parsedVersion).toBe("==0.11.20");
+  },
+);
 
 test("strips PEP 508 markers from requirements dependencies", () => {
   const parsedVersion = getUvVersionFromRequirementsText(

@@ -100,24 +100,23 @@ describe("loadInputs", () => {
     expect(inputs.resolutionStrategy).toBe("highest");
   });
 
-  it.each([
-    "pull_request_target",
-    "workflow_run",
-    "release",
-  ])("disables automatic caching for the %s event", (eventName) => {
-    mockInputs["working-directory"] = "/workspace";
-    mockInputs["enable-cache"] = "auto";
-    process.env.RUNNER_ENVIRONMENT = "github-hosted";
-    process.env.RUNNER_TEMP = "/runner-temp";
-    process.env.GITHUB_EVENT_NAME = eventName;
+  it.each(["pull_request_target", "workflow_run", "release"])(
+    "disables automatic caching for the %s event",
+    (eventName) => {
+      mockInputs["working-directory"] = "/workspace";
+      mockInputs["enable-cache"] = "auto";
+      process.env.RUNNER_ENVIRONMENT = "github-hosted";
+      process.env.RUNNER_TEMP = "/runner-temp";
+      process.env.GITHUB_EVENT_NAME = eventName;
 
-    const inputs = loadInputs();
+      const inputs = loadInputs();
 
-    expect(inputs.enableCache).toBe(false);
-    expect(mockInfo).toHaveBeenCalledWith(
-      `Caching is disabled for the ${eventName} event`,
-    );
-  });
+      expect(inputs.enableCache).toBe(false);
+      expect(mockInfo).toHaveBeenCalledWith(
+        `Caching is disabled for the ${eventName} event`,
+      );
+    },
+  );
 
   it("disables automatic caching for tag pushes", () => {
     mockInputs["working-directory"] = "/workspace";
