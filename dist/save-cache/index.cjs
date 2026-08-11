@@ -22691,7 +22691,7 @@ var require_package = __commonJS({
   "node_modules/@actions/cache/package.json"(exports2, module2) {
     module2.exports = {
       name: "@actions/cache",
-      version: "6.1.0",
+      version: "6.2.0",
       description: "Actions cache lib",
       keywords: [
         "github",
@@ -60156,6 +60156,15 @@ function getCacheServiceVersion() {
     return "v1";
   return process.env["ACTIONS_CACHE_SERVICE_V2"] ? "v2" : "v1";
 }
+var KNOWN_CACHE_MODES = ["none", "read", "write", "write-only"];
+function getCacheMode() {
+  return (process.env["ACTIONS_CACHE_MODE"] || "").trim().toLowerCase();
+}
+function isCacheWritable(mode) {
+  if (!KNOWN_CACHE_MODES.includes(mode))
+    return true;
+  return mode === "write" || mode === "write-only";
+}
 function getCacheServiceURL() {
   const version3 = getCacheServiceVersion();
   switch (version3) {
@@ -61445,6 +61454,12 @@ function saveCache2(paths_1, key_1, options_1) {
     debug(`Cache service version: ${cacheServiceVersion}`);
     checkPaths(paths);
     checkKey(key);
+    const cacheMode = getCacheMode();
+    if (!isCacheWritable(cacheMode)) {
+      info(`Cache save skipped: the effective cache-mode '${cacheMode}' does not permit writes.`);
+      debug(`Skipped save for paths [${paths.join(", ")}] with key '${key}'.`);
+      return -1;
+    }
     switch (cacheServiceVersion) {
       case "v2":
         return yield saveCacheV2(paths, key, options, enableCrossOsArchive);
@@ -61502,8 +61517,6 @@ function saveCacheV1(paths_1, key_1, options_1) {
       const typedError = error2;
       if (typedError.name === ValidationError.name) {
         throw error2;
-      } else if (typedError.name === CacheWriteDeniedError.name) {
-        warning(`Failed to save: ${typedError.message}`);
       } else if (typedError.name === ReserveCacheError.name) {
         info(`Failed to save: ${typedError.message}`);
       } else {
@@ -61591,8 +61604,6 @@ function saveCacheV2(paths_1, key_1, options_1) {
       const typedError = error2;
       if (typedError.name === ValidationError.name) {
         throw error2;
-      } else if (typedError.name === CacheWriteDeniedError.name) {
-        warning(`Failed to save: ${typedError.message}`);
       } else if (typedError.name === ReserveCacheError.name) {
         info(`Failed to save: ${typedError.message}`);
       } else if (typedError.name === FinalizeCacheError.name) {
