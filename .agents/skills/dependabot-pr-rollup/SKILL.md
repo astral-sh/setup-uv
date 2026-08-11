@@ -1,6 +1,6 @@
 ---
 name: dependabot-pr-rollup
-description: Find open Dependabot PRs for the current GitHub repo, compare each PR head to its base branch, replay only the net dependency changes in a fresh worktree and branch, run npm validation, and optionally commit, push, and open a PR. Use when you want to batch or manually replicate active Dependabot updates.
+description: Find open Dependabot PRs for the current GitHub repo, compare each PR head to its base branch, replay only the net dependency changes in a fresh worktree and branch, run npm validation, then commit, push, and open a pull request labeled dependencies. Use when you want to batch or manually replicate active Dependabot updates.
 license: MIT
 compatibility: Requires git, git worktree, gh CLI auth, npm, and a GitHub repo with an origin remote.
 ---
@@ -13,7 +13,7 @@ Use this skill when the user wants to:
 - find all open Dependabot PRs in the current repo
 - reproduce their net effect in one local branch
 - validate the result with the repo's standard npm checks
-- optionally commit, push, and open a PR
+- commit and push the validated changes, then open a PR labeled `dependencies`
 
 ## Workflow
 
@@ -28,7 +28,8 @@ Use this skill when the user wants to:
    - Use `npm install ... --ignore-scripts` for direct dependency changes so `package-lock.json` stays in sync.
    - When updating `@biomejs/biome`, also update the Biome schema URL version in `biome.json` to match the installed Biome version.
 7. Run `npm run all`.
-8. If requested, commit the changed source, lockfile, and generated artifacts, then push and open a PR.
+8. Commit the changed source, lockfile, and generated artifacts, then push the branch.
+9. Always open a pull request for the rollup and add the `dependencies` label to it. Pass `--label dependencies` to `gh pr create`, or add the label immediately afterward with `gh pr edit --add-label dependencies`.
 
 ## Repo-specific notes
 
@@ -46,4 +47,5 @@ Always report:
 - new worktree path
 - files changed
 - `npm run all` result
-- if applicable, commit SHA and PR URL
+- commit SHA and PR URL
+- confirmation that the PR has the `dependencies` label
