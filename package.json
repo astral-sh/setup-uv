@@ -46,7 +46,7 @@
     "@vercel/ncc": "^0.44.1",
     "esbuild": "^0.28.1",
     "jest": "^30.4.2",
-    "js-yaml": "^5.2.1",
+    "js-yaml": "^5.2.3",
     "ts-jest": "^29.4.11",
     "typescript": "^6.0.3"
   }
