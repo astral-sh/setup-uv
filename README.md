@@ -161,8 +161,9 @@ python 3.13
     version-file: ".tool-versions"
 ```
 
-Only a single Python version is supported. Multiple fallback versions and the asdf `ref:`, `path:`,
-and `system` forms are ignored with a warning.
+Only a single Python version is supported. Filesystem paths are not supported for uv or Python.
+Multiple Python fallback versions and the asdf `ref:`, `path:`, and `system` forms are ignored with
+a warning.
 
 ```yaml
 - name: Install the latest version of uv and set the python version to 3.13t

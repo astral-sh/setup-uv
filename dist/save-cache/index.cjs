@@ -61862,7 +61862,7 @@ function getPythonVersionFromToolVersions(filePath) {
     return void 0;
   }
   const version3 = stripVersionPrefix(versions[0]);
-  if (version3 === "system" || version3.startsWith("ref:") || version3.startsWith("path:")) {
+  if (version3 === "system" || version3.startsWith("ref:") || version3.startsWith("path:") || isPath(version3)) {
     warning(
       `The Python version ${versions[0]} in .tool-versions is not supported. The Python entry will be ignored.`
     );
@@ -61889,6 +61889,9 @@ function getToolVersions(filePath, toolName) {
 }
 function stripVersionPrefix(version3) {
   return version3.startsWith("v") ? version3.slice(1) : version3;
+}
+function isPath(version3) {
+  return version3.includes("/") || version3.includes("\\");
 }
 
 // src/utils/config-file.ts
