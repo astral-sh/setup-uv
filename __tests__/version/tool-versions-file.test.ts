@@ -113,6 +113,20 @@ describe("getUvVersionFromToolVersions", () => {
     );
   });
 
+  it.each(["/my/python/exploit", "my/exploited/uv", "C:\\exploited\\uv"])(
+    "should warn and return undefined for path %s",
+    async (version) => {
+      mockReadFileSync.mockReturnValue(`uv ${version}`);
+
+      const result = await getVersionFromToolVersions(".tool-versions");
+
+      expect(result).toBeUndefined();
+      expect(mockWarning).toHaveBeenCalledWith(
+        `The uv version ${version} in .tool-versions is not supported. Paths are not allowed.`,
+      );
+    },
+  );
+
   it("should handle file path with .tool-versions extension", async () => {
     const fileContent = "uv 0.1.0";
     mockReadFileSync.mockReturnValue(fileContent);
@@ -170,19 +184,23 @@ describe("getPythonVersionFromToolVersions", () => {
     );
   });
 
-  it.each(["ref:main", "path:~/src/python", "system"])(
-    "should warn and return undefined for %s",
-    async (version) => {
-      mockReadFileSync.mockReturnValue(`python ${version}`);
+  it.each([
+    "ref:main",
+    "path:~/src/python",
+    "system",
+    "/my/python/exploit",
+    "my/exploited/python",
+    "C:\\exploited\\python",
+  ])("should warn and return undefined for %s", async (version) => {
+    mockReadFileSync.mockReturnValue(`python ${version}`);
 
-      const result = await getPythonVersionFromToolVersions(".tool-versions");
+    const result = await getPythonVersionFromToolVersions(".tool-versions");
 
-      expect(result).toBeUndefined();
-      expect(mockWarning).toHaveBeenCalledWith(
-        `The Python version ${version} in .tool-versions is not supported. The Python entry will be ignored.`,
-      );
-    },
-  );
+    expect(result).toBeUndefined();
+    expect(mockWarning).toHaveBeenCalledWith(
+      `The Python version ${version} in .tool-versions is not supported. The Python entry will be ignored.`,
+    );
+  });
 
   it("should return undefined for non-.tool-versions files", async () => {
     const result = await getPythonVersionFromToolVersions(".python-version");

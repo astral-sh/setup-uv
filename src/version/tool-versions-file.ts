@@ -10,6 +10,12 @@ export function getUvVersionFromToolVersions(
   }
 
   const version = stripVersionPrefix(versions[0]);
+  if (isPath(version)) {
+    core.warning(
+      `The uv version ${versions[0]} in .tool-versions is not supported. Paths are not allowed.`,
+    );
+    return undefined;
+  }
   if (version.startsWith("ref")) {
     core.warning(
       "The ref syntax of .tool-versions is not supported. Please use a released version instead.",
@@ -37,7 +43,8 @@ export function getPythonVersionFromToolVersions(
   if (
     version === "system" ||
     version.startsWith("ref:") ||
-    version.startsWith("path:")
+    version.startsWith("path:") ||
+    isPath(version)
   ) {
     core.warning(
       `The Python version ${versions[0]} in .tool-versions is not supported. The Python entry will be ignored.`,
@@ -72,4 +79,8 @@ function getToolVersions(
 
 function stripVersionPrefix(version: string): string {
   return version.startsWith("v") ? version.slice(1) : version;
+}
+
+function isPath(version: string): boolean {
+  return version.includes("/") || version.includes("\\");
 }
