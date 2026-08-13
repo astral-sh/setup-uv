@@ -52390,6 +52390,7 @@ function info2(msg) {
 
 // src/download/manifest.ts
 var cachedManifestData = /* @__PURE__ */ new Map();
+var MANIFEST_FETCH_ATTEMPTS = 3;
 async function fetchManifest(manifestUrl = VERSIONS_MANIFEST_URL) {
   const cachedManifest = cachedManifestData.get(manifestUrl);
   if (cachedManifest?.complete === true) {
@@ -52430,8 +52431,24 @@ async function getLatestVersion(manifestUrl = VERSIONS_MANIFEST_URL) {
   return latestVersion;
 }
 async function fetchManifestResponse(manifestUrl) {
-  info2(`Fetching manifest data from ${manifestUrl} ...`);
-  const response = await fetch(manifestUrl, {});
+  let response;
+  for (let attempt = 1; attempt <= MANIFEST_FETCH_ATTEMPTS; attempt++) {
+    info2(`Fetching manifest data from ${manifestUrl} ...`);
+    try {
+      response = await fetch(manifestUrl, {});
+      break;
+    } catch (error2) {
+      if (attempt >= MANIFEST_FETCH_ATTEMPTS) {
+        throw error2;
+      }
+      const delayMs = 1e3 * 2 ** (attempt - 1);
+      info2(`Manifest fetch failed; retrying in ${delayMs}ms ...`);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+  if (response === void 0) {
+    throw new Error("Manifest fetch attempts exhausted.");
+  }
   if (!response.ok) {
     throw new Error(
       `Failed to fetch manifest data: ${response.status} ${response.statusText}`

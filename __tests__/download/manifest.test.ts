@@ -1,4 +1,11 @@
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  jest,
+} from "@jest/globals";
 
 // biome-ignore lint/suspicious/noExplicitAny: Mock requires flexible typing in tests.
 const mockFetch = jest.fn<any>();
@@ -13,6 +20,7 @@ jest.unstable_mockModule("../../src/utils/fetch", () => ({
 }));
 
 const {
+  MANIFEST_FETCH_ATTEMPTS,
   clearManifestCache,
   fetchManifest,
   getAllVersions,
@@ -73,6 +81,10 @@ describe("manifest", () => {
     mockFetch.mockReset();
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   describe("fetchManifest", () => {
     it("fetches and parses manifest data", async () => {
       mockFetch.mockResolvedValue(
@@ -84,6 +96,34 @@ describe("manifest", () => {
       expect(versions).toHaveLength(2);
       expect(versions[0]?.version).toBe("0.9.26");
       expect(versions[1]?.version).toBe("0.9.25");
+    });
+
+    it("retries network failures", async () => {
+      jest.useFakeTimers();
+      mockFetch
+        .mockRejectedValueOnce(new Error("request timed out"))
+        .mockResolvedValueOnce(
+          createMockResponse(true, 200, "OK", sampleManifestResponse),
+        );
+
+      const result = fetchManifest();
+      await jest.runAllTimersAsync();
+
+      await expect(result).resolves.toHaveLength(2);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it("stops after the configured number of network failures", async () => {
+      jest.useFakeTimers();
+      mockFetch.mockRejectedValue(new Error("request timed out"));
+
+      const result = expect(fetchManifest()).rejects.toThrow(
+        "request timed out",
+      );
+      await jest.runAllTimersAsync();
+
+      await result;
+      expect(mockFetch).toHaveBeenCalledTimes(MANIFEST_FETCH_ATTEMPTS);
     });
 
     it("throws on a failed fetch", async () => {

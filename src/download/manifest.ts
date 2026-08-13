@@ -31,6 +31,7 @@ interface CachedManifest {
 }
 
 const cachedManifestData = new Map<string, CachedManifest>();
+export const MANIFEST_FETCH_ATTEMPTS = 3;
 
 export async function fetchManifest(
   manifestUrl: string = VERSIONS_MANIFEST_URL,
@@ -166,8 +167,26 @@ export function clearManifestCache(manifestUrl?: string): void {
 }
 
 async function fetchManifestResponse(manifestUrl: string) {
-  log.info(`Fetching manifest data from ${manifestUrl} ...`);
-  const response = await fetch(manifestUrl, {});
+  let response: Awaited<ReturnType<typeof fetch>> | undefined;
+  for (let attempt = 1; attempt <= MANIFEST_FETCH_ATTEMPTS; attempt++) {
+    log.info(`Fetching manifest data from ${manifestUrl} ...`);
+    try {
+      response = await fetch(manifestUrl, {});
+      break;
+    } catch (error) {
+      if (attempt >= MANIFEST_FETCH_ATTEMPTS) {
+        throw error;
+      }
+      const delayMs = 1_000 * 2 ** (attempt - 1);
+      log.info(`Manifest fetch failed; retrying in ${delayMs}ms ...`);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+
+  if (response === undefined) {
+    throw new Error("Manifest fetch attempts exhausted.");
+  }
+
   if (!response.ok) {
     throw new Error(
       `Failed to fetch manifest data: ${response.status} ${response.statusText}`,
