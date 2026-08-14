@@ -23,7 +23,7 @@ The computed cache key is available as the `cache-key` output:
 ```yaml
 - name: Setup uv
   id: setup-uv
-  uses: astral-sh/setup-uv@ae62891fec2bb8e7d6c99fc78c9fec3a63790f8d # v10.0.0
+  uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
   with:
     enable-cache: true
 - name: Print cache key
@@ -53,7 +53,7 @@ You can optionally define a custom cache key suffix.
 ```yaml
 - name: Enable caching and define a custom cache key suffix
   id: setup-uv
-  uses: astral-sh/setup-uv@ae62891fec2bb8e7d6c99fc78c9fec3a63790f8d # v10.0.0
+  uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
   with:
     enable-cache: true
     cache-suffix: "optional-suffix"
@@ -92,7 +92,7 @@ changes. If you use relative paths, they are relative to the working directory.
 
 ```yaml
 - name: Define a cache dependency glob
-  uses: astral-sh/setup-uv@ae62891fec2bb8e7d6c99fc78c9fec3a63790f8d # v10.0.0
+  uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
   with:
     enable-cache: true
     cache-dependency-glob: "**/pyproject.toml"
@@ -100,7 +100,7 @@ changes. If you use relative paths, they are relative to the working directory.
 
 ```yaml
 - name: Define a list of cache dependency globs
-  uses: astral-sh/setup-uv@ae62891fec2bb8e7d6c99fc78c9fec3a63790f8d # v10.0.0
+  uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
   with:
     enable-cache: true
     cache-dependency-glob: |
@@ -110,7 +110,7 @@ changes. If you use relative paths, they are relative to the working directory.
 
 ```yaml
 - name: Define an absolute cache dependency glob
-  uses: astral-sh/setup-uv@ae62891fec2bb8e7d6c99fc78c9fec3a63790f8d # v10.0.0
+  uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
   with:
     enable-cache: true
     cache-dependency-glob: "/tmp/my-folder/requirements*.txt"
@@ -118,7 +118,7 @@ changes. If you use relative paths, they are relative to the working directory.
 
 ```yaml
 - name: Never invalidate the cache
-  uses: astral-sh/setup-uv@ae62891fec2bb8e7d6c99fc78c9fec3a63790f8d # v10.0.0
+  uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
   with:
     enable-cache: true
     cache-dependency-glob: ""
@@ -131,7 +131,7 @@ By default, the cache will be restored.
 
 ```yaml
 - name: Don't restore an existing cache
-  uses: astral-sh/setup-uv@ae62891fec2bb8e7d6c99fc78c9fec3a63790f8d # v10.0.0
+  uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
   with:
     enable-cache: true
     restore-cache: false
@@ -145,7 +145,7 @@ By default, the cache will be saved.
 
 ```yaml
 - name: Don't save the cache after the run
-  uses: astral-sh/setup-uv@ae62891fec2bb8e7d6c99fc78c9fec3a63790f8d # v10.0.0
+  uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
   with:
     enable-cache: true
     save-cache: false
@@ -171,7 +171,7 @@ It defaults to `setup-uv-cache` in the `TMP` dir, `D:\a\_temp\setup-uv-cache` on
 
 ```yaml
 - name: Define a custom uv cache path
-  uses: astral-sh/setup-uv@ae62891fec2bb8e7d6c99fc78c9fec3a63790f8d # v10.0.0
+  uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
   with:
     cache-local-path: "/path/to/cache"
 ```
@@ -188,7 +188,7 @@ If you want to prune the cache before saving it, enable cache pruning with the `
 
 ```yaml
 - name: Prune the cache before saving it
-  uses: astral-sh/setup-uv@ae62891fec2bb8e7d6c99fc78c9fec3a63790f8d # v10.0.0
+  uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
   with:
     enable-cache: true
     prune-cache: true
@@ -207,7 +207,7 @@ To force managed Python installs, set `UV_PYTHON_PREFERENCE=only-managed`.
 
 ```yaml
 - name: Cache Python installs
-  uses: astral-sh/setup-uv@ae62891fec2bb8e7d6c99fc78c9fec3a63790f8d # v10.0.0
+  uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
   with:
     enable-cache: true
     cache-python: true
@@ -225,7 +225,7 @@ If you want to ignore this, set the `ignore-nothing-to-cache` input to `true`.
 
 ```yaml
 - name: Ignore nothing to cache
-  uses: astral-sh/setup-uv@ae62891fec2bb8e7d6c99fc78c9fec3a63790f8d # v10.0.0
+  uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
   with:
     enable-cache: true
     ignore-nothing-to-cache: true
