@@ -60,20 +60,8 @@ jobs:
           else
               echo "changes-exist=false" >> "$GITHUB_OUTPUT"
           fi
-      - name: Commit and push changes
-        if: ${{ steps.changes-exist.outputs.changes-exist == 'true' }}
-        id: commit-and-push
-        continue-on-error: true
-        run: |
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-          git add .
-          git commit -m "docs: update version references to $NEW_VERSION"
-          git push origin HEAD:refs/heads/main
-        env:
-          NEW_VERSION: ${{ steps.tag-info.outputs.tag }}
       - name: Create Pull Request
-        if: ${{ steps.changes-exist.outputs.changes-exist == 'true' && steps.commit-and-push.outcome != 'success' }}
+        if: ${{ steps.changes-exist.outputs.changes-exist == 'true' }}
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           commit-message: "docs: update version references to ${{ steps.tag-info.outputs.tag }}"
