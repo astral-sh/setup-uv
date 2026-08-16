@@ -5,6 +5,7 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "noImplicitAny": true,
+    "resolveJsonModule": true,
     "strict": true,
     "target": "ES2022"
   },

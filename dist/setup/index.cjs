@@ -94506,8 +94506,8 @@ var ASTRAL_MIRROR_PREFIX = "https://releases.astral.sh/github/uv/releases/downlo
 var crypto6 = __toESM(require("node:crypto"), 1);
 var fs10 = __toESM(require("node:fs"), 1);
 
-// src/download/checksum/known-checksums.ts
-var KNOWN_CHECKSUMS = {
+// src/download/checksum/known-checksums.json
+var known_checksums_default = {
   "aarch64-apple-darwin-0.12.5": "5bb0e5fe008a773c3dbcb97ff79cd89e1241464fe9d2f986d52ad8f1b037bd62",
   "aarch64-pc-windows-msvc-0.12.5": "724279317fee6e5fa8ad1908e4eba2bbe764ef1ece5b3f4597927b62b1fe562a",
   "aarch64-unknown-linux-gnu-0.12.5": "9bf43b4d1a07665bf64d4c4e710930b382321a785e0eb10aac07f46471f86a31",
@@ -99671,6 +99671,9 @@ var KNOWN_CHECKSUMS = {
   "x86_64-unknown-linux-gnu-0.0.5": "c0f3bc450ffac667dd3c12e2fb221177262d60ccac0521797bb4f4fef14cfad3",
   "x86_64-unknown-linux-musl-0.0.5": "705bbe04a93a9d4d9db5224c2f980a88bba272538a33a78ea2e966f46b4d5eb7"
 };
+
+// src/download/checksum/known-checksums.ts
+var KNOWN_CHECKSUMS = known_checksums_default;
 
 // src/download/checksum/checksum.ts
 async function validateChecksum(checksum, downloadPath, arch3, platform2, version3) {

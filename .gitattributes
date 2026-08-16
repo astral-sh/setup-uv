@@ -1,2 +1,3 @@
 * text=auto eol=lf
 dist/** -diff linguist-generated=true
+src/download/checksum/known-checksums.json linguist-generated=true

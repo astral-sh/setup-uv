@@ -12,7 +12,7 @@
     "test:unit": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
     "test": "npm run build && npm run test:unit",
     "act": "act pull_request -W .github/workflows/test.yml --container-architecture linux/amd64 -s GITHUB_TOKEN=\"$(gh auth token)\"",
-    "update-known-checksums": "RUNNER_TEMP=known_versions node dist/update-known-checksums/index.cjs src/download/checksum/known-checksums.ts",
+    "update-known-checksums": "RUNNER_TEMP=known_versions node dist/update-known-checksums/index.cjs src/download/checksum/known-checksums.json",
     "all": "npm run build && npm run check && npm run package && npm run test:unit"
   },
   "repository": {
