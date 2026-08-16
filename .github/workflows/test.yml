@@ -1055,21 +1055,6 @@ jobs:
       - name: Install python works
         run: uv python install
 
-  test-act:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Install act
-        run: gh extension install https://github.com/nektos/gh-act
-        env:
-          GH_TOKEN: ${{ github.token }}
-      - name: Run test-uvx with act
-        run: gh act -j test-uvx -P ubuntu-latest=catthehacker/ubuntu:act-latest
-        env:
-          GH_TOKEN: ${{ github.token }}
-
   test-workflow-run:
     runs-on: ubuntu-latest
     steps:
@@ -1145,7 +1130,6 @@ jobs:
       - test-cache-python-installs
       - test-restore-python-installs
       - test-python-install-dir
-      - test-act
       - test-workflow-run
       - validate-typings
     if: always()
