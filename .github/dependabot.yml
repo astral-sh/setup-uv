@@ -5,11 +5,11 @@ updates:
     schedule:
       interval: daily
     cooldown:
-      default-days: 7
+      default-days: 30
 
   - package-ecosystem: npm
     directory: /
     schedule:
       interval: daily
     cooldown:
-      default-days: 7
+      default-days: 30
