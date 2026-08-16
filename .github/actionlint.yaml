@@ -8,6 +8,10 @@ self-hosted-runner:
 # Empty array means no configuration variable is allowed.
 config-variables: null
 paths:
+  .github/workflows/**/*.{yml,yaml}:
+    ignore:
+      - 'specifying action "\$/" in invalid format because ref is missing'
+      - 'reusable workflow call "\$/.+" at "uses" is not following the format'
   .github/workflows/test.yml:
     ignore:
       - 'invalid runner name.+'

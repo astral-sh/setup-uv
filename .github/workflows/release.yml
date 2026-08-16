@@ -116,7 +116,7 @@ jobs:
     name: Update docs
     needs:
       - release
-    uses: ./.github/workflows/update-docs.yml
+    uses: $/.github/workflows/update-docs.yml
     permissions:
       contents: write
       pull-requests: write

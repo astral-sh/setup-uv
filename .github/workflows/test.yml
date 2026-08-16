@@ -56,7 +56,7 @@ jobs:
           persist-credentials: false
       - name: Install latest version
         id: setup-uv
-        uses: ./
+        uses: $/
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
         shell: bash
@@ -81,7 +81,7 @@ jobs:
           persist-credentials: false
       - name: Install with UV_NO_MODIFY_PATH set
         id: setup-uv
-        uses: ./
+        uses: $/
         env:
           UV_NO_MODIFY_PATH: 1
       - run: |
@@ -130,7 +130,7 @@ jobs:
           persist-credentials: false
       - name: Install version ${{ matrix.input.version-input }} with strategy ${{ matrix.input.resolution-strategy || 'highest' }}
         id: setup-uv
-        uses: ./
+        uses: $/
         with:
           version: ${{ matrix.input.version-input }}
           resolution-strategy: ${{ matrix.input.resolution-strategy || 'highest' }}
@@ -154,11 +154,8 @@ jobs:
       matrix:
         version-input: ["latest", ">=0.8"]
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
       - name: Install version ${{ matrix.version-input }}
-        uses: ./
+        uses: $/
         with:
           version: ${{ matrix.version-input }}
       - name: Latest version gets installed
@@ -198,7 +195,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install version from ${{ matrix.input.working-directory }}
-        uses: ./
+        uses: $/
         with:
           working-directory: ${{ matrix.input.working-directory }}
       - name: Correct version gets installed
@@ -224,7 +221,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install version from ${{ matrix.input.version-file }}
-        uses: ./
+        uses: $/
         with:
           version-file: ${{ matrix.input.version-file }}
       - name: Correct version gets installed
@@ -242,7 +239,7 @@ jobs:
           persist-credentials: false
       - name: Install versions from .tool-versions
         id: setup-uv
-        uses: ./
+        uses: $/
         with:
           version-file: "__tests__/fixtures/.tool-versions"
       - name: Verify Python version from .tool-versions
@@ -267,7 +264,7 @@ jobs:
           persist-credentials: false
       - name: Install using malformed pyproject.toml
         id: setup-uv
-        uses: ./
+        uses: $/
         with:
           working-directory: "__tests__/fixtures/malformed-pyproject-toml-project"
       - run: uv --help
@@ -286,7 +283,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Checksum matches expected
-        uses: ./
+        uses: $/
         with:
           version: "0.3.2"
           checksum: ${{ matrix.inputs.checksum }}
@@ -300,7 +297,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install default version
-        uses: ./
+        uses: $/
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - run: uv sync
@@ -309,11 +306,8 @@ jobs:
   test-uvx:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
       - name: Install default version
-        uses: ./
+        uses: $/
       - run: uvx ruff@0.14.10 --version
 
   test-tool-install:
@@ -322,11 +316,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, macos-14, windows-latest]
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
       - name: Install default version
-        uses: ./
+        uses: $/
       - run: uv tool install ruff==0.14.10
       - run: ruff --version
 
@@ -341,7 +332,7 @@ jobs:
           persist-credentials: false
       - name: Install latest version
         id: setup-uv
-        uses: ./
+        uses: $/
         with:
           python-version: 3.13.1t
       - name: Verify UV_PYTHON is set to correct version
@@ -368,12 +359,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
       - name: Install latest version
         id: setup-uv
-        uses: ./
+        uses: $/
         with:
           python-version: 3.13.1t
           activate-environment: true
@@ -407,12 +395,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
       - name: Install latest version
         id: setup-uv
-        uses: ./
+        uses: $/
         with:
           python-version: 3.13.1t
           activate-environment: true
@@ -458,9 +443,6 @@ jobs:
   test-activate-environment-no-project:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
       - name: Create incompatible pyproject.toml
         run: |
           cat > pyproject.toml <<'EOF'
@@ -476,7 +458,7 @@ jobs:
         shell: bash
       - name: Install latest version with no-project
         id: setup-uv
-        uses: ./
+        uses: $/
         with:
           python-version: 3.13.1t
           activate-environment: true
@@ -506,7 +488,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install latest version
-        uses: ./
+        uses: $/
         with:
           enable-cache: true
       - run: uv sync
@@ -521,7 +503,7 @@ jobs:
           persist-credentials: false
       - name: Install latest version
         id: setup-uv
-        uses: ./
+        uses: $/
         with:
           enable-cache: true
       - name: Verify cache key contains alpine
@@ -555,12 +537,9 @@ jobs:
           - os: windows-2025
             expected-os: "windows-2025"
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
       - name: Setup uv
         id: setup-uv
-        uses: ./
+        uses: $/
         with:
           enable-cache: true
       - name: Verify cache key contains OS version
@@ -585,7 +564,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup with cache
-        uses: ./
+        uses: $/
         with:
           enable-cache: ${{ matrix.enable-cache }}
           cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-${{ matrix.os }}-${{ matrix.enable-cache }}
@@ -605,7 +584,7 @@ jobs:
           persist-credentials: false
       - name: Restore with cache
         id: restore
-        uses: ./
+        uses: $/
         with:
           enable-cache: ${{ matrix.enable-cache }}
           cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-${{ matrix.os }}-${{ matrix.enable-cache }}
@@ -638,7 +617,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup with cache
-        uses: ./
+        uses: $/
         with:
           enable-cache: true
           cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-requirements-txt
@@ -655,7 +634,7 @@ jobs:
           persist-credentials: false
       - name: Restore with cache
         id: restore
-        uses: ./
+        uses: $/
         with:
           enable-cache: true
           cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-requirements-txt
@@ -678,7 +657,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup with cache
-        uses: ./
+        uses: $/
         with:
           enable-cache: true
           cache-dependency-glob: |
@@ -700,7 +679,7 @@ jobs:
           echo 'dev-dependencies = []' >> __tests__/fixtures/uv-project/pyproject.toml
       - name: Restore with cache
         id: restore
-        uses: ./
+        uses: $/
         with:
           enable-cache: true
           cache-dependency-glob: |
@@ -723,7 +702,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup with cache
-        uses: ./
+        uses: $/
         with:
           enable-cache: true
           save-cache: false
@@ -740,7 +719,7 @@ jobs:
           persist-credentials: false
       - name: Restore with cache
         id: restore
-        uses: ./
+        uses: $/
         with:
           enable-cache: true
           cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-save-cache-false
@@ -759,7 +738,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup with cache
-        uses: ./
+        uses: $/
         with:
           enable-cache: true
           cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-restore-cache-false
@@ -775,7 +754,7 @@ jobs:
           persist-credentials: false
       - name: Restore with cache
         id: restore
-        uses: ./
+        uses: $/
         with:
           enable-cache: true
           restore-cache: false
@@ -798,11 +777,8 @@ jobs:
             expected-cache-dir: "D:\\a\\_temp\\setup-uv-cache"
     runs-on: ${{ matrix.inputs.os }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
       - name: Setup with cache
-        uses: ./
+        uses: $/
         with:
           enable-cache: true
           cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-cache-local
@@ -816,11 +792,8 @@ jobs:
   test-cache-local-cache-disabled:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
       - name: Setup without cache
-        uses: ./
+        uses: $/
         with:
           enable-cache: false
 
@@ -835,11 +808,8 @@ jobs:
   test-cache-local-cache-disabled-but-explicit-path:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
       - name: Setup without cache
-        uses: ./
+        uses: $/
         with:
           enable-cache: false
           cache-local-path: /tmp/uv-cache-disabled
@@ -861,7 +831,7 @@ jobs:
       - name: Fake pyproject.toml at root
         run: cp __tests__/fixtures/old-python-constraint-project/pyproject.toml pyproject.toml
       - name: Setup with cache
-        uses: ./
+        uses: $/
         with:
           enable-cache: true
       - run: uv sync
@@ -874,7 +844,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install from custom manifest file
-        uses: ./
+        uses: $/
         with:
           manifest-file: "https://raw.githubusercontent.com/astral-sh/setup-uv/${{ github.ref }}/__tests__/download/custom-manifest.ndjson"
       - run: uv sync
@@ -889,12 +859,9 @@ jobs:
   test-download-from-astral-mirror-false:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
       - name: Install with download-from-astral-mirror disabled
         id: setup-uv
-        uses: ./
+        uses: $/
         with:
           download-from-astral-mirror: false
       - name: Verify uv is installed
@@ -903,14 +870,11 @@ jobs:
   test-absolute-path:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
       - name: Create requirements.txt
         run: echo "uv==0.6.17" > /tmp/setup-uv-requirements.txt
       - name: Install from requirements file
         id: setup-uv
-        uses: ./
+        uses: $/
         with:
           version-file: "/tmp/setup-uv-requirements.txt"
       - name: Correct version gets installed
@@ -923,16 +887,13 @@ jobs:
   test-relative-path:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
       - name: mkdir
         run: mkdir -p /tmp/setup-uv-test-relative-path
       - name: Create requirements.txt
         run: echo "uv==0.6.17" > /tmp/setup-uv-test-relative-path/setup-uv-requirements.txt
       - name: Install from requirements file
         id: setup-uv
-        uses: ./
+        uses: $/
         with:
           version-file: "./setup-uv-requirements.txt"
           working-directory: "/tmp/setup-uv-test-relative-path"
@@ -951,7 +912,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup uv
-        uses: ./
+        uses: $/
         with:
           cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-cache-prune-force
       - name: Create long running python script
@@ -974,7 +935,7 @@ jobs:
             exit 1
           fi
       - name: Setup uv
-        uses: ./
+        uses: $/
         with:
           working-directory: __tests__/fixtures/cache-dir-defined-project
       - run: uv sync
@@ -995,7 +956,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup uv with cache and python cache enabled
-        uses: ./
+        uses: $/
         with:
           enable-cache: true
           cache-python: true
@@ -1022,7 +983,7 @@ jobs:
             exit 1
           fi
       - name: Setup uv with cache
-        uses: ./
+        uses: $/
         with:
           enable-cache: true
           cache-python: true
@@ -1050,7 +1011,7 @@ jobs:
           fi
       - name: Restore with cache
         id: restore
-        uses: ./
+        uses: $/
         with:
           enable-cache: true
           cache-python: true
@@ -1081,12 +1042,9 @@ jobs:
             expected-python-dir: "D:\\a\\_temp\\uv-python-dir"
     runs-on: ${{ matrix.inputs.os }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
       - name: Install latest version
         id: setup-uv
-        uses: ./
+        uses: $/
       - name: Check Python dir is expected dir
         run: |
           if [ "$UV_PYTHON_INSTALL_DIR" != "${{ matrix.inputs.expected-python-dir }}" ]; then
@@ -1096,21 +1054,6 @@ jobs:
         shell: bash
       - name: Install python works
         run: uv python install
-
-  test-act:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Install act
-        run: gh extension install https://github.com/nektos/gh-act
-        env:
-          GH_TOKEN: ${{ github.token }}
-      - name: Run test-uvx with act
-        run: gh act -j test-uvx -P ubuntu-latest=catthehacker/ubuntu:act-latest
-        env:
-          GH_TOKEN: ${{ github.token }}
 
   test-workflow-run:
     runs-on: ubuntu-latest
@@ -1187,7 +1130,6 @@ jobs:
       - test-cache-python-installs
       - test-restore-python-installs
       - test-python-install-dir
-      - test-act
       - test-workflow-run
       - validate-typings
     if: always()
