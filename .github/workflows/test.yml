@@ -314,7 +314,7 @@ jobs:
           persist-credentials: false
       - name: Install default version
         uses: ./
-      - run: uvx ruff --version
+      - run: uvx ruff@0.14.10 --version
 
   test-tool-install:
     runs-on: ${{ matrix.os }}
@@ -327,7 +327,7 @@ jobs:
           persist-credentials: false
       - name: Install default version
         uses: ./
-      - run: uv tool install ruff
+      - run: uv tool install ruff==0.14.10
       - run: ruff --version
 
   test-python-version:
