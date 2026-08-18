@@ -5,6 +5,9 @@
   "type": "module",
   "description": "Set up your GitHub Actions workflow with a specific version of uv",
   "main": "dist/setup/index.cjs",
+  "engines": {
+    "npm": ">=11.10.0"
+  },
   "devEngines": {
     "packageManager": {
       "name": "npm",
