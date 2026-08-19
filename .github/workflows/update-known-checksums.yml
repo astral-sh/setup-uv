@@ -26,7 +26,7 @@ jobs:
         id: update-known-checksums
         run:
           node dist/update-known-checksums/index.cjs
-          src/download/checksum/known-checksums.ts
+          src/download/checksum/known-checksums.json
       - name: Check for changes
         id: changes-exist
         run: |
