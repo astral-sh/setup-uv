@@ -34,6 +34,8 @@ jobs:
           cache: npm
       - run: |
           npm ci --ignore-scripts
+      - name: Verify npm package signatures
+        run: npm audit signatures
       - run: |
           npm run all
       - name: Check all jobs are in all-tests-passed.needs
