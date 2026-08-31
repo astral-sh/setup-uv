@@ -4,8 +4,9 @@ This document covers advanced customization options including checksum validatio
 
 ## Validate checksum
 
-You can specify a checksum to validate the downloaded executable. Checksums up to the default version
-are automatically verified by this action. The sha256 hashes can be found on the
+Downloaded executables are automatically verified using checksums bundled with this action or,
+for newer versions, the checksum from [`astral-sh/versions`](https://github.com/astral-sh/versions).
+You can specify a checksum to override those values. The sha256 hashes can also be found on the
 [releases page](https://github.com/astral-sh/uv/releases) of the uv repo.
 
 ```yaml

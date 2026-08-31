@@ -99694,15 +99694,20 @@ var known_checksums_default = {
 var KNOWN_CHECKSUMS = known_checksums_default;
 
 // src/download/checksum/checksum.ts
-async function validateChecksum(checksum, downloadPath, arch3, platform2, version3) {
+async function validateChecksum(checksum, downloadPath, arch3, platform2, version3, manifestChecksum) {
   const key = `${arch3}-${platform2}-${version3}`;
   const hasProvidedChecksum = checksum !== void 0 && checksum !== "";
-  const checksumToUse = hasProvidedChecksum ? checksum : KNOWN_CHECKSUMS[key];
+  const knownChecksum = KNOWN_CHECKSUMS[key];
+  const hasManifestChecksum = manifestChecksum !== void 0 && manifestChecksum !== "";
+  const checksumToUse = hasProvidedChecksum ? checksum : knownChecksum ?? (hasManifestChecksum ? manifestChecksum : void 0);
   if (checksumToUse === void 0) {
+    if (manifestChecksum !== void 0) {
+      throw new Error(`No checksum found for ${key} in manifest.`);
+    }
     debug(`No checksum found for ${key}.`);
     return;
   }
-  const checksumSource = hasProvidedChecksum ? "provided checksum" : `KNOWN_CHECKSUMS entry for ${key}`;
+  const checksumSource = hasProvidedChecksum ? "provided checksum" : knownChecksum !== void 0 ? `KNOWN_CHECKSUMS entry for ${key}` : "manifest checksum";
   debug(`Validating checksum using ${checksumSource}.`);
   const isValid = await validateFileCheckSum(downloadPath, checksumToUse);
   if (!isValid) {
@@ -101620,6 +101625,7 @@ async function downloadVersion(platform2, arch3, version3, checksum, githubToken
     );
   }
   const resolvedChecksum = manifestUrl === void 0 ? checksum : resolveChecksum(checksum, artifact.checksum);
+  const manifestChecksum = artifact.checksum;
   const mirrorUrl = downloadFromAstralMirror ? rewriteToMirror(artifact.downloadUrl) : void 0;
   const downloadUrl = mirrorUrl ?? artifact.downloadUrl;
   try {
@@ -101630,6 +101636,7 @@ async function downloadVersion(platform2, arch3, version3, checksum, githubToken
       arch3,
       version3,
       resolvedChecksum,
+      manifestChecksum,
       githubTokenForUrl(downloadUrl, githubToken)
     );
   } catch (err) {
@@ -101646,6 +101653,7 @@ async function downloadVersion(platform2, arch3, version3, checksum, githubToken
       arch3,
       version3,
       resolvedChecksum,
+      manifestChecksum,
       githubTokenForUrl(artifact.downloadUrl, githubToken)
     );
   }
@@ -101663,14 +101671,21 @@ function githubTokenForUrl(downloadUrl, githubToken) {
     return void 0;
   }
 }
-async function downloadArtifact(downloadUrl, artifactName, platform2, arch3, version3, checksum, githubToken) {
+async function downloadArtifact(downloadUrl, artifactName, platform2, arch3, version3, checksum, manifestChecksum, githubToken) {
   info2(`Downloading uv from "${downloadUrl}" ...`);
   const downloadPath = await downloadTool(
     downloadUrl,
     void 0,
     githubToken
   );
-  await validateChecksum(checksum, downloadPath, arch3, platform2, version3);
+  await validateChecksum(
+    checksum,
+    downloadPath,
+    arch3,
+    platform2,
+    version3,
+    manifestChecksum
+  );
   let uvDir;
   if (platform2 === "pc-windows-msvc") {
     try {

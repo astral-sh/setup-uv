@@ -26,7 +26,47 @@ test("provided checksum beats known checksums", async () => {
     "x86_64",
     "unknown-linux-gnu",
     "0.3.0",
+    "incorrect-manifest-checksum",
   );
+});
+
+test("known checksums beat manifest checksums", async () => {
+  await expect(
+    validateChecksum(
+      undefined,
+      filePath,
+      "x86_64",
+      "unknown-linux-gnu",
+      "0.3.0",
+      validChecksum,
+    ),
+  ).rejects.toThrow("did not match");
+});
+
+test("manifest checksums are used when no known checksum exists", async () => {
+  await expect(
+    validateChecksum(
+      undefined,
+      filePath,
+      "aarch64",
+      "pc-windows-msvc",
+      "1.2.3",
+      "incorrect-manifest-checksum",
+    ),
+  ).rejects.toThrow("did not match");
+});
+
+test("empty manifest checksums are rejected", async () => {
+  await expect(
+    validateChecksum(
+      undefined,
+      filePath,
+      "aarch64",
+      "pc-windows-msvc",
+      "1.2.3",
+      "",
+    ),
+  ).rejects.toThrow("No checksum found");
 });
 
 type KnownVersionFixture = { version: string; known: boolean };
