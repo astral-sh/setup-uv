@@ -11,19 +11,30 @@ export async function validateChecksum(
   arch: Architecture,
   platform: Platform,
   version: string,
+  manifestChecksum?: string,
 ): Promise<void> {
   const key = `${arch}-${platform}-${version}`;
   const hasProvidedChecksum = checksum !== undefined && checksum !== "";
-  const checksumToUse = hasProvidedChecksum ? checksum : KNOWN_CHECKSUMS[key];
+  const knownChecksum = KNOWN_CHECKSUMS[key];
+  const hasManifestChecksum =
+    manifestChecksum !== undefined && manifestChecksum !== "";
+  const checksumToUse = hasProvidedChecksum
+    ? checksum
+    : (knownChecksum ?? (hasManifestChecksum ? manifestChecksum : undefined));
 
   if (checksumToUse === undefined) {
+    if (manifestChecksum !== undefined) {
+      throw new Error(`No checksum found for ${key} in manifest.`);
+    }
     core.debug(`No checksum found for ${key}.`);
     return;
   }
 
   const checksumSource = hasProvidedChecksum
     ? "provided checksum"
-    : `KNOWN_CHECKSUMS entry for ${key}`;
+    : knownChecksum !== undefined
+      ? `KNOWN_CHECKSUMS entry for ${key}`
+      : "manifest checksum";
 
   core.debug(`Validating checksum using ${checksumSource}.`);
   const isValid = await validateFileCheckSum(downloadPath, checksumToUse);

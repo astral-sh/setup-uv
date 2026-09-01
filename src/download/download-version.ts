@@ -47,12 +47,14 @@ export async function downloadVersion(
     );
   }
 
-  // For the default astral-sh/versions source, checksum validation relies on
-  // user input or the built-in KNOWN_CHECKSUMS table, not manifest sha256 values.
+  // Custom manifests are explicitly selected by the user, so their checksum
+  // takes precedence over the built-in table. For the default manifest, pass
+  // its checksum as a fallback after user input and KNOWN_CHECKSUMS.
   const resolvedChecksum =
     manifestUrl === undefined
       ? checksum
       : resolveChecksum(checksum, artifact.checksum);
+  const manifestChecksum = artifact.checksum;
 
   const mirrorUrl = downloadFromAstralMirror
     ? rewriteToMirror(artifact.downloadUrl)
@@ -67,6 +69,7 @@ export async function downloadVersion(
       arch,
       version,
       resolvedChecksum,
+      manifestChecksum,
       githubTokenForUrl(downloadUrl, githubToken),
     );
   } catch (err) {
@@ -85,6 +88,7 @@ export async function downloadVersion(
       arch,
       version,
       resolvedChecksum,
+      manifestChecksum,
       githubTokenForUrl(artifact.downloadUrl, githubToken),
     );
   }
@@ -122,6 +126,7 @@ async function downloadArtifact(
   arch: Architecture,
   version: string,
   checksum: string | undefined,
+  manifestChecksum: string | undefined,
   githubToken: string | undefined,
 ): Promise<{ version: string; cachedToolDir: string }> {
   log.info(`Downloading uv from "${downloadUrl}" ...`);
@@ -130,7 +135,14 @@ async function downloadArtifact(
     undefined,
     githubToken,
   );
-  await validateChecksum(checksum, downloadPath, arch, platform, version);
+  await validateChecksum(
+    checksum,
+    downloadPath,
+    arch,
+    platform,
+    version,
+    manifestChecksum,
+  );
 
   let uvDir: string;
   if (platform === "pc-windows-msvc") {

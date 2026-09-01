@@ -227,10 +227,10 @@ describe("download-version", () => {
       expect(mockValidateChecksum).not.toHaveBeenCalled();
     });
 
-    it("uses built-in checksums for default manifest downloads", async () => {
+    it("uses the default manifest checksum as a fallback", async () => {
       mockGetArtifact.mockResolvedValue({
         archiveFormat: "tar.gz",
-        checksum: "manifest-checksum-that-should-be-ignored",
+        checksum: "manifest-checksum",
         downloadUrl: "https://example.com/uv.tar.gz",
       });
 
@@ -248,6 +248,7 @@ describe("download-version", () => {
         "x86_64",
         "unknown-linux-gnu",
         "0.9.26",
+        "manifest-checksum",
       );
     });
 
@@ -400,6 +401,7 @@ describe("download-version", () => {
         "x86_64",
         "unknown-linux-gnu",
         "0.9.26",
+        "manifest-checksum",
       );
     });
 
@@ -425,6 +427,7 @@ describe("download-version", () => {
         "x86_64",
         "unknown-linux-gnu",
         "0.9.26",
+        "manifest-checksum",
       );
     });
 
