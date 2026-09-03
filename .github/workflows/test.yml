@@ -347,14 +347,14 @@ jobs:
           if [ "$PYTHON_VERSION" != "3.13.1t" ]; then
             exit 1
           fi
-          if [ -n "$PYTHON_VERSION_RESOLVED" ]; then
-            echo "python-version-resolved should be empty without environment activation"
+          if [ -n "$PYTHON_RUNTIME_ID" ]; then
+            echo "python-runtime-id should be empty without environment activation"
             exit 1
           fi
         shell: bash
         env:
           PYTHON_VERSION: ${{ steps.setup-uv.outputs.python-version }}
-          PYTHON_VERSION_RESOLVED: ${{ steps.setup-uv.outputs.python-version-resolved }}
+          PYTHON_RUNTIME_ID: ${{ steps.setup-uv.outputs.python-runtime-id }}
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
 
@@ -370,6 +370,8 @@ jobs:
           - os: ubuntu-latest
             python-version: "3.14.0rc2"
           - os: ubuntu-latest
+            python-version: "3.14.0rc2t"
+          - os: ubuntu-latest
             python-version: "pypy3.11"
     steps:
       - name: Install latest version
@@ -384,9 +386,27 @@ jobs:
         shell: bash
       - name: Verify Python version outputs and cache key
         run: |
-          expected=$(python -I -c 'import platform; print(platform.python_version())')
-          if [ "$PYTHON_VERSION_RESOLVED" != "$expected" ]; then
-            echo "Wrong resolved Python version: $PYTHON_VERSION_RESOLVED (expected $expected)"
+          expected=$(python -I - <<'PY'
+          import platform
+          import sys
+          import sysconfig
+
+          if sys.implementation.name == "cpython":
+              runtime = f"cpython-{platform.python_version()}"
+          else:
+              version = sys.implementation.version
+              implementation_version = f"{version.major}.{version.minor}.{version.micro}"
+              suffix = {"alpha": "a", "beta": "b", "candidate": "rc", "final": ""}[version.releaselevel]
+              if suffix:
+                  implementation_version += f"{suffix}{version.serial}"
+              runtime = f"{sys.implementation.name}-{implementation_version}-python-{platform.python_version()}"
+          if sysconfig.get_config_var("Py_GIL_DISABLED") == 1:
+              runtime += "-freethreaded"
+          print(runtime)
+          PY
+          )
+          if [ "$PYTHON_RUNTIME_ID" != "$expected" ]; then
+            echo "Wrong Python runtime ID: $PYTHON_RUNTIME_ID (expected $expected)"
             exit 1
           fi
           if [ "$PYTHON_VERSION" != "$PYTHON_REQUEST" ]; then
@@ -402,7 +422,7 @@ jobs:
           CACHE_KEY: ${{ steps.setup-uv.outputs.cache-key }}
           PYTHON_REQUEST: ${{ matrix.python-version }}
           PYTHON_VERSION: ${{ steps.setup-uv.outputs.python-version }}
-          PYTHON_VERSION_RESOLVED: ${{ steps.setup-uv.outputs.python-version-resolved }}
+          PYTHON_RUNTIME_ID: ${{ steps.setup-uv.outputs.python-runtime-id }}
       - name: Verify output venv is set
         run: |
           if [ -z "$UV_VENV" ]; then
@@ -467,15 +487,15 @@ jobs:
               raise SystemExit(f"Python is not running from custom venv: {sys.executable}")
           PY
         shell: bash
-      - name: Verify resolved Python version from custom venv
+      - name: Verify Python runtime ID from custom venv
         run: |
-          if [ "$PYTHON_VERSION_RESOLVED" != "3.13.1" ]; then
-            echo "Wrong resolved Python version: $PYTHON_VERSION_RESOLVED"
+          if [ "$PYTHON_RUNTIME_ID" != "cpython-3.13.1-freethreaded" ]; then
+            echo "Wrong Python runtime ID: $PYTHON_RUNTIME_ID"
             exit 1
           fi
         shell: bash
         env:
-          PYTHON_VERSION_RESOLVED: ${{ steps.setup-uv.outputs.python-version-resolved }}
+          PYTHON_RUNTIME_ID: ${{ steps.setup-uv.outputs.python-runtime-id }}
 
   test-activate-environment-no-project:
     runs-on: ubuntu-latest

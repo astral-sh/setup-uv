@@ -102101,9 +102101,41 @@ function getResolutionStrategy() {
   );
 }
 
-// src/utils/python-version.ts
+// src/utils/python-runtime.ts
 var import_node_path2 = require("node:path");
-async function getResolvedPythonVersion(inputs) {
+var PYTHON_RUNTIME_QUERY = `
+import json
+import platform
+import sys
+import sysconfig
+
+print(json.dumps({
+    "implementation": sys.implementation.name,
+    "implementationVersion": list(sys.implementation.version),
+    "pythonVersion": platform.python_version(),
+    "freethreaded": sysconfig.get_config_var("Py_GIL_DISABLED") == 1,
+}))
+`;
+function formatRuntimeId(runtime) {
+  if (typeof runtime.implementation !== "string" || runtime.implementation === "" || typeof runtime.pythonVersion !== "string" || runtime.pythonVersion === "" || typeof runtime.freethreaded !== "boolean") {
+    throw new Error("Invalid Python runtime metadata");
+  }
+  let id = `cpython-${runtime.pythonVersion}`;
+  if (runtime.implementation !== "cpython") {
+    const [major2, minor2, micro, releaseLevel, serial] = runtime.implementationVersion;
+    const suffixes = { alpha: "a", beta: "b", candidate: "rc", final: "" };
+    const suffix = suffixes[releaseLevel];
+    if (suffix === void 0 || ![major2, minor2, micro, serial].every(
+      (part) => Number.isInteger(part) && part >= 0
+    )) {
+      throw new Error("Invalid Python implementation version");
+    }
+    const implementationVersion = `${major2}.${minor2}.${micro}${suffix}${suffix ? serial : ""}`;
+    id = `${runtime.implementation}-${implementationVersion}-python-${runtime.pythonVersion}`;
+  }
+  return runtime.freethreaded ? `${id}-freethreaded` : id;
+}
+async function getPythonRuntimeId(inputs) {
   if (!inputs.activateEnvironment) {
     return "";
   }
@@ -102111,13 +102143,13 @@ async function getResolvedPythonVersion(inputs) {
   try {
     const { stdout } = await getExecOutput(
       `"${pythonPath.replace(/"/g, '\\"')}"`,
-      ["-I", "-c", "import platform; print(platform.python_version())"],
+      ["-I", "-c", PYTHON_RUNTIME_QUERY],
       { silent: !isDebug() }
     );
-    return stdout.trim();
+    return formatRuntimeId(JSON.parse(stdout));
   } catch (error2) {
     debug(
-      `Failed to get the activated environment's Python version. Error: ${error2 instanceof Error ? error2.message : String(error2)}`
+      `Failed to identify the activated environment's Python runtime. Error: ${error2 instanceof Error ? error2.message : String(error2)}`
     );
     return "";
   }
@@ -102193,10 +102225,7 @@ async function run() {
     info2(`Successfully installed uv version ${setupResult.version}`);
     const detectedPythonVersion = await getPythonVersion2(inputs);
     setOutput("python-version", detectedPythonVersion);
-    setOutput(
-      "python-version-resolved",
-      await getResolvedPythonVersion(inputs)
-    );
+    setOutput("python-runtime-id", await getPythonRuntimeId(inputs));
     if (inputs.enableCache) {
       await restoreCache2(inputs, detectedPythonVersion);
     }

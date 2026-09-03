@@ -79,7 +79,7 @@ outputs:
     type: string
   python-version:
     type: string
-  python-version-resolved:
+  python-runtime-id:
     type: string
   python-cache-hit:
     type: boolean
