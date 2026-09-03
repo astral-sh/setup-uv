@@ -102068,53 +102068,30 @@ function getResolutionStrategy() {
 
 // src/utils/python-runtime.ts
 var import_node_child_process = require("node:child_process");
-var import_node_path2 = require("node:path");
 var import_node_util4 = require("node:util");
 var execFileAsync = (0, import_node_util4.promisify)(import_node_child_process.execFile);
-var PYTHON_RUNTIME_QUERY = `
-import json
-import platform
-import sys
-import sysconfig
-
-print(json.dumps({
-    "implementation": sys.implementation.name,
-    "implementationVersion": list(sys.implementation.version),
-    "pythonVersion": platform.python_version(),
-    "freethreaded": sysconfig.get_config_var("Py_GIL_DISABLED") == 1,
-}))
-`;
-function formatRuntimeId(runtime) {
-  if (typeof runtime.implementation !== "string" || runtime.implementation === "" || typeof runtime.pythonVersion !== "string" || runtime.pythonVersion === "" || typeof runtime.freethreaded !== "boolean") {
-    throw new Error("Invalid Python runtime metadata");
-  }
-  let id = `cpython-${runtime.pythonVersion}`;
-  if (runtime.implementation !== "cpython") {
-    const [major2, minor2, micro, releaseLevel, serial] = runtime.implementationVersion;
-    const suffixes = { alpha: "a", beta: "b", candidate: "rc", final: "" };
-    const suffix = suffixes[releaseLevel];
-    if (suffix === void 0 || ![major2, minor2, micro, serial].every(
-      (part) => Number.isInteger(part) && part >= 0
-    )) {
-      throw new Error("Invalid Python implementation version");
-    }
-    const implementationVersion = `${major2}.${minor2}.${micro}${suffix}${suffix ? serial : ""}`;
-    id = `${runtime.implementation}-${implementationVersion}-python-${runtime.pythonVersion}`;
-  }
-  return runtime.freethreaded ? `${id}-freethreaded` : id;
-}
 async function getPythonRuntimeId(inputs) {
   if (!inputs.activateEnvironment) {
     return "";
   }
-  const pythonPath = process.platform === "win32" ? (0, import_node_path2.join)(inputs.venvPath, "Scripts", "python.exe") : (0, import_node_path2.join)(inputs.venvPath, "bin", "python");
   try {
     const { stdout } = await execFileAsync(
-      pythonPath,
-      ["-I", "-c", PYTHON_RUNTIME_QUERY],
+      "uv",
+      [
+        "python",
+        "list",
+        inputs.venvPath,
+        "--only-installed",
+        "--output-format",
+        "json"
+      ],
       { encoding: "utf8" }
     );
-    return formatRuntimeId(JSON.parse(stdout));
+    const pythons = JSON.parse(stdout);
+    if (!Array.isArray(pythons) || pythons.length !== 1 || typeof pythons[0]?.key !== "string" || pythons[0].key === "") {
+      throw new Error("Expected one installed Python with a runtime key");
+    }
+    return pythons[0].key;
   } catch (error2) {
     throw new Error(
       `Failed to identify the activated environment's Python runtime: ${error2 instanceof Error ? error2.message : String(error2)}`,

@@ -138,8 +138,8 @@ Have a look under [Advanced Configuration](#advanced-configuration) for detailed
 - `cache-hit`: A boolean value to indicate a cache entry was found.
 - `venv`: Path to the activated venv if activate-environment is true.
 - `python-version`: The Python version that was set.
-- `python-runtime-id`: An opaque identifier for the activated venv's Python runtime, including
-  implementation, full version, and free-threaded build information. Useful as a cache-key component.
+- `python-runtime-id`: An opaque identifier reported by uv for the activated venv's Python runtime, including
+  implementation, full Python version, and free-threaded build information. Useful as a cache-key component.
   Empty when `activate-environment` is false. The action fails if the activated runtime cannot be determined.
 - `python-cache-hit`: A boolean value to indicate the Python cache entry was found.
 

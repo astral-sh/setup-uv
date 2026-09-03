@@ -386,29 +386,21 @@ jobs:
         shell: bash
       - name: Verify Python version outputs and cache key
         run: |
-          expected=$(python -I - <<'PY'
+          expected_prefix=$(python -I - <<'PY'
           import platform
           import sys
           import sysconfig
 
-          if sys.implementation.name == "cpython":
-              runtime = f"cpython-{platform.python_version()}"
-          else:
-              version = sys.implementation.version
-              implementation_version = f"{version.major}.{version.minor}.{version.micro}"
-              suffix = {"alpha": "a", "beta": "b", "candidate": "rc", "final": ""}[version.releaselevel]
-              if suffix:
-                  implementation_version += f"{suffix}{version.serial}"
-              runtime = f"{sys.implementation.name}-{implementation_version}-python-{platform.python_version()}"
+          runtime = f"{sys.implementation.name}-{platform.python_version()}"
           if sysconfig.get_config_var("Py_GIL_DISABLED") == 1:
-              runtime += "-freethreaded"
-          print(runtime)
+              runtime += "+freethreaded"
+          print(f"{runtime}-")
           PY
           )
-          if [ "$PYTHON_RUNTIME_ID" != "$expected" ]; then
-            echo "Wrong Python runtime ID: $PYTHON_RUNTIME_ID (expected $expected)"
-            exit 1
-          fi
+          case "$PYTHON_RUNTIME_ID" in
+            "$expected_prefix"*) ;;
+            *) echo "Wrong Python runtime ID: $PYTHON_RUNTIME_ID (expected prefix $expected_prefix)"; exit 1 ;;
+          esac
           if [ "$PYTHON_VERSION" != "$PYTHON_REQUEST" ]; then
             echo "Wrong requested Python version: $PYTHON_VERSION"
             exit 1
@@ -489,10 +481,10 @@ jobs:
         shell: bash
       - name: Verify Python runtime ID from custom venv
         run: |
-          if [ "$PYTHON_RUNTIME_ID" != "cpython-3.13.1-freethreaded" ]; then
-            echo "Wrong Python runtime ID: $PYTHON_RUNTIME_ID"
-            exit 1
-          fi
+          case "$PYTHON_RUNTIME_ID" in
+            cpython-3.13.1+freethreaded-*) ;;
+            *) echo "Wrong Python runtime ID: $PYTHON_RUNTIME_ID"; exit 1 ;;
+          esac
         shell: bash
         env:
           PYTHON_RUNTIME_ID: ${{ steps.setup-uv.outputs.python-runtime-id }}

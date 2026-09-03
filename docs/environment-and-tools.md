@@ -18,7 +18,7 @@ This allows directly using it in later steps:
 By default, the venv is created at `.venv` inside the `working-directory`.
 
 With `activate-environment: true`, the `python-runtime-id` output identifies the
-venv's Python runtime. This is an opaque identifier that users of the action
+venv's Python runtime as reported by uv. This is an opaque identifier that users of the action
 can use as a cache key if necessary; users should not assume anything about
 the stability or structure of the identifier itself.
 
