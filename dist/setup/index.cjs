@@ -14676,7 +14676,7 @@ var require_util4 = __commonJS({
     var { getEncoding } = require_encoding();
     var { serializeAMimeType, parseMIMEType } = require_data_url();
     var { types: types2 } = require("node:util");
-    var { StringDecoder } = require("string_decoder");
+    var { StringDecoder: StringDecoder2 } = require("string_decoder");
     var { btoa: btoa2 } = require("node:buffer");
     var staticPropertyDescriptors = {
       enumerable: true,
@@ -14767,7 +14767,7 @@ var require_util4 = __commonJS({
             dataURL += serializeAMimeType(parsed);
           }
           dataURL += ";base64,";
-          const decoder = new StringDecoder("latin1");
+          const decoder = new StringDecoder2("latin1");
           for (const chunk of bytes) {
             dataURL += btoa2(decoder.write(chunk));
           }
@@ -14796,7 +14796,7 @@ var require_util4 = __commonJS({
         }
         case "BinaryString": {
           let binaryString = "";
-          const decoder = new StringDecoder("latin1");
+          const decoder = new StringDecoder2("latin1");
           for (const chunk of bytes) {
             binaryString += decoder.write(chunk);
           }
@@ -58186,6 +58186,9 @@ var _summary = new Summary();
 // node_modules/@actions/core/lib/platform.js
 var import_os2 = __toESM(require("os"), 1);
 
+// node_modules/@actions/exec/lib/exec.js
+var import_string_decoder = require("string_decoder");
+
 // node_modules/@actions/exec/lib/toolrunner.js
 var os3 = __toESM(require("os"), 1);
 var events = __toESM(require("events"), 1);
@@ -59004,6 +59007,38 @@ function exec(commandLine, args, options) {
     args = commandArgs.slice(1).concat(args || []);
     const runner = new ToolRunner(toolPath, args, options);
     return runner.exec();
+  });
+}
+function getExecOutput(commandLine, args, options) {
+  return __awaiter7(this, void 0, void 0, function* () {
+    var _a2, _b;
+    let stdout = "";
+    let stderr = "";
+    const stdoutDecoder = new import_string_decoder.StringDecoder("utf8");
+    const stderrDecoder = new import_string_decoder.StringDecoder("utf8");
+    const originalStdoutListener = (_a2 = options === null || options === void 0 ? void 0 : options.listeners) === null || _a2 === void 0 ? void 0 : _a2.stdout;
+    const originalStdErrListener = (_b = options === null || options === void 0 ? void 0 : options.listeners) === null || _b === void 0 ? void 0 : _b.stderr;
+    const stdErrListener = (data) => {
+      stderr += stderrDecoder.write(data);
+      if (originalStdErrListener) {
+        originalStdErrListener(data);
+      }
+    };
+    const stdOutListener = (data) => {
+      stdout += stdoutDecoder.write(data);
+      if (originalStdoutListener) {
+        originalStdoutListener(data);
+      }
+    };
+    const listeners = Object.assign(Object.assign({}, options === null || options === void 0 ? void 0 : options.listeners), { stdout: stdOutListener, stderr: stdErrListener });
+    const exitCode = yield exec(commandLine, args, Object.assign(Object.assign({}, options), { listeners }));
+    stdout += stdoutDecoder.end();
+    stderr += stderrDecoder.end();
+    return {
+      exitCode,
+      stdout,
+      stderr
+    };
   });
 }
 
@@ -102066,6 +102101,28 @@ function getResolutionStrategy() {
   );
 }
 
+// src/utils/python-version.ts
+var import_node_path2 = require("node:path");
+async function getResolvedPythonVersion(inputs) {
+  if (!inputs.activateEnvironment) {
+    return "";
+  }
+  const pythonPath = process.platform === "win32" ? (0, import_node_path2.join)(inputs.venvPath, "Scripts", "python.exe") : (0, import_node_path2.join)(inputs.venvPath, "bin", "python");
+  try {
+    const { stdout } = await getExecOutput(
+      `"${pythonPath.replace(/"/g, '\\"')}"`,
+      ["-I", "-c", "import platform; print(platform.python_version())"],
+      { silent: !isDebug() }
+    );
+    return stdout.trim();
+  } catch (error2) {
+    debug(
+      `Failed to get the activated environment's Python version. Error: ${error2 instanceof Error ? error2.message : String(error2)}`
+    );
+    return "";
+  }
+}
+
 // src/setup-uv.ts
 var sourceDir = __dirname;
 function formatUnexpectedFailure(error2) {
@@ -102136,6 +102193,10 @@ async function run() {
     info2(`Successfully installed uv version ${setupResult.version}`);
     const detectedPythonVersion = await getPythonVersion2(inputs);
     setOutput("python-version", detectedPythonVersion);
+    setOutput(
+      "python-version-resolved",
+      await getResolvedPythonVersion(inputs)
+    );
     if (inputs.enableCache) {
       await restoreCache2(inputs, detectedPythonVersion);
     }

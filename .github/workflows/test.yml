@@ -347,9 +347,14 @@ jobs:
           if [ "$PYTHON_VERSION" != "3.13.1t" ]; then
             exit 1
           fi
+          if [ -n "$PYTHON_VERSION_RESOLVED" ]; then
+            echo "python-version-resolved should be empty without environment activation"
+            exit 1
+          fi
         shell: bash
         env:
           PYTHON_VERSION: ${{ steps.setup-uv.outputs.python-version }}
+          PYTHON_VERSION_RESOLVED: ${{ steps.setup-uv.outputs.python-version-resolved }}
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
 
@@ -358,23 +363,46 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.13.1t"]
+        include:
+          - os: ubuntu-latest
+            python-version: "3.13"
+          - os: ubuntu-latest
+            python-version: "3.14.0rc2"
+          - os: ubuntu-latest
+            python-version: "pypy3.11"
     steps:
       - name: Install latest version
         id: setup-uv
         uses: $/
         with:
-          python-version: 3.13.1t
+          python-version: ${{ matrix.python-version }}
           activate-environment: true
+          enable-cache: true
       - name: Verify packages can be installed
         run: uv pip install pip
         shell: bash
-      - name: Verify python version is correct
+      - name: Verify Python version outputs and cache key
         run: |
-          python --version
-          if [ "$(python --version)" != "Python 3.13.1" ]; then
+          expected=$(python -I -c 'import platform; print(platform.python_version())')
+          if [ "$PYTHON_VERSION_RESOLVED" != "$expected" ]; then
+            echo "Wrong resolved Python version: $PYTHON_VERSION_RESOLVED (expected $expected)"
             exit 1
           fi
+          if [ "$PYTHON_VERSION" != "$PYTHON_REQUEST" ]; then
+            echo "Wrong requested Python version: $PYTHON_VERSION"
+            exit 1
+          fi
+          case "$CACHE_KEY" in
+            *-"$PYTHON_REQUEST"-*) ;;
+            *) echo "Cache key no longer contains requested Python version: $CACHE_KEY"; exit 1 ;;
+          esac
         shell: bash
+        env:
+          CACHE_KEY: ${{ steps.setup-uv.outputs.cache-key }}
+          PYTHON_REQUEST: ${{ matrix.python-version }}
+          PYTHON_VERSION: ${{ steps.setup-uv.outputs.python-version }}
+          PYTHON_VERSION_RESOLVED: ${{ steps.setup-uv.outputs.python-version-resolved }}
       - name: Verify output venv is set
         run: |
           if [ -z "$UV_VENV" ]; then
@@ -439,6 +467,15 @@ jobs:
               raise SystemExit(f"Python is not running from custom venv: {sys.executable}")
           PY
         shell: bash
+      - name: Verify resolved Python version from custom venv
+        run: |
+          if [ "$PYTHON_VERSION_RESOLVED" != "3.13.1" ]; then
+            echo "Wrong resolved Python version: $PYTHON_VERSION_RESOLVED"
+            exit 1
+          fi
+        shell: bash
+        env:
+          PYTHON_VERSION_RESOLVED: ${{ steps.setup-uv.outputs.python-version-resolved }}
 
   test-activate-environment-no-project:
     runs-on: ubuntu-latest

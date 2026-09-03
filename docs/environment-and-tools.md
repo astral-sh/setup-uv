@@ -17,6 +17,19 @@ This allows directly using it in later steps:
 
 By default, the venv is created at `.venv` inside the `working-directory`.
 
+With `activate-environment: true`, the `python-version-resolved` output contains the
+venv's full Python version, as reported by `platform.python_version()`. For example,
+a `python-version` input of `3.15t` can resolve to `3.15.0rc1`. Use
+`${{ steps.setup-uv.outputs.python-version-resolved }}` in later steps to access
+the resolved version (with `id: setup-uv` on the setup step).
+
+This is the Python language version: it includes prerelease suffixes, but no
+implementation name or free-threaded marker. For cache keys that distinguish PyPy
+from CPython or free-threaded builds, include the requested version as well.
+The output is empty when `activate-environment` is false or the version cannot be
+determined. The existing `python-version` output and setup-uv's cache keys are
+unaffected.
+
 You can customize the venv location with `venv-path`, for example to place it in the runner temp directory:
 
 ```yaml
