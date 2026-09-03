@@ -18,25 +18,12 @@ This allows directly using it in later steps:
 By default, the venv is created at `.venv` inside the `working-directory`.
 
 With `activate-environment: true`, the `python-runtime-id` output identifies the
-venv's Python runtime using its implementation, full Python version (including
-prerelease numbers), and whether the interpreter was built for free threading.
-For implementations other than CPython, it also includes the implementation's own
-version, so upgrading PyPy changes the identifier even if its Python version stays
-the same.
+venv's Python runtime. This is an opaque identifier that users of the action
+can use as a cache key if necessary; users should not assume anything about
+the stability or structure of the identifier itself.
 
-Example identifiers:
-
-| Runtime | `python-runtime-id` |
-| --- | --- |
-| CPython RC1 | `cpython-3.15.0rc1` |
-| Free-threaded CPython RC1 | `cpython-3.15.0rc1-freethreaded` |
-| Free-threaded CPython RC2 | `cpython-3.15.0rc2-freethreaded` |
-| PyPy | `pypy-7.3.23-python-3.11.15` |
-
-This is an opaque identifier in a setup-uv-defined format, not a Python version
-specifier. Use the whole value as a cache-key component rather than parsing it.
-Combine it with the platform and dependency information relevant to your cache,
-for example (with `id: setup-uv` on the setup step):
+For example, you can combine it with the platform and dependency information relevant to
+your cache with `id: setup-uv` on the setup step:
 
 ```yaml
 key: build-${{ runner.os }}-${{ runner.arch }}-${{ steps.setup-uv.outputs.python-runtime-id }}-${{ hashFiles('uv.lock') }}
