@@ -1,7 +1,10 @@
+import { execFile } from "node:child_process";
 import { join } from "node:path";
+import { promisify } from "node:util";
 import * as core from "@actions/core";
-import * as exec from "@actions/exec";
 import type { SetupInputs } from "./inputs";
+
+const execFileAsync = promisify(execFile);
 
 const PYTHON_RUNTIME_QUERY = `
 import json
@@ -69,11 +72,10 @@ export async function getPythonRuntimeId(inputs: SetupInputs): Promise<string> {
       : join(inputs.venvPath, "bin", "python");
 
   try {
-    // @actions/exec parses the executable as a command line, so quote the path.
-    const { stdout } = await exec.getExecOutput(
-      `"${pythonPath.replace(/"/g, '\\"')}"`,
+    const { stdout } = await execFileAsync(
+      pythonPath,
       ["-I", "-c", PYTHON_RUNTIME_QUERY],
-      { silent: !core.isDebug() },
+      { encoding: "utf8" },
     );
     return formatRuntimeId(JSON.parse(stdout));
   } catch (error) {
