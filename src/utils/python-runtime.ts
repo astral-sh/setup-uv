@@ -10,6 +10,8 @@ export async function getPythonRuntimeId(inputs: SetupInputs): Promise<string> {
   }
 
   try {
+    // The venv path restricts results to this invocation's runtime, even if
+    // earlier setup-uv calls installed other Python versions in the same job.
     const { stdout } = await execFileAsync(
       "uv",
       [
