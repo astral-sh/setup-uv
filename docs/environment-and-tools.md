@@ -30,9 +30,9 @@ key: build-${{ runner.os }}-${{ runner.arch }}-${{ steps.setup-uv.outputs.python
 ```
 
 The free-threaded marker describes the interpreter's build even when the GIL is
-enabled at runtime. The output is empty when `activate-environment` is false or the
-runtime cannot be determined. The existing `python-version` output and setup-uv's
-cache keys are unaffected.
+enabled at runtime. The output is empty when `activate-environment` is false. If
+the activated runtime cannot be determined, the action fails. The existing
+`python-version` output and setup-uv's cache keys are unaffected.
 
 You can customize the venv location with `venv-path`, for example to place it in the runner temp directory:
 

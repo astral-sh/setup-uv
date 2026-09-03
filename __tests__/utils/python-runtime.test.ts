@@ -7,14 +7,12 @@ const mockExecFile =
   jest.fn<
     (...args: unknown[]) => Promise<{ stdout: string; stderr: string }>
   >();
-const mockDebug = jest.fn();
 const originalPlatform = process.platform;
 const inputs = createSetupInputs({
   activateEnvironment: true,
   pythonVersion: "3.15t",
 });
 
-jest.unstable_mockModule("@actions/core", () => ({ debug: mockDebug }));
 jest.unstable_mockModule("node:child_process", () => ({
   // execFile's custom promisifier returns both stdout and stderr.
   execFile: Object.assign(mockExecFile, { [promisify.custom]: mockExecFile }),
@@ -70,16 +68,13 @@ it.each([
   ["pypy", [7, 3, 24, "beta", 2], "pypy-7.3.24b2"],
   ["pypy", [7, 3, 24, "candidate", 3], "pypy-7.3.24rc3"],
   ["graalpy", [25, 0, 0, "final", 0], "graalpy-25.0.0"],
-  ["pypy", [7, 3, 24, "unknown", 0], ""],
 ])("formats %s implementation version %j", async (name, version, expected) => {
   mockRuntime({
     implementation: name,
     implementationVersion: version,
     pythonVersion: "3.11.15",
   });
-  expect(await getPythonRuntimeId(inputs)).toBe(
-    expected ? `${expected}-python-3.11.15` : "",
-  );
+  expect(await getPythonRuntimeId(inputs)).toBe(`${expected}-python-3.11.15`);
 });
 
 it.each([
@@ -97,15 +92,25 @@ it.each([
   );
 });
 
-it.each([new Error("interpreter missing"), "", "not JSON", "null", "{}"])(
-  "returns an empty ID for interpreter failure: %s",
-  async (result) => {
-    if (result instanceof Error) {
-      mockExecFile.mockRejectedValue(result);
-    } else {
-      mockExecFile.mockResolvedValue({ stderr: "", stdout: result });
-    }
-    expect(await getPythonRuntimeId(inputs)).toBe("");
-    expect(mockDebug).toHaveBeenCalled();
-  },
-);
+it.each([
+  new Error("interpreter missing"),
+  "",
+  "not JSON",
+  "null",
+  "{}",
+  JSON.stringify({
+    freethreaded: false,
+    implementation: "pypy",
+    implementationVersion: [7, 3, 24, "unknown", 0],
+    pythonVersion: "3.11.15",
+  }),
+])("rejects interpreter failure or invalid metadata: %s", async (result) => {
+  if (result instanceof Error) {
+    mockExecFile.mockRejectedValue(result);
+  } else {
+    mockExecFile.mockResolvedValue({ stderr: "", stdout: result });
+  }
+  await expect(getPythonRuntimeId(inputs)).rejects.toThrow(
+    "Failed to identify the activated environment's Python runtime:",
+  );
+});

@@ -1,7 +1,6 @@
 import { execFile } from "node:child_process";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import * as core from "@actions/core";
 import type { SetupInputs } from "./inputs";
 
 const execFileAsync = promisify(execFile);
@@ -79,9 +78,9 @@ export async function getPythonRuntimeId(inputs: SetupInputs): Promise<string> {
     );
     return formatRuntimeId(JSON.parse(stdout));
   } catch (error) {
-    core.debug(
-      `Failed to identify the activated environment's Python runtime. Error: ${error instanceof Error ? error.message : String(error)}`,
+    throw new Error(
+      `Failed to identify the activated environment's Python runtime: ${error instanceof Error ? error.message : String(error)}`,
+      { cause: error },
     );
-    return "";
   }
 }

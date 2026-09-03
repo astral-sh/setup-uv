@@ -140,7 +140,7 @@ Have a look under [Advanced Configuration](#advanced-configuration) for detailed
 - `python-version`: The Python version that was set.
 - `python-runtime-id`: An opaque identifier for the activated venv's Python runtime, including
   implementation, full version, and free-threaded build information. Useful as a cache-key component.
-  Empty when `activate-environment` is false or the runtime cannot be determined.
+  Empty when `activate-environment` is false. The action fails if the activated runtime cannot be determined.
 - `python-cache-hit`: A boolean value to indicate the Python cache entry was found.
 
 ### Python version

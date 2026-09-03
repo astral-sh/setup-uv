@@ -102116,10 +102116,10 @@ async function getPythonRuntimeId(inputs) {
     );
     return formatRuntimeId(JSON.parse(stdout));
   } catch (error2) {
-    debug(
-      `Failed to identify the activated environment's Python runtime. Error: ${error2 instanceof Error ? error2.message : String(error2)}`
+    throw new Error(
+      `Failed to identify the activated environment's Python runtime: ${error2 instanceof Error ? error2.message : String(error2)}`,
+      { cause: error2 }
     );
-    return "";
   }
 }
 
