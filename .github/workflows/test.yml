@@ -347,9 +347,14 @@ jobs:
           if [ "$PYTHON_VERSION" != "3.13.1t" ]; then
             exit 1
           fi
+          if [ -n "$PYTHON_RUNTIME_ID" ]; then
+            echo "python-runtime-id should be empty without environment activation"
+            exit 1
+          fi
         shell: bash
         env:
           PYTHON_VERSION: ${{ steps.setup-uv.outputs.python-version }}
+          PYTHON_RUNTIME_ID: ${{ steps.setup-uv.outputs.python-runtime-id }}
       - run: uv sync
         working-directory: __tests__/fixtures/uv-project
 
@@ -439,6 +444,15 @@ jobs:
               raise SystemExit(f"Python is not running from custom venv: {sys.executable}")
           PY
         shell: bash
+      - name: Verify Python runtime ID from custom venv
+        run: |
+          case "$PYTHON_RUNTIME_ID" in
+            cpython-3.13.1+freethreaded-*) ;;
+            *) echo "Wrong Python runtime ID: $PYTHON_RUNTIME_ID"; exit 1 ;;
+          esac
+        shell: bash
+        env:
+          PYTHON_RUNTIME_ID: ${{ steps.setup-uv.outputs.python-runtime-id }}
 
   test-activate-environment-no-project:
     runs-on: ubuntu-latest
