@@ -1,4 +1,8 @@
-import { EnvHttpProxyAgent, type RequestInit, fetch as undiciFetch } from "undici";
+import {
+  EnvHttpProxyAgent,
+  type RequestInit,
+  fetch as undiciFetch,
+} from "undici";
 
 export const fetch = async (url: string, opts: RequestInit) => {
   // Merge timeout signal with any existing signal from opts
