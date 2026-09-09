@@ -17,6 +17,18 @@ This allows directly using it in later steps:
 
 By default, the venv is created at `.venv` inside the `working-directory`.
 
+With `activate-environment: true`, the `python-runtime-id` output identifies the
+venv's Python runtime as reported by uv. This is an opaque identifier that users of the action
+can use as a cache key if necessary; users should not assume anything about
+the stability or structure of the identifier itself.
+
+For example, you can combine it with the platform and dependency information relevant to
+your cache with `id: setup-uv` on the setup step:
+
+```yaml
+key: build-${{ runner.os }}-${{ runner.arch }}-${{ steps.setup-uv.outputs.python-runtime-id }}-${{ hashFiles('uv.lock') }}
+```
+
 You can customize the venv location with `venv-path`, for example to place it in the runner temp directory:
 
 ```yaml

@@ -16,6 +16,7 @@ import {
   getPlatform,
   type Platform,
 } from "./utils/platforms";
+import { getPythonRuntimeId } from "./utils/python-runtime";
 import { resolveUvVersion } from "./version/resolve";
 
 const sourceDir = __dirname;
@@ -101,6 +102,7 @@ async function run(): Promise<void> {
 
     const detectedPythonVersion = await getPythonVersion(inputs);
     core.setOutput("python-version", detectedPythonVersion);
+    core.setOutput("python-runtime-id", await getPythonRuntimeId(inputs));
 
     if (inputs.enableCache) {
       await restoreCache(inputs, detectedPythonVersion);
