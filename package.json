@@ -49,12 +49,12 @@
     "undici": "^8.10.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.7",
+    "@biomejs/biome": "^2.5.8",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^26.1.2",
+    "@types/node": "^26.2.0",
     "@types/semver": "^7.8.0",
     "@vercel/ncc": "^0.44.1",
-    "esbuild": "^0.28.1",
+    "esbuild": "^0.28.2",
     "jest": "^30.4.2",
     "js-yaml": "^5.2.3",
     "ts-jest": "^29.4.11",
