@@ -11,7 +11,7 @@ You can specify a checksum to override those values. The sha256 hashes can also 
 
 ```yaml
 - name: Install a specific version and validate the checksum
-  uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+  uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
   with:
     version: "0.3.1"
     checksum: "e11b01402ab645392c7ad6044db63d37e4fd1e745e015306993b07695ea5f9f8"
@@ -40,7 +40,7 @@ The `archive_format` field is currently ignored.
 
 ```yaml
 - name: Use a custom manifest file
-  uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+  uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
   with:
     manifest-file: "https://example.com/my-custom-manifest.ndjson"
 ```
@@ -59,7 +59,7 @@ You can disable this by setting the `add-problem-matchers` input to `false`.
 
 ```yaml
 - name: Install the latest version of uv without problem matchers
-  uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+  uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
   with:
     add-problem-matchers: false
 ```
