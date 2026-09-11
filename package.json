@@ -45,7 +45,7 @@
     "@actions/io": "^3.0.2",
     "@actions/tool-cache": "^4.0.0",
     "@renovatebot/pep440": "^5.0.0",
-    "smol-toml": "^1.7.1",
+    "smol-toml": "^1.8.0",
     "undici": "^8.10.0"
   },
   "devDependencies": {
