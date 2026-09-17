@@ -33,7 +33,11 @@ inputs:
   restore-cache:
     type: boolean
   save-cache:
-    type: boolean
+    type: enum
+    allowed-values:
+      - "true"
+      - "false"
+      - auto
   cache-suffix:
     type: string
   cache-local-path:

@@ -139,9 +139,11 @@ By default, the cache will be restored.
 
 ## Save cache
 
-You can also disable saving the cache after the run with the `save-cache` input.
+You can control saving the cache after the run with the `save-cache` input.
 This can be useful to save cache storage when you know you will not use the cache of the run again.
-By default, the cache will be saved.
+By default, `save-cache: auto` saves the cache except for `merge_group` events, where caches created
+for temporary merge queue refs are unlikely to be reused. Cache restoration remains enabled for
+these events. Set `save-cache: true` to save the cache for all events.
 
 ```yaml
 - name: Don't save the cache after the run

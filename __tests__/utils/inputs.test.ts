@@ -206,6 +206,51 @@ describe("loadInputs", () => {
     expect(inputs.enableCache).toBe(true);
   });
 
+  it("restores but does not save cache automatically for merge groups", () => {
+    mockInputs["working-directory"] = "/workspace";
+    mockInputs["enable-cache"] = "auto";
+    mockInputs["restore-cache"] = "true";
+    mockInputs["save-cache"] = "auto";
+    process.env.RUNNER_ENVIRONMENT = "github-hosted";
+    process.env.RUNNER_TEMP = "/runner-temp";
+    process.env.GITHUB_EVENT_NAME = "merge_group";
+
+    const inputs = loadInputs();
+
+    expect(inputs.enableCache).toBe(true);
+    expect(inputs.restoreCache).toBe(true);
+    expect(inputs.saveCache).toBe(false);
+    expect(mockInfo).toHaveBeenCalledWith(
+      "Cache saving is disabled for the merge_group event",
+    );
+  });
+
+  it.each([
+    ["true", true],
+    ["false", false],
+  ])("honors save-cache %s for merge groups", (saveCacheInput, expected) => {
+    mockInputs["working-directory"] = "/workspace";
+    mockInputs["save-cache"] = saveCacheInput;
+    process.env.GITHUB_EVENT_NAME = "merge_group";
+
+    const inputs = loadInputs();
+
+    expect(inputs.saveCache).toBe(expected);
+    expect(mockInfo).not.toHaveBeenCalledWith(
+      "Cache saving is disabled for the merge_group event",
+    );
+  });
+
+  it("automatically saves cache for other events", () => {
+    mockInputs["working-directory"] = "/workspace";
+    mockInputs["save-cache"] = "auto";
+    process.env.GITHUB_EVENT_NAME = "push";
+
+    const inputs = loadInputs();
+
+    expect(inputs.saveCache).toBe(true);
+  });
+
   it("uses cache-dir from pyproject.toml when present", () => {
     mockInputs["working-directory"] = createTempProject({
       "pyproject.toml": `[project]
