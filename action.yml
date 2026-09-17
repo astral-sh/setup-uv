@@ -51,8 +51,8 @@ inputs:
     description: "Whether to restore the cache if found."
     default: "true"
   save-cache:
-    description: "Whether to save the cache after the run."
-    default: "true"
+    description: "Whether to save the cache after the run. 'auto' disables saving for merge_group events."
+    default: "auto"
   cache-suffix:
     description: "Suffix for the cache key"
     required: false

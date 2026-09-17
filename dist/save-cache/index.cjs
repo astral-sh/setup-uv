@@ -64490,7 +64490,7 @@ function loadInputs() {
   const checksum = getInput("checksum");
   const enableCache = getEnableCache();
   const restoreCache2 = getInput("restore-cache") === "true";
-  const saveCache4 = getInput("save-cache") === "true";
+  const saveCache4 = getSaveCache();
   const cacheSuffix = getInput("cache-suffix") || "";
   const cacheLocalPath = getCacheLocalPath(
     workingDirectory,
@@ -64599,6 +64599,17 @@ function getEnableCache() {
     return true;
   }
   return enableCacheInput === "true";
+}
+function getSaveCache() {
+  const saveCacheInput = getInput("save-cache");
+  if (saveCacheInput === "auto") {
+    if (process.env.GITHUB_EVENT_NAME === "merge_group") {
+      info2("Cache saving is disabled for the merge_group event");
+      return false;
+    }
+    return true;
+  }
+  return saveCacheInput === "true";
 }
 function getToolBinDir(workingDirectory) {
   const toolBinDirInput = getInput("tool-bin-dir");

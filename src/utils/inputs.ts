@@ -60,7 +60,7 @@ export function loadInputs(): SetupInputs {
   const checksum = core.getInput("checksum");
   const enableCache = getEnableCache();
   const restoreCache = core.getInput("restore-cache") === "true";
-  const saveCache = core.getInput("save-cache") === "true";
+  const saveCache = getSaveCache();
   const cacheSuffix = core.getInput("cache-suffix") || "";
   const cacheLocalPath = getCacheLocalPath(
     workingDirectory,
@@ -187,6 +187,18 @@ function getEnableCache(): boolean {
     return true;
   }
   return enableCacheInput === "true";
+}
+
+function getSaveCache(): boolean {
+  const saveCacheInput = core.getInput("save-cache");
+  if (saveCacheInput === "auto") {
+    if (process.env.GITHUB_EVENT_NAME === "merge_group") {
+      log.info("Cache saving is disabled for the merge_group event");
+      return false;
+    }
+    return true;
+  }
+  return saveCacheInput === "true";
 }
 
 function getToolBinDir(workingDirectory: string): string | undefined {
