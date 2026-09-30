@@ -12,6 +12,9 @@ inputs:
   python-version:
     description: "The version of Python to set UV_PYTHON to. Overrides the Python version from .tool-versions."
     required: false
+  python-arch:
+    description: "The Python architecture to set UV_PYTHON_ARCH to, e.g., x86_64 or aarch64. Overrides UV_PYTHON_ARCH."
+    required: false
   activate-environment:
     description: "Use uv venv to activate a venv ready to be used by later steps. "
     default: "false"

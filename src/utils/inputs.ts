@@ -24,6 +24,7 @@ export interface SetupInputs {
   version: string;
   versionFile: string;
   pythonVersion: string;
+  pythonArch: string;
   activateEnvironment: boolean;
   noProject: boolean;
   venvPath: string;
@@ -54,6 +55,7 @@ export function loadInputs(): SetupInputs {
   const version = core.getInput("version");
   const versionFile = getVersionFile(workingDirectory);
   const pythonVersion = getPythonVersion(versionFile);
+  const pythonArch = core.getInput("python-arch");
   const activateEnvironment = core.getBooleanInput("activate-environment");
   const noProject = core.getBooleanInput("no-project");
   const venvPath = getVenvPath(workingDirectory, activateEnvironment);
@@ -100,6 +102,7 @@ export function loadInputs(): SetupInputs {
     manifestFile,
     noProject,
     pruneCache,
+    pythonArch,
     pythonDir,
     pythonVersion,
     quiet,
@@ -144,6 +147,10 @@ function getPythonVersion(versionFile: string): string {
     );
     return "";
   }
+}
+
+export function resolvePythonArch(pythonArch: string): string {
+  return pythonArch || process.env.UV_PYTHON_ARCH || "";
 }
 
 function getVenvPath(

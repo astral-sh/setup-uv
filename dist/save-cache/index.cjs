@@ -63714,15 +63714,6 @@ function info2(msg) {
 }
 var warning2 = warning;
 
-// src/cache/restore-cache.ts
-var STATE_CACHE_KEY = "cache-key";
-var STATE_CACHE_MATCHED_KEY = "cache-matched-key";
-var STATE_PYTHON_CACHE_MATCHED_KEY = "python-cache-matched-key";
-
-// src/utils/constants.ts
-var STATE_UV_PATH = "uv-path";
-var STATE_UV_VERSION = "uv-version";
-
 // src/utils/inputs.ts
 var import_node_fs4 = __toESM(require("node:fs"), 1);
 var import_node_path = __toESM(require("node:path"), 1);
@@ -64447,6 +64438,7 @@ function loadInputs() {
   const version3 = getInput("version");
   const versionFile = getVersionFile(workingDirectory);
   const pythonVersion = getPythonVersion(versionFile);
+  const pythonArch = getInput("python-arch");
   const activateEnvironment = getBooleanInput("activate-environment");
   const noProject = getBooleanInput("no-project");
   const venvPath = getVenvPath(workingDirectory, activateEnvironment);
@@ -64490,6 +64482,7 @@ function loadInputs() {
     manifestFile,
     noProject,
     pruneCache: pruneCache2,
+    pythonArch,
     pythonDir,
     pythonVersion,
     quiet: quiet2,
@@ -64737,6 +64730,15 @@ function getResolutionStrategy() {
     `Invalid resolution-strategy: ${resolutionStrategyInput}. Must be 'highest' or 'lowest'.`
   );
 }
+
+// src/cache/restore-cache.ts
+var STATE_CACHE_KEY = "cache-key";
+var STATE_CACHE_MATCHED_KEY = "cache-matched-key";
+var STATE_PYTHON_CACHE_MATCHED_KEY = "python-cache-matched-key";
+
+// src/utils/constants.ts
+var STATE_UV_PATH = "uv-path";
+var STATE_UV_VERSION = "uv-version";
 
 // src/save-cache.ts
 function formatUnexpectedFailure(error2) {

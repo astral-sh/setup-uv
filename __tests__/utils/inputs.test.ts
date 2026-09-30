@@ -19,6 +19,7 @@ const ORIGINAL_RUNNER_ENVIRONMENT = process.env.RUNNER_ENVIRONMENT;
 const ORIGINAL_RUNNER_TEMP = process.env.RUNNER_TEMP;
 const ORIGINAL_UV_CACHE_DIR = process.env.UV_CACHE_DIR;
 const ORIGINAL_UV_PYTHON = process.env.UV_PYTHON;
+const ORIGINAL_UV_PYTHON_ARCH = process.env.UV_PYTHON_ARCH;
 const ORIGINAL_UV_PYTHON_INSTALL_DIR = process.env.UV_PYTHON_INSTALL_DIR;
 
 const mockDebug = jest.fn();
@@ -37,7 +38,9 @@ jest.unstable_mockModule("@actions/core", () => ({
   warning: mockWarning,
 }));
 
-const { CacheLocalSource, loadInputs } = await import("../../src/utils/inputs");
+const { CacheLocalSource, loadInputs, resolvePythonArch } = await import(
+  "../../src/utils/inputs"
+);
 
 function createTempProject(files: Record<string, string> = {}): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "setup-uv-inputs-test-"));
@@ -62,6 +65,7 @@ function resetEnvironment(): void {
   delete process.env.RUNNER_TEMP;
   delete process.env.UV_CACHE_DIR;
   delete process.env.UV_PYTHON;
+  delete process.env.UV_PYTHON_ARCH;
   delete process.env.UV_PYTHON_INSTALL_DIR;
 }
 
@@ -77,6 +81,11 @@ function restoreEnvironment(): void {
   process.env.RUNNER_TEMP = ORIGINAL_RUNNER_TEMP;
   process.env.UV_CACHE_DIR = ORIGINAL_UV_CACHE_DIR;
   process.env.UV_PYTHON = ORIGINAL_UV_PYTHON;
+  if (ORIGINAL_UV_PYTHON_ARCH === undefined) {
+    delete process.env.UV_PYTHON_ARCH;
+  } else {
+    process.env.UV_PYTHON_ARCH = ORIGINAL_UV_PYTHON_ARCH;
+  }
   process.env.UV_PYTHON_INSTALL_DIR = ORIGINAL_UV_PYTHON_INSTALL_DIR;
 }
 
@@ -98,6 +107,7 @@ describe("loadInputs", () => {
       source: CacheLocalSource.Default,
     });
     expect(inputs.pythonDir).toBe("/runner-temp/uv-python-dir");
+    expect(inputs.pythonArch).toBe("");
     expect(inputs.venvPath).toBe("/workspace/.venv");
     expect(inputs.manifestFile).toBeUndefined();
     expect(inputs.resolutionStrategy).toBe("highest");
@@ -148,6 +158,28 @@ describe("loadInputs", () => {
 
     expect(inputs.pythonVersion).toBe("");
   });
+
+  it("prefers the python-arch input over UV_PYTHON_ARCH", () => {
+    mockInputs["working-directory"] = "/workspace";
+    mockInputs["python-arch"] = "x86_64";
+    process.env.UV_PYTHON_ARCH = "aarch64";
+
+    const inputs = loadInputs();
+    expect(inputs.pythonArch).toBe("x86_64");
+    expect(resolvePythonArch(inputs.pythonArch)).toBe("x86_64");
+  });
+
+  it.each(["aarch64", "x86_64_v3", ""])(
+    "uses UV_PYTHON_ARCH when python-arch is omitted: %s",
+    (pythonArch) => {
+      mockInputs["working-directory"] = "/workspace";
+      process.env.UV_PYTHON_ARCH = pythonArch;
+
+      const inputs = loadInputs();
+      expect(inputs.pythonArch).toBe("");
+      expect(resolvePythonArch(inputs.pythonArch)).toBe(pythonArch);
+    },
+  );
 
   it.each(["pull_request_target", "workflow_run", "release"])(
     "disables automatic caching for the %s event",

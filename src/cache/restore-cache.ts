@@ -1,7 +1,7 @@
 import * as cache from "@actions/cache";
 import * as core from "@actions/core";
 import { hashFiles } from "../hash/hash-files";
-import type { SetupInputs } from "../utils/inputs";
+import { resolvePythonArch, type SetupInputs } from "../utils/inputs";
 import * as log from "../utils/logging";
 import { getArch, getOSNameVersion, getPlatform } from "../utils/platforms";
 
@@ -98,11 +98,15 @@ async function computeKeys(
     ? `-${encodeURIComponent(inputs.cacheSuffix)}`
     : "";
   const version = encodeURIComponent(pythonVersion ?? "unknown");
+  const pythonArch = resolvePythonArch(inputs.pythonArch);
+  const pythonArchKey = pythonArch
+    ? `-python-${encodeURIComponent(pythonArch)}`
+    : "";
   const platform = await getPlatform();
   const osNameVersion = getOSNameVersion();
   const pruned = inputs.pruneCache ? "-pruned" : "";
   const python = inputs.cachePython ? "-py" : "";
-  return `setup-uv-${CACHE_VERSION}-${getArch()}-${platform}-${osNameVersion}-${version}${pruned}${python}${cacheDependencyPathHash}${suffix}`;
+  return `setup-uv-${CACHE_VERSION}-${getArch()}-${platform}-${osNameVersion}-${version}${pythonArchKey}${pruned}${python}${cacheDependencyPathHash}${suffix}`;
 }
 
 function handleMatchResult(
