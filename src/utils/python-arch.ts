@@ -1,7 +1,6 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import * as core from "@actions/core";
-import { resolvePythonArch } from "./inputs";
 import * as log from "./logging";
 
 const execFileAsync = promisify(execFile);
@@ -9,9 +8,9 @@ const PROBE_ARCH = "setup-uv-probe";
 
 export async function setupPythonArch(
   uvPath: string,
-  pythonArchInput: string,
+  pythonArch: string,
+  exportPythonArch: boolean,
 ): Promise<void> {
-  const pythonArch = resolvePythonArch(pythonArchInput);
   if (pythonArch === "") {
     return;
   }
@@ -41,7 +40,7 @@ export async function setupPythonArch(
     );
   }
 
-  if (pythonArchInput !== "") {
+  if (exportPythonArch) {
     core.exportVariable("UV_PYTHON_ARCH", pythonArch);
     log.info(`Set UV_PYTHON_ARCH to ${pythonArch}`);
   }

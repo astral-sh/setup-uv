@@ -91,7 +91,7 @@ async function run(): Promise<void> {
       setupResult.uvDir,
       process.platform === "win32" ? "uv.exe" : "uv",
     );
-    await setupPythonArch(uvPath, inputs.pythonArch);
+    await setupPythonArch(uvPath, inputs.pythonArch, inputs.exportPythonArch);
 
     addToolBinToPath(inputs);
     addUvToPathAndOutput(setupResult.uvDir);

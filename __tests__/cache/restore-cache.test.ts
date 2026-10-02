@@ -1,11 +1,4 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  jest,
-} from "@jest/globals";
+import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { createSetupInputs } from "../helpers/setup-inputs";
 
 const mockRestoreCache = jest.fn();
@@ -14,7 +7,6 @@ const mockSetOutput = jest.fn();
 const mockGetArch = jest.fn(() => "x86_64");
 const mockGetOSNameVersion = jest.fn(() => "ubuntu-24.04");
 const mockGetPlatform = jest.fn(async () => "unknown-linux-gnu");
-const ORIGINAL_UV_PYTHON_ARCH = process.env.UV_PYTHON_ARCH;
 
 jest.unstable_mockModule("@actions/cache", () => ({
   restoreCache: mockRestoreCache,
@@ -49,19 +41,10 @@ function cacheKeyOutput(): string {
 }
 
 beforeEach(() => {
-  delete process.env.UV_PYTHON_ARCH;
   jest.clearAllMocks();
   mockGetArch.mockReturnValue("x86_64");
   mockGetOSNameVersion.mockReturnValue("ubuntu-24.04");
   mockGetPlatform.mockResolvedValue("unknown-linux-gnu");
-});
-
-afterEach(() => {
-  if (ORIGINAL_UV_PYTHON_ARCH === undefined) {
-    delete process.env.UV_PYTHON_ARCH;
-  } else {
-    process.env.UV_PYTHON_ARCH = ORIGINAL_UV_PYTHON_ARCH;
-  }
 });
 
 describe("restoreCache", () => {
@@ -95,10 +78,10 @@ describe("restoreCache", () => {
     );
   });
 
-  it("includes an inherited Python architecture in the cache key", async () => {
-    process.env.UV_PYTHON_ARCH = "aarch64";
+  it("includes the resolved Python architecture in the cache key", async () => {
+    const inputs = createSetupInputs({ pythonArch: "aarch64" });
 
-    await restoreCache(createSetupInputs(), "3.14");
+    await restoreCache(inputs, "3.14");
 
     expect(cacheKeyOutput()).toContain("-3.14-python-aarch64-");
   });

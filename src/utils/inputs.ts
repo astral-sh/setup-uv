@@ -25,6 +25,7 @@ export interface SetupInputs {
   versionFile: string;
   pythonVersion: string;
   pythonArch: string;
+  exportPythonArch: boolean;
   activateEnvironment: boolean;
   noProject: boolean;
   venvPath: string;
@@ -55,7 +56,9 @@ export function loadInputs(): SetupInputs {
   const version = core.getInput("version");
   const versionFile = getVersionFile(workingDirectory);
   const pythonVersion = getPythonVersion(versionFile);
-  const pythonArch = core.getInput("python-arch");
+  const pythonArchInput = core.getInput("python-arch");
+  const pythonArch = pythonArchInput || process.env.UV_PYTHON_ARCH || "";
+  const exportPythonArch = pythonArchInput !== "";
   const activateEnvironment = core.getBooleanInput("activate-environment");
   const noProject = core.getBooleanInput("no-project");
   const venvPath = getVenvPath(workingDirectory, activateEnvironment);
@@ -96,6 +99,7 @@ export function loadInputs(): SetupInputs {
     checksum,
     downloadFromAstralMirror,
     enableCache,
+    exportPythonArch,
     githubToken,
     ignoreEmptyWorkdir,
     ignoreNothingToCache,
@@ -147,10 +151,6 @@ function getPythonVersion(versionFile: string): string {
     );
     return "";
   }
-}
-
-export function resolvePythonArch(pythonArch: string): string {
-  return pythonArch || process.env.UV_PYTHON_ARCH || "";
 }
 
 function getVenvPath(

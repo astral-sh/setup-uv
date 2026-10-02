@@ -1,7 +1,7 @@
 import * as cache from "@actions/cache";
 import * as core from "@actions/core";
 import { hashFiles } from "../hash/hash-files";
-import { resolvePythonArch, type SetupInputs } from "../utils/inputs";
+import type { SetupInputs } from "../utils/inputs";
 import * as log from "../utils/logging";
 import { getArch, getOSNameVersion, getPlatform } from "../utils/platforms";
 
@@ -98,9 +98,8 @@ async function computeKeys(
     ? `-${encodeURIComponent(inputs.cacheSuffix)}`
     : "";
   const version = encodeURIComponent(pythonVersion ?? "unknown");
-  const pythonArch = resolvePythonArch(inputs.pythonArch);
-  const pythonArchKey = pythonArch
-    ? `-python-${encodeURIComponent(pythonArch)}`
+  const pythonArchKey = inputs.pythonArch
+    ? `-python-${encodeURIComponent(inputs.pythonArch)}`
     : "";
   const platform = await getPlatform();
   const osNameVersion = getOSNameVersion();

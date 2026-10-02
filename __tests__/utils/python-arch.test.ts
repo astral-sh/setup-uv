@@ -57,16 +57,16 @@ afterEach(() => {
 
 describe("setupPythonArch", () => {
   it("leaves Python selection alone without an architecture", async () => {
-    await setupPythonArch("/tools/uv", "");
+    await setupPythonArch("/tools/uv", "", false);
 
     expect(mockExecFile).not.toHaveBeenCalled();
     expect(mockExportVariable).not.toHaveBeenCalled();
   });
 
-  it("validates an inherited architecture without exporting it", async () => {
+  it("validates a resolved environment architecture without exporting it", async () => {
     process.env.UV_PYTHON_ARCH = "aarch64";
 
-    await setupPythonArch("/tools/uv", "");
+    await setupPythonArch("/tools/uv", "aarch64", false);
 
     expect(mockExecFile).toHaveBeenNthCalledWith(
       2,
@@ -83,7 +83,7 @@ describe("setupPythonArch", () => {
   it.each(["/runner temp/uv", "C:\\runner temp\\uv.exe"])(
     "validates and exports the architecture using the installed uv: %s",
     async (uvPath) => {
-      await setupPythonArch(uvPath, "x86_64");
+      await setupPythonArch(uvPath, "x86_64", true);
 
       expect(mockExecFile).toHaveBeenNthCalledWith(
         1,
@@ -112,7 +112,7 @@ describe("setupPythonArch", () => {
   it("rejects uv versions that ignore UV_PYTHON_ARCH", async () => {
     mockExecFile.mockReset().mockResolvedValue(success);
 
-    await expect(setupPythonArch("/tools/uv", "x86_64")).rejects.toThrow(
+    await expect(setupPythonArch("/tools/uv", "x86_64", true)).rejects.toThrow(
       "The installed version of uv does not support UV_PYTHON_ARCH",
     );
     expect(mockExecFile).toHaveBeenCalledTimes(1);
@@ -127,7 +127,7 @@ describe("setupPythonArch", () => {
       }),
     );
 
-    await expect(setupPythonArch("/tools/uv", "x86_64")).rejects.toThrow(
+    await expect(setupPythonArch("/tools/uv", "x86_64", true)).rejects.toThrow(
       "Failed to check uv's support for UV_PYTHON_ARCH: error: unrelated configuration error",
     );
     expect(mockExportVariable).not.toHaveBeenCalled();
@@ -144,7 +144,7 @@ describe("setupPythonArch", () => {
         }),
       );
 
-    await expect(setupPythonArch("/tools/uv", "invalid")).rejects.toThrow(
+    await expect(setupPythonArch("/tools/uv", "invalid", true)).rejects.toThrow(
       "Failed to set Python architecture to invalid: error: Unknown architecture: invalid",
     );
     expect(mockExportVariable).not.toHaveBeenCalled();

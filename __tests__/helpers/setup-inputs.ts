@@ -16,6 +16,7 @@ export function createSetupInputs(
     checksum: "",
     downloadFromAstralMirror: false,
     enableCache: true,
+    exportPythonArch: false,
     githubToken: "",
     ignoreEmptyWorkdir: false,
     ignoreNothingToCache: false,

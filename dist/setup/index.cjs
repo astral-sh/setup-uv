@@ -93839,1048 +93839,8 @@ async function hashFiles3(pattern, verbose = false) {
   return "";
 }
 
-// src/utils/inputs.ts
-var import_node_fs4 = __toESM(require("node:fs"), 1);
-var import_node_path = __toESM(require("node:path"), 1);
-
-// src/version/tool-versions-file.ts
-var import_node_fs2 = __toESM(require("node:fs"), 1);
-function getUvVersionFromToolVersions(filePath) {
-  const versions = getToolVersions(filePath, "uv");
-  if (versions === void 0 || versions.length !== 1) {
-    return void 0;
-  }
-  const version3 = stripVersionPrefix(versions[0]);
-  if (isPath(version3)) {
-    warning(
-      `The uv version ${versions[0]} in .tool-versions is not supported. Paths are not allowed.`
-    );
-    return void 0;
-  }
-  if (version3.startsWith("ref")) {
-    warning(
-      "The ref syntax of .tool-versions is not supported. Please use a released version instead."
-    );
-    return void 0;
-  }
-  return version3;
-}
-function getPythonVersionFromToolVersions(filePath) {
-  const versions = getToolVersions(filePath, "python");
-  if (versions === void 0 || versions.length === 0) {
-    return void 0;
-  }
-  if (versions.length > 1) {
-    warning(
-      "Multiple Python versions in .tool-versions are not supported. The Python entry will be ignored."
-    );
-    return void 0;
-  }
-  const version3 = stripVersionPrefix(versions[0]);
-  if (version3 === "system" || version3.startsWith("ref:") || version3.startsWith("path:") || isPath(version3)) {
-    warning(
-      `The Python version ${versions[0]} in .tool-versions is not supported. The Python entry will be ignored.`
-    );
-    return void 0;
-  }
-  return version3;
-}
-function getToolVersions(filePath, toolName) {
-  if (!filePath.endsWith(".tool-versions")) {
-    return void 0;
-  }
-  const fileContents = import_node_fs2.default.readFileSync(filePath, "utf8");
-  for (const line of fileContents.split("\n")) {
-    const content = line.split("#", 1)[0].trim();
-    if (content === "") {
-      continue;
-    }
-    const [tool, ...versions] = content.split(/\s+/);
-    if (tool === toolName) {
-      return versions;
-    }
-  }
-  return void 0;
-}
-function stripVersionPrefix(version3) {
-  return version3.startsWith("v") ? version3.slice(1) : version3;
-}
-function isPath(version3) {
-  return version3.includes("/") || version3.includes("\\");
-}
-
-// src/utils/config-file.ts
-var import_node_fs3 = __toESM(require("node:fs"), 1);
-
-// node_modules/smol-toml/dist/date.js
-var DATE_TIME_RE = /^(\d{4}-\d{2}-\d{2})?[T ]?(?:(\d{2}):\d{2}(?::\d{2}(?:\.\d+)?)?)?(Z|[-+]\d{2}:\d{2})?$/i;
-var TomlDate = class _TomlDate extends Date {
-  #hasDate = false;
-  #hasTime = false;
-  #offset = null;
-  constructor(date) {
-    let hasDate = true;
-    let hasTime = true;
-    let offset = "Z";
-    if (typeof date === "string") {
-      let match4 = date.match(DATE_TIME_RE);
-      if (match4) {
-        if (!match4[1]) {
-          hasDate = false;
-          date = `0000-01-01T${date}`;
-        }
-        hasTime = !!match4[2];
-        hasTime && date[10] === " " && (date = date.replace(" ", "T"));
-        if (match4[2] && +match4[2] > 23) {
-          date = "";
-        } else {
-          offset = match4[3] || null;
-          date = date.toUpperCase();
-          if (!offset && hasTime)
-            date += "Z";
-        }
-      } else {
-        date = "";
-      }
-    }
-    super(date);
-    if (!isNaN(this.getTime())) {
-      this.#hasDate = hasDate;
-      this.#hasTime = hasTime;
-      this.#offset = offset;
-    }
-  }
-  isDateTime() {
-    return this.#hasDate && this.#hasTime;
-  }
-  isLocal() {
-    return !this.#hasDate || !this.#hasTime || !this.#offset;
-  }
-  isDate() {
-    return this.#hasDate && !this.#hasTime;
-  }
-  isTime() {
-    return this.#hasTime && !this.#hasDate;
-  }
-  isValid() {
-    return this.#hasDate || this.#hasTime;
-  }
-  toISOString() {
-    let iso = super.toISOString();
-    if (this.isDate())
-      return iso.slice(0, 10);
-    if (this.isTime())
-      return iso.slice(11, 23);
-    if (this.#offset === null)
-      return iso.slice(0, -1);
-    if (this.#offset === "Z")
-      return iso;
-    let offset = +this.#offset.slice(1, 3) * 60 + +this.#offset.slice(4, 6);
-    offset = this.#offset[0] === "-" ? offset : -offset;
-    let offsetDate = new Date(this.getTime() - offset * 6e4);
-    return offsetDate.toISOString().slice(0, -1) + this.#offset;
-  }
-  static wrapAsOffsetDateTime(jsDate, offset = "Z") {
-    let date = new _TomlDate(jsDate);
-    date.#offset = offset;
-    return date;
-  }
-  static wrapAsLocalDateTime(jsDate) {
-    let date = new _TomlDate(jsDate);
-    date.#offset = null;
-    return date;
-  }
-  static wrapAsLocalDate(jsDate) {
-    let date = new _TomlDate(jsDate);
-    date.#hasTime = false;
-    date.#offset = null;
-    return date;
-  }
-  static wrapAsLocalTime(jsDate) {
-    let date = new _TomlDate(jsDate);
-    date.#hasDate = false;
-    date.#offset = null;
-    return date;
-  }
-};
-
-// node_modules/smol-toml/dist/error.js
-function getLineColFromPtr(string, ptr) {
-  let lines = string.slice(0, ptr).split(/\r\n|\n|\r/g);
-  return [lines.length, lines.pop().length + 1];
-}
-function makeCodeBlock(string, line, column) {
-  let lines = string.split(/\r\n|\n|\r/g);
-  let codeblock = "";
-  let numberLen = (Math.log10(line + 1) | 0) + 1;
-  for (let i = line - 1; i <= line + 1; i++) {
-    let l = lines[i - 1];
-    if (!l)
-      continue;
-    codeblock += i.toString().padEnd(numberLen, " ");
-    codeblock += ":  ";
-    codeblock += l;
-    codeblock += "\n";
-    if (i === line) {
-      codeblock += " ".repeat(numberLen + column + 2);
-      codeblock += "^\n";
-    }
-  }
-  return codeblock;
-}
-var TomlError = class extends Error {
-  line;
-  column;
-  codeblock;
-  constructor(message, options) {
-    const [line, column] = getLineColFromPtr(options.toml, options.ptr);
-    const codeblock = makeCodeBlock(options.toml, line, column);
-    super(`Invalid TOML document: ${message}
-
-${codeblock}`, options);
-    this.line = line;
-    this.column = column;
-    this.codeblock = codeblock;
-  }
-};
-
-// node_modules/smol-toml/dist/util.js
-function indexOfNewline(str, start = 0) {
-  let idx = str.indexOf("\n", start);
-  if (str.charCodeAt(idx - 1) === 13)
-    idx--;
-  return idx;
-}
-function skipComment(ctx) {
-  for (; ctx.p < ctx.s.length; ctx.p++) {
-    let c = ctx.s.charCodeAt(ctx.p);
-    if (c === 10)
-      break;
-    if (c === 13 && ctx.s.charCodeAt(ctx.p + 1) === 10) {
-      ctx.p++;
-      break;
-    }
-    if (c < 32 && c !== 9 || c === 127) {
-      throw new TomlError("control characters are not allowed in comments", {
-        toml: ctx.s,
-        ptr: ctx.p
-      });
-    }
-  }
-}
-function skipVoid(ctx, banNewLines, banComments) {
-  let c;
-  while (1) {
-    while ((c = ctx.s.charCodeAt(ctx.p)) === 32 || c === 9 || !banNewLines && (c === 10 || c === 13 && ctx.s.charCodeAt(ctx.p + 1) === 10))
-      ctx.p++;
-    if (banComments || c !== 35)
-      break;
-    skipComment(ctx);
-  }
-}
-function skipUntil(ctx, sep9, end) {
-  let ptr = ctx.p;
-  if (!end) {
-    ptr = indexOfNewline(ctx.s, ptr);
-    ctx.p = ptr < 0 ? ctx.s.length : ptr;
-    return;
-  }
-  for (; ctx.p < ctx.s.length; ctx.p++) {
-    let c = ctx.s.charCodeAt(ctx.p);
-    if (c === 35) {
-      skipComment(ctx);
-    } else if (c === end || c === sep9) {
-      return;
-    }
-  }
-  throw new TomlError("cannot find end of structure", {
-    toml: ctx.s,
-    ptr
-  });
-}
-
-// node_modules/smol-toml/dist/primitive.js
-var INT_REGEX = /^((0x[0-9a-fA-F](_?[0-9a-fA-F])*)|(([+-]|0[ob])?\d(_?\d)*))$/;
-var FLOAT_REGEX = /^[+-]?\d(_?\d)*(\.\d(_?\d)*)?([eE][+-]?\d(_?\d)*)?$/;
-var LEADING_ZERO = /^[+-]?0[0-9_]/;
-function parseString(ctx) {
-  let start = ctx.p;
-  let c = ctx.s.charCodeAt(ctx.p++);
-  let first = c;
-  let isLiteral = c === 39;
-  let isMultiline = c === ctx.s.charCodeAt(ctx.p) && c === ctx.s.charCodeAt(ctx.p + 1);
-  if (isMultiline) {
-    if ((c = ctx.s.charCodeAt(ctx.p += 2)) === 10)
-      ctx.p++;
-    else if (c === 13 && ctx.s.charCodeAt(ctx.p + 1) === 10)
-      ctx.p += 2;
-  }
-  let parsed = "";
-  let sliceStart = ctx.p;
-  let state3 = 0;
-  for (; ctx.p < ctx.s.length; ctx.p++) {
-    c = ctx.s.charCodeAt(ctx.p);
-    if (isMultiline && (c === 10 || c === 13 && ctx.s.charCodeAt(ctx.p + 1) === 10)) {
-      state3 = state3 && 3;
-    } else if (c < 32 && c !== 9 || c === 127) {
-      throw new TomlError("control characters are not allowed in strings", {
-        toml: ctx.s,
-        ptr: ctx.p
-      });
-    } else if ((!state3 || state3 === 3) && c === first && (!isMultiline || ctx.s.charCodeAt(ctx.p + 1) === first && ctx.s.charCodeAt(ctx.p + 2) === first)) {
-      if (isMultiline) {
-        if (ctx.s.charCodeAt(ctx.p + 3) === first)
-          ctx.p++;
-        if (ctx.s.charCodeAt(ctx.p + 3) === first)
-          ctx.p++;
-      }
-      if (!state3)
-        parsed += ctx.s.slice(sliceStart, ctx.p);
-      ctx.p += isMultiline ? 3 : 1;
-      return parsed;
-    } else if (!state3) {
-      if (!isLiteral && c === 92) {
-        parsed += ctx.s.slice(sliceStart, sliceStart = ctx.p);
-        state3 = 1;
-      }
-    } else if (state3 === 1) {
-      if (c === 120 || c === 117 || c === 85) {
-        let value = 0;
-        let len = c === 120 ? 2 : c === 117 ? 4 : 8;
-        for (let j = 0; j < len; j++, ctx.p++) {
-          let hex = ctx.s.charCodeAt(ctx.p + 1);
-          let digit = (
-            /* 0-9 */
-            hex >= 48 && hex <= 57 ? hex - 48 : (
-              /* A-F */
-              hex >= 65 && hex <= 70 ? hex - 65 + 10 : (
-                /* a-f */
-                hex >= 97 && hex <= 102 ? hex - 97 + 10 : -1
-              )
-            )
-          );
-          if (digit < 0)
-            throw new TomlError("invalid non-hex character in unicode escape", { toml: ctx.s, ptr: ctx.p + 1 });
-          value = value << 4 | digit;
-        }
-        if (value < 0 || value > 1114111 || value >= 55296 && value <= 57343) {
-          throw new TomlError("invalid unicode escape", { toml: ctx.s, ptr: ctx.p });
-        }
-        parsed += String.fromCodePoint(value);
-        sliceStart = ctx.p + 1;
-        state3 = 0;
-      } else if (c === 32 || c === 9) {
-        state3 = 2;
-      } else {
-        if (c === 98)
-          parsed += "\b";
-        else if (c === 116)
-          parsed += "	";
-        else if (c === 110)
-          parsed += "\n";
-        else if (c === 102)
-          parsed += "\f";
-        else if (c === 114)
-          parsed += "\r";
-        else if (c === 101)
-          parsed += "\x1B";
-        else if (c === 34)
-          parsed += '"';
-        else if (c === 92)
-          parsed += "\\";
-        else
-          throw new TomlError("unrecognized escape sequence", { toml: ctx.s, ptr: ctx.p });
-        sliceStart = ctx.p + 1;
-        state3 = 0;
-      }
-    } else if (c !== 32 && c !== 9) {
-      if (state3 === 2) {
-        throw new TomlError("invalid escape: only line-ending whitespace may be escaped", {
-          toml: ctx.s,
-          ptr: sliceStart
-        });
-      }
-      state3 = !isLiteral && c === 92 ? 1 : 0;
-      sliceStart = ctx.p;
-    }
-  }
-  throw new TomlError("unfinished string", { toml: ctx.s, ptr: start });
-}
-function sliceAndTrimEndOf(ctx, start, end) {
-  let value = ctx.s.slice(start, end);
-  let commentIdx = value.indexOf("#");
-  if (commentIdx > 0) {
-    skipComment({ s: value, p: commentIdx, d: 0 });
-    value = value.slice(0, commentIdx);
-  }
-  return value.trimEnd();
-}
-function parseValue2(ctx, integersAsBigInt, end) {
-  let ptr = ctx.p;
-  let err = { toml: ctx.s, ptr };
-  skipUntil(ctx, 44, end);
-  let value = sliceAndTrimEndOf(ctx, ptr, ctx.p);
-  if (!value)
-    throw new TomlError("incomplete declaration: value expected", err);
-  if (value === "-inf")
-    return -Infinity;
-  if (value === "inf" || value === "+inf")
-    return Infinity;
-  if (value === "nan" || value === "+nan" || value === "-nan")
-    return NaN;
-  if (value === "-0")
-    return integersAsBigInt ? 0n : 0;
-  let isInt = INT_REGEX.test(value);
-  if (isInt || FLOAT_REGEX.test(value)) {
-    if (LEADING_ZERO.test(value)) {
-      throw new TomlError("leading zeroes are not allowed", err);
-    }
-    value = value.replace(/_/g, "");
-    let numeric2 = +value;
-    if (isNaN(numeric2)) {
-      throw new TomlError("invalid number", err);
-    }
-    if (isInt) {
-      if ((isInt = !Number.isSafeInteger(numeric2)) && !integersAsBigInt) {
-        throw new TomlError("integer value cannot be represented losslessly", err);
-      }
-      if (isInt || integersAsBigInt === true)
-        numeric2 = BigInt(value);
-    }
-    return numeric2;
-  }
-  const date = new TomlDate(value);
-  if (!date.isValid())
-    throw new TomlError("invalid value", err);
-  return date;
-}
-
-// node_modules/smol-toml/dist/extract.js
-function extractValue(ctx, end, integersAsBigInt) {
-  let ptr = ctx.p;
-  let c = ctx.s.charCodeAt(ptr);
-  if (c === 91 || c === 123) {
-    if (!ctx.d--) {
-      throw new TomlError("document contains excessively nested structures. aborting.", {
-        toml: ctx.s,
-        ptr
-      });
-    }
-    let value = c === 91 ? parseArray(ctx, integersAsBigInt) : parseInlineTable(ctx, integersAsBigInt);
-    ctx.d++;
-    return value;
-  }
-  if (c === 34 || c === 39) {
-    return parseString(ctx);
-  }
-  if (c === 116) {
-    if (ctx.s.charCodeAt(++ctx.p) !== 114 || ctx.s.charCodeAt(++ctx.p) !== 117 || ctx.s.charCodeAt(++ctx.p) !== 101)
-      throw new TomlError("invalid value", { toml: ctx.s, ptr });
-    ctx.p++;
-    return true;
-  }
-  if (c === 102) {
-    if (ctx.s.charCodeAt(++ctx.p) !== 97 || ctx.s.charCodeAt(++ctx.p) !== 108 || ctx.s.charCodeAt(++ctx.p) !== 115 || ctx.s.charCodeAt(++ctx.p) !== 101)
-      throw new TomlError("invalid value", { toml: ctx.s, ptr });
-    ctx.p++;
-    return false;
-  }
-  return parseValue2(ctx, integersAsBigInt, end);
-}
-
-// node_modules/smol-toml/dist/struct.js
-var KEY_PART_RE = /^[a-zA-Z0-9-_]+[ \t]*$/;
-function parseKey(ctx, end = "=") {
-  let start = ctx.p;
-  let dot = start - 1;
-  let parsed = [];
-  let endPtr = ctx.s.indexOf(end, start);
-  if (endPtr < 0) {
-    throw new TomlError("incomplete key-value: cannot find end of key", {
-      toml: ctx.s,
-      ptr: start
-    });
-  }
-  do {
-    let c = ctx.s.charCodeAt(ctx.p = ++dot);
-    if (c !== 32 && c !== 9) {
-      if (c === 34 || c === 39) {
-        if (c === ctx.s.charCodeAt(ctx.p + 1) && c === ctx.s.charCodeAt(ctx.p + 2)) {
-          throw new TomlError("multiline strings are not allowed in keys", {
-            toml: ctx.s,
-            ptr: ctx.p
-          });
-        }
-        let part = parseString(ctx);
-        dot = ctx.s.indexOf(".", ctx.p);
-        let strEnd = ctx.s.slice(ctx.p, dot < 0 || dot > endPtr ? endPtr : dot);
-        let newLine = indexOfNewline(strEnd);
-        if (newLine > -1) {
-          throw new TomlError("newlines are not allowed in keys", {
-            toml: ctx.s,
-            ptr: newLine
-          });
-        }
-        if (strEnd.trimStart()) {
-          throw new TomlError("found extra tokens after the string part", {
-            toml: ctx.s,
-            ptr: ctx.p
-          });
-        }
-        if (endPtr < ctx.p) {
-          endPtr = ctx.s.indexOf(end, ctx.p);
-          if (endPtr < 0) {
-            throw new TomlError("incomplete key-value: cannot find end of key", {
-              toml: ctx.s,
-              ptr: start
-            });
-          }
-        }
-        parsed.push(part);
-      } else {
-        dot = ctx.s.indexOf(".", ctx.p);
-        let part = ctx.s.slice(ctx.p, dot < 0 || dot > endPtr ? endPtr : dot);
-        if (!KEY_PART_RE.test(part)) {
-          throw new TomlError("only letter, numbers, dashes and underscores are allowed in keys", {
-            toml: ctx.s,
-            ptr: ctx.p
-          });
-        }
-        parsed.push(part.trimEnd());
-      }
-    }
-  } while (dot + 1 && dot < endPtr);
-  ctx.p = endPtr + 1;
-  skipVoid(ctx, true, true);
-  return parsed;
-}
-function parseInlineTable(ctx, integersAsBigInt) {
-  let res = {};
-  let seen = /* @__PURE__ */ new Set();
-  let c;
-  ctx.p++;
-  while (ctx.p < ctx.s.length) {
-    skipVoid(ctx);
-    if ((c = ctx.s.charCodeAt(ctx.p)) === 125) {
-      ctx.p++;
-      return res;
-    }
-    let k;
-    let t = res;
-    let hasOwn = false;
-    let p = ctx.p;
-    let key = parseKey(ctx);
-    for (let i = 0; i < key.length; i++) {
-      if (i)
-        t = hasOwn ? t[k] : t[k] = {};
-      k = key[i];
-      if ((hasOwn = Object.hasOwn(t, k)) && (typeof t[k] !== "object" || seen.has(t[k]))) {
-        throw new TomlError("trying to redefine an already defined value", {
-          toml: ctx.s,
-          ptr: p
-        });
-      }
-      if (!hasOwn && k === "__proto__") {
-        Object.defineProperty(t, k, { enumerable: true, configurable: true, writable: true });
-      }
-    }
-    if (hasOwn) {
-      throw new TomlError("trying to redefine an already defined value", {
-        toml: ctx.s,
-        ptr: ctx.p
-      });
-    }
-    let value = extractValue(ctx, 125, integersAsBigInt);
-    seen.add(t[k] = value);
-    skipVoid(ctx);
-    if ((c = ctx.s.charCodeAt(ctx.p++)) === 125) {
-      return res;
-    }
-    if (c !== 44) {
-      throw new TomlError("expected comma or end of structure", { toml: ctx.s, ptr: ctx.p - 1 });
-    }
-  }
-  throw new TomlError("unfinished table encountered", {
-    toml: ctx.s,
-    ptr: ctx.p
-  });
-}
-function parseArray(ctx, integersAsBigInt) {
-  let res = [];
-  let c;
-  ctx.p++;
-  while (ctx.p < ctx.s.length) {
-    skipVoid(ctx);
-    if ((c = ctx.s.charCodeAt(ctx.p)) === 93) {
-      ctx.p++;
-      return res;
-    }
-    res.push(extractValue(ctx, 93, integersAsBigInt));
-    skipVoid(ctx);
-    if ((c = ctx.s.charCodeAt(ctx.p++)) === 93) {
-      return res;
-    }
-    if (c !== 44) {
-      throw new TomlError("expected comma or end of structure", { toml: ctx.s, ptr: ctx.p - 1 });
-    }
-  }
-  throw new TomlError("unfinished array encountered", {
-    toml: ctx.s,
-    ptr: ctx.p
-  });
-}
-
-// node_modules/smol-toml/dist/parse.js
-function peekTable(key, table, meta, type) {
-  let t = table;
-  let m = meta;
-  let k;
-  let hasOwn = false;
-  let state3;
-  for (let i = 0; i < key.length; i++) {
-    if (i) {
-      t = hasOwn ? t[k] : t[k] = {};
-      m = (state3 = m[k]).c;
-      if (type === 0 && (state3.t === 1 || state3.t === 2)) {
-        return null;
-      }
-      if (state3.t === 2) {
-        let l = t.length - 1;
-        t = t[l];
-        m = m[l].c;
-      }
-    }
-    k = key[i];
-    if ((hasOwn = Object.hasOwn(t, k)) && m[k]?.t === 0 && m[k]?.d) {
-      return null;
-    }
-    if (!hasOwn) {
-      if (k === "__proto__") {
-        Object.defineProperty(t, k, { enumerable: true, configurable: true, writable: true });
-        Object.defineProperty(m, k, { enumerable: true, configurable: true, writable: true });
-      }
-      m[k] = {
-        t: i < key.length - 1 && type === 2 ? 3 : type,
-        d: false,
-        i: 0,
-        c: {}
-      };
-    }
-  }
-  state3 = m[k];
-  if (state3.t !== type && !(type === 1 && state3.t === 3)) {
-    return null;
-  }
-  if (type === 2) {
-    if (!state3.d) {
-      state3.d = true;
-      t[k] = [];
-    }
-    t[k].push(t = {});
-    state3.c[state3.i++] = state3 = { t: 1, d: false, i: 0, c: {} };
-  }
-  if (state3.d) {
-    return null;
-  }
-  state3.d = true;
-  if (type === 1) {
-    t = hasOwn ? t[k] : t[k] = {};
-  } else if (type === 0 && hasOwn) {
-    return null;
-  }
-  return [k, t, state3.c];
-}
-function parse2(toml, { maxDepth = 1e3, integersAsBigInt } = {}) {
-  let ctx = { s: toml, p: 0, d: maxDepth };
-  let res = {};
-  let meta = {};
-  let tmp;
-  let tbl = res;
-  let m = meta;
-  skipVoid(ctx);
-  while (ctx.p < toml.length) {
-    if (toml.charCodeAt(ctx.p) === 91) {
-      let isTableArray = toml.charCodeAt(++ctx.p) === 91;
-      tmp = ctx.p += +isTableArray;
-      let k = parseKey(ctx, "]");
-      if (isTableArray) {
-        if (toml.charCodeAt(ctx.p - 1) !== 93) {
-          throw new TomlError("expected end of table declaration", {
-            toml,
-            ptr: ctx.p - 1
-          });
-        }
-        ctx.p++;
-      }
-      let p = peekTable(
-        k,
-        res,
-        meta,
-        isTableArray ? 2 : 1
-        /* Type.EXPLICIT */
-      );
-      if (!p) {
-        throw new TomlError("trying to redefine an already defined table or value", {
-          toml,
-          ptr: tmp
-        });
-      }
-      m = p[2];
-      tbl = p[1];
-    } else {
-      tmp = ctx.p;
-      let k = parseKey(ctx);
-      let p = peekTable(
-        k,
-        tbl,
-        m,
-        0
-        /* Type.DOTTED */
-      );
-      if (!p) {
-        throw new TomlError("trying to redefine an already defined table or value", {
-          toml,
-          ptr: tmp
-        });
-      }
-      p[1][p[0]] = extractValue(ctx, void 0, integersAsBigInt);
-    }
-    skipVoid(ctx, true);
-    if (ctx.p < toml.length && (tmp = toml.charCodeAt(ctx.p)) !== 10 && tmp !== 13) {
-      throw new TomlError("each key-value declaration must be followed by an end-of-line", {
-        toml,
-        ptr: ctx.p
-      });
-    }
-    skipVoid(ctx);
-  }
-  return res;
-}
-
-// src/utils/config-file.ts
-function getConfigValueFromTomlFile(filePath, key) {
-  if (!import_node_fs3.default.existsSync(filePath) || !filePath.endsWith(".toml")) {
-    return void 0;
-  }
-  const fileContent = import_node_fs3.default.readFileSync(filePath, "utf-8");
-  return getConfigValueFromTomlContent(filePath, fileContent, key);
-}
-function getConfigValueFromTomlContent(filePath, fileContent, key) {
-  if (!filePath.endsWith(".toml")) {
-    return void 0;
-  }
-  if (filePath.endsWith("pyproject.toml")) {
-    const tomlContent2 = parse2(fileContent);
-    return tomlContent2?.tool?.uv?.[key];
-  }
-  const tomlContent = parse2(fileContent);
-  return tomlContent[key];
-}
-
-// src/utils/inputs.ts
-function loadInputs() {
-  const workingDirectory = getInput("working-directory");
-  const version3 = getInput("version");
-  const versionFile = getVersionFile(workingDirectory);
-  const pythonVersion = getPythonVersion(versionFile);
-  const pythonArch = getInput("python-arch");
-  const activateEnvironment2 = getBooleanInput("activate-environment");
-  const noProject = getBooleanInput("no-project");
-  const venvPath = getVenvPath(workingDirectory, activateEnvironment2);
-  const checksum = getInput("checksum");
-  const enableCache = getEnableCache();
-  const restoreCache3 = getInput("restore-cache") === "true";
-  const saveCache2 = getSaveCache();
-  const cacheSuffix = getInput("cache-suffix") || "";
-  const cacheLocalPath = getCacheLocalPath(
-    workingDirectory,
-    versionFile,
-    enableCache
-  );
-  const cacheDependencyGlob = getCacheDependencyGlob(workingDirectory);
-  const pruneCache = getInput("prune-cache") === "true";
-  const cachePython = getInput("cache-python") === "true";
-  const ignoreNothingToCache = getInput("ignore-nothing-to-cache") === "true";
-  const ignoreEmptyWorkdir = getInput("ignore-empty-workdir") === "true";
-  const toolBinDir = getToolBinDir(workingDirectory);
-  const toolDir = getToolDir(workingDirectory);
-  const pythonDir = getUvPythonDir();
-  const githubToken = getInput("github-token");
-  const manifestFile = getManifestFile();
-  const downloadFromAstralMirror = getInput("download-from-astral-mirror") === "true";
-  const addProblemMatchers = getInput("add-problem-matchers") === "true";
-  const quiet2 = getInput("quiet") === "true";
-  const resolutionStrategy = getResolutionStrategy();
-  return {
-    activateEnvironment: activateEnvironment2,
-    addProblemMatchers,
-    cacheDependencyGlob,
-    cacheLocalPath,
-    cachePython,
-    cacheSuffix,
-    checksum,
-    downloadFromAstralMirror,
-    enableCache,
-    githubToken,
-    ignoreEmptyWorkdir,
-    ignoreNothingToCache,
-    manifestFile,
-    noProject,
-    pruneCache,
-    pythonArch,
-    pythonDir,
-    pythonVersion,
-    quiet: quiet2,
-    resolutionStrategy,
-    restoreCache: restoreCache3,
-    saveCache: saveCache2,
-    toolBinDir,
-    toolDir,
-    venvPath,
-    version: version3,
-    versionFile,
-    workingDirectory
-  };
-}
-function getVersionFile(workingDirectory) {
-  const versionFileInput = getInput("version-file");
-  if (versionFileInput !== "") {
-    const tildeExpanded = expandTilde(versionFileInput);
-    return resolveRelativePath(workingDirectory, tildeExpanded);
-  }
-  return versionFileInput;
-}
-function getPythonVersion(versionFile) {
-  const pythonVersionInput = getInput("python-version");
-  if (pythonVersionInput !== "") {
-    return pythonVersionInput;
-  }
-  if (process.env.UV_PYTHON !== void 0 && process.env.UV_PYTHON !== "") {
-    return "";
-  }
-  if (versionFile === "" || !import_node_fs4.default.existsSync(versionFile)) {
-    return "";
-  }
-  try {
-    return getPythonVersionFromToolVersions(versionFile) ?? "";
-  } catch (err) {
-    warning2(
-      `Error while parsing Python version from ${versionFile}: ${err.message}`
-    );
-    return "";
-  }
-}
-function resolvePythonArch(pythonArch) {
-  return pythonArch || process.env.UV_PYTHON_ARCH || "";
-}
-function getVenvPath(workingDirectory, activateEnvironment2) {
-  const venvPathInput = getInput("venv-path");
-  if (venvPathInput !== "") {
-    if (!activateEnvironment2) {
-      warning2("venv-path is only used when activate-environment is true");
-    }
-    const tildeExpanded = expandTilde(venvPathInput);
-    return normalizePath(resolveRelativePath(workingDirectory, tildeExpanded));
-  }
-  return normalizePath(resolveRelativePath(workingDirectory, ".venv"));
-}
-function getEnableCache() {
-  const enableCacheInput = getInput("enable-cache");
-  if (enableCacheInput === "auto") {
-    if (process.env.RUNNER_ENVIRONMENT !== "github-hosted") {
-      return false;
-    }
-    const eventName = process.env.GITHUB_EVENT_NAME;
-    const isTagPush = eventName === "push" && process.env.GITHUB_REF?.startsWith("refs/tags/");
-    if (isTagPush) {
-      info2("Caching is disabled for tag pushes");
-      return false;
-    }
-    if (eventName === "pull_request_target" || eventName === "workflow_run" || eventName === "release") {
-      info2(`Caching is disabled for the ${eventName} event`);
-      return false;
-    }
-    return true;
-  }
-  return enableCacheInput === "true";
-}
-function getSaveCache() {
-  const saveCacheInput = getInput("save-cache");
-  if (saveCacheInput === "auto") {
-    if (process.env.GITHUB_EVENT_NAME === "merge_group") {
-      info2("Cache saving is disabled for the merge_group event");
-      return false;
-    }
-    return true;
-  }
-  return saveCacheInput === "true";
-}
-function getToolBinDir(workingDirectory) {
-  const toolBinDirInput = getInput("tool-bin-dir");
-  if (toolBinDirInput !== "") {
-    const tildeExpanded = expandTilde(toolBinDirInput);
-    return resolveRelativePath(workingDirectory, tildeExpanded);
-  }
-  if (process.platform === "win32") {
-    if (process.env.RUNNER_TEMP !== void 0) {
-      return `${process.env.RUNNER_TEMP}${import_node_path.default.sep}uv-tool-bin-dir`;
-    }
-    throw Error(
-      "Could not determine UV_TOOL_BIN_DIR. Please make sure RUNNER_TEMP is set or provide the tool-bin-dir input"
-    );
-  }
-  return void 0;
-}
-function getToolDir(workingDirectory) {
-  const toolDirInput = getInput("tool-dir");
-  if (toolDirInput !== "") {
-    const tildeExpanded = expandTilde(toolDirInput);
-    return resolveRelativePath(workingDirectory, tildeExpanded);
-  }
-  if (process.platform === "win32") {
-    if (process.env.RUNNER_TEMP !== void 0) {
-      return `${process.env.RUNNER_TEMP}${import_node_path.default.sep}uv-tool-dir`;
-    }
-    throw Error(
-      "Could not determine UV_TOOL_DIR. Please make sure RUNNER_TEMP is set or provide the tool-dir input"
-    );
-  }
-  return void 0;
-}
-function getCacheLocalPath(workingDirectory, versionFile, enableCache) {
-  const cacheLocalPathInput = getInput("cache-local-path");
-  if (cacheLocalPathInput !== "") {
-    const tildeExpanded = expandTilde(cacheLocalPathInput);
-    return {
-      path: resolveRelativePath(workingDirectory, tildeExpanded),
-      source: 0 /* Input */
-    };
-  }
-  const cacheDirFromConfig = getCacheDirFromConfig(
-    workingDirectory,
-    versionFile
-  );
-  if (cacheDirFromConfig !== void 0) {
-    return { path: cacheDirFromConfig, source: 1 /* Config */ };
-  }
-  if (process.env.UV_CACHE_DIR !== void 0) {
-    info2(`UV_CACHE_DIR is already set to ${process.env.UV_CACHE_DIR}`);
-    return { path: process.env.UV_CACHE_DIR, source: 2 /* Env */ };
-  }
-  if (enableCache) {
-    if (process.env.RUNNER_ENVIRONMENT === "github-hosted") {
-      if (process.env.RUNNER_TEMP !== void 0) {
-        return {
-          path: `${process.env.RUNNER_TEMP}${import_node_path.default.sep}setup-uv-cache`,
-          source: 3 /* Default */
-        };
-      }
-      throw Error(
-        "Could not determine UV_CACHE_DIR. Please make sure RUNNER_TEMP is set or provide the cache-local-path input"
-      );
-    }
-    if (process.platform === "win32") {
-      return {
-        path: `${process.env.APPDATA}${import_node_path.default.sep}uv${import_node_path.default.sep}cache`,
-        source: 3 /* Default */
-      };
-    }
-    return {
-      path: `${process.env.HOME}${import_node_path.default.sep}.cache${import_node_path.default.sep}uv`,
-      source: 3 /* Default */
-    };
-  }
-}
-function getCacheDirFromConfig(workingDirectory, versionFile) {
-  for (const filePath of [versionFile, "uv.toml", "pyproject.toml"]) {
-    const resolvedPath = resolveRelativePath(workingDirectory, filePath);
-    try {
-      const cacheDir2 = getConfigValueFromTomlFile(resolvedPath, "cache-dir");
-      if (cacheDir2 !== void 0) {
-        info2(`Found cache-dir in ${resolvedPath}: ${cacheDir2}`);
-        return cacheDir2;
-      }
-    } catch (err) {
-      const message = err.message;
-      warning2(`Error while parsing ${filePath}: ${message}`);
-      return void 0;
-    }
-  }
-  return void 0;
-}
-function getUvPythonDir() {
-  if (process.env.UV_PYTHON_INSTALL_DIR !== void 0) {
-    info2(
-      `UV_PYTHON_INSTALL_DIR is already set to ${process.env.UV_PYTHON_INSTALL_DIR}`
-    );
-    return process.env.UV_PYTHON_INSTALL_DIR;
-  }
-  if (process.env.RUNNER_ENVIRONMENT !== "github-hosted") {
-    if (process.platform === "win32") {
-      return `${process.env.APPDATA}${import_node_path.default.sep}uv${import_node_path.default.sep}python`;
-    }
-    return `${process.env.HOME}${import_node_path.default.sep}.local${import_node_path.default.sep}share${import_node_path.default.sep}uv${import_node_path.default.sep}python`;
-  }
-  if (process.env.RUNNER_TEMP !== void 0) {
-    return `${process.env.RUNNER_TEMP}${import_node_path.default.sep}uv-python-dir`;
-  }
-  throw Error(
-    "Could not determine UV_PYTHON_INSTALL_DIR. Please make sure RUNNER_TEMP is set or provide the UV_PYTHON_INSTALL_DIR environment variable"
-  );
-}
-function getCacheDependencyGlob(workingDirectory) {
-  const cacheDependencyGlobInput = getInput("cache-dependency-glob");
-  if (cacheDependencyGlobInput !== "") {
-    return cacheDependencyGlobInput.split("\n").map((part) => part.trim()).map((part) => expandTilde(part)).map((part) => resolveRelativePath(workingDirectory, part)).join("\n");
-  }
-  return cacheDependencyGlobInput;
-}
-function expandTilde(input) {
-  if (input.startsWith("~")) {
-    return `${process.env.HOME}${input.substring(1)}`;
-  }
-  return input;
-}
-function normalizePath(inputPath) {
-  const normalized = import_node_path.default.normalize(inputPath);
-  const root = import_node_path.default.parse(normalized).root;
-  let trimmed = normalized;
-  while (trimmed.length > root.length && trimmed.endsWith(import_node_path.default.sep)) {
-    trimmed = trimmed.slice(0, -1);
-  }
-  return trimmed;
-}
-function resolveRelativePath(workingDirectory, inputPath) {
-  const hasNegation = inputPath.startsWith("!");
-  const pathWithoutNegation = hasNegation ? inputPath.substring(1) : inputPath;
-  const resolvedPath = import_node_path.default.resolve(workingDirectory, pathWithoutNegation);
-  debug(
-    `Resolving relative path ${inputPath} to ${hasNegation ? "!" : ""}${resolvedPath}`
-  );
-  return hasNegation ? `!${resolvedPath}` : resolvedPath;
-}
-function getManifestFile() {
-  const manifestFileInput = getInput("manifest-file");
-  if (manifestFileInput !== "") {
-    return manifestFileInput;
-  }
-  return void 0;
-}
-function getResolutionStrategy() {
-  const resolutionStrategyInput = getInput("resolution-strategy");
-  if (resolutionStrategyInput === "lowest") {
-    return "lowest";
-  }
-  if (resolutionStrategyInput === "highest" || resolutionStrategyInput === "") {
-    return "highest";
-  }
-  throw new Error(
-    `Invalid resolution-strategy: ${resolutionStrategyInput}. Must be 'highest' or 'lowest'.`
-  );
-}
-
 // src/utils/platforms.ts
-var import_node_fs5 = __toESM(require("node:fs"), 1);
+var import_node_fs2 = __toESM(require("node:fs"), 1);
 var import_node_os3 = __toESM(require("node:os"), 1);
 function getArch() {
   const arch3 = process.arch;
@@ -94957,7 +93917,7 @@ function getLinuxOSNameVersion() {
   let idWithoutVersion;
   for (const file of files) {
     try {
-      const content = import_node_fs5.default.readFileSync(file, "utf8");
+      const content = import_node_fs2.default.readFileSync(file, "utf8");
       const id = parseOsReleaseValue(content, "ID");
       const versionId2 = parseOsReleaseValue(content, "VERSION_ID");
       const versionCodename = parseOsReleaseValue(content, "VERSION_CODENAME");
@@ -95078,8 +94038,7 @@ async function computeKeys(inputs, pythonVersion) {
   }
   const suffix = inputs.cacheSuffix ? `-${encodeURIComponent(inputs.cacheSuffix)}` : "";
   const version3 = encodeURIComponent(pythonVersion ?? "unknown");
-  const pythonArch = resolvePythonArch(inputs.pythonArch);
-  const pythonArchKey = pythonArch ? `-python-${encodeURIComponent(pythonArch)}` : "";
+  const pythonArchKey = inputs.pythonArch ? `-python-${encodeURIComponent(inputs.pythonArch)}` : "";
   const platform2 = await getPlatform();
   const osNameVersion = getOSNameVersion();
   const pruned = inputs.pruneCache ? "-pruned" : "";
@@ -95098,19 +94057,19 @@ function handleMatchResult(matchedKey, primaryKey, stateKey, outputKey) {
 }
 
 // src/download/download-version.ts
-var import_node_fs8 = require("node:fs");
-var path16 = __toESM(require("node:path"), 1);
+var import_node_fs7 = require("node:fs");
+var path15 = __toESM(require("node:path"), 1);
 
 // node_modules/@actions/tool-cache/lib/tool-cache.js
 var crypto5 = __toESM(require("crypto"), 1);
-var fs12 = __toESM(require("fs"), 1);
+var fs9 = __toESM(require("fs"), 1);
 
 // node_modules/@actions/tool-cache/lib/manifest.js
 var semver2 = __toESM(require_semver4(), 1);
 
 // node_modules/@actions/tool-cache/lib/tool-cache.js
 var os9 = __toESM(require("os"), 1);
-var path14 = __toESM(require("path"), 1);
+var path13 = __toESM(require("path"), 1);
 var semver3 = __toESM(require_semver4(), 1);
 var stream3 = __toESM(require("stream"), 1);
 var util6 = __toESM(require("util"), 1);
@@ -95226,8 +94185,8 @@ var IS_MAC = process.platform === "darwin";
 var userAgent = "actions/tool-cache";
 function downloadTool(url2, dest, auth, headers) {
   return __awaiter18(this, void 0, void 0, function* () {
-    dest = dest || path14.join(_getTempDirectory(), crypto5.randomUUID());
-    yield mkdirP(path14.dirname(dest));
+    dest = dest || path13.join(_getTempDirectory(), crypto5.randomUUID());
+    yield mkdirP(path13.dirname(dest));
     debug(`Downloading ${url2}`);
     debug(`Destination ${dest}`);
     const maxAttempts = 3;
@@ -95248,7 +94207,7 @@ function downloadTool(url2, dest, auth, headers) {
 }
 function downloadToolAttempt(url2, dest, auth, headers) {
   return __awaiter18(this, void 0, void 0, function* () {
-    if (fs12.existsSync(dest)) {
+    if (fs9.existsSync(dest)) {
       throw new Error(`Destination file path ${dest} already exists`);
     }
     const http3 = new HttpClient(userAgent, [], {
@@ -95272,7 +94231,7 @@ function downloadToolAttempt(url2, dest, auth, headers) {
     const readStream = responseMessageFactory();
     let succeeded = false;
     try {
-      yield pipeline4(readStream, fs12.createWriteStream(dest));
+      yield pipeline4(readStream, fs9.createWriteStream(dest));
       debug("download complete");
       succeeded = true;
       return dest;
@@ -95408,12 +94367,12 @@ function cacheDir(sourceDir2, tool, version3, arch3) {
     arch3 = arch3 || os9.arch();
     debug(`Caching tool ${tool} ${version3} ${arch3}`);
     debug(`source dir: ${sourceDir2}`);
-    if (!fs12.statSync(sourceDir2).isDirectory()) {
+    if (!fs9.statSync(sourceDir2).isDirectory()) {
       throw new Error("sourceDir is not a directory");
     }
     const destPath = yield _createToolPath(tool, version3, arch3);
-    for (const itemName of fs12.readdirSync(sourceDir2)) {
-      const s = path14.join(sourceDir2, itemName);
+    for (const itemName of fs9.readdirSync(sourceDir2)) {
+      const s = path13.join(sourceDir2, itemName);
       yield cp(s, destPath, { recursive: true });
     }
     _completeToolPath(tool, version3, arch3);
@@ -95436,9 +94395,9 @@ function find(toolName, versionSpec, arch3) {
   let toolPath = "";
   if (versionSpec) {
     versionSpec = semver3.clean(versionSpec) || "";
-    const cachePath = path14.join(_getCacheDirectory(), toolName, versionSpec, arch3);
+    const cachePath = path13.join(_getCacheDirectory(), toolName, versionSpec, arch3);
     debug(`checking cache: ${cachePath}`);
-    if (fs12.existsSync(cachePath) && fs12.existsSync(`${cachePath}.complete`)) {
+    if (fs9.existsSync(cachePath) && fs9.existsSync(`${cachePath}.complete`)) {
       debug(`Found tool in cache ${toolName} ${versionSpec} ${arch3}`);
       toolPath = cachePath;
     } else {
@@ -95450,13 +94409,13 @@ function find(toolName, versionSpec, arch3) {
 function findAllVersions(toolName, arch3) {
   const versions = [];
   arch3 = arch3 || os9.arch();
-  const toolPath = path14.join(_getCacheDirectory(), toolName);
-  if (fs12.existsSync(toolPath)) {
-    const children = fs12.readdirSync(toolPath);
+  const toolPath = path13.join(_getCacheDirectory(), toolName);
+  if (fs9.existsSync(toolPath)) {
+    const children = fs9.readdirSync(toolPath);
     for (const child2 of children) {
       if (isExplicitVersion(child2)) {
-        const fullPath = path14.join(toolPath, child2, arch3 || "");
-        if (fs12.existsSync(fullPath) && fs12.existsSync(`${fullPath}.complete`)) {
+        const fullPath = path13.join(toolPath, child2, arch3 || "");
+        if (fs9.existsSync(fullPath) && fs9.existsSync(`${fullPath}.complete`)) {
           versions.push(child2);
         }
       }
@@ -95467,7 +94426,7 @@ function findAllVersions(toolName, arch3) {
 function _createExtractFolder(dest) {
   return __awaiter18(this, void 0, void 0, function* () {
     if (!dest) {
-      dest = path14.join(_getTempDirectory(), crypto5.randomUUID());
+      dest = path13.join(_getTempDirectory(), crypto5.randomUUID());
     }
     yield mkdirP(dest);
     return dest;
@@ -95475,7 +94434,7 @@ function _createExtractFolder(dest) {
 }
 function _createToolPath(tool, version3, arch3) {
   return __awaiter18(this, void 0, void 0, function* () {
-    const folderPath = path14.join(_getCacheDirectory(), tool, semver3.clean(version3) || version3, arch3 || "");
+    const folderPath = path13.join(_getCacheDirectory(), tool, semver3.clean(version3) || version3, arch3 || "");
     debug(`destination ${folderPath}`);
     const markerPath = `${folderPath}.complete`;
     yield rmRF(folderPath);
@@ -95485,9 +94444,9 @@ function _createToolPath(tool, version3, arch3) {
   });
 }
 function _completeToolPath(tool, version3, arch3) {
-  const folderPath = path14.join(_getCacheDirectory(), tool, semver3.clean(version3) || version3, arch3 || "");
+  const folderPath = path13.join(_getCacheDirectory(), tool, semver3.clean(version3) || version3, arch3 || "");
   const markerPath = `${folderPath}.complete`;
-  fs12.writeFileSync(markerPath, "");
+  fs9.writeFileSync(markerPath, "");
   debug("finished caching tool");
 }
 function isExplicitVersion(versionSpec) {
@@ -95546,7 +94505,7 @@ var ASTRAL_MIRROR_PREFIX = "https://releases.astral.sh/github/uv/releases/downlo
 
 // src/download/checksum/checksum.ts
 var crypto6 = __toESM(require("node:crypto"), 1);
-var fs13 = __toESM(require("node:fs"), 1);
+var fs10 = __toESM(require("node:fs"), 1);
 
 // src/download/checksum/known-checksums.json
 var known_checksums_default = {
@@ -101014,7 +99973,7 @@ async function validateChecksum(checksum, downloadPath, arch3, platform2, versio
 async function validateFileCheckSum(filePath, expected) {
   return new Promise((resolve3, reject) => {
     const hash = crypto6.createHash("sha256");
-    const stream4 = fs13.createReadStream(filePath);
+    const stream4 = fs10.createReadStream(filePath);
     stream4.on("error", (err) => reject(err));
     stream4.on("data", (chunk) => hash.update(chunk));
     stream4.on("end", () => {
@@ -101343,7 +100302,7 @@ var VERSION_PATTERN = [
 ].join("");
 var validRegex = new RegExp("^" + VERSION_PATTERN + "$", "i");
 var cleanRegex = new RegExp("^\\s*" + VERSION_PATTERN + "\\s*$", "i");
-function parse3(version3, regex) {
+function parse2(version3, regex) {
   const { groups } = (regex || validRegex).exec(version3) || {};
   if (!groups) {
     return null;
@@ -101361,7 +100320,7 @@ function parse3(version3, regex) {
   };
   return parsed;
 }
-function stringify2(parsed) {
+function stringify(parsed) {
   if (!parsed) {
     return null;
   }
@@ -101419,7 +100378,7 @@ function parse_local_version(local) {
   return null;
 }
 function explain(version3) {
-  const parsed = parse3(version3);
+  const parsed = parse2(version3);
   if (!parsed) {
     return parsed;
   }
@@ -101439,7 +100398,7 @@ function explain(version3) {
     post: post ? post[1] : post,
     dev: dev ? dev[1] : dev,
     local: local ? local.join(".") : local,
-    public: stringify2(parsed).split("+", 1)[0],
+    public: stringify(parsed).split("+", 1)[0],
     base_version,
     is_prerelease,
     is_devrelease,
@@ -101488,8 +100447,8 @@ function arbitrary(version3, other) {
   return version3.toLowerCase() === other.toLowerCase();
 }
 function compare(version3, other) {
-  const parsedVersion = parse3(version3);
-  const parsedOther = parse3(other);
+  const parsedVersion = parse2(version3);
+  const parsedOther = parse2(other);
   const keyVersion = calculateKey(parsedVersion);
   const keyOther = calculateKey(parsedOther);
   return pyCompare(keyVersion, keyOther);
@@ -101565,7 +100524,7 @@ var RANGE_PATTERN = [
 ].join("");
 var isEqualityOperator = (op) => ["==", "!=", "==="].includes(op);
 var rangeRegex = new RegExp("^" + RANGE_PATTERN + "$", "i");
-function parse4(ranges) {
+function parse3(ranges) {
   if (!ranges.trim()) {
     return [];
   }
@@ -101617,7 +100576,7 @@ function minSatisfying(versions, range3, options) {
   return found.length === 0 ? null : found[0];
 }
 function pick(versions, specifier, options) {
-  const parsed = parse4(specifier);
+  const parsed = parse3(specifier);
   if (!parsed) {
     return [];
   }
@@ -101743,10 +100702,678 @@ function parseVersionSpecifier(specifier) {
 }
 
 // src/version/version-request-resolver.ts
-var path15 = __toESM(require("node:path"), 1);
+var path14 = __toESM(require("node:path"), 1);
 
 // src/version/file-parser.ts
-var import_node_fs7 = __toESM(require("node:fs"), 1);
+var import_node_fs6 = __toESM(require("node:fs"), 1);
+
+// src/utils/config-file.ts
+var import_node_fs3 = __toESM(require("node:fs"), 1);
+
+// node_modules/smol-toml/dist/date.js
+var DATE_TIME_RE = /^(\d{4}-\d{2}-\d{2})?[T ]?(?:(\d{2}):\d{2}(?::\d{2}(?:\.\d+)?)?)?(Z|[-+]\d{2}:\d{2})?$/i;
+var TomlDate = class _TomlDate extends Date {
+  #hasDate = false;
+  #hasTime = false;
+  #offset = null;
+  constructor(date) {
+    let hasDate = true;
+    let hasTime = true;
+    let offset = "Z";
+    if (typeof date === "string") {
+      let match4 = date.match(DATE_TIME_RE);
+      if (match4) {
+        if (!match4[1]) {
+          hasDate = false;
+          date = `0000-01-01T${date}`;
+        }
+        hasTime = !!match4[2];
+        hasTime && date[10] === " " && (date = date.replace(" ", "T"));
+        if (match4[2] && +match4[2] > 23) {
+          date = "";
+        } else {
+          offset = match4[3] || null;
+          date = date.toUpperCase();
+          if (!offset && hasTime)
+            date += "Z";
+        }
+      } else {
+        date = "";
+      }
+    }
+    super(date);
+    if (!isNaN(this.getTime())) {
+      this.#hasDate = hasDate;
+      this.#hasTime = hasTime;
+      this.#offset = offset;
+    }
+  }
+  isDateTime() {
+    return this.#hasDate && this.#hasTime;
+  }
+  isLocal() {
+    return !this.#hasDate || !this.#hasTime || !this.#offset;
+  }
+  isDate() {
+    return this.#hasDate && !this.#hasTime;
+  }
+  isTime() {
+    return this.#hasTime && !this.#hasDate;
+  }
+  isValid() {
+    return this.#hasDate || this.#hasTime;
+  }
+  toISOString() {
+    let iso = super.toISOString();
+    if (this.isDate())
+      return iso.slice(0, 10);
+    if (this.isTime())
+      return iso.slice(11, 23);
+    if (this.#offset === null)
+      return iso.slice(0, -1);
+    if (this.#offset === "Z")
+      return iso;
+    let offset = +this.#offset.slice(1, 3) * 60 + +this.#offset.slice(4, 6);
+    offset = this.#offset[0] === "-" ? offset : -offset;
+    let offsetDate = new Date(this.getTime() - offset * 6e4);
+    return offsetDate.toISOString().slice(0, -1) + this.#offset;
+  }
+  static wrapAsOffsetDateTime(jsDate, offset = "Z") {
+    let date = new _TomlDate(jsDate);
+    date.#offset = offset;
+    return date;
+  }
+  static wrapAsLocalDateTime(jsDate) {
+    let date = new _TomlDate(jsDate);
+    date.#offset = null;
+    return date;
+  }
+  static wrapAsLocalDate(jsDate) {
+    let date = new _TomlDate(jsDate);
+    date.#hasTime = false;
+    date.#offset = null;
+    return date;
+  }
+  static wrapAsLocalTime(jsDate) {
+    let date = new _TomlDate(jsDate);
+    date.#hasDate = false;
+    date.#offset = null;
+    return date;
+  }
+};
+
+// node_modules/smol-toml/dist/error.js
+function getLineColFromPtr(string, ptr) {
+  let lines = string.slice(0, ptr).split(/\r\n|\n|\r/g);
+  return [lines.length, lines.pop().length + 1];
+}
+function makeCodeBlock(string, line, column) {
+  let lines = string.split(/\r\n|\n|\r/g);
+  let codeblock = "";
+  let numberLen = (Math.log10(line + 1) | 0) + 1;
+  for (let i = line - 1; i <= line + 1; i++) {
+    let l = lines[i - 1];
+    if (!l)
+      continue;
+    codeblock += i.toString().padEnd(numberLen, " ");
+    codeblock += ":  ";
+    codeblock += l;
+    codeblock += "\n";
+    if (i === line) {
+      codeblock += " ".repeat(numberLen + column + 2);
+      codeblock += "^\n";
+    }
+  }
+  return codeblock;
+}
+var TomlError = class extends Error {
+  line;
+  column;
+  codeblock;
+  constructor(message, options) {
+    const [line, column] = getLineColFromPtr(options.toml, options.ptr);
+    const codeblock = makeCodeBlock(options.toml, line, column);
+    super(`Invalid TOML document: ${message}
+
+${codeblock}`, options);
+    this.line = line;
+    this.column = column;
+    this.codeblock = codeblock;
+  }
+};
+
+// node_modules/smol-toml/dist/util.js
+function indexOfNewline(str, start = 0) {
+  let idx = str.indexOf("\n", start);
+  if (str.charCodeAt(idx - 1) === 13)
+    idx--;
+  return idx;
+}
+function skipComment(ctx) {
+  for (; ctx.p < ctx.s.length; ctx.p++) {
+    let c = ctx.s.charCodeAt(ctx.p);
+    if (c === 10)
+      break;
+    if (c === 13 && ctx.s.charCodeAt(ctx.p + 1) === 10) {
+      ctx.p++;
+      break;
+    }
+    if (c < 32 && c !== 9 || c === 127) {
+      throw new TomlError("control characters are not allowed in comments", {
+        toml: ctx.s,
+        ptr: ctx.p
+      });
+    }
+  }
+}
+function skipVoid(ctx, banNewLines, banComments) {
+  let c;
+  while (1) {
+    while ((c = ctx.s.charCodeAt(ctx.p)) === 32 || c === 9 || !banNewLines && (c === 10 || c === 13 && ctx.s.charCodeAt(ctx.p + 1) === 10))
+      ctx.p++;
+    if (banComments || c !== 35)
+      break;
+    skipComment(ctx);
+  }
+}
+function skipUntil(ctx, sep9, end) {
+  let ptr = ctx.p;
+  if (!end) {
+    ptr = indexOfNewline(ctx.s, ptr);
+    ctx.p = ptr < 0 ? ctx.s.length : ptr;
+    return;
+  }
+  for (; ctx.p < ctx.s.length; ctx.p++) {
+    let c = ctx.s.charCodeAt(ctx.p);
+    if (c === 35) {
+      skipComment(ctx);
+    } else if (c === end || c === sep9) {
+      return;
+    }
+  }
+  throw new TomlError("cannot find end of structure", {
+    toml: ctx.s,
+    ptr
+  });
+}
+
+// node_modules/smol-toml/dist/primitive.js
+var INT_REGEX = /^((0x[0-9a-fA-F](_?[0-9a-fA-F])*)|(([+-]|0[ob])?\d(_?\d)*))$/;
+var FLOAT_REGEX = /^[+-]?\d(_?\d)*(\.\d(_?\d)*)?([eE][+-]?\d(_?\d)*)?$/;
+var LEADING_ZERO = /^[+-]?0[0-9_]/;
+function parseString(ctx) {
+  let start = ctx.p;
+  let c = ctx.s.charCodeAt(ctx.p++);
+  let first = c;
+  let isLiteral = c === 39;
+  let isMultiline = c === ctx.s.charCodeAt(ctx.p) && c === ctx.s.charCodeAt(ctx.p + 1);
+  if (isMultiline) {
+    if ((c = ctx.s.charCodeAt(ctx.p += 2)) === 10)
+      ctx.p++;
+    else if (c === 13 && ctx.s.charCodeAt(ctx.p + 1) === 10)
+      ctx.p += 2;
+  }
+  let parsed = "";
+  let sliceStart = ctx.p;
+  let state3 = 0;
+  for (; ctx.p < ctx.s.length; ctx.p++) {
+    c = ctx.s.charCodeAt(ctx.p);
+    if (isMultiline && (c === 10 || c === 13 && ctx.s.charCodeAt(ctx.p + 1) === 10)) {
+      state3 = state3 && 3;
+    } else if (c < 32 && c !== 9 || c === 127) {
+      throw new TomlError("control characters are not allowed in strings", {
+        toml: ctx.s,
+        ptr: ctx.p
+      });
+    } else if ((!state3 || state3 === 3) && c === first && (!isMultiline || ctx.s.charCodeAt(ctx.p + 1) === first && ctx.s.charCodeAt(ctx.p + 2) === first)) {
+      if (isMultiline) {
+        if (ctx.s.charCodeAt(ctx.p + 3) === first)
+          ctx.p++;
+        if (ctx.s.charCodeAt(ctx.p + 3) === first)
+          ctx.p++;
+      }
+      if (!state3)
+        parsed += ctx.s.slice(sliceStart, ctx.p);
+      ctx.p += isMultiline ? 3 : 1;
+      return parsed;
+    } else if (!state3) {
+      if (!isLiteral && c === 92) {
+        parsed += ctx.s.slice(sliceStart, sliceStart = ctx.p);
+        state3 = 1;
+      }
+    } else if (state3 === 1) {
+      if (c === 120 || c === 117 || c === 85) {
+        let value = 0;
+        let len = c === 120 ? 2 : c === 117 ? 4 : 8;
+        for (let j = 0; j < len; j++, ctx.p++) {
+          let hex = ctx.s.charCodeAt(ctx.p + 1);
+          let digit = (
+            /* 0-9 */
+            hex >= 48 && hex <= 57 ? hex - 48 : (
+              /* A-F */
+              hex >= 65 && hex <= 70 ? hex - 65 + 10 : (
+                /* a-f */
+                hex >= 97 && hex <= 102 ? hex - 97 + 10 : -1
+              )
+            )
+          );
+          if (digit < 0)
+            throw new TomlError("invalid non-hex character in unicode escape", { toml: ctx.s, ptr: ctx.p + 1 });
+          value = value << 4 | digit;
+        }
+        if (value < 0 || value > 1114111 || value >= 55296 && value <= 57343) {
+          throw new TomlError("invalid unicode escape", { toml: ctx.s, ptr: ctx.p });
+        }
+        parsed += String.fromCodePoint(value);
+        sliceStart = ctx.p + 1;
+        state3 = 0;
+      } else if (c === 32 || c === 9) {
+        state3 = 2;
+      } else {
+        if (c === 98)
+          parsed += "\b";
+        else if (c === 116)
+          parsed += "	";
+        else if (c === 110)
+          parsed += "\n";
+        else if (c === 102)
+          parsed += "\f";
+        else if (c === 114)
+          parsed += "\r";
+        else if (c === 101)
+          parsed += "\x1B";
+        else if (c === 34)
+          parsed += '"';
+        else if (c === 92)
+          parsed += "\\";
+        else
+          throw new TomlError("unrecognized escape sequence", { toml: ctx.s, ptr: ctx.p });
+        sliceStart = ctx.p + 1;
+        state3 = 0;
+      }
+    } else if (c !== 32 && c !== 9) {
+      if (state3 === 2) {
+        throw new TomlError("invalid escape: only line-ending whitespace may be escaped", {
+          toml: ctx.s,
+          ptr: sliceStart
+        });
+      }
+      state3 = !isLiteral && c === 92 ? 1 : 0;
+      sliceStart = ctx.p;
+    }
+  }
+  throw new TomlError("unfinished string", { toml: ctx.s, ptr: start });
+}
+function sliceAndTrimEndOf(ctx, start, end) {
+  let value = ctx.s.slice(start, end);
+  let commentIdx = value.indexOf("#");
+  if (commentIdx > 0) {
+    skipComment({ s: value, p: commentIdx, d: 0 });
+    value = value.slice(0, commentIdx);
+  }
+  return value.trimEnd();
+}
+function parseValue2(ctx, integersAsBigInt, end) {
+  let ptr = ctx.p;
+  let err = { toml: ctx.s, ptr };
+  skipUntil(ctx, 44, end);
+  let value = sliceAndTrimEndOf(ctx, ptr, ctx.p);
+  if (!value)
+    throw new TomlError("incomplete declaration: value expected", err);
+  if (value === "-inf")
+    return -Infinity;
+  if (value === "inf" || value === "+inf")
+    return Infinity;
+  if (value === "nan" || value === "+nan" || value === "-nan")
+    return NaN;
+  if (value === "-0")
+    return integersAsBigInt ? 0n : 0;
+  let isInt = INT_REGEX.test(value);
+  if (isInt || FLOAT_REGEX.test(value)) {
+    if (LEADING_ZERO.test(value)) {
+      throw new TomlError("leading zeroes are not allowed", err);
+    }
+    value = value.replace(/_/g, "");
+    let numeric2 = +value;
+    if (isNaN(numeric2)) {
+      throw new TomlError("invalid number", err);
+    }
+    if (isInt) {
+      if ((isInt = !Number.isSafeInteger(numeric2)) && !integersAsBigInt) {
+        throw new TomlError("integer value cannot be represented losslessly", err);
+      }
+      if (isInt || integersAsBigInt === true)
+        numeric2 = BigInt(value);
+    }
+    return numeric2;
+  }
+  const date = new TomlDate(value);
+  if (!date.isValid())
+    throw new TomlError("invalid value", err);
+  return date;
+}
+
+// node_modules/smol-toml/dist/extract.js
+function extractValue(ctx, end, integersAsBigInt) {
+  let ptr = ctx.p;
+  let c = ctx.s.charCodeAt(ptr);
+  if (c === 91 || c === 123) {
+    if (!ctx.d--) {
+      throw new TomlError("document contains excessively nested structures. aborting.", {
+        toml: ctx.s,
+        ptr
+      });
+    }
+    let value = c === 91 ? parseArray(ctx, integersAsBigInt) : parseInlineTable(ctx, integersAsBigInt);
+    ctx.d++;
+    return value;
+  }
+  if (c === 34 || c === 39) {
+    return parseString(ctx);
+  }
+  if (c === 116) {
+    if (ctx.s.charCodeAt(++ctx.p) !== 114 || ctx.s.charCodeAt(++ctx.p) !== 117 || ctx.s.charCodeAt(++ctx.p) !== 101)
+      throw new TomlError("invalid value", { toml: ctx.s, ptr });
+    ctx.p++;
+    return true;
+  }
+  if (c === 102) {
+    if (ctx.s.charCodeAt(++ctx.p) !== 97 || ctx.s.charCodeAt(++ctx.p) !== 108 || ctx.s.charCodeAt(++ctx.p) !== 115 || ctx.s.charCodeAt(++ctx.p) !== 101)
+      throw new TomlError("invalid value", { toml: ctx.s, ptr });
+    ctx.p++;
+    return false;
+  }
+  return parseValue2(ctx, integersAsBigInt, end);
+}
+
+// node_modules/smol-toml/dist/struct.js
+var KEY_PART_RE = /^[a-zA-Z0-9-_]+[ \t]*$/;
+function parseKey(ctx, end = "=") {
+  let start = ctx.p;
+  let dot = start - 1;
+  let parsed = [];
+  let endPtr = ctx.s.indexOf(end, start);
+  if (endPtr < 0) {
+    throw new TomlError("incomplete key-value: cannot find end of key", {
+      toml: ctx.s,
+      ptr: start
+    });
+  }
+  do {
+    let c = ctx.s.charCodeAt(ctx.p = ++dot);
+    if (c !== 32 && c !== 9) {
+      if (c === 34 || c === 39) {
+        if (c === ctx.s.charCodeAt(ctx.p + 1) && c === ctx.s.charCodeAt(ctx.p + 2)) {
+          throw new TomlError("multiline strings are not allowed in keys", {
+            toml: ctx.s,
+            ptr: ctx.p
+          });
+        }
+        let part = parseString(ctx);
+        dot = ctx.s.indexOf(".", ctx.p);
+        let strEnd = ctx.s.slice(ctx.p, dot < 0 || dot > endPtr ? endPtr : dot);
+        let newLine = indexOfNewline(strEnd);
+        if (newLine > -1) {
+          throw new TomlError("newlines are not allowed in keys", {
+            toml: ctx.s,
+            ptr: newLine
+          });
+        }
+        if (strEnd.trimStart()) {
+          throw new TomlError("found extra tokens after the string part", {
+            toml: ctx.s,
+            ptr: ctx.p
+          });
+        }
+        if (endPtr < ctx.p) {
+          endPtr = ctx.s.indexOf(end, ctx.p);
+          if (endPtr < 0) {
+            throw new TomlError("incomplete key-value: cannot find end of key", {
+              toml: ctx.s,
+              ptr: start
+            });
+          }
+        }
+        parsed.push(part);
+      } else {
+        dot = ctx.s.indexOf(".", ctx.p);
+        let part = ctx.s.slice(ctx.p, dot < 0 || dot > endPtr ? endPtr : dot);
+        if (!KEY_PART_RE.test(part)) {
+          throw new TomlError("only letter, numbers, dashes and underscores are allowed in keys", {
+            toml: ctx.s,
+            ptr: ctx.p
+          });
+        }
+        parsed.push(part.trimEnd());
+      }
+    }
+  } while (dot + 1 && dot < endPtr);
+  ctx.p = endPtr + 1;
+  skipVoid(ctx, true, true);
+  return parsed;
+}
+function parseInlineTable(ctx, integersAsBigInt) {
+  let res = {};
+  let seen = /* @__PURE__ */ new Set();
+  let c;
+  ctx.p++;
+  while (ctx.p < ctx.s.length) {
+    skipVoid(ctx);
+    if ((c = ctx.s.charCodeAt(ctx.p)) === 125) {
+      ctx.p++;
+      return res;
+    }
+    let k;
+    let t = res;
+    let hasOwn = false;
+    let p = ctx.p;
+    let key = parseKey(ctx);
+    for (let i = 0; i < key.length; i++) {
+      if (i)
+        t = hasOwn ? t[k] : t[k] = {};
+      k = key[i];
+      if ((hasOwn = Object.hasOwn(t, k)) && (typeof t[k] !== "object" || seen.has(t[k]))) {
+        throw new TomlError("trying to redefine an already defined value", {
+          toml: ctx.s,
+          ptr: p
+        });
+      }
+      if (!hasOwn && k === "__proto__") {
+        Object.defineProperty(t, k, { enumerable: true, configurable: true, writable: true });
+      }
+    }
+    if (hasOwn) {
+      throw new TomlError("trying to redefine an already defined value", {
+        toml: ctx.s,
+        ptr: ctx.p
+      });
+    }
+    let value = extractValue(ctx, 125, integersAsBigInt);
+    seen.add(t[k] = value);
+    skipVoid(ctx);
+    if ((c = ctx.s.charCodeAt(ctx.p++)) === 125) {
+      return res;
+    }
+    if (c !== 44) {
+      throw new TomlError("expected comma or end of structure", { toml: ctx.s, ptr: ctx.p - 1 });
+    }
+  }
+  throw new TomlError("unfinished table encountered", {
+    toml: ctx.s,
+    ptr: ctx.p
+  });
+}
+function parseArray(ctx, integersAsBigInt) {
+  let res = [];
+  let c;
+  ctx.p++;
+  while (ctx.p < ctx.s.length) {
+    skipVoid(ctx);
+    if ((c = ctx.s.charCodeAt(ctx.p)) === 93) {
+      ctx.p++;
+      return res;
+    }
+    res.push(extractValue(ctx, 93, integersAsBigInt));
+    skipVoid(ctx);
+    if ((c = ctx.s.charCodeAt(ctx.p++)) === 93) {
+      return res;
+    }
+    if (c !== 44) {
+      throw new TomlError("expected comma or end of structure", { toml: ctx.s, ptr: ctx.p - 1 });
+    }
+  }
+  throw new TomlError("unfinished array encountered", {
+    toml: ctx.s,
+    ptr: ctx.p
+  });
+}
+
+// node_modules/smol-toml/dist/parse.js
+function peekTable(key, table, meta, type) {
+  let t = table;
+  let m = meta;
+  let k;
+  let hasOwn = false;
+  let state3;
+  for (let i = 0; i < key.length; i++) {
+    if (i) {
+      t = hasOwn ? t[k] : t[k] = {};
+      m = (state3 = m[k]).c;
+      if (type === 0 && (state3.t === 1 || state3.t === 2)) {
+        return null;
+      }
+      if (state3.t === 2) {
+        let l = t.length - 1;
+        t = t[l];
+        m = m[l].c;
+      }
+    }
+    k = key[i];
+    if ((hasOwn = Object.hasOwn(t, k)) && m[k]?.t === 0 && m[k]?.d) {
+      return null;
+    }
+    if (!hasOwn) {
+      if (k === "__proto__") {
+        Object.defineProperty(t, k, { enumerable: true, configurable: true, writable: true });
+        Object.defineProperty(m, k, { enumerable: true, configurable: true, writable: true });
+      }
+      m[k] = {
+        t: i < key.length - 1 && type === 2 ? 3 : type,
+        d: false,
+        i: 0,
+        c: {}
+      };
+    }
+  }
+  state3 = m[k];
+  if (state3.t !== type && !(type === 1 && state3.t === 3)) {
+    return null;
+  }
+  if (type === 2) {
+    if (!state3.d) {
+      state3.d = true;
+      t[k] = [];
+    }
+    t[k].push(t = {});
+    state3.c[state3.i++] = state3 = { t: 1, d: false, i: 0, c: {} };
+  }
+  if (state3.d) {
+    return null;
+  }
+  state3.d = true;
+  if (type === 1) {
+    t = hasOwn ? t[k] : t[k] = {};
+  } else if (type === 0 && hasOwn) {
+    return null;
+  }
+  return [k, t, state3.c];
+}
+function parse4(toml, { maxDepth = 1e3, integersAsBigInt } = {}) {
+  let ctx = { s: toml, p: 0, d: maxDepth };
+  let res = {};
+  let meta = {};
+  let tmp;
+  let tbl = res;
+  let m = meta;
+  skipVoid(ctx);
+  while (ctx.p < toml.length) {
+    if (toml.charCodeAt(ctx.p) === 91) {
+      let isTableArray = toml.charCodeAt(++ctx.p) === 91;
+      tmp = ctx.p += +isTableArray;
+      let k = parseKey(ctx, "]");
+      if (isTableArray) {
+        if (toml.charCodeAt(ctx.p - 1) !== 93) {
+          throw new TomlError("expected end of table declaration", {
+            toml,
+            ptr: ctx.p - 1
+          });
+        }
+        ctx.p++;
+      }
+      let p = peekTable(
+        k,
+        res,
+        meta,
+        isTableArray ? 2 : 1
+        /* Type.EXPLICIT */
+      );
+      if (!p) {
+        throw new TomlError("trying to redefine an already defined table or value", {
+          toml,
+          ptr: tmp
+        });
+      }
+      m = p[2];
+      tbl = p[1];
+    } else {
+      tmp = ctx.p;
+      let k = parseKey(ctx);
+      let p = peekTable(
+        k,
+        tbl,
+        m,
+        0
+        /* Type.DOTTED */
+      );
+      if (!p) {
+        throw new TomlError("trying to redefine an already defined table or value", {
+          toml,
+          ptr: tmp
+        });
+      }
+      p[1][p[0]] = extractValue(ctx, void 0, integersAsBigInt);
+    }
+    skipVoid(ctx, true);
+    if (ctx.p < toml.length && (tmp = toml.charCodeAt(ctx.p)) !== 10 && tmp !== 13) {
+      throw new TomlError("each key-value declaration must be followed by an end-of-line", {
+        toml,
+        ptr: ctx.p
+      });
+    }
+    skipVoid(ctx);
+  }
+  return res;
+}
+
+// src/utils/config-file.ts
+function getConfigValueFromTomlFile(filePath, key) {
+  if (!import_node_fs3.default.existsSync(filePath) || !filePath.endsWith(".toml")) {
+    return void 0;
+  }
+  const fileContent = import_node_fs3.default.readFileSync(filePath, "utf-8");
+  return getConfigValueFromTomlContent(filePath, fileContent, key);
+}
+function getConfigValueFromTomlContent(filePath, fileContent, key) {
+  if (!filePath.endsWith(".toml")) {
+    return void 0;
+  }
+  if (filePath.endsWith("pyproject.toml")) {
+    const tomlContent2 = parse4(fileContent);
+    return tomlContent2?.tool?.uv?.[key];
+  }
+  const tomlContent = parse4(fileContent);
+  return tomlContent[key];
+}
 
 // src/version/requirements-file.ts
 function getUvVersionFromRequirementsText(fileContent) {
@@ -101765,7 +101392,7 @@ function getUvVersionFromParsedPyproject(pyproject) {
   );
 }
 function parsePyprojectContent(pyprojectContent) {
-  return parse2(pyprojectContent);
+  return parse4(pyprojectContent);
 }
 function getUvVersionFromAllDependencies(allDependencies) {
   return allDependencies.map(getUvVersionFromDependency).find((version3) => version3 !== void 0);
@@ -101775,14 +101402,80 @@ function getUvVersionFromDependency(dependency) {
   return dependencyWithoutMarker?.match(/^uv([=<>~!]+\S*)/)?.[1].trim();
 }
 
+// src/version/tool-versions-file.ts
+var import_node_fs4 = __toESM(require("node:fs"), 1);
+function getUvVersionFromToolVersions(filePath) {
+  const versions = getToolVersions(filePath, "uv");
+  if (versions === void 0 || versions.length !== 1) {
+    return void 0;
+  }
+  const version3 = stripVersionPrefix(versions[0]);
+  if (isPath(version3)) {
+    warning(
+      `The uv version ${versions[0]} in .tool-versions is not supported. Paths are not allowed.`
+    );
+    return void 0;
+  }
+  if (version3.startsWith("ref")) {
+    warning(
+      "The ref syntax of .tool-versions is not supported. Please use a released version instead."
+    );
+    return void 0;
+  }
+  return version3;
+}
+function getPythonVersionFromToolVersions(filePath) {
+  const versions = getToolVersions(filePath, "python");
+  if (versions === void 0 || versions.length === 0) {
+    return void 0;
+  }
+  if (versions.length > 1) {
+    warning(
+      "Multiple Python versions in .tool-versions are not supported. The Python entry will be ignored."
+    );
+    return void 0;
+  }
+  const version3 = stripVersionPrefix(versions[0]);
+  if (version3 === "system" || version3.startsWith("ref:") || version3.startsWith("path:") || isPath(version3)) {
+    warning(
+      `The Python version ${versions[0]} in .tool-versions is not supported. The Python entry will be ignored.`
+    );
+    return void 0;
+  }
+  return version3;
+}
+function getToolVersions(filePath, toolName) {
+  if (!filePath.endsWith(".tool-versions")) {
+    return void 0;
+  }
+  const fileContents = import_node_fs4.default.readFileSync(filePath, "utf8");
+  for (const line of fileContents.split("\n")) {
+    const content = line.split("#", 1)[0].trim();
+    if (content === "") {
+      continue;
+    }
+    const [tool, ...versions] = content.split(/\s+/);
+    if (tool === toolName) {
+      return versions;
+    }
+  }
+  return void 0;
+}
+function stripVersionPrefix(version3) {
+  return version3.startsWith("v") ? version3.slice(1) : version3;
+}
+function isPath(version3) {
+  return version3.includes("/") || version3.includes("\\");
+}
+
 // src/version/uv-lock-file.ts
-var import_node_fs6 = __toESM(require("node:fs"), 1);
+var import_node_fs5 = __toESM(require("node:fs"), 1);
 function getUvVersionFromUvLock(filePath) {
-  const fileContent = import_node_fs6.default.readFileSync(filePath, "utf-8");
+  const fileContent = import_node_fs5.default.readFileSync(filePath, "utf-8");
   return getUvVersionFromUvLockContent(fileContent);
 }
 function getUvVersionFromUvLockContent(fileContent) {
-  const parsed = parse2(fileContent);
+  const parsed = parse4(fileContent);
   const uvPackage = parsed.package?.find((pkg) => pkg.name === "uv");
   return uvPackage?.version;
 }
@@ -101797,7 +101490,7 @@ var VERSION_FILE_PARSERS = [
   {
     format: "uv.toml",
     parse: (filePath) => {
-      const fileContent = import_node_fs7.default.readFileSync(filePath, "utf-8");
+      const fileContent = import_node_fs6.default.readFileSync(filePath, "utf-8");
       return getConfigValueFromTomlContent(
         filePath,
         fileContent,
@@ -101809,7 +101502,7 @@ var VERSION_FILE_PARSERS = [
   {
     format: "pyproject.toml",
     parse: (filePath) => {
-      const fileContent = import_node_fs7.default.readFileSync(filePath, "utf-8");
+      const fileContent = import_node_fs6.default.readFileSync(filePath, "utf-8");
       const pyproject = parsePyprojectContent(fileContent);
       const requiredVersion = pyproject.tool?.uv?.["required-version"];
       if (requiredVersion !== void 0) {
@@ -101827,7 +101520,7 @@ var VERSION_FILE_PARSERS = [
   {
     format: "requirements",
     parse: (filePath) => {
-      const fileContent = import_node_fs7.default.readFileSync(filePath, "utf-8");
+      const fileContent = import_node_fs6.default.readFileSync(filePath, "utf-8");
       return getUvVersionFromRequirementsText(fileContent);
     },
     supports: (filePath) => filePath.endsWith(".txt")
@@ -101835,7 +101528,7 @@ var VERSION_FILE_PARSERS = [
 ];
 function getParsedVersionFile(filePath) {
   info2(`Trying to find version for uv in: ${filePath}`);
-  if (!import_node_fs7.default.existsSync(filePath)) {
+  if (!import_node_fs6.default.existsSync(filePath)) {
     info2(`Could not find file: ${filePath}`);
     return void 0;
   }
@@ -101887,11 +101580,11 @@ var VersionRequestContext = class {
     return [
       {
         source: "uv.toml",
-        sourcePath: path15.join(this.workingDirectory, "uv.toml")
+        sourcePath: path14.join(this.workingDirectory, "uv.toml")
       },
       {
         source: "pyproject.toml",
-        sourcePath: path15.join(this.workingDirectory, "pyproject.toml")
+        sourcePath: path14.join(this.workingDirectory, "pyproject.toml")
       }
     ];
   }
@@ -102208,12 +101901,12 @@ async function downloadArtifact(downloadUrl, artifactName, platform2, arch3, ver
       );
       const extension = getExtension(platform2);
       const fullPathWithExtension = `${downloadPath}${extension}`;
-      await import_node_fs8.promises.copyFile(downloadPath, fullPathWithExtension);
+      await import_node_fs7.promises.copyFile(downloadPath, fullPathWithExtension);
       uvDir = await extractZip(fullPathWithExtension);
     }
   } else {
     const extractedDir = await extractTar2(downloadPath);
-    uvDir = path16.join(extractedDir, artifactName);
+    uvDir = path15.join(extractedDir, artifactName);
   }
   const cachedToolDir = await cacheDir(
     uvDir,
@@ -102236,13 +101929,316 @@ function getExtension(platform2) {
   return platform2 === "pc-windows-msvc" ? ".zip" : ".tar.gz";
 }
 
+// src/utils/inputs.ts
+var import_node_fs8 = __toESM(require("node:fs"), 1);
+var import_node_path = __toESM(require("node:path"), 1);
+function loadInputs() {
+  const workingDirectory = getInput("working-directory");
+  const version3 = getInput("version");
+  const versionFile = getVersionFile(workingDirectory);
+  const pythonVersion = getPythonVersion(versionFile);
+  const pythonArchInput = getInput("python-arch");
+  const pythonArch = pythonArchInput || process.env.UV_PYTHON_ARCH || "";
+  const exportPythonArch = pythonArchInput !== "";
+  const activateEnvironment2 = getBooleanInput("activate-environment");
+  const noProject = getBooleanInput("no-project");
+  const venvPath = getVenvPath(workingDirectory, activateEnvironment2);
+  const checksum = getInput("checksum");
+  const enableCache = getEnableCache();
+  const restoreCache3 = getInput("restore-cache") === "true";
+  const saveCache2 = getSaveCache();
+  const cacheSuffix = getInput("cache-suffix") || "";
+  const cacheLocalPath = getCacheLocalPath(
+    workingDirectory,
+    versionFile,
+    enableCache
+  );
+  const cacheDependencyGlob = getCacheDependencyGlob(workingDirectory);
+  const pruneCache = getInput("prune-cache") === "true";
+  const cachePython = getInput("cache-python") === "true";
+  const ignoreNothingToCache = getInput("ignore-nothing-to-cache") === "true";
+  const ignoreEmptyWorkdir = getInput("ignore-empty-workdir") === "true";
+  const toolBinDir = getToolBinDir(workingDirectory);
+  const toolDir = getToolDir(workingDirectory);
+  const pythonDir = getUvPythonDir();
+  const githubToken = getInput("github-token");
+  const manifestFile = getManifestFile();
+  const downloadFromAstralMirror = getInput("download-from-astral-mirror") === "true";
+  const addProblemMatchers = getInput("add-problem-matchers") === "true";
+  const quiet2 = getInput("quiet") === "true";
+  const resolutionStrategy = getResolutionStrategy();
+  return {
+    activateEnvironment: activateEnvironment2,
+    addProblemMatchers,
+    cacheDependencyGlob,
+    cacheLocalPath,
+    cachePython,
+    cacheSuffix,
+    checksum,
+    downloadFromAstralMirror,
+    enableCache,
+    exportPythonArch,
+    githubToken,
+    ignoreEmptyWorkdir,
+    ignoreNothingToCache,
+    manifestFile,
+    noProject,
+    pruneCache,
+    pythonArch,
+    pythonDir,
+    pythonVersion,
+    quiet: quiet2,
+    resolutionStrategy,
+    restoreCache: restoreCache3,
+    saveCache: saveCache2,
+    toolBinDir,
+    toolDir,
+    venvPath,
+    version: version3,
+    versionFile,
+    workingDirectory
+  };
+}
+function getVersionFile(workingDirectory) {
+  const versionFileInput = getInput("version-file");
+  if (versionFileInput !== "") {
+    const tildeExpanded = expandTilde(versionFileInput);
+    return resolveRelativePath(workingDirectory, tildeExpanded);
+  }
+  return versionFileInput;
+}
+function getPythonVersion(versionFile) {
+  const pythonVersionInput = getInput("python-version");
+  if (pythonVersionInput !== "") {
+    return pythonVersionInput;
+  }
+  if (process.env.UV_PYTHON !== void 0 && process.env.UV_PYTHON !== "") {
+    return "";
+  }
+  if (versionFile === "" || !import_node_fs8.default.existsSync(versionFile)) {
+    return "";
+  }
+  try {
+    return getPythonVersionFromToolVersions(versionFile) ?? "";
+  } catch (err) {
+    warning2(
+      `Error while parsing Python version from ${versionFile}: ${err.message}`
+    );
+    return "";
+  }
+}
+function getVenvPath(workingDirectory, activateEnvironment2) {
+  const venvPathInput = getInput("venv-path");
+  if (venvPathInput !== "") {
+    if (!activateEnvironment2) {
+      warning2("venv-path is only used when activate-environment is true");
+    }
+    const tildeExpanded = expandTilde(venvPathInput);
+    return normalizePath(resolveRelativePath(workingDirectory, tildeExpanded));
+  }
+  return normalizePath(resolveRelativePath(workingDirectory, ".venv"));
+}
+function getEnableCache() {
+  const enableCacheInput = getInput("enable-cache");
+  if (enableCacheInput === "auto") {
+    if (process.env.RUNNER_ENVIRONMENT !== "github-hosted") {
+      return false;
+    }
+    const eventName = process.env.GITHUB_EVENT_NAME;
+    const isTagPush = eventName === "push" && process.env.GITHUB_REF?.startsWith("refs/tags/");
+    if (isTagPush) {
+      info2("Caching is disabled for tag pushes");
+      return false;
+    }
+    if (eventName === "pull_request_target" || eventName === "workflow_run" || eventName === "release") {
+      info2(`Caching is disabled for the ${eventName} event`);
+      return false;
+    }
+    return true;
+  }
+  return enableCacheInput === "true";
+}
+function getSaveCache() {
+  const saveCacheInput = getInput("save-cache");
+  if (saveCacheInput === "auto") {
+    if (process.env.GITHUB_EVENT_NAME === "merge_group") {
+      info2("Cache saving is disabled for the merge_group event");
+      return false;
+    }
+    return true;
+  }
+  return saveCacheInput === "true";
+}
+function getToolBinDir(workingDirectory) {
+  const toolBinDirInput = getInput("tool-bin-dir");
+  if (toolBinDirInput !== "") {
+    const tildeExpanded = expandTilde(toolBinDirInput);
+    return resolveRelativePath(workingDirectory, tildeExpanded);
+  }
+  if (process.platform === "win32") {
+    if (process.env.RUNNER_TEMP !== void 0) {
+      return `${process.env.RUNNER_TEMP}${import_node_path.default.sep}uv-tool-bin-dir`;
+    }
+    throw Error(
+      "Could not determine UV_TOOL_BIN_DIR. Please make sure RUNNER_TEMP is set or provide the tool-bin-dir input"
+    );
+  }
+  return void 0;
+}
+function getToolDir(workingDirectory) {
+  const toolDirInput = getInput("tool-dir");
+  if (toolDirInput !== "") {
+    const tildeExpanded = expandTilde(toolDirInput);
+    return resolveRelativePath(workingDirectory, tildeExpanded);
+  }
+  if (process.platform === "win32") {
+    if (process.env.RUNNER_TEMP !== void 0) {
+      return `${process.env.RUNNER_TEMP}${import_node_path.default.sep}uv-tool-dir`;
+    }
+    throw Error(
+      "Could not determine UV_TOOL_DIR. Please make sure RUNNER_TEMP is set or provide the tool-dir input"
+    );
+  }
+  return void 0;
+}
+function getCacheLocalPath(workingDirectory, versionFile, enableCache) {
+  const cacheLocalPathInput = getInput("cache-local-path");
+  if (cacheLocalPathInput !== "") {
+    const tildeExpanded = expandTilde(cacheLocalPathInput);
+    return {
+      path: resolveRelativePath(workingDirectory, tildeExpanded),
+      source: 0 /* Input */
+    };
+  }
+  const cacheDirFromConfig = getCacheDirFromConfig(
+    workingDirectory,
+    versionFile
+  );
+  if (cacheDirFromConfig !== void 0) {
+    return { path: cacheDirFromConfig, source: 1 /* Config */ };
+  }
+  if (process.env.UV_CACHE_DIR !== void 0) {
+    info2(`UV_CACHE_DIR is already set to ${process.env.UV_CACHE_DIR}`);
+    return { path: process.env.UV_CACHE_DIR, source: 2 /* Env */ };
+  }
+  if (enableCache) {
+    if (process.env.RUNNER_ENVIRONMENT === "github-hosted") {
+      if (process.env.RUNNER_TEMP !== void 0) {
+        return {
+          path: `${process.env.RUNNER_TEMP}${import_node_path.default.sep}setup-uv-cache`,
+          source: 3 /* Default */
+        };
+      }
+      throw Error(
+        "Could not determine UV_CACHE_DIR. Please make sure RUNNER_TEMP is set or provide the cache-local-path input"
+      );
+    }
+    if (process.platform === "win32") {
+      return {
+        path: `${process.env.APPDATA}${import_node_path.default.sep}uv${import_node_path.default.sep}cache`,
+        source: 3 /* Default */
+      };
+    }
+    return {
+      path: `${process.env.HOME}${import_node_path.default.sep}.cache${import_node_path.default.sep}uv`,
+      source: 3 /* Default */
+    };
+  }
+}
+function getCacheDirFromConfig(workingDirectory, versionFile) {
+  for (const filePath of [versionFile, "uv.toml", "pyproject.toml"]) {
+    const resolvedPath = resolveRelativePath(workingDirectory, filePath);
+    try {
+      const cacheDir2 = getConfigValueFromTomlFile(resolvedPath, "cache-dir");
+      if (cacheDir2 !== void 0) {
+        info2(`Found cache-dir in ${resolvedPath}: ${cacheDir2}`);
+        return cacheDir2;
+      }
+    } catch (err) {
+      const message = err.message;
+      warning2(`Error while parsing ${filePath}: ${message}`);
+      return void 0;
+    }
+  }
+  return void 0;
+}
+function getUvPythonDir() {
+  if (process.env.UV_PYTHON_INSTALL_DIR !== void 0) {
+    info2(
+      `UV_PYTHON_INSTALL_DIR is already set to ${process.env.UV_PYTHON_INSTALL_DIR}`
+    );
+    return process.env.UV_PYTHON_INSTALL_DIR;
+  }
+  if (process.env.RUNNER_ENVIRONMENT !== "github-hosted") {
+    if (process.platform === "win32") {
+      return `${process.env.APPDATA}${import_node_path.default.sep}uv${import_node_path.default.sep}python`;
+    }
+    return `${process.env.HOME}${import_node_path.default.sep}.local${import_node_path.default.sep}share${import_node_path.default.sep}uv${import_node_path.default.sep}python`;
+  }
+  if (process.env.RUNNER_TEMP !== void 0) {
+    return `${process.env.RUNNER_TEMP}${import_node_path.default.sep}uv-python-dir`;
+  }
+  throw Error(
+    "Could not determine UV_PYTHON_INSTALL_DIR. Please make sure RUNNER_TEMP is set or provide the UV_PYTHON_INSTALL_DIR environment variable"
+  );
+}
+function getCacheDependencyGlob(workingDirectory) {
+  const cacheDependencyGlobInput = getInput("cache-dependency-glob");
+  if (cacheDependencyGlobInput !== "") {
+    return cacheDependencyGlobInput.split("\n").map((part) => part.trim()).map((part) => expandTilde(part)).map((part) => resolveRelativePath(workingDirectory, part)).join("\n");
+  }
+  return cacheDependencyGlobInput;
+}
+function expandTilde(input) {
+  if (input.startsWith("~")) {
+    return `${process.env.HOME}${input.substring(1)}`;
+  }
+  return input;
+}
+function normalizePath(inputPath) {
+  const normalized = import_node_path.default.normalize(inputPath);
+  const root = import_node_path.default.parse(normalized).root;
+  let trimmed = normalized;
+  while (trimmed.length > root.length && trimmed.endsWith(import_node_path.default.sep)) {
+    trimmed = trimmed.slice(0, -1);
+  }
+  return trimmed;
+}
+function resolveRelativePath(workingDirectory, inputPath) {
+  const hasNegation = inputPath.startsWith("!");
+  const pathWithoutNegation = hasNegation ? inputPath.substring(1) : inputPath;
+  const resolvedPath = import_node_path.default.resolve(workingDirectory, pathWithoutNegation);
+  debug(
+    `Resolving relative path ${inputPath} to ${hasNegation ? "!" : ""}${resolvedPath}`
+  );
+  return hasNegation ? `!${resolvedPath}` : resolvedPath;
+}
+function getManifestFile() {
+  const manifestFileInput = getInput("manifest-file");
+  if (manifestFileInput !== "") {
+    return manifestFileInput;
+  }
+  return void 0;
+}
+function getResolutionStrategy() {
+  const resolutionStrategyInput = getInput("resolution-strategy");
+  if (resolutionStrategyInput === "lowest") {
+    return "lowest";
+  }
+  if (resolutionStrategyInput === "highest" || resolutionStrategyInput === "") {
+    return "highest";
+  }
+  throw new Error(
+    `Invalid resolution-strategy: ${resolutionStrategyInput}. Must be 'highest' or 'lowest'.`
+  );
+}
+
 // src/utils/python-arch.ts
 var import_node_child_process = require("node:child_process");
 var import_node_util4 = require("node:util");
 var execFileAsync = (0, import_node_util4.promisify)(import_node_child_process.execFile);
 var PROBE_ARCH = "setup-uv-probe";
-async function setupPythonArch(uvPath, pythonArchInput) {
-  const pythonArch = resolvePythonArch(pythonArchInput);
+async function setupPythonArch(uvPath, pythonArch, exportPythonArch) {
   if (pythonArch === "") {
     return;
   }
@@ -102265,7 +102261,7 @@ async function setupPythonArch(uvPath, pythonArchInput) {
       `Failed to set Python architecture to ${pythonArch}: ${selected.stderr.trim() || `uv exited with code ${selected.exitCode}`}`
     );
   }
-  if (pythonArchInput !== "") {
+  if (exportPythonArch) {
     exportVariable("UV_PYTHON_ARCH", pythonArch);
     info2(`Set UV_PYTHON_ARCH to ${pythonArch}`);
   }
@@ -102384,7 +102380,7 @@ async function run() {
       setupResult.uvDir,
       process.platform === "win32" ? "uv.exe" : "uv"
     );
-    await setupPythonArch(uvPath, inputs.pythonArch);
+    await setupPythonArch(uvPath, inputs.pythonArch, inputs.exportPythonArch);
     addToolBinToPath(inputs);
     addUvToPathAndOutput(setupResult.uvDir);
     setToolDir(inputs);

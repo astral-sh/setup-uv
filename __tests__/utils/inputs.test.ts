@@ -38,9 +38,7 @@ jest.unstable_mockModule("@actions/core", () => ({
   warning: mockWarning,
 }));
 
-const { CacheLocalSource, loadInputs, resolvePythonArch } = await import(
-  "../../src/utils/inputs"
-);
+const { CacheLocalSource, loadInputs } = await import("../../src/utils/inputs");
 
 function createTempProject(files: Record<string, string> = {}): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "setup-uv-inputs-test-"));
@@ -108,6 +106,7 @@ describe("loadInputs", () => {
     });
     expect(inputs.pythonDir).toBe("/runner-temp/uv-python-dir");
     expect(inputs.pythonArch).toBe("");
+    expect(inputs.exportPythonArch).toBe(false);
     expect(inputs.venvPath).toBe("/workspace/.venv");
     expect(inputs.manifestFile).toBeUndefined();
     expect(inputs.resolutionStrategy).toBe("highest");
@@ -166,7 +165,7 @@ describe("loadInputs", () => {
 
     const inputs = loadInputs();
     expect(inputs.pythonArch).toBe("x86_64");
-    expect(resolvePythonArch(inputs.pythonArch)).toBe("x86_64");
+    expect(inputs.exportPythonArch).toBe(true);
   });
 
   it.each(["aarch64", "x86_64_v3", ""])(
@@ -176,8 +175,8 @@ describe("loadInputs", () => {
       process.env.UV_PYTHON_ARCH = pythonArch;
 
       const inputs = loadInputs();
-      expect(inputs.pythonArch).toBe("");
-      expect(resolvePythonArch(inputs.pythonArch)).toBe(pythonArch);
+      expect(inputs.pythonArch).toBe(pythonArch);
+      expect(inputs.exportPythonArch).toBe(false);
     },
   );
 
