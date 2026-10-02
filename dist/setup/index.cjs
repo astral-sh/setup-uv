@@ -10833,7 +10833,7 @@ var require_mock_interceptor = __commonJS({
 var require_mock_client = __commonJS({
   "node_modules/@actions/http-client/node_modules/undici/lib/mock/mock-client.js"(exports2, module2) {
     "use strict";
-    var { promisify: promisify6 } = require("node:util");
+    var { promisify: promisify7 } = require("node:util");
     var Client = require_client();
     var { buildMockDispatch } = require_mock_utils();
     var {
@@ -10873,7 +10873,7 @@ var require_mock_client = __commonJS({
         return new MockInterceptor(opts, this[kDispatches]);
       }
       async [kClose]() {
-        await promisify6(this[kOriginalClose])();
+        await promisify7(this[kOriginalClose])();
         this[kConnected] = 0;
         this[kMockAgent][Symbols.kClients].delete(this[kOrigin]);
       }
@@ -10886,7 +10886,7 @@ var require_mock_client = __commonJS({
 var require_mock_pool = __commonJS({
   "node_modules/@actions/http-client/node_modules/undici/lib/mock/mock-pool.js"(exports2, module2) {
     "use strict";
-    var { promisify: promisify6 } = require("node:util");
+    var { promisify: promisify7 } = require("node:util");
     var Pool = require_pool();
     var { buildMockDispatch } = require_mock_utils();
     var {
@@ -10926,7 +10926,7 @@ var require_mock_pool = __commonJS({
         return new MockInterceptor(opts, this[kDispatches]);
       }
       async [kClose]() {
-        await promisify6(this[kOriginalClose])();
+        await promisify7(this[kOriginalClose])();
         this[kConnected] = 0;
         this[kMockAgent][Symbols.kClients].delete(this[kOrigin]);
       }
@@ -43099,7 +43099,7 @@ var require_mock_interceptor2 = __commonJS({
 var require_mock_client2 = __commonJS({
   "node_modules/undici/lib/mock/mock-client.js"(exports2, module2) {
     "use strict";
-    var { promisify: promisify6 } = require("node:util");
+    var { promisify: promisify7 } = require("node:util");
     var Client = require_client2();
     var { buildMockDispatch } = require_mock_utils2();
     var {
@@ -43147,7 +43147,7 @@ var require_mock_client2 = __commonJS({
         this[kDispatches] = [];
       }
       async [kClose]() {
-        await promisify6(this[kOriginalClose])();
+        await promisify7(this[kOriginalClose])();
         this[kConnected] = 0;
         this[kMockAgent][Symbols.kClients].delete(this[kOrigin]);
       }
@@ -43360,7 +43360,7 @@ var require_mock_call_history = __commonJS({
 var require_mock_pool2 = __commonJS({
   "node_modules/undici/lib/mock/mock-pool.js"(exports2, module2) {
     "use strict";
-    var { promisify: promisify6 } = require("node:util");
+    var { promisify: promisify7 } = require("node:util");
     var Pool = require_pool2();
     var { buildMockDispatch } = require_mock_utils2();
     var {
@@ -43408,7 +43408,7 @@ var require_mock_pool2 = __commonJS({
         this[kDispatches] = [];
       }
       async [kClose]() {
-        await promisify6(this[kOriginalClose])();
+        await promisify7(this[kOriginalClose])();
         this[kConnected] = 0;
         this[kMockAgent][Symbols.kClients].delete(this[kOrigin]);
       }
@@ -94038,11 +94038,12 @@ async function computeKeys(inputs, pythonVersion) {
   }
   const suffix = inputs.cacheSuffix ? `-${encodeURIComponent(inputs.cacheSuffix)}` : "";
   const version3 = encodeURIComponent(pythonVersion ?? "unknown");
+  const pythonArchKey = inputs.pythonArch ? `-python-${encodeURIComponent(inputs.pythonArch)}` : "";
   const platform2 = await getPlatform();
   const osNameVersion = getOSNameVersion();
   const pruned = inputs.pruneCache ? "-pruned" : "";
   const python = inputs.cachePython ? "-py" : "";
-  return `setup-uv-${CACHE_VERSION}-${getArch()}-${platform2}-${osNameVersion}-${version3}${pruned}${python}${cacheDependencyPathHash}${suffix}`;
+  return `setup-uv-${CACHE_VERSION}-${getArch()}-${platform2}-${osNameVersion}-${version3}${pythonArchKey}${pruned}${python}${cacheDependencyPathHash}${suffix}`;
 }
 function handleMatchResult(matchedKey, primaryKey, stateKey, outputKey) {
   if (!matchedKey) {
@@ -101972,6 +101973,9 @@ function loadInputs() {
   const version3 = getInput("version");
   const versionFile = getVersionFile(workingDirectory);
   const pythonVersion = getPythonVersion(versionFile);
+  const pythonArchInput = getInput("python-arch");
+  const pythonArch = pythonArchInput || process.env.UV_PYTHON_ARCH || "";
+  const exportPythonArch = pythonArchInput !== "";
   const activateEnvironment2 = getBooleanInput("activate-environment");
   const noProject = getBooleanInput("no-project");
   const venvPath = getVenvPath(workingDirectory, activateEnvironment2);
@@ -102009,12 +102013,14 @@ function loadInputs() {
     checksum,
     downloadFromAstralMirror,
     enableCache,
+    exportPythonArch,
     githubToken,
     ignoreEmptyWorkdir,
     ignoreNothingToCache,
     manifestFile,
     noProject,
     pruneCache,
+    pythonArch,
     pythonDir,
     pythonVersion,
     quiet: quiet2,
@@ -102263,16 +102269,68 @@ function getResolutionStrategy() {
   );
 }
 
-// src/utils/python-runtime.ts
+// src/utils/python-arch.ts
 var import_node_child_process = require("node:child_process");
 var import_node_util4 = require("node:util");
 var execFileAsync = (0, import_node_util4.promisify)(import_node_child_process.execFile);
+var PROBE_ARCH = "setup-uv-probe";
+async function setupPythonArch(uvPath, pythonArch, exportPythonArch) {
+  if (pythonArch === "") {
+    return;
+  }
+  const probe = await queryPythonArch(uvPath, PROBE_ARCH);
+  if (probe.exitCode === 0) {
+    throw new Error(
+      "The installed version of uv does not support UV_PYTHON_ARCH. Select a newer uv version or use an architecture-qualified python-version."
+    );
+  }
+  if (!probe.stderr.includes(
+    `environment variable \`UV_PYTHON_ARCH\` with invalid value \`${PROBE_ARCH}\``
+  )) {
+    throw new Error(
+      `Failed to check uv's support for UV_PYTHON_ARCH: ${probe.stderr.trim() || `uv exited with code ${probe.exitCode}`}`
+    );
+  }
+  const selected = await queryPythonArch(uvPath, pythonArch);
+  if (selected.exitCode !== 0) {
+    throw new Error(
+      `Failed to set Python architecture to ${pythonArch}: ${selected.stderr.trim() || `uv exited with code ${selected.exitCode}`}`
+    );
+  }
+  if (exportPythonArch) {
+    exportVariable("UV_PYTHON_ARCH", pythonArch);
+    info2(`Set UV_PYTHON_ARCH to ${pythonArch}`);
+  }
+}
+async function queryPythonArch(uvPath, pythonArch) {
+  try {
+    const { stderr } = await execFileAsync(
+      uvPath,
+      ["--no-config", "cache", "dir"],
+      {
+        encoding: "utf8",
+        env: { ...process.env, NO_COLOR: "1", UV_PYTHON_ARCH: pythonArch }
+      }
+    );
+    return { exitCode: 0, stderr };
+  } catch (error2) {
+    if (error2 instanceof Error && "code" in error2 && typeof error2.code === "number" && "stderr" in error2 && typeof error2.stderr === "string") {
+      return { exitCode: error2.code, stderr: error2.stderr };
+    }
+    throw error2;
+  }
+}
+
+// src/utils/python-runtime.ts
+var import_node_child_process2 = require("node:child_process");
+var import_node_util5 = require("node:util");
+var execFileAsync2 = (0, import_node_util5.promisify)(import_node_child_process2.execFile);
 async function getPythonRuntimeId(inputs) {
   if (!inputs.activateEnvironment) {
     return "";
   }
   try {
-    const { stdout } = await execFileAsync(
+    const { stdout } = await execFileAsync2(
       "uv",
       [
         "python",
@@ -102354,6 +102412,11 @@ async function run() {
       throw new Error(`Unsupported architecture: ${process.arch}`);
     }
     const setupResult = await setupUv(inputs, platform2, arch3);
+    const uvPath = path17.join(
+      setupResult.uvDir,
+      process.platform === "win32" ? "uv.exe" : "uv"
+    );
+    await setupPythonArch(uvPath, inputs.pythonArch, inputs.exportPythonArch);
     addToolBinToPath(inputs);
     addUvToPathAndOutput(setupResult.uvDir);
     setToolDir(inputs);

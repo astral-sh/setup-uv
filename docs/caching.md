@@ -11,6 +11,7 @@ The cache key is automatically generated based on:
   `pc-windows-msvc`)
 - **OS version**: OS name and version (e.g., `ubuntu-22.04`, `macos-14`, `windows-2022`)
 - **Python version**: The Python version in use
+- **Python architecture**: The architecture selected by `python-arch` or `UV_PYTHON_ARCH`, when set
 - **Cache options**: Whether pruning and Python caching are enabled
 - **Dependency hash**: Hash of files matching `cache-dependency-glob`
 - **Suffix**: Optional `cache-suffix` if provided

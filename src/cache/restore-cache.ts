@@ -98,11 +98,14 @@ async function computeKeys(
     ? `-${encodeURIComponent(inputs.cacheSuffix)}`
     : "";
   const version = encodeURIComponent(pythonVersion ?? "unknown");
+  const pythonArchKey = inputs.pythonArch
+    ? `-python-${encodeURIComponent(inputs.pythonArch)}`
+    : "";
   const platform = await getPlatform();
   const osNameVersion = getOSNameVersion();
   const pruned = inputs.pruneCache ? "-pruned" : "";
   const python = inputs.cachePython ? "-py" : "";
-  return `setup-uv-${CACHE_VERSION}-${getArch()}-${platform}-${osNameVersion}-${version}${pruned}${python}${cacheDependencyPathHash}${suffix}`;
+  return `setup-uv-${CACHE_VERSION}-${getArch()}-${platform}-${osNameVersion}-${version}${pythonArchKey}${pruned}${python}${cacheDependencyPathHash}${suffix}`;
 }
 
 function handleMatchResult(
