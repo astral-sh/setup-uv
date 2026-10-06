@@ -71,4 +71,14 @@ describe("restoreCache", () => {
       "setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.11-dependencyhash-tests-3.11",
     );
   });
+
+  it("uses the cache key prefix as a restore key", async () => {
+    await restoreCache(createSetupInputs({ restoreCache: true }), "3.11");
+
+    expect(mockRestoreCache).toHaveBeenCalledWith(
+      ["/tmp/setup-uv-cache"],
+      "setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.11-dependencyhash",
+      ["setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.11"],
+    );
+  });
 });
