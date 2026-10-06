@@ -11,13 +11,18 @@ export const STATE_PYTHON_CACHE_MATCHED_KEY = "python-cache-matched-key";
 
 const CACHE_VERSION = "2";
 
+interface CacheKeys {
+  primary: string;
+  restore: string;
+}
+
 export async function restoreCache(
   inputs: SetupInputs,
   pythonVersion?: string,
 ): Promise<void> {
-  const cacheKey = await computeKeys(inputs, pythonVersion);
-  core.saveState(STATE_CACHE_KEY, cacheKey);
-  core.setOutput("cache-key", cacheKey);
+  const cacheKeys = await computeKeys(inputs, pythonVersion);
+  core.saveState(STATE_CACHE_KEY, cacheKeys.primary);
+  core.setOutput("cache-key", cacheKeys.primary);
 
   if (!inputs.restoreCache) {
     log.info("restore-cache is false. Skipping restore cache step.");
@@ -32,7 +37,8 @@ export async function restoreCache(
   }
 
   await restoreCacheFromKey(
-    cacheKey,
+    cacheKeys.primary,
+    cacheKeys.restore,
     inputs.cacheLocalPath.path,
     STATE_CACHE_MATCHED_KEY,
     "cache-hit",
@@ -40,7 +46,8 @@ export async function restoreCache(
 
   if (inputs.cachePython) {
     await restoreCacheFromKey(
-      `${cacheKey}-python`,
+      `${cacheKeys.primary}-python`,
+      undefined,
       inputs.pythonDir,
       STATE_PYTHON_CACHE_MATCHED_KEY,
       "python-cache-hit",
@@ -52,6 +59,7 @@ export async function restoreCache(
 
 async function restoreCacheFromKey(
   cacheKey: string,
+  restoreKey: string | undefined,
   cachePath: string,
   stateKey: string,
   outputKey: string,
@@ -61,7 +69,11 @@ async function restoreCacheFromKey(
   );
   let matchedKey: string | undefined;
   try {
-    matchedKey = await cache.restoreCache([cachePath], cacheKey);
+    matchedKey = await cache.restoreCache(
+      [cachePath],
+      cacheKey,
+      restoreKey === undefined ? undefined : [restoreKey],
+    );
   } catch (err) {
     const message = (err as Error).message;
     log.warning(message);
@@ -75,7 +87,7 @@ async function restoreCacheFromKey(
 async function computeKeys(
   inputs: SetupInputs,
   pythonVersion?: string,
-): Promise<string> {
+): Promise<CacheKeys> {
   let cacheDependencyPathHash = "-";
   if (inputs.cacheDependencyGlob !== "") {
     log.info(
@@ -102,7 +114,11 @@ async function computeKeys(
   const osNameVersion = getOSNameVersion();
   const pruned = inputs.pruneCache ? "-pruned" : "";
   const python = inputs.cachePython ? "-py" : "";
-  return `setup-uv-${CACHE_VERSION}-${getArch()}-${platform}-${osNameVersion}-${version}${pruned}${python}${cacheDependencyPathHash}${suffix}`;
+  const restore = `setup-uv-${CACHE_VERSION}-${getArch()}-${platform}-${osNameVersion}-${version}${pruned}${python}`;
+  return {
+    primary: `${restore}${cacheDependencyPathHash}${suffix}`,
+    restore,
+  };
 }
 
 function handleMatchResult(
