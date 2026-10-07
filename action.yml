@@ -100,7 +100,9 @@ outputs:
   uvx-path:
     description: "The path to the installed uvx binary."
   cache-hit:
-    description: "A boolean value to indicate a cache entry was found"
+    description: "A boolean value to indicate the primary cache key matched exactly"
+  cache-matched-key:
+    description: "The cache key that was actually restored, including restore-key matches"
   cache-key:
     description: "The cache key used for storing/restoring the cache"
   venv:

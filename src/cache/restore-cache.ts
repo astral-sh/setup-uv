@@ -42,6 +42,7 @@ export async function restoreCache(
     inputs.cacheLocalPath.path,
     STATE_CACHE_MATCHED_KEY,
     "cache-hit",
+    "cache-matched-key",
   );
 
   if (inputs.cachePython) {
@@ -51,6 +52,7 @@ export async function restoreCache(
       inputs.pythonDir,
       STATE_PYTHON_CACHE_MATCHED_KEY,
       "python-cache-hit",
+      undefined,
     );
   } else {
     core.setOutput("python-cache-hit", false);
@@ -63,6 +65,7 @@ async function restoreCacheFromKey(
   cachePath: string,
   stateKey: string,
   outputKey: string,
+  matchedKeyOutputKey: string | undefined,
 ): Promise<void> {
   log.info(
     `Trying to restore cache from GitHub Actions cache with key: ${cacheKey}`,
@@ -78,10 +81,19 @@ async function restoreCacheFromKey(
     const message = (err as Error).message;
     log.warning(message);
     core.setOutput(outputKey, false);
+    if (matchedKeyOutputKey !== undefined) {
+      core.setOutput(matchedKeyOutputKey, "");
+    }
     return;
   }
 
-  handleMatchResult(matchedKey, cacheKey, stateKey, outputKey);
+  handleMatchResult(
+    matchedKey,
+    cacheKey,
+    stateKey,
+    outputKey,
+    matchedKeyOutputKey,
+  );
 }
 
 async function computeKeys(
@@ -126,14 +138,23 @@ function handleMatchResult(
   primaryKey: string,
   stateKey: string,
   outputKey: string,
+  matchedKeyOutputKey: string | undefined,
 ): void {
   if (!matchedKey) {
     log.info(`No GitHub Actions cache found for key: ${primaryKey}`);
     core.setOutput(outputKey, false);
+    if (matchedKeyOutputKey !== undefined) {
+      core.setOutput(matchedKeyOutputKey, "");
+    }
     return;
   }
 
   core.saveState(stateKey, matchedKey);
   log.info(`cache restored from GitHub Actions cache with key: ${matchedKey}`);
-  core.setOutput(outputKey, true);
+  if (matchedKeyOutputKey !== undefined) {
+    core.setOutput(matchedKeyOutputKey, matchedKey);
+  }
+  // cache-hit is true only for an exact match. A restore-key match is useful,
+  // but callers may still need to perform work before saving a new cache.
+  core.setOutput(outputKey, matchedKey === primaryKey);
 }

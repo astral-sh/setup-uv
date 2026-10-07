@@ -37,6 +37,13 @@ function cacheKeyOutput(): string {
   return call?.[1] as string;
 }
 
+function output(name: string): unknown {
+  const call = mockSetOutput.mock.calls.find(
+    ([outputName]) => outputName === name,
+  );
+  return call?.[1];
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
 });
@@ -80,5 +87,27 @@ describe("restoreCache", () => {
       "setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.11-dependencyhash",
       ["setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.11"],
     );
+  });
+
+  it("reports the matched key and keeps cache-hit false for a restore-key match", async () => {
+    const matchedKey =
+      "setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.11-oldhash";
+    mockRestoreCache.mockResolvedValueOnce(matchedKey);
+
+    await restoreCache(createSetupInputs({ restoreCache: true }), "3.11");
+
+    expect(output("cache-matched-key")).toBe(matchedKey);
+    expect(output("cache-hit")).toBe(false);
+  });
+
+  it("reports cache-hit true for an exact cache-key match", async () => {
+    const primaryKey =
+      "setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.11-dependencyhash";
+    mockRestoreCache.mockResolvedValueOnce(primaryKey);
+
+    await restoreCache(createSetupInputs({ restoreCache: true }), "3.11");
+
+    expect(output("cache-matched-key")).toBe(primaryKey);
+    expect(output("cache-hit")).toBe(true);
   });
 });
