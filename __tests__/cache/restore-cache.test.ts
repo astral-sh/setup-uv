@@ -75,7 +75,7 @@ describe("restoreCache", () => {
     await restoreCache(inputs, "3.11");
 
     expect(cacheKeyOutput()).toBe(
-      "setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.11-dependencyhash-tests-3.11",
+      "setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.11-tests-3.11-dependencyhash",
     );
   });
 
@@ -85,7 +85,27 @@ describe("restoreCache", () => {
     expect(mockRestoreCache).toHaveBeenCalledWith(
       ["/tmp/setup-uv-cache"],
       "setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.11-dependencyhash",
-      ["setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.11"],
+      ["setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.11-"],
+    );
+  });
+
+  it("uses a suffix-aware restore key for Python caches", async () => {
+    await restoreCache(
+      createSetupInputs({
+        cachePython: true,
+        cacheSuffix: "project-a",
+        restoreCache: true,
+      }),
+      "3.11",
+    );
+
+    expect(mockRestoreCache).toHaveBeenNthCalledWith(
+      2,
+      ["/tmp/uv-python-dir"],
+      "setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.11-py-project-a-python-dependencyhash",
+      [
+        "setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.11-py-project-a-python-",
+      ],
     );
   });
 

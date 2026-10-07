@@ -7,6 +7,7 @@ import { getArch, getOSNameVersion, getPlatform } from "../utils/platforms";
 
 export const STATE_CACHE_KEY = "cache-key";
 export const STATE_CACHE_MATCHED_KEY = "cache-matched-key";
+export const STATE_PYTHON_CACHE_KEY = "python-cache-key";
 export const STATE_PYTHON_CACHE_MATCHED_KEY = "python-cache-matched-key";
 
 const CACHE_VERSION = "2";
@@ -14,6 +15,10 @@ const CACHE_VERSION = "2";
 interface CacheKeys {
   primary: string;
   restore: string;
+  python?: {
+    primary: string;
+    restore: string;
+  };
 }
 
 export async function restoreCache(
@@ -46,9 +51,14 @@ export async function restoreCache(
   );
 
   if (inputs.cachePython) {
+    const pythonCacheKeys = cacheKeys.python;
+    if (pythonCacheKeys === undefined) {
+      throw new Error("Python cache keys are missing");
+    }
+    core.saveState(STATE_PYTHON_CACHE_KEY, pythonCacheKeys.primary);
     await restoreCacheFromKey(
-      `${cacheKeys.primary}-python`,
-      undefined,
+      pythonCacheKeys.primary,
+      pythonCacheKeys.restore,
       inputs.pythonDir,
       STATE_PYTHON_CACHE_MATCHED_KEY,
       "python-cache-hit",
@@ -126,10 +136,20 @@ async function computeKeys(
   const osNameVersion = getOSNameVersion();
   const pruned = inputs.pruneCache ? "-pruned" : "";
   const python = inputs.cachePython ? "-py" : "";
-  const restore = `setup-uv-${CACHE_VERSION}-${getArch()}-${platform}-${osNameVersion}-${version}${pruned}${python}`;
+  const restore = `setup-uv-${CACHE_VERSION}-${getArch()}-${platform}-${osNameVersion}-${version}${pruned}${python}${suffix}-`;
+  const dependencyHash = cacheDependencyPathHash.slice(1);
+  const primary = `${restore}${dependencyHash}`;
   return {
-    primary: `${restore}${cacheDependencyPathHash}${suffix}`,
+    primary,
     restore,
+    ...(inputs.cachePython
+      ? {
+          python: {
+            primary: `${restore}python-${dependencyHash}`,
+            restore: `${restore}python-`,
+          },
+        }
+      : {}),
   };
 }
 

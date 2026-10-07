@@ -93969,6 +93969,7 @@ function getWindowsNameVersion() {
 // src/cache/restore-cache.ts
 var STATE_CACHE_KEY = "cache-key";
 var STATE_CACHE_MATCHED_KEY = "cache-matched-key";
+var STATE_PYTHON_CACHE_KEY = "python-cache-key";
 var STATE_PYTHON_CACHE_MATCHED_KEY = "python-cache-matched-key";
 var CACHE_VERSION = "2";
 async function restoreCache2(inputs, pythonVersion) {
@@ -93994,9 +93995,14 @@ async function restoreCache2(inputs, pythonVersion) {
     "cache-matched-key"
   );
   if (inputs.cachePython) {
+    const pythonCacheKeys = cacheKeys.python;
+    if (pythonCacheKeys === void 0) {
+      throw new Error("Python cache keys are missing");
+    }
+    saveState(STATE_PYTHON_CACHE_KEY, pythonCacheKeys.primary);
     await restoreCacheFromKey(
-      `${cacheKeys.primary}-python`,
-      void 0,
+      pythonCacheKeys.primary,
+      pythonCacheKeys.restore,
       inputs.pythonDir,
       STATE_PYTHON_CACHE_MATCHED_KEY,
       "python-cache-hit",
@@ -94059,10 +94065,18 @@ async function computeKeys(inputs, pythonVersion) {
   const osNameVersion = getOSNameVersion();
   const pruned = inputs.pruneCache ? "-pruned" : "";
   const python = inputs.cachePython ? "-py" : "";
-  const restore = `setup-uv-${CACHE_VERSION}-${getArch()}-${platform2}-${osNameVersion}-${version3}${pruned}${python}`;
+  const restore = `setup-uv-${CACHE_VERSION}-${getArch()}-${platform2}-${osNameVersion}-${version3}${pruned}${python}${suffix}-`;
+  const dependencyHash = cacheDependencyPathHash.slice(1);
+  const primary = `${restore}${dependencyHash}`;
   return {
-    primary: `${restore}${cacheDependencyPathHash}${suffix}`,
-    restore
+    primary,
+    restore,
+    ...inputs.cachePython ? {
+      python: {
+        primary: `${restore}python-${dependencyHash}`,
+        restore: `${restore}python-`
+      }
+    } : {}
   };
 }
 function handleMatchResult(matchedKey, primaryKey, stateKey, outputKey, matchedKeyOutputKey) {

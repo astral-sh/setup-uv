@@ -63717,6 +63717,7 @@ var warning2 = warning;
 // src/cache/restore-cache.ts
 var STATE_CACHE_KEY = "cache-key";
 var STATE_CACHE_MATCHED_KEY = "cache-matched-key";
+var STATE_PYTHON_CACHE_KEY = "python-cache-key";
 var STATE_PYTHON_CACHE_MATCHED_KEY = "python-cache-matched-key";
 
 // src/utils/constants.ts
@@ -64812,7 +64813,11 @@ async function saveCache3(inputs) {
       );
       return;
     }
-    const pythonCacheKey = `${cacheKey}-python`;
+    const pythonCacheKey = getState(STATE_PYTHON_CACHE_KEY);
+    if (!pythonCacheKey) {
+      warning2("Error retrieving Python cache key from state.");
+      return;
+    }
     await saveCacheToKey(
       pythonCacheKey,
       inputs.pythonDir,
