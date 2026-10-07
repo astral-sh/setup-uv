@@ -93976,6 +93976,9 @@ async function restoreCache2(inputs, pythonVersion) {
   const cacheKeys = await computeKeys(inputs, pythonVersion);
   saveState(STATE_CACHE_KEY, cacheKeys.primary);
   setOutput("cache-key", cacheKeys.primary);
+  if (inputs.cachePython && cacheKeys.python !== void 0) {
+    saveState(STATE_PYTHON_CACHE_KEY, cacheKeys.python.primary);
+  }
   if (!inputs.restoreCache) {
     info2("restore-cache is false. Skipping restore cache step.");
     setOutput("python-cache-hit", false);
@@ -93999,7 +94002,6 @@ async function restoreCache2(inputs, pythonVersion) {
     if (pythonCacheKeys === void 0) {
       throw new Error("Python cache keys are missing");
     }
-    saveState(STATE_PYTHON_CACHE_KEY, pythonCacheKeys.primary);
     await restoreCacheFromKey(
       pythonCacheKeys.primary,
       pythonCacheKeys.restore,

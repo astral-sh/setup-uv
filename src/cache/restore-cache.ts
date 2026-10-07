@@ -28,6 +28,9 @@ export async function restoreCache(
   const cacheKeys = await computeKeys(inputs, pythonVersion);
   core.saveState(STATE_CACHE_KEY, cacheKeys.primary);
   core.setOutput("cache-key", cacheKeys.primary);
+  if (inputs.cachePython && cacheKeys.python !== undefined) {
+    core.saveState(STATE_PYTHON_CACHE_KEY, cacheKeys.python.primary);
+  }
 
   if (!inputs.restoreCache) {
     log.info("restore-cache is false. Skipping restore cache step.");
@@ -55,7 +58,6 @@ export async function restoreCache(
     if (pythonCacheKeys === undefined) {
       throw new Error("Python cache keys are missing");
     }
-    core.saveState(STATE_PYTHON_CACHE_KEY, pythonCacheKeys.primary);
     await restoreCacheFromKey(
       pythonCacheKeys.primary,
       pythonCacheKeys.restore,
