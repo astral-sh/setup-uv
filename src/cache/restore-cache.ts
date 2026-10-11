@@ -134,11 +134,14 @@ async function computeKeys(
     ? `-${encodeURIComponent(inputs.cacheSuffix)}`
     : "";
   const version = encodeURIComponent(pythonVersion ?? "unknown");
+  const pythonArchKey = inputs.pythonArch
+    ? `-python-${encodeURIComponent(inputs.pythonArch)}`
+    : "";
   const platform = await getPlatform();
   const osNameVersion = getOSNameVersion();
   const pruned = inputs.pruneCache ? "-pruned" : "";
   const python = inputs.cachePython ? "-py" : "";
-  const restore = `setup-uv-${CACHE_VERSION}-${getArch()}-${platform}-${osNameVersion}-${version}${pruned}${python}${suffix}-`;
+  const restore = `setup-uv-${CACHE_VERSION}-${getArch()}-${platform}-${osNameVersion}-${version}${pythonArchKey}${pruned}${python}${suffix}-`;
   const dependencyHash = cacheDependencyPathHash.slice(1);
   const primary = `${restore}${dependencyHash}`;
   return {

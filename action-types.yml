@@ -7,6 +7,8 @@ inputs:
     type: string
   python-version:
     type: string
+  python-arch:
+    type: string
   activate-environment:
     type: boolean
   venv-path:
