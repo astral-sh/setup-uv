@@ -81,7 +81,7 @@ Have a look under [Advanced Configuration](#advanced-configuration) for detailed
     # Enable the GitHub Actions cache for uv: true, false, or auto (enabled on GitHub-hosted runners except for release, tag push, pull_request_target, and workflow_run events; disabled on self-hosted runners)
     enable-cache: "auto"
 
-    # Glob pattern to match files relative to the repository root to control the cache
+    # Glob pattern to match files relative to the working directory to control the cache
     cache-dependency-glob: |
       **/*requirements*.txt
       **/*requirements*.in
