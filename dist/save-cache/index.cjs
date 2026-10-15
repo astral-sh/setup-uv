@@ -5,6 +5,7 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 var __commonJS = (cb, mod) => function __require() {
   try {
     return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
@@ -54,6 +55,7 @@ var require_tunnel = __commonJS({
       agent.request = http3.request;
       return agent;
     }
+    __name(httpOverHttp2, "httpOverHttp");
     function httpsOverHttp2(options) {
       var agent = new TunnelingAgent(options);
       agent.request = http3.request;
@@ -61,11 +63,13 @@ var require_tunnel = __commonJS({
       agent.defaultPort = 443;
       return agent;
     }
+    __name(httpsOverHttp2, "httpsOverHttp");
     function httpOverHttps2(options) {
       var agent = new TunnelingAgent(options);
       agent.request = https3.request;
       return agent;
     }
+    __name(httpOverHttps2, "httpOverHttps");
     function httpsOverHttps2(options) {
       var agent = new TunnelingAgent(options);
       agent.request = https3.request;
@@ -73,6 +77,7 @@ var require_tunnel = __commonJS({
       agent.defaultPort = 443;
       return agent;
     }
+    __name(httpsOverHttps2, "httpsOverHttps");
     function TunnelingAgent(options) {
       var self2 = this;
       self2.options = options || {};
@@ -80,7 +85,7 @@ var require_tunnel = __commonJS({
       self2.maxSockets = self2.options.maxSockets || http3.Agent.defaultMaxSockets;
       self2.requests = [];
       self2.sockets = [];
-      self2.on("free", function onFree(socket, host, port, localAddress) {
+      self2.on("free", /* @__PURE__ */ __name(function onFree(socket, host, port, localAddress) {
         var options2 = toOptions(host, port, localAddress);
         for (var i = 0, len = self2.requests.length; i < len; ++i) {
           var pending = self2.requests[i];
@@ -92,10 +97,11 @@ var require_tunnel = __commonJS({
         }
         socket.destroy();
         self2.removeSocket(socket);
-      });
+      }, "onFree"));
     }
+    __name(TunnelingAgent, "TunnelingAgent");
     util4.inherits(TunnelingAgent, events2.EventEmitter);
-    TunnelingAgent.prototype.addRequest = function addRequest(req, host, port, localAddress) {
+    TunnelingAgent.prototype.addRequest = /* @__PURE__ */ __name(function addRequest(req, host, port, localAddress) {
       var self2 = this;
       var options = mergeOptions({ request: req }, self2.options, toOptions(host, port, localAddress));
       if (self2.sockets.length >= this.maxSockets) {
@@ -110,15 +116,17 @@ var require_tunnel = __commonJS({
         function onFree() {
           self2.emit("free", socket, options);
         }
+        __name(onFree, "onFree");
         function onCloseOrRemove(err) {
           self2.removeSocket(socket);
           socket.removeListener("free", onFree);
           socket.removeListener("close", onCloseOrRemove);
           socket.removeListener("agentRemove", onCloseOrRemove);
         }
+        __name(onCloseOrRemove, "onCloseOrRemove");
       });
-    };
-    TunnelingAgent.prototype.createSocket = function createSocket(options, cb) {
+    }, "addRequest");
+    TunnelingAgent.prototype.createSocket = /* @__PURE__ */ __name(function createSocket(options, cb) {
       var self2 = this;
       var placeholder = {};
       self2.sockets.push(placeholder);
@@ -148,11 +156,13 @@ var require_tunnel = __commonJS({
       function onResponse(res) {
         res.upgrade = true;
       }
+      __name(onResponse, "onResponse");
       function onUpgrade(res, socket, head) {
         process.nextTick(function() {
           onConnect(res, socket, head);
         });
       }
+      __name(onUpgrade, "onUpgrade");
       function onConnect(res, socket, head) {
         connectReq.removeAllListeners();
         socket.removeAllListeners();
@@ -181,6 +191,7 @@ var require_tunnel = __commonJS({
         self2.sockets[self2.sockets.indexOf(placeholder)] = socket;
         return cb(socket);
       }
+      __name(onConnect, "onConnect");
       function onError(cause) {
         connectReq.removeAllListeners();
         debug3(
@@ -193,8 +204,9 @@ var require_tunnel = __commonJS({
         options.request.emit("error", error2);
         self2.removeSocket(placeholder);
       }
-    };
-    TunnelingAgent.prototype.removeSocket = function removeSocket(socket) {
+      __name(onError, "onError");
+    }, "createSocket");
+    TunnelingAgent.prototype.removeSocket = /* @__PURE__ */ __name(function removeSocket(socket) {
       var pos = this.sockets.indexOf(socket);
       if (pos === -1) {
         return;
@@ -206,7 +218,7 @@ var require_tunnel = __commonJS({
           pending.request.onSocket(socket2);
         });
       }
-    };
+    }, "removeSocket");
     function createSecureSocket(options, cb) {
       var self2 = this;
       TunnelingAgent.prototype.createSocket.call(self2, options, function(socket) {
@@ -220,6 +232,7 @@ var require_tunnel = __commonJS({
         cb(secureSocket);
       });
     }
+    __name(createSecureSocket, "createSecureSocket");
     function toOptions(host, port, localAddress) {
       if (typeof host === "string") {
         return {
@@ -230,6 +243,7 @@ var require_tunnel = __commonJS({
       }
       return host;
     }
+    __name(toOptions, "toOptions");
     function mergeOptions(target) {
       for (var i = 1, len = arguments.length; i < len; ++i) {
         var overrides = arguments[i];
@@ -245,9 +259,10 @@ var require_tunnel = __commonJS({
       }
       return target;
     }
+    __name(mergeOptions, "mergeOptions");
     var debug3;
     if (process.env.NODE_DEBUG && /\btunnel\b/.test(process.env.NODE_DEBUG)) {
-      debug3 = function() {
+      debug3 = /* @__PURE__ */ __name(function() {
         var args = Array.prototype.slice.call(arguments);
         if (typeof args[0] === "string") {
           args[0] = "TUNNEL: " + args[0];
@@ -255,10 +270,10 @@ var require_tunnel = __commonJS({
           args.unshift("TUNNEL:");
         }
         console.error.apply(console, args);
-      };
+      }, "debug");
     } else {
-      debug3 = function() {
-      };
+      debug3 = /* @__PURE__ */ __name(function() {
+      }, "debug");
     }
     exports2.debug = debug3;
   }
@@ -350,6 +365,9 @@ var require_errors = __commonJS({
     "use strict";
     var kUndiciError = /* @__PURE__ */ Symbol.for("undici.error.UND_ERR");
     var UndiciError = class extends Error {
+      static {
+        __name(this, "UndiciError");
+      }
       constructor(message) {
         super(message);
         this.name = "UndiciError";
@@ -362,6 +380,9 @@ var require_errors = __commonJS({
     };
     var kConnectTimeoutError = /* @__PURE__ */ Symbol.for("undici.error.UND_ERR_CONNECT_TIMEOUT");
     var ConnectTimeoutError = class extends UndiciError {
+      static {
+        __name(this, "ConnectTimeoutError");
+      }
       constructor(message) {
         super(message);
         this.name = "ConnectTimeoutError";
@@ -375,6 +396,9 @@ var require_errors = __commonJS({
     };
     var kHeadersTimeoutError = /* @__PURE__ */ Symbol.for("undici.error.UND_ERR_HEADERS_TIMEOUT");
     var HeadersTimeoutError = class extends UndiciError {
+      static {
+        __name(this, "HeadersTimeoutError");
+      }
       constructor(message) {
         super(message);
         this.name = "HeadersTimeoutError";
@@ -388,6 +412,9 @@ var require_errors = __commonJS({
     };
     var kHeadersOverflowError = /* @__PURE__ */ Symbol.for("undici.error.UND_ERR_HEADERS_OVERFLOW");
     var HeadersOverflowError = class extends UndiciError {
+      static {
+        __name(this, "HeadersOverflowError");
+      }
       constructor(message) {
         super(message);
         this.name = "HeadersOverflowError";
@@ -401,6 +428,9 @@ var require_errors = __commonJS({
     };
     var kBodyTimeoutError = /* @__PURE__ */ Symbol.for("undici.error.UND_ERR_BODY_TIMEOUT");
     var BodyTimeoutError = class extends UndiciError {
+      static {
+        __name(this, "BodyTimeoutError");
+      }
       constructor(message) {
         super(message);
         this.name = "BodyTimeoutError";
@@ -414,6 +444,9 @@ var require_errors = __commonJS({
     };
     var kResponseStatusCodeError = /* @__PURE__ */ Symbol.for("undici.error.UND_ERR_RESPONSE_STATUS_CODE");
     var ResponseStatusCodeError = class extends UndiciError {
+      static {
+        __name(this, "ResponseStatusCodeError");
+      }
       constructor(message, statusCode, headers, body2) {
         super(message);
         this.name = "ResponseStatusCodeError";
@@ -431,6 +464,9 @@ var require_errors = __commonJS({
     };
     var kInvalidArgumentError = /* @__PURE__ */ Symbol.for("undici.error.UND_ERR_INVALID_ARG");
     var InvalidArgumentError = class extends UndiciError {
+      static {
+        __name(this, "InvalidArgumentError");
+      }
       constructor(message) {
         super(message);
         this.name = "InvalidArgumentError";
@@ -444,6 +480,9 @@ var require_errors = __commonJS({
     };
     var kInvalidReturnValueError = /* @__PURE__ */ Symbol.for("undici.error.UND_ERR_INVALID_RETURN_VALUE");
     var InvalidReturnValueError = class extends UndiciError {
+      static {
+        __name(this, "InvalidReturnValueError");
+      }
       constructor(message) {
         super(message);
         this.name = "InvalidReturnValueError";
@@ -457,6 +496,9 @@ var require_errors = __commonJS({
     };
     var kAbortError = /* @__PURE__ */ Symbol.for("undici.error.UND_ERR_ABORT");
     var AbortError3 = class extends UndiciError {
+      static {
+        __name(this, "AbortError");
+      }
       constructor(message) {
         super(message);
         this.name = "AbortError";
@@ -470,6 +512,9 @@ var require_errors = __commonJS({
     };
     var kRequestAbortedError = /* @__PURE__ */ Symbol.for("undici.error.UND_ERR_ABORTED");
     var RequestAbortedError = class extends AbortError3 {
+      static {
+        __name(this, "RequestAbortedError");
+      }
       constructor(message) {
         super(message);
         this.name = "AbortError";
@@ -483,6 +528,9 @@ var require_errors = __commonJS({
     };
     var kInformationalError = /* @__PURE__ */ Symbol.for("undici.error.UND_ERR_INFO");
     var InformationalError = class extends UndiciError {
+      static {
+        __name(this, "InformationalError");
+      }
       constructor(message) {
         super(message);
         this.name = "InformationalError";
@@ -496,6 +544,9 @@ var require_errors = __commonJS({
     };
     var kRequestContentLengthMismatchError = /* @__PURE__ */ Symbol.for("undici.error.UND_ERR_REQ_CONTENT_LENGTH_MISMATCH");
     var RequestContentLengthMismatchError = class extends UndiciError {
+      static {
+        __name(this, "RequestContentLengthMismatchError");
+      }
       constructor(message) {
         super(message);
         this.name = "RequestContentLengthMismatchError";
@@ -509,6 +560,9 @@ var require_errors = __commonJS({
     };
     var kResponseContentLengthMismatchError = /* @__PURE__ */ Symbol.for("undici.error.UND_ERR_RES_CONTENT_LENGTH_MISMATCH");
     var ResponseContentLengthMismatchError = class extends UndiciError {
+      static {
+        __name(this, "ResponseContentLengthMismatchError");
+      }
       constructor(message) {
         super(message);
         this.name = "ResponseContentLengthMismatchError";
@@ -522,6 +576,9 @@ var require_errors = __commonJS({
     };
     var kClientDestroyedError = /* @__PURE__ */ Symbol.for("undici.error.UND_ERR_DESTROYED");
     var ClientDestroyedError = class extends UndiciError {
+      static {
+        __name(this, "ClientDestroyedError");
+      }
       constructor(message) {
         super(message);
         this.name = "ClientDestroyedError";
@@ -535,6 +592,9 @@ var require_errors = __commonJS({
     };
     var kClientClosedError = /* @__PURE__ */ Symbol.for("undici.error.UND_ERR_CLOSED");
     var ClientClosedError = class extends UndiciError {
+      static {
+        __name(this, "ClientClosedError");
+      }
       constructor(message) {
         super(message);
         this.name = "ClientClosedError";
@@ -548,6 +608,9 @@ var require_errors = __commonJS({
     };
     var kSocketError = /* @__PURE__ */ Symbol.for("undici.error.UND_ERR_SOCKET");
     var SocketError = class extends UndiciError {
+      static {
+        __name(this, "SocketError");
+      }
       constructor(message, socket) {
         super(message);
         this.name = "SocketError";
@@ -562,6 +625,9 @@ var require_errors = __commonJS({
     };
     var kNotSupportedError = /* @__PURE__ */ Symbol.for("undici.error.UND_ERR_NOT_SUPPORTED");
     var NotSupportedError = class extends UndiciError {
+      static {
+        __name(this, "NotSupportedError");
+      }
       constructor(message) {
         super(message);
         this.name = "NotSupportedError";
@@ -575,6 +641,9 @@ var require_errors = __commonJS({
     };
     var kBalancedPoolMissingUpstreamError = /* @__PURE__ */ Symbol.for("undici.error.UND_ERR_BPL_MISSING_UPSTREAM");
     var BalancedPoolMissingUpstreamError = class extends UndiciError {
+      static {
+        __name(this, "BalancedPoolMissingUpstreamError");
+      }
       constructor(message) {
         super(message);
         this.name = "MissingUpstreamError";
@@ -588,6 +657,9 @@ var require_errors = __commonJS({
     };
     var kHTTPParserError = /* @__PURE__ */ Symbol.for("undici.error.UND_ERR_HTTP_PARSER");
     var HTTPParserError = class extends Error {
+      static {
+        __name(this, "HTTPParserError");
+      }
       constructor(message, code, data) {
         super(message);
         this.name = "HTTPParserError";
@@ -601,6 +673,9 @@ var require_errors = __commonJS({
     };
     var kResponseExceededMaxSizeError = /* @__PURE__ */ Symbol.for("undici.error.UND_ERR_RES_EXCEEDED_MAX_SIZE");
     var ResponseExceededMaxSizeError = class extends UndiciError {
+      static {
+        __name(this, "ResponseExceededMaxSizeError");
+      }
       constructor(message) {
         super(message);
         this.name = "ResponseExceededMaxSizeError";
@@ -614,6 +689,9 @@ var require_errors = __commonJS({
     };
     var kRequestRetryError = /* @__PURE__ */ Symbol.for("undici.error.UND_ERR_REQ_RETRY");
     var RequestRetryError = class extends UndiciError {
+      static {
+        __name(this, "RequestRetryError");
+      }
       constructor(message, code, { headers, data }) {
         super(message);
         this.name = "RequestRetryError";
@@ -630,6 +708,9 @@ var require_errors = __commonJS({
     };
     var kResponseError = /* @__PURE__ */ Symbol.for("undici.error.UND_ERR_RESPONSE");
     var ResponseError = class extends UndiciError {
+      static {
+        __name(this, "ResponseError");
+      }
       constructor(message, code, { headers, data }) {
         super(message);
         this.name = "ResponseError";
@@ -646,6 +727,9 @@ var require_errors = __commonJS({
     };
     var kSecureProxyConnectionError = /* @__PURE__ */ Symbol.for("undici.error.UND_ERR_PRX_TLS");
     var SecureProxyConnectionError = class extends UndiciError {
+      static {
+        __name(this, "SecureProxyConnectionError");
+      }
       constructor(cause, message, options) {
         super(message, { cause, ...options ?? {} });
         this.name = "SecureProxyConnectionError";
@@ -660,6 +744,9 @@ var require_errors = __commonJS({
     };
     var kMessageSizeExceededError = /* @__PURE__ */ Symbol.for("undici.error.UND_ERR_WS_MESSAGE_SIZE_EXCEEDED");
     var MessageSizeExceededError = class extends UndiciError {
+      static {
+        __name(this, "MessageSizeExceededError");
+      }
       constructor(message) {
         super(message);
         this.name = "MessageSizeExceededError";
@@ -826,6 +913,9 @@ var require_tree = __commonJS({
       headerNameLowerCasedRecord
     } = require_constants();
     var TstNode = class _TstNode {
+      static {
+        __name(this, "TstNode");
+      }
       /** @type {any} */
       value = null;
       /** @type {null | TstNode} */
@@ -924,6 +1014,9 @@ var require_tree = __commonJS({
       }
     };
     var TernarySearchTree = class {
+      static {
+        __name(this, "TernarySearchTree");
+      }
       /** @type {TstNode | null} */
       node = null;
       /**
@@ -975,6 +1068,9 @@ var require_util = __commonJS({
     var { tree } = require_tree();
     var [nodeMajor, nodeMinor] = process.versions.node.split(".").map((v) => Number(v));
     var BodyAsyncIterable = class {
+      static {
+        __name(this, "BodyAsyncIterable");
+      }
       constructor(body2) {
         this[kBody] = body2;
         this[kBodyUsed] = false;
@@ -1007,11 +1103,14 @@ var require_util = __commonJS({
         return body2;
       }
     }
+    __name(wrapRequestBody, "wrapRequestBody");
     function nop() {
     }
+    __name(nop, "nop");
     function isStream(obj) {
       return obj && typeof obj === "object" && typeof obj.pipe === "function" && typeof obj.on === "function";
     }
+    __name(isStream, "isStream");
     function isBlobLike(object) {
       if (object === null) {
         return false;
@@ -1024,6 +1123,7 @@ var require_util = __commonJS({
         return (sTag === "Blob" || sTag === "File") && ("stream" in object && typeof object.stream === "function" || "arrayBuffer" in object && typeof object.arrayBuffer === "function");
       }
     }
+    __name(isBlobLike, "isBlobLike");
     function buildURL(url2, queryParams) {
       if (url2.includes("?") || url2.includes("#")) {
         throw new Error('Query params cannot be passed when url already contains "?" or "#".');
@@ -1034,13 +1134,16 @@ var require_util = __commonJS({
       }
       return url2;
     }
+    __name(buildURL, "buildURL");
     function isValidPort(port) {
       const value = parseInt(port, 10);
       return value === Number(port) && value >= 0 && value <= 65535;
     }
+    __name(isValidPort, "isValidPort");
     function isHttpOrHttpsPrefixed(value) {
       return value != null && value[0] === "h" && value[1] === "t" && value[2] === "t" && value[3] === "p" && (value[4] === ":" || value[4] === "s" && value[5] === ":");
     }
+    __name(isHttpOrHttpsPrefixed, "isHttpOrHttpsPrefixed");
     function parseURL(url2) {
       if (typeof url2 === "string") {
         url2 = new URL(url2);
@@ -1087,6 +1190,7 @@ var require_util = __commonJS({
       }
       return url2;
     }
+    __name(parseURL, "parseURL");
     function parseOrigin(url2) {
       url2 = parseURL(url2);
       if (url2.pathname !== "/" || url2.search || url2.hash) {
@@ -1094,6 +1198,7 @@ var require_util = __commonJS({
       }
       return url2;
     }
+    __name(parseOrigin, "parseOrigin");
     function getHostname(host) {
       if (host[0] === "[") {
         const idx2 = host.indexOf("]");
@@ -1104,6 +1209,7 @@ var require_util = __commonJS({
       if (idx === -1) return host;
       return host.substring(0, idx);
     }
+    __name(getHostname, "getHostname");
     function getServerName(host) {
       if (!host) {
         return null;
@@ -1115,15 +1221,19 @@ var require_util = __commonJS({
       }
       return servername;
     }
+    __name(getServerName, "getServerName");
     function deepClone(obj) {
       return JSON.parse(JSON.stringify(obj));
     }
+    __name(deepClone, "deepClone");
     function isAsyncIterable(obj) {
       return !!(obj != null && typeof obj[Symbol.asyncIterator] === "function");
     }
+    __name(isAsyncIterable, "isAsyncIterable");
     function isIterable(obj) {
       return !!(obj != null && (typeof obj[Symbol.iterator] === "function" || typeof obj[Symbol.asyncIterator] === "function"));
     }
+    __name(isIterable, "isIterable");
     function bodyLength(body2) {
       if (body2 == null) {
         return 0;
@@ -1137,9 +1247,11 @@ var require_util = __commonJS({
       }
       return null;
     }
+    __name(bodyLength, "bodyLength");
     function isDestroyed(body2) {
       return body2 && !!(body2.destroyed || body2[kDestroyed] || stream.isDestroyed?.(body2));
     }
+    __name(isDestroyed, "isDestroyed");
     function destroy2(stream2, err) {
       if (stream2 == null || !isStream(stream2) || isDestroyed(stream2)) {
         return;
@@ -1158,17 +1270,21 @@ var require_util = __commonJS({
         stream2[kDestroyed] = true;
       }
     }
+    __name(destroy2, "destroy");
     var KEEPALIVE_TIMEOUT_EXPR = /timeout=(\d+)/;
     function parseKeepAliveTimeout(val) {
       const m = val.toString().match(KEEPALIVE_TIMEOUT_EXPR);
       return m ? parseInt(m[1], 10) * 1e3 : null;
     }
+    __name(parseKeepAliveTimeout, "parseKeepAliveTimeout");
     function headerNameToString(value) {
       return typeof value === "string" ? headerNameLowerCasedRecord[value] ?? value.toLowerCase() : tree.lookup(value) ?? value.toString("latin1").toLowerCase();
     }
+    __name(headerNameToString, "headerNameToString");
     function bufferToLowerCasedHeaderName(value) {
       return tree.lookup(value) ?? value.toString("latin1").toLowerCase();
     }
+    __name(bufferToLowerCasedHeaderName, "bufferToLowerCasedHeaderName");
     function parseHeaders(headers, obj) {
       if (obj === void 0) obj = {};
       for (let i = 0; i < headers.length; i += 2) {
@@ -1194,6 +1310,7 @@ var require_util = __commonJS({
       }
       return obj;
     }
+    __name(parseHeaders, "parseHeaders");
     function parseRawHeaders(headers) {
       const len = headers.length;
       const ret = new Array(len);
@@ -1221,9 +1338,11 @@ var require_util = __commonJS({
       }
       return ret;
     }
+    __name(parseRawHeaders, "parseRawHeaders");
     function isBuffer(buffer2) {
       return buffer2 instanceof Uint8Array || Buffer.isBuffer(buffer2);
     }
+    __name(isBuffer, "isBuffer");
     function validateHandler(handler, method, upgrade) {
       if (!handler || typeof handler !== "object") {
         throw new InvalidArgumentError("handler must be an object");
@@ -1253,15 +1372,19 @@ var require_util = __commonJS({
         }
       }
     }
+    __name(validateHandler, "validateHandler");
     function isDisturbed(body2) {
       return !!(body2 && (stream.isDisturbed(body2) || body2[kBodyUsed]));
     }
+    __name(isDisturbed, "isDisturbed");
     function isErrored(body2) {
       return !!(body2 && stream.isErrored(body2));
     }
+    __name(isErrored, "isErrored");
     function isReadable(body2) {
       return !!(body2 && stream.isReadable(body2));
     }
+    __name(isReadable, "isReadable");
     function getSocketInfo(socket) {
       return {
         localAddress: socket.localAddress,
@@ -1274,6 +1397,7 @@ var require_util = __commonJS({
         bytesRead: socket.bytesRead
       };
     }
+    __name(getSocketInfo, "getSocketInfo");
     function ReadableStreamFrom(iterable) {
       let iterator;
       return new ReadableStream(
@@ -1303,9 +1427,11 @@ var require_util = __commonJS({
         }
       );
     }
+    __name(ReadableStreamFrom, "ReadableStreamFrom");
     function isFormDataLike(object) {
       return object && typeof object === "object" && typeof object.append === "function" && typeof object.delete === "function" && typeof object.get === "function" && typeof object.getAll === "function" && typeof object.has === "function" && typeof object.set === "function" && object[Symbol.toStringTag] === "FormData";
     }
+    __name(isFormDataLike, "isFormDataLike");
     function addAbortListener(signal, listener) {
       if ("addEventListener" in signal) {
         signal.addEventListener("abort", listener, { once: true });
@@ -1314,14 +1440,17 @@ var require_util = __commonJS({
       signal.addListener("abort", listener);
       return () => signal.removeListener("abort", listener);
     }
+    __name(addAbortListener, "addAbortListener");
     var hasToWellFormed = typeof String.prototype.toWellFormed === "function";
     var hasIsWellFormed = typeof String.prototype.isWellFormed === "function";
     function toUSVString(val) {
       return hasToWellFormed ? `${val}`.toWellFormed() : nodeUtil.toUSVString(val);
     }
+    __name(toUSVString, "toUSVString");
     function isUSVString(val) {
       return hasIsWellFormed ? `${val}`.isWellFormed() : toUSVString(val) === `${val}`;
     }
+    __name(isUSVString, "isUSVString");
     function isTokenCharCode(c) {
       switch (c) {
         case 34:
@@ -1346,6 +1475,7 @@ var require_util = __commonJS({
           return c >= 33 && c <= 126;
       }
     }
+    __name(isTokenCharCode, "isTokenCharCode");
     function isValidHTTPToken(characters) {
       if (characters.length === 0) {
         return false;
@@ -1357,10 +1487,12 @@ var require_util = __commonJS({
       }
       return true;
     }
+    __name(isValidHTTPToken, "isValidHTTPToken");
     var headerCharRegex = /[^\t\x20-\x7e\x80-\xff]/;
     function isValidHeaderValue(characters) {
       return !headerCharRegex.test(characters);
     }
+    __name(isValidHeaderValue, "isValidHeaderValue");
     function parseRangeHeader(range3) {
       if (range3 == null || range3 === "") return { start: 0, end: null, size: null };
       const m = range3 ? range3.match(/^bytes (\d+)-(\d+)\/(\d+)?$/) : null;
@@ -1370,18 +1502,21 @@ var require_util = __commonJS({
         size: m[3] ? parseInt(m[3]) : null
       } : null;
     }
+    __name(parseRangeHeader, "parseRangeHeader");
     function addListener(obj, name, listener) {
       const listeners = obj[kListeners] ??= [];
       listeners.push([name, listener]);
       obj.on(name, listener);
       return obj;
     }
+    __name(addListener, "addListener");
     function removeAllListeners(obj) {
       for (const [name, listener] of obj[kListeners] ?? []) {
         obj.removeListener(name, listener);
       }
       obj[kListeners] = null;
     }
+    __name(removeAllListeners, "removeAllListeners");
     function errorRequest(client, request, err) {
       try {
         request.onError(err);
@@ -1390,6 +1525,7 @@ var require_util = __commonJS({
         client.emit("error", err2);
       }
     }
+    __name(errorRequest, "errorRequest");
     var kEnumerableProperty = /* @__PURE__ */ Object.create(null);
     kEnumerableProperty.enumerable = true;
     var normalizedMethodRecordsBase = {
@@ -1676,6 +1812,9 @@ var require_request = __commonJS({
     var invalidPathRegex = /[^\u0021-\u00ff]/;
     var kHandler = /* @__PURE__ */ Symbol("handler");
     var Request = class {
+      static {
+        __name(this, "Request");
+      }
       constructor(origin, {
         path: path13,
         method,
@@ -1733,9 +1872,9 @@ var require_request = __commonJS({
           this.body = body2;
           const rState = this.body._readableState;
           if (!rState || !rState.autoDestroy) {
-            this.endHandler = function autoDestroy() {
+            this.endHandler = /* @__PURE__ */ __name(function autoDestroy() {
               destroy2(this);
-            };
+            }, "autoDestroy");
             this.body.on("end", this.endHandler);
           }
           this.errorHandler = (err) => {
@@ -1977,6 +2116,7 @@ var require_request = __commonJS({
         request.headers.push(key, val);
       }
     }
+    __name(processHeader, "processHeader");
     module2.exports = Request;
   }
 });
@@ -1987,6 +2127,9 @@ var require_dispatcher = __commonJS({
     "use strict";
     var EventEmitter4 = require("node:events");
     var Dispatcher = class extends EventEmitter4 {
+      static {
+        __name(this, "Dispatcher");
+      }
       dispatch() {
         throw new Error("not implemented");
       }
@@ -2015,6 +2158,9 @@ var require_dispatcher = __commonJS({
       }
     };
     var ComposedDispatcher = class extends Dispatcher {
+      static {
+        __name(this, "ComposedDispatcher");
+      }
       #dispatcher = null;
       #dispatch = null;
       constructor(dispatcher, dispatch) {
@@ -2051,6 +2197,9 @@ var require_dispatcher_base = __commonJS({
     var kOnClosed = /* @__PURE__ */ Symbol("onClosed");
     var kInterceptedDispatch = /* @__PURE__ */ Symbol("Intercepted Dispatch");
     var DispatcherBase = class extends Dispatcher {
+      static {
+        __name(this, "DispatcherBase");
+      }
       constructor() {
         super();
         this[kDestroyed] = false;
@@ -2103,13 +2252,13 @@ var require_dispatcher_base = __commonJS({
         }
         this[kClosed] = true;
         this[kOnClosed].push(callback);
-        const onClosed = () => {
+        const onClosed = /* @__PURE__ */ __name(() => {
           const callbacks = this[kOnClosed];
           this[kOnClosed] = null;
           for (let i = 0; i < callbacks.length; i++) {
             callbacks[i](null, null);
           }
-        };
+        }, "onClosed");
         this[kClose]().then(() => this.destroy()).then(() => {
           queueMicrotask(onClosed);
         });
@@ -2146,13 +2295,13 @@ var require_dispatcher_base = __commonJS({
         this[kDestroyed] = true;
         this[kOnDestroyed] = this[kOnDestroyed] || [];
         this[kOnDestroyed].push(callback);
-        const onDestroyed = () => {
+        const onDestroyed = /* @__PURE__ */ __name(() => {
           const callbacks = this[kOnDestroyed];
           this[kOnDestroyed] = null;
           for (let i = 0; i < callbacks.length; i++) {
             callbacks[i](null, null);
           }
-        };
+        }, "onDestroyed");
         this[kDestroy](err).then(() => {
           queueMicrotask(onDestroyed);
         });
@@ -2239,6 +2388,7 @@ var require_timers = __commonJS({
         refreshTimeout();
       }
     }
+    __name(onTick, "onTick");
     function refreshTimeout() {
       if (fastNowTimeout) {
         fastNowTimeout.refresh();
@@ -2250,7 +2400,11 @@ var require_timers = __commonJS({
         }
       }
     }
+    __name(refreshTimeout, "refreshTimeout");
     var FastTimer = class {
+      static {
+        __name(this, "FastTimer");
+      }
       [kFastTimer] = true;
       /**
        * The state of the timer, which can be one of the following:
@@ -2439,10 +2593,14 @@ var require_connect = __commonJS({
     var timers = require_timers();
     function noop() {
     }
+    __name(noop, "noop");
     var tls;
     var SessionCache;
     if (global.FinalizationRegistry && !(process.env.NODE_V8_COVERAGE || process.env.UNDICI_NO_FG)) {
       SessionCache = class WeakSessionCache {
+        static {
+          __name(this, "WeakSessionCache");
+        }
         constructor(maxCachedSessions) {
           this._maxCachedSessions = maxCachedSessions;
           this._sessionCache = /* @__PURE__ */ new Map();
@@ -2470,6 +2628,9 @@ var require_connect = __commonJS({
       };
     } else {
       SessionCache = class SimpleSessionCache {
+        static {
+          __name(this, "SimpleSessionCache");
+        }
         constructor(maxCachedSessions) {
           this._maxCachedSessions = maxCachedSessions;
           this._sessionCache = /* @__PURE__ */ new Map();
@@ -2497,7 +2658,7 @@ var require_connect = __commonJS({
       const sessionCache = new SessionCache(maxCachedSessions == null ? 100 : maxCachedSessions);
       timeout = timeout == null ? 1e4 : timeout;
       allowH2 = allowH2 != null ? allowH2 : false;
-      return function connect({ hostname, host, protocol, port, servername, localAddress, httpSocket }, callback) {
+      return /* @__PURE__ */ __name(function connect({ hostname, host, protocol, port, servername, localAddress, httpSocket }, callback) {
         let socket;
         if (protocol === "https:") {
           if (!tls) {
@@ -2558,8 +2719,9 @@ var require_connect = __commonJS({
           }
         });
         return socket;
-      };
+      }, "connect");
     }
+    __name(buildConnector, "buildConnector");
     var setupConnectTimeout = process.platform === "win32" ? (socketWeakRef, opts) => {
       if (!opts.timeout) {
         return noop;
@@ -2604,6 +2766,7 @@ var require_connect = __commonJS({
       message += ` timeout: ${opts.timeout}ms)`;
       util4.destroy(socket, new ConnectTimeoutError(message));
     }
+    __name(onConnectTimeout, "onConnectTimeout");
     module2.exports = buildConnector;
   }
 });
@@ -2624,6 +2787,7 @@ var require_utils = __commonJS({
       });
       return res;
     }
+    __name(enumToMap, "enumToMap");
     exports2.enumToMap = enumToMap;
   }
 });
@@ -3193,6 +3357,7 @@ var require_global = __commonJS({
     function getGlobalOrigin() {
       return globalThis[globalOrigin];
     }
+    __name(getGlobalOrigin, "getGlobalOrigin");
     function setGlobalOrigin(newOrigin) {
       if (newOrigin === void 0) {
         Object.defineProperty(globalThis, globalOrigin, {
@@ -3214,6 +3379,7 @@ var require_global = __commonJS({
         configurable: false
       });
     }
+    __name(setGlobalOrigin, "setGlobalOrigin");
     module2.exports = {
       getGlobalOrigin,
       setGlobalOrigin
@@ -3268,6 +3434,7 @@ var require_data_url = __commonJS({
       }
       return { mimeType: mimeTypeRecord, body: body2 };
     }
+    __name(dataURLProcessor, "dataURLProcessor");
     function URLSerializer(url2, excludeFragment = false) {
       if (!excludeFragment) {
         return url2.href;
@@ -3280,6 +3447,7 @@ var require_data_url = __commonJS({
       }
       return serialized;
     }
+    __name(URLSerializer, "URLSerializer");
     function collectASequenceOfCodePoints(condition, input, position) {
       let result = "";
       while (position.position < input.length && condition(input[position.position])) {
@@ -3288,6 +3456,7 @@ var require_data_url = __commonJS({
       }
       return result;
     }
+    __name(collectASequenceOfCodePoints, "collectASequenceOfCodePoints");
     function collectASequenceOfCodePointsFast(char, input, position) {
       const idx = input.indexOf(char, position.position);
       const start = position.position;
@@ -3298,19 +3467,23 @@ var require_data_url = __commonJS({
       position.position = idx;
       return input.slice(start, position.position);
     }
+    __name(collectASequenceOfCodePointsFast, "collectASequenceOfCodePointsFast");
     function stringPercentDecode(input) {
       const bytes = encoder.encode(input);
       return percentDecode(bytes);
     }
+    __name(stringPercentDecode, "stringPercentDecode");
     function isHexCharByte(byte) {
       return byte >= 48 && byte <= 57 || byte >= 65 && byte <= 70 || byte >= 97 && byte <= 102;
     }
+    __name(isHexCharByte, "isHexCharByte");
     function hexByteToNumber(byte) {
       return (
         // 0-9
         byte >= 48 && byte <= 57 ? byte - 48 : (byte & 223) - 55
       );
     }
+    __name(hexByteToNumber, "hexByteToNumber");
     function percentDecode(input) {
       const length = input.length;
       const output = new Uint8Array(length);
@@ -3328,6 +3501,7 @@ var require_data_url = __commonJS({
       }
       return length === j ? output : output.subarray(0, j);
     }
+    __name(percentDecode, "percentDecode");
     function parseMIMEType(input) {
       input = removeHTTPWhitespace(input, true, true);
       const position = { position: 0 };
@@ -3410,6 +3584,7 @@ var require_data_url = __commonJS({
       }
       return mimeType;
     }
+    __name(parseMIMEType, "parseMIMEType");
     function forgivingBase64(data) {
       data = data.replace(ASCII_WHITESPACE_REPLACE_REGEX, "");
       let dataLength = data.length;
@@ -3430,6 +3605,7 @@ var require_data_url = __commonJS({
       const buffer2 = Buffer.from(data, "base64");
       return new Uint8Array(buffer2.buffer, buffer2.byteOffset, buffer2.byteLength);
     }
+    __name(forgivingBase64, "forgivingBase64");
     function collectAnHTTPQuotedString(input, position, extractValue2) {
       const positionStart = position.position;
       let value = "";
@@ -3463,6 +3639,7 @@ var require_data_url = __commonJS({
       }
       return input.slice(positionStart, position.position);
     }
+    __name(collectAnHTTPQuotedString, "collectAnHTTPQuotedString");
     function serializeAMimeType(mimeType) {
       assert4(mimeType !== "failure");
       const { parameters, essence } = mimeType;
@@ -3480,18 +3657,23 @@ var require_data_url = __commonJS({
       }
       return serialization;
     }
+    __name(serializeAMimeType, "serializeAMimeType");
     function isHTTPWhiteSpace(char) {
       return char === 13 || char === 10 || char === 9 || char === 32;
     }
+    __name(isHTTPWhiteSpace, "isHTTPWhiteSpace");
     function removeHTTPWhitespace(str, leading = true, trailing = true) {
       return removeChars(str, leading, trailing, isHTTPWhiteSpace);
     }
+    __name(removeHTTPWhitespace, "removeHTTPWhitespace");
     function isASCIIWhitespace(char) {
       return char === 13 || char === 10 || char === 9 || char === 12 || char === 32;
     }
+    __name(isASCIIWhitespace, "isASCIIWhitespace");
     function removeASCIIWhitespace(str, leading = true, trailing = true) {
       return removeChars(str, leading, trailing, isASCIIWhitespace);
     }
+    __name(removeASCIIWhitespace, "removeASCIIWhitespace");
     function removeChars(str, leading, trailing, predicate) {
       let lead = 0;
       let trail = str.length - 1;
@@ -3503,6 +3685,7 @@ var require_data_url = __commonJS({
       }
       return lead === 0 && trail === str.length - 1 ? str : str.slice(lead, trail + 1);
     }
+    __name(removeChars, "removeChars");
     function isomorphicDecode(input) {
       const length = input.length;
       if ((2 << 15) - 1 > length) {
@@ -3519,6 +3702,7 @@ var require_data_url = __commonJS({
       }
       return result;
     }
+    __name(isomorphicDecode, "isomorphicDecode");
     function minimizeSupportedMimeType(mimeType) {
       switch (mimeType.essence) {
         case "application/ecmascript":
@@ -3555,6 +3739,7 @@ var require_data_url = __commonJS({
       }
       return "";
     }
+    __name(minimizeSupportedMimeType, "minimizeSupportedMimeType");
     module2.exports = {
       dataURLProcessor,
       URLSerializer,
@@ -4019,6 +4204,7 @@ var require_util2 = __commonJS({
       const length = urlList.length;
       return length === 0 ? null : urlList[length - 1].toString();
     }
+    __name(responseURL, "responseURL");
     function responseLocationURL(response, requestFragment) {
       if (!redirectStatusSet.has(response.status)) {
         return null;
@@ -4035,6 +4221,7 @@ var require_util2 = __commonJS({
       }
       return location;
     }
+    __name(responseLocationURL, "responseLocationURL");
     function isValidEncodedURL(url2) {
       for (let i = 0; i < url2.length; ++i) {
         const code = url2.charCodeAt(i);
@@ -4045,12 +4232,15 @@ var require_util2 = __commonJS({
       }
       return true;
     }
+    __name(isValidEncodedURL, "isValidEncodedURL");
     function normalizeBinaryStringToUtf8(value) {
       return Buffer.from(value, "binary").toString("utf8");
     }
+    __name(normalizeBinaryStringToUtf8, "normalizeBinaryStringToUtf8");
     function requestCurrentURL(request) {
       return request.urlList[request.urlList.length - 1];
     }
+    __name(requestCurrentURL, "requestCurrentURL");
     function requestBadPort(request) {
       const url2 = requestCurrentURL(request);
       if (urlIsHttpHttpsScheme(url2) && badPortsSet.has(url2.port)) {
@@ -4058,9 +4248,11 @@ var require_util2 = __commonJS({
       }
       return "allowed";
     }
+    __name(requestBadPort, "requestBadPort");
     function isErrorLike(object) {
       return object instanceof Error || (object?.constructor?.name === "Error" || object?.constructor?.name === "DOMException");
     }
+    __name(isErrorLike, "isErrorLike");
     function isValidReasonPhrase(statusText) {
       for (let i = 0; i < statusText.length; ++i) {
         const c = statusText.charCodeAt(i);
@@ -4072,10 +4264,12 @@ var require_util2 = __commonJS({
       }
       return true;
     }
+    __name(isValidReasonPhrase, "isValidReasonPhrase");
     var isValidHeaderName = isValidHTTPToken;
     function isValidHeaderValue(potentialValue) {
       return (potentialValue[0] === "	" || potentialValue[0] === " " || potentialValue[potentialValue.length - 1] === "	" || potentialValue[potentialValue.length - 1] === " " || potentialValue.includes("\n") || potentialValue.includes("\r") || potentialValue.includes("\0")) === false;
     }
+    __name(isValidHeaderValue, "isValidHeaderValue");
     function setRequestReferrerPolicyOnRedirect(request, actualResponse) {
       const { headersList } = actualResponse;
       const policyHeader = (headersList.get("referrer-policy", true) ?? "").split(",");
@@ -4093,20 +4287,25 @@ var require_util2 = __commonJS({
         request.referrerPolicy = policy;
       }
     }
+    __name(setRequestReferrerPolicyOnRedirect, "setRequestReferrerPolicyOnRedirect");
     function crossOriginResourcePolicyCheck() {
       return "allowed";
     }
+    __name(crossOriginResourcePolicyCheck, "crossOriginResourcePolicyCheck");
     function corsCheck() {
       return "success";
     }
+    __name(corsCheck, "corsCheck");
     function TAOCheck() {
       return "success";
     }
+    __name(TAOCheck, "TAOCheck");
     function appendFetchMetadata(httpRequest) {
       let header = null;
       header = httpRequest.mode;
       httpRequest.headersList.set("sec-fetch-mode", header, true);
     }
+    __name(appendFetchMetadata, "appendFetchMetadata");
     function appendRequestOriginHeader(request) {
       let serializedOrigin = request.origin;
       if (serializedOrigin === "client" || serializedOrigin === void 0) {
@@ -4136,9 +4335,11 @@ var require_util2 = __commonJS({
         request.headersList.append("origin", serializedOrigin, true);
       }
     }
+    __name(appendRequestOriginHeader, "appendRequestOriginHeader");
     function coarsenTime(timestamp, crossOriginIsolatedCapability) {
       return timestamp;
     }
+    __name(coarsenTime, "coarsenTime");
     function clampAndCoarsenConnectionTimingInfo(connectionTimingInfo, defaultStartTime, crossOriginIsolatedCapability) {
       if (!connectionTimingInfo?.startTime || connectionTimingInfo.startTime < defaultStartTime) {
         return {
@@ -4159,9 +4360,11 @@ var require_util2 = __commonJS({
         ALPNNegotiatedProtocol: connectionTimingInfo.ALPNNegotiatedProtocol
       };
     }
+    __name(clampAndCoarsenConnectionTimingInfo, "clampAndCoarsenConnectionTimingInfo");
     function coarsenedSharedCurrentTime(crossOriginIsolatedCapability) {
       return coarsenTime(performance2.now(), crossOriginIsolatedCapability);
     }
+    __name(coarsenedSharedCurrentTime, "coarsenedSharedCurrentTime");
     function createOpaqueTimingInfo(timingInfo) {
       return {
         startTime: timingInfo.startTime ?? 0,
@@ -4177,16 +4380,19 @@ var require_util2 = __commonJS({
         finalConnectionTimingInfo: null
       };
     }
+    __name(createOpaqueTimingInfo, "createOpaqueTimingInfo");
     function makePolicyContainer() {
       return {
         referrerPolicy: "strict-origin-when-cross-origin"
       };
     }
+    __name(makePolicyContainer, "makePolicyContainer");
     function clonePolicyContainer(policyContainer) {
       return {
         referrerPolicy: policyContainer.referrerPolicy
       };
     }
+    __name(clonePolicyContainer, "clonePolicyContainer");
     function determineRequestsReferrer(request) {
       const policy = request.referrerPolicy;
       assert4(policy);
@@ -4246,6 +4452,7 @@ var require_util2 = __commonJS({
           return isNonPotentiallyTrustWorthy ? "no-referrer" : referrerOrigin;
       }
     }
+    __name(determineRequestsReferrer, "determineRequestsReferrer");
     function stripURLForReferrer(url2, originOnly) {
       assert4(url2 instanceof URL);
       url2 = new URL(url2);
@@ -4261,6 +4468,7 @@ var require_util2 = __commonJS({
       }
       return url2;
     }
+    __name(stripURLForReferrer, "stripURLForReferrer");
     function isURLPotentiallyTrustworthy(url2) {
       if (!(url2 instanceof URL)) {
         return false;
@@ -4282,7 +4490,9 @@ var require_util2 = __commonJS({
         }
         return false;
       }
+      __name(isOriginPotentiallyTrustworthy, "isOriginPotentiallyTrustworthy");
     }
+    __name(isURLPotentiallyTrustworthy, "isURLPotentiallyTrustworthy");
     function bytesMatch(bytes, metadataList) {
       if (crypto3 === void 0) {
         return true;
@@ -4313,6 +4523,7 @@ var require_util2 = __commonJS({
       }
       return false;
     }
+    __name(bytesMatch, "bytesMatch");
     var parseHashWithOptions = /(?<algo>sha256|sha384|sha512)-((?<hash>[A-Za-z0-9+/]+|[A-Za-z0-9_-]+)={0,2}(?:\s|$)( +[!-~]*)?)?/i;
     function parseMetadata(metadata2) {
       const result = [];
@@ -4333,6 +4544,7 @@ var require_util2 = __commonJS({
       }
       return result;
     }
+    __name(parseMetadata, "parseMetadata");
     function getStrongestMetadata(metadataList) {
       let algorithm = metadataList[0].algo;
       if (algorithm[3] === "5") {
@@ -4351,6 +4563,7 @@ var require_util2 = __commonJS({
       }
       return algorithm;
     }
+    __name(getStrongestMetadata, "getStrongestMetadata");
     function filterMetadataListByAlgorithm(metadataList, algorithm) {
       if (metadataList.length === 1) {
         return metadataList;
@@ -4364,6 +4577,7 @@ var require_util2 = __commonJS({
       metadataList.length = pos;
       return metadataList;
     }
+    __name(filterMetadataListByAlgorithm, "filterMetadataListByAlgorithm");
     function compareBase64Mixed(actualValue, expectedValue) {
       if (actualValue.length !== expectedValue.length) {
         return false;
@@ -4378,8 +4592,10 @@ var require_util2 = __commonJS({
       }
       return true;
     }
+    __name(compareBase64Mixed, "compareBase64Mixed");
     function tryUpgradeRequestToAPotentiallyTrustworthyURL(request) {
     }
+    __name(tryUpgradeRequestToAPotentiallyTrustworthyURL, "tryUpgradeRequestToAPotentiallyTrustworthyURL");
     function sameOrigin(A, B) {
       if (A.origin === B.origin && A.origin === "null") {
         return true;
@@ -4389,6 +4605,7 @@ var require_util2 = __commonJS({
       }
       return false;
     }
+    __name(sameOrigin, "sameOrigin");
     function createDeferredPromise() {
       let res;
       let rej;
@@ -4398,15 +4615,19 @@ var require_util2 = __commonJS({
       });
       return { promise, resolve: res, reject: rej };
     }
+    __name(createDeferredPromise, "createDeferredPromise");
     function isAborted(fetchParams) {
       return fetchParams.controller.state === "aborted";
     }
+    __name(isAborted, "isAborted");
     function isCancelled(fetchParams) {
       return fetchParams.controller.state === "aborted" || fetchParams.controller.state === "terminated";
     }
+    __name(isCancelled, "isCancelled");
     function normalizeMethod(method) {
       return normalizedMethodRecordsBase[method.toLowerCase()] ?? method;
     }
+    __name(normalizeMethod, "normalizeMethod");
     function serializeJavascriptValueToJSONString(value) {
       const result = JSON.stringify(value);
       if (result === void 0) {
@@ -4415,9 +4636,13 @@ var require_util2 = __commonJS({
       assert4(typeof result === "string");
       return result;
     }
+    __name(serializeJavascriptValueToJSONString, "serializeJavascriptValueToJSONString");
     var esIteratorPrototype = Object.getPrototypeOf(Object.getPrototypeOf([][Symbol.iterator]()));
     function createIterator(name, kInternalIterator, keyIndex = 0, valueIndex = 1) {
       class FastIterableIterator {
+        static {
+          __name(this, "FastIterableIterator");
+        }
         /** @type {any} */
         #target;
         /** @type {'key' | 'value' | 'key+value'} */
@@ -4484,6 +4709,7 @@ var require_util2 = __commonJS({
         return new FastIterableIterator(target, kind);
       };
     }
+    __name(createIterator, "createIterator");
     function iteratorMixin(name, object, kInternalIterator, keyIndex = 0, valueIndex = 1) {
       const makeIterator = createIterator(name, kInternalIterator, keyIndex, valueIndex);
       const properties = {
@@ -4491,34 +4717,34 @@ var require_util2 = __commonJS({
           writable: true,
           enumerable: true,
           configurable: true,
-          value: function keys() {
+          value: /* @__PURE__ */ __name(function keys() {
             webidl.brandCheck(this, object);
             return makeIterator(this, "key");
-          }
+          }, "keys")
         },
         values: {
           writable: true,
           enumerable: true,
           configurable: true,
-          value: function values() {
+          value: /* @__PURE__ */ __name(function values() {
             webidl.brandCheck(this, object);
             return makeIterator(this, "value");
-          }
+          }, "values")
         },
         entries: {
           writable: true,
           enumerable: true,
           configurable: true,
-          value: function entries() {
+          value: /* @__PURE__ */ __name(function entries() {
             webidl.brandCheck(this, object);
             return makeIterator(this, "key+value");
-          }
+          }, "entries")
         },
         forEach: {
           writable: true,
           enumerable: true,
           configurable: true,
-          value: function forEach(callbackfn, thisArg = globalThis) {
+          value: /* @__PURE__ */ __name(function forEach(callbackfn, thisArg = globalThis) {
             webidl.brandCheck(this, object);
             webidl.argumentLengthCheck(arguments, 1, `${name}.forEach`);
             if (typeof callbackfn !== "function") {
@@ -4529,7 +4755,7 @@ var require_util2 = __commonJS({
             for (const { 0: key, 1: value } of makeIterator(this, "key+value")) {
               callbackfn.call(thisArg, value, key, this);
             }
-          }
+          }, "forEach")
         }
       };
       return Object.defineProperties(object.prototype, {
@@ -4542,6 +4768,7 @@ var require_util2 = __commonJS({
         }
       });
     }
+    __name(iteratorMixin, "iteratorMixin");
     async function fullyReadBody(body2, processBody, processBodyError) {
       const successSteps = processBody;
       const errorSteps = processBodyError;
@@ -4558,9 +4785,11 @@ var require_util2 = __commonJS({
         errorSteps(e);
       }
     }
+    __name(fullyReadBody, "fullyReadBody");
     function isReadableStreamLike(stream) {
       return stream instanceof ReadableStream || stream[Symbol.toStringTag] === "ReadableStream" && typeof stream.tee === "function";
     }
+    __name(isReadableStreamLike, "isReadableStreamLike");
     function readableStreamClose(controller) {
       try {
         controller.close();
@@ -4571,11 +4800,13 @@ var require_util2 = __commonJS({
         }
       }
     }
+    __name(readableStreamClose, "readableStreamClose");
     var invalidIsomorphicEncodeValueRegex = /[^\x00-\xFF]/;
     function isomorphicEncode(input) {
       assert4(!invalidIsomorphicEncodeValueRegex.test(input));
       return input;
     }
+    __name(isomorphicEncode, "isomorphicEncode");
     async function readAllBytes(reader) {
       const bytes = [];
       let byteLength = 0;
@@ -4591,19 +4822,23 @@ var require_util2 = __commonJS({
         byteLength += chunk.length;
       }
     }
+    __name(readAllBytes, "readAllBytes");
     function urlIsLocal(url2) {
       assert4("protocol" in url2);
       const protocol = url2.protocol;
       return protocol === "about:" || protocol === "blob:" || protocol === "data:";
     }
+    __name(urlIsLocal, "urlIsLocal");
     function urlHasHttpsScheme(url2) {
       return typeof url2 === "string" && url2[5] === ":" && url2[0] === "h" && url2[1] === "t" && url2[2] === "t" && url2[3] === "p" && url2[4] === "s" || url2.protocol === "https:";
     }
+    __name(urlHasHttpsScheme, "urlHasHttpsScheme");
     function urlIsHttpHttpsScheme(url2) {
       assert4("protocol" in url2);
       const protocol = url2.protocol;
       return protocol === "http:" || protocol === "https:";
     }
+    __name(urlIsHttpHttpsScheme, "urlIsHttpHttpsScheme");
     function simpleRangeHeaderValue(value, allowWhitespace) {
       const data = value;
       if (!data.startsWith("bytes")) {
@@ -4675,6 +4910,7 @@ var require_util2 = __commonJS({
       }
       return { rangeStartValue, rangeEndValue };
     }
+    __name(simpleRangeHeaderValue, "simpleRangeHeaderValue");
     function buildContentRange(rangeStart, rangeEnd, fullLength) {
       let contentRange = "bytes ";
       contentRange += isomorphicEncode(`${rangeStart}`);
@@ -4684,7 +4920,11 @@ var require_util2 = __commonJS({
       contentRange += isomorphicEncode(`${fullLength}`);
       return contentRange;
     }
+    __name(buildContentRange, "buildContentRange");
     var InflateStream = class extends Transform2 {
+      static {
+        __name(this, "InflateStream");
+      }
       #zlibOptions;
       /** @param {zlib.ZlibOptions} [zlibOptions] */
       constructor(zlibOptions) {
@@ -4715,6 +4955,7 @@ var require_util2 = __commonJS({
     function createInflate(zlibOptions) {
       return new InflateStream(zlibOptions);
     }
+    __name(createInflate, "createInflate");
     function extractMimeType(headers) {
       let charset = null;
       let essence = null;
@@ -4744,6 +4985,7 @@ var require_util2 = __commonJS({
       }
       return mimeType;
     }
+    __name(extractMimeType, "extractMimeType");
     function gettingDecodingSplitting(value) {
       const input = value;
       const position = { position: 0 };
@@ -4775,6 +5017,7 @@ var require_util2 = __commonJS({
       }
       return values;
     }
+    __name(gettingDecodingSplitting, "gettingDecodingSplitting");
     function getDecodeSplit(name, list) {
       const value = list.get(name, true);
       if (value === null) {
@@ -4782,6 +5025,7 @@ var require_util2 = __commonJS({
       }
       return gettingDecodingSplitting(value);
     }
+    __name(getDecodeSplit, "getDecodeSplit");
     var textDecoder = new TextDecoder();
     function utf8DecodeBytes(buffer2) {
       if (buffer2.length === 0) {
@@ -4793,7 +5037,11 @@ var require_util2 = __commonJS({
       const output = textDecoder.decode(buffer2);
       return output;
     }
+    __name(utf8DecodeBytes, "utf8DecodeBytes");
     var EnvironmentSettingsObjectBase = class {
+      static {
+        __name(this, "EnvironmentSettingsObjectBase");
+      }
       get baseUrl() {
         return getGlobalOrigin();
       }
@@ -4803,6 +5051,9 @@ var require_util2 = __commonJS({
       policyContainer = makePolicyContainer();
     };
     var EnvironmentSettingsObject = class {
+      static {
+        __name(this, "EnvironmentSettingsObject");
+      }
       settingsObject = new EnvironmentSettingsObjectBase();
     };
     var environmentSettingsObject = new EnvironmentSettingsObject();
@@ -4884,6 +5135,9 @@ var require_file = __commonJS({
     var { kState } = require_symbols2();
     var { webidl } = require_webidl();
     var FileLike = class _FileLike {
+      static {
+        __name(this, "FileLike");
+      }
       constructor(blobLike, fileName, options = {}) {
         const n = fileName;
         const t = options.type;
@@ -4935,6 +5189,7 @@ var require_file = __commonJS({
     function isFileLike(object) {
       return object instanceof File2 || object && (typeof object.stream === "function" || typeof object.arrayBuffer === "function") && object[Symbol.toStringTag] === "File";
     }
+    __name(isFileLike, "isFileLike");
     module2.exports = { FileLike, isFileLike };
   }
 });
@@ -4952,6 +5207,9 @@ var require_formdata = __commonJS({
     var nodeUtil = require("node:util");
     var File2 = globalThis.File ?? NativeFile;
     var FormData2 = class _FormData {
+      static {
+        __name(this, "FormData");
+      }
       constructor(form) {
         webidl.util.markAsUncloneable(this);
         if (form !== void 0) {
@@ -5082,6 +5340,7 @@ var require_formdata = __commonJS({
       }
       return { name, value };
     }
+    __name(makeEntry, "makeEntry");
     module2.exports = { FormData: FormData2, makeEntry };
   }
 });
@@ -5110,6 +5369,7 @@ var require_formdata_parser = __commonJS({
       }
       return true;
     }
+    __name(isAsciiString, "isAsciiString");
     function validateBoundary(boundary) {
       const length = boundary.length;
       if (length < 27 || length > 70) {
@@ -5123,6 +5383,7 @@ var require_formdata_parser = __commonJS({
       }
       return true;
     }
+    __name(validateBoundary, "validateBoundary");
     function multipartFormDataParser(input, mimeType) {
       assert4(mimeType !== "failure" && mimeType.essence === "multipart/form-data");
       const boundaryString = mimeType.parameters.get("boundary");
@@ -5193,6 +5454,7 @@ var require_formdata_parser = __commonJS({
         entryList.push(makeEntry(name, value, filename));
       }
     }
+    __name(multipartFormDataParser, "multipartFormDataParser");
     function parseMultipartFormDataHeaders(input, position) {
       let name = null;
       let filename = null;
@@ -5286,6 +5548,7 @@ var require_formdata_parser = __commonJS({
         }
       }
     }
+    __name(parseMultipartFormDataHeaders, "parseMultipartFormDataHeaders");
     function parseMultipartFormDataName(input, position) {
       assert4(input[position.position - 1] === 34);
       let name = collectASequenceOfBytes(
@@ -5301,6 +5564,7 @@ var require_formdata_parser = __commonJS({
       name = new TextDecoder().decode(name).replace(/%0A/ig, "\n").replace(/%0D/ig, "\r").replace(/%22/g, '"');
       return name;
     }
+    __name(parseMultipartFormDataName, "parseMultipartFormDataName");
     function collectASequenceOfBytes(condition, input, position) {
       let start = position.position;
       while (start < input.length && condition(input[start])) {
@@ -5308,6 +5572,7 @@ var require_formdata_parser = __commonJS({
       }
       return input.subarray(position.position, position.position = start);
     }
+    __name(collectASequenceOfBytes, "collectASequenceOfBytes");
     function removeChars(buf, leading, trailing, predicate) {
       let lead = 0;
       let trail = buf.length - 1;
@@ -5319,6 +5584,7 @@ var require_formdata_parser = __commonJS({
       }
       return lead === 0 && trail === buf.length - 1 ? buf : buf.subarray(lead, trail + 1);
     }
+    __name(removeChars, "removeChars");
     function bufferStartsWith(buffer2, start, position) {
       if (buffer2.length < start.length) {
         return false;
@@ -5330,6 +5596,7 @@ var require_formdata_parser = __commonJS({
       }
       return true;
     }
+    __name(bufferStartsWith, "bufferStartsWith");
     module2.exports = {
       multipartFormDataParser,
       validateBoundary
@@ -5364,13 +5631,14 @@ var require_body = __commonJS({
     var random;
     try {
       const crypto3 = require("node:crypto");
-      random = (max) => crypto3.randomInt(0, max);
+      random = /* @__PURE__ */ __name((max) => crypto3.randomInt(0, max), "random");
     } catch {
-      random = (max) => Math.floor(Math.random(max));
+      random = /* @__PURE__ */ __name((max) => Math.floor(Math.random(max)), "random");
     }
     var textEncoder = new TextEncoder();
     function noop() {
     }
+    __name(noop, "noop");
     var hasFinalizationRegistry = globalThis.FinalizationRegistry && process.version.indexOf("v18") !== 0;
     var streamRegistry;
     if (hasFinalizationRegistry) {
@@ -5420,8 +5688,8 @@ var require_body = __commonJS({
         const boundary = `----formdata-undici-0${`${random(1e11)}`.padStart(11, "0")}`;
         const prefix2 = `--${boundary}\r
 Content-Disposition: form-data`;
-        const escape3 = (str) => str.replace(/\n/g, "%0A").replace(/\r/g, "%0D").replace(/"/g, "%22");
-        const normalizeLinefeeds = (value) => value.replace(/\r?\n|\r/g, "\r\n");
+        const escape3 = /* @__PURE__ */ __name((str) => str.replace(/\n/g, "%0A").replace(/\r/g, "%0D").replace(/"/g, "%22"), "escape");
+        const normalizeLinefeeds = /* @__PURE__ */ __name((value) => value.replace(/\r?\n|\r/g, "\r\n"), "normalizeLinefeeds");
         const blobParts = [];
         const rn = new Uint8Array([13, 10]);
         length = 0;
@@ -5455,7 +5723,7 @@ Content-Type: ${value.type || "application/octet-stream"}\r
           length = null;
         }
         source = object;
-        action5 = async function* () {
+        action5 = /* @__PURE__ */ __name(async function* () {
           for (const part of blobParts) {
             if (part.stream) {
               yield* part.stream();
@@ -5463,7 +5731,7 @@ Content-Type: ${value.type || "application/octet-stream"}\r
               yield part;
             }
           }
-        };
+        }, "action");
         type = `multipart/form-data; boundary=${boundary}`;
       } else if (isBlobLike(object)) {
         source = object;
@@ -5517,6 +5785,7 @@ Content-Type: ${value.type || "application/octet-stream"}\r
       const body2 = { stream, source, length };
       return [body2, type];
     }
+    __name(extractBody, "extractBody");
     function safelyExtractBody(object, keepalive = false) {
       if (object instanceof ReadableStream) {
         assert4(!util4.isDisturbed(object), "The body has already been consumed.");
@@ -5524,6 +5793,7 @@ Content-Type: ${value.type || "application/octet-stream"}\r
       }
       return extractBody(object, keepalive);
     }
+    __name(safelyExtractBody, "safelyExtractBody");
     function cloneBody(instance, body2) {
       const [out1, out2] = body2.stream.tee();
       body2.stream = out1;
@@ -5533,11 +5803,13 @@ Content-Type: ${value.type || "application/octet-stream"}\r
         source: body2.source
       };
     }
+    __name(cloneBody, "cloneBody");
     function throwIfAborted(state3) {
       if (state3.aborted) {
         throw new DOMException("The operation was aborted.", "AbortError");
       }
     }
+    __name(throwIfAborted, "throwIfAborted");
     function bodyMixinMethods(instance) {
       const methods = {
         blob() {
@@ -5599,9 +5871,11 @@ Content-Type: ${value.type || "application/octet-stream"}\r
       };
       return methods;
     }
+    __name(bodyMixinMethods, "bodyMixinMethods");
     function mixinBody(prototype) {
       Object.assign(prototype.prototype, bodyMixinMethods(prototype));
     }
+    __name(mixinBody, "mixinBody");
     async function consumeBody(object, convertBytesToJSValue, instance) {
       webidl.brandCheck(object, instance);
       if (bodyUnusable(object)) {
@@ -5609,14 +5883,14 @@ Content-Type: ${value.type || "application/octet-stream"}\r
       }
       throwIfAborted(object[kState]);
       const promise = createDeferredPromise();
-      const errorSteps = (error2) => promise.reject(error2);
-      const successSteps = (data) => {
+      const errorSteps = /* @__PURE__ */ __name((error2) => promise.reject(error2), "errorSteps");
+      const successSteps = /* @__PURE__ */ __name((data) => {
         try {
           promise.resolve(convertBytesToJSValue(data));
         } catch (e) {
           errorSteps(e);
         }
-      };
+      }, "successSteps");
       if (object[kState].body == null) {
         successSteps(Buffer.allocUnsafe(0));
         return promise.promise;
@@ -5624,13 +5898,16 @@ Content-Type: ${value.type || "application/octet-stream"}\r
       await fullyReadBody(object[kState].body, successSteps, errorSteps);
       return promise.promise;
     }
+    __name(consumeBody, "consumeBody");
     function bodyUnusable(object) {
       const body2 = object[kState].body;
       return body2 != null && (body2.stream.locked || util4.isDisturbed(body2.stream));
     }
+    __name(bodyUnusable, "bodyUnusable");
     function parseJSONFromBytes(bytes) {
       return JSON.parse(utf8DecodeBytes(bytes));
     }
+    __name(parseJSONFromBytes, "parseJSONFromBytes");
     function bodyMimeType(requestOrResponse) {
       const headers = requestOrResponse[kState].headersList;
       const mimeType = extractMimeType(headers);
@@ -5639,6 +5916,7 @@ Content-Type: ${value.type || "application/octet-stream"}\r
       }
       return mimeType;
     }
+    __name(bodyMimeType, "bodyMimeType");
     module2.exports = {
       extractBody,
       safelyExtractBody,
@@ -5721,45 +5999,46 @@ var require_client_h1 = __commonJS({
       return await WebAssembly.instantiate(mod, {
         env: {
           /* eslint-disable camelcase */
-          wasm_on_url: (p, at, len) => {
+          wasm_on_url: /* @__PURE__ */ __name((p, at, len) => {
             return 0;
-          },
-          wasm_on_status: (p, at, len) => {
+          }, "wasm_on_url"),
+          wasm_on_status: /* @__PURE__ */ __name((p, at, len) => {
             assert4(currentParser.ptr === p);
             const start = at - currentBufferPtr + currentBufferRef.byteOffset;
             return currentParser.onStatus(new FastBuffer(currentBufferRef.buffer, start, len)) || 0;
-          },
-          wasm_on_message_begin: (p) => {
+          }, "wasm_on_status"),
+          wasm_on_message_begin: /* @__PURE__ */ __name((p) => {
             assert4(currentParser.ptr === p);
             return currentParser.onMessageBegin() || 0;
-          },
-          wasm_on_header_field: (p, at, len) => {
+          }, "wasm_on_message_begin"),
+          wasm_on_header_field: /* @__PURE__ */ __name((p, at, len) => {
             assert4(currentParser.ptr === p);
             const start = at - currentBufferPtr + currentBufferRef.byteOffset;
             return currentParser.onHeaderField(new FastBuffer(currentBufferRef.buffer, start, len)) || 0;
-          },
-          wasm_on_header_value: (p, at, len) => {
+          }, "wasm_on_header_field"),
+          wasm_on_header_value: /* @__PURE__ */ __name((p, at, len) => {
             assert4(currentParser.ptr === p);
             const start = at - currentBufferPtr + currentBufferRef.byteOffset;
             return currentParser.onHeaderValue(new FastBuffer(currentBufferRef.buffer, start, len)) || 0;
-          },
-          wasm_on_headers_complete: (p, statusCode, upgrade, shouldKeepAlive) => {
+          }, "wasm_on_header_value"),
+          wasm_on_headers_complete: /* @__PURE__ */ __name((p, statusCode, upgrade, shouldKeepAlive) => {
             assert4(currentParser.ptr === p);
             return currentParser.onHeadersComplete(statusCode, Boolean(upgrade), Boolean(shouldKeepAlive)) || 0;
-          },
-          wasm_on_body: (p, at, len) => {
+          }, "wasm_on_headers_complete"),
+          wasm_on_body: /* @__PURE__ */ __name((p, at, len) => {
             assert4(currentParser.ptr === p);
             const start = at - currentBufferPtr + currentBufferRef.byteOffset;
             return currentParser.onBody(new FastBuffer(currentBufferRef.buffer, start, len)) || 0;
-          },
-          wasm_on_message_complete: (p) => {
+          }, "wasm_on_body"),
+          wasm_on_message_complete: /* @__PURE__ */ __name((p) => {
             assert4(currentParser.ptr === p);
             return currentParser.onMessageComplete() || 0;
-          }
+          }, "wasm_on_message_complete")
           /* eslint-enable camelcase */
         }
       });
     }
+    __name(lazyllhttp, "lazyllhttp");
     var llhttpInstance = null;
     var llhttpPromise = lazyllhttp();
     llhttpPromise.catch();
@@ -5773,6 +6052,9 @@ var require_client_h1 = __commonJS({
     var TIMEOUT_BODY = 4 | USE_FAST_TIMER;
     var TIMEOUT_KEEP_ALIVE = 8 | USE_NATIVE_TIMER;
     var Parser = class {
+      static {
+        __name(this, "Parser");
+      }
       constructor(client, socket, { exports: exports3 }) {
         assert4(Number.isFinite(client[kMaxHeadersSize]) && client[kMaxHeadersSize] > 0);
         this.llhttp = exports3;
@@ -6145,6 +6427,7 @@ var require_client_h1 = __commonJS({
         util4.destroy(socket, new InformationalError("socket idle timeout"));
       }
     }
+    __name(onParserTimeout, "onParserTimeout");
     async function connectH1(client, socket) {
       client[kSocket] = socket;
       if (!llhttpInstance) {
@@ -6252,6 +6535,7 @@ var require_client_h1 = __commonJS({
         }
       };
     }
+    __name(connectH1, "connectH1");
     function resumeH1(client) {
       const socket = client[kSocket];
       if (socket && !socket.destroyed) {
@@ -6277,9 +6561,11 @@ var require_client_h1 = __commonJS({
         }
       }
     }
+    __name(resumeH1, "resumeH1");
     function shouldSendContentLength(method) {
       return method !== "GET" && method !== "HEAD" && method !== "OPTIONS" && method !== "TRACE" && method !== "CONNECT";
     }
+    __name(shouldSendContentLength, "shouldSendContentLength");
     function writeH1(client, request) {
       const { method, path: path13, host, upgrade, blocking, reset } = request;
       let { body: body2, headers, contentLength: contentLength2 } = request;
@@ -6316,14 +6602,14 @@ var require_client_h1 = __commonJS({
         process.emitWarning(new RequestContentLengthMismatchError());
       }
       const socket = client[kSocket];
-      const abort = (err) => {
+      const abort = /* @__PURE__ */ __name((err) => {
         if (request.aborted || request.completed) {
           return;
         }
         util4.errorRequest(client, request, err || new RequestAbortedError());
         util4.destroy(body2);
         util4.destroy(socket, new InformationalError("aborted"));
-      };
+      }, "abort");
       try {
         request.onConnect(abort);
       } catch (err) {
@@ -6401,11 +6687,12 @@ upgrade: ${upgrade}\r
       }
       return true;
     }
+    __name(writeH1, "writeH1");
     function writeStream(abort, body2, client, request, socket, contentLength2, header, expectsPayload) {
       assert4(contentLength2 !== 0 || client[kRunning] === 0, "stream body cannot be pipelined");
       let finished = false;
       const writer = new AsyncWriter({ abort, socket, request, contentLength: contentLength2, client, expectsPayload, header });
-      const onData = function(chunk) {
+      const onData = /* @__PURE__ */ __name(function(chunk) {
         if (finished) {
           return;
         }
@@ -6416,16 +6703,16 @@ upgrade: ${upgrade}\r
         } catch (err) {
           util4.destroy(this, err);
         }
-      };
-      const onDrain = function() {
+      }, "onData");
+      const onDrain = /* @__PURE__ */ __name(function() {
         if (finished) {
           return;
         }
         if (body2.resume) {
           body2.resume();
         }
-      };
-      const onClose = function() {
+      }, "onDrain");
+      const onClose = /* @__PURE__ */ __name(function() {
         queueMicrotask(() => {
           body2.removeListener("error", onFinished);
         });
@@ -6433,8 +6720,8 @@ upgrade: ${upgrade}\r
           const err = new RequestAbortedError();
           queueMicrotask(() => onFinished(err));
         }
-      };
-      const onFinished = function(err) {
+      }, "onClose");
+      const onFinished = /* @__PURE__ */ __name(function(err) {
         if (finished) {
           return;
         }
@@ -6455,7 +6742,7 @@ upgrade: ${upgrade}\r
         } else {
           util4.destroy(body2);
         }
-      };
+      }, "onFinished");
       body2.on("data", onData).on("end", onFinished).on("error", onFinished).on("close", onClose);
       if (body2.resume) {
         body2.resume();
@@ -6470,6 +6757,7 @@ upgrade: ${upgrade}\r
         setImmediate(onClose);
       }
     }
+    __name(writeStream, "writeStream");
     function writeBuffer(abort, body2, client, request, socket, contentLength2, header, expectsPayload) {
       try {
         if (!body2) {
@@ -6501,6 +6789,7 @@ upgrade: ${upgrade}\r
         abort(err);
       }
     }
+    __name(writeBuffer, "writeBuffer");
     async function writeBlob(abort, body2, client, request, socket, contentLength2, header, expectsPayload) {
       assert4(contentLength2 === body2.size, "blob body must have content length");
       try {
@@ -6524,6 +6813,7 @@ upgrade: ${upgrade}\r
         abort(err);
       }
     }
+    __name(writeBlob, "writeBlob");
     async function writeIterable(abort, body2, client, request, socket, contentLength2, header, expectsPayload) {
       assert4(contentLength2 !== 0 || client[kRunning] === 0, "iterator body cannot be pipelined");
       let callback = null;
@@ -6534,14 +6824,15 @@ upgrade: ${upgrade}\r
           cb();
         }
       }
-      const waitForDrain = () => new Promise((resolve2, reject) => {
+      __name(onDrain, "onDrain");
+      const waitForDrain = /* @__PURE__ */ __name(() => new Promise((resolve2, reject) => {
         assert4(callback === null);
         if (socket[kError]) {
           reject(socket[kError]);
         } else {
           callback = resolve2;
         }
-      });
+      }), "waitForDrain");
       socket.on("close", onDrain).on("drain", onDrain);
       const writer = new AsyncWriter({ abort, socket, request, contentLength: contentLength2, client, expectsPayload, header });
       try {
@@ -6560,7 +6851,11 @@ upgrade: ${upgrade}\r
         socket.off("close", onDrain).off("drain", onDrain);
       }
     }
+    __name(writeIterable, "writeIterable");
     var AsyncWriter = class {
+      static {
+        __name(this, "AsyncWriter");
+      }
       constructor({ abort, socket, request, contentLength: contentLength2, client, expectsPayload, header }) {
         this.socket = socket;
         this.request = request;
@@ -6736,6 +7031,7 @@ var require_client_h2 = __commonJS({
       }
       return result;
     }
+    __name(parseH2Headers, "parseH2Headers");
     async function connectH2(client, socket) {
       client[kSocket] = socket;
       if (!h2ExperimentalWarned) {
@@ -6745,7 +7041,7 @@ var require_client_h2 = __commonJS({
         });
       }
       const session = http22.connect(client[kUrl], {
-        createConnection: () => socket,
+        createConnection: /* @__PURE__ */ __name(() => socket, "createConnection"),
         peerMaxConcurrentStreams: client[kMaxConcurrentStreams]
       });
       session[kOpenStreams] = 0;
@@ -6819,6 +7115,7 @@ var require_client_h2 = __commonJS({
         }
       };
     }
+    __name(connectH2, "connectH2");
     function resumeH2(client) {
       const socket = client[kSocket];
       if (socket?.destroyed === false) {
@@ -6831,11 +7128,13 @@ var require_client_h2 = __commonJS({
         }
       }
     }
+    __name(resumeH2, "resumeH2");
     function onHttp2SessionError(err) {
       assert4(err.code !== "ERR_TLS_CERT_ALTNAME_INVALID");
       this[kSocket][kError] = err;
       this[kClient][kOnError](err);
     }
+    __name(onHttp2SessionError, "onHttp2SessionError");
     function onHttp2FrameError(type, code, id) {
       if (id === 0) {
         const err = new InformationalError(`HTTP/2: "frameError" received - type ${type}, code ${code}`);
@@ -6843,11 +7142,13 @@ var require_client_h2 = __commonJS({
         this[kClient][kOnError](err);
       }
     }
+    __name(onHttp2FrameError, "onHttp2FrameError");
     function onHttp2SessionEnd() {
       const err = new SocketError("other side closed", util4.getSocketInfo(this[kSocket]));
       this.destroy(err);
       util4.destroy(this[kSocket], err);
     }
+    __name(onHttp2SessionEnd, "onHttp2SessionEnd");
     function onHTTP2GoAway(code) {
       const err = this[kError] || new SocketError(`HTTP/2: "GOAWAY" frame received with code ${code}`, util4.getSocketInfo(this));
       const client = this[kClient];
@@ -6868,9 +7169,11 @@ var require_client_h2 = __commonJS({
       client.emit("disconnect", client[kUrl], [client], err);
       client[kResume]();
     }
+    __name(onHTTP2GoAway, "onHTTP2GoAway");
     function shouldSendContentLength(method) {
       return method !== "GET" && method !== "HEAD" && method !== "OPTIONS" && method !== "TRACE" && method !== "CONNECT";
     }
+    __name(shouldSendContentLength, "shouldSendContentLength");
     function writeH2(client, request) {
       const session = client[kHTTP2Session];
       const { method, path: path13, host, upgrade, expectContinue, signal, headers: reqHeaders } = request;
@@ -6899,7 +7202,7 @@ var require_client_h2 = __commonJS({
       const { hostname, port } = client[kUrl];
       headers[HTTP2_HEADER_AUTHORITY] = host || `${hostname}${port ? `:${port}` : ""}`;
       headers[HTTP2_HEADER_METHOD] = method;
-      const abort = (err) => {
+      const abort = /* @__PURE__ */ __name((err) => {
         if (request.aborted || request.completed) {
           return;
         }
@@ -6911,7 +7214,7 @@ var require_client_h2 = __commonJS({
         util4.destroy(body2, err);
         client[kQueue][client[kRunningIdx]++] = null;
         client[kResume]();
-      };
+      }, "abort");
       try {
         request.onConnect(abort);
       } catch (err) {
@@ -7101,7 +7404,9 @@ var require_client_h2 = __commonJS({
           assert4(false);
         }
       }
+      __name(writeBodyH2, "writeBodyH2");
     }
+    __name(writeH2, "writeH2");
     function writeBuffer(abort, h2stream, body2, client, request, socket, contentLength2, expectsPayload) {
       try {
         if (body2 != null && util4.isBuffer(body2)) {
@@ -7121,6 +7426,7 @@ var require_client_h2 = __commonJS({
         abort(error2);
       }
     }
+    __name(writeBuffer, "writeBuffer");
     function writeStream(abort, socket, expectsPayload, h2stream, body2, client, request, contentLength2) {
       assert4(contentLength2 !== 0 || client[kRunning] === 0, "stream body cannot be pipelined");
       const pipe = pipeline(
@@ -7144,7 +7450,9 @@ var require_client_h2 = __commonJS({
       function onPipeData(chunk) {
         request.onBodySent(chunk);
       }
+      __name(onPipeData, "onPipeData");
     }
+    __name(writeStream, "writeStream");
     async function writeBlob(abort, h2stream, body2, client, request, socket, contentLength2, expectsPayload) {
       assert4(contentLength2 === body2.size, "blob body must have content length");
       try {
@@ -7166,6 +7474,7 @@ var require_client_h2 = __commonJS({
         abort(err);
       }
     }
+    __name(writeBlob, "writeBlob");
     async function writeIterable(abort, h2stream, body2, client, request, socket, contentLength2, expectsPayload) {
       assert4(contentLength2 !== 0 || client[kRunning] === 0, "iterator body cannot be pipelined");
       let callback = null;
@@ -7176,14 +7485,15 @@ var require_client_h2 = __commonJS({
           cb();
         }
       }
-      const waitForDrain = () => new Promise((resolve2, reject) => {
+      __name(onDrain, "onDrain");
+      const waitForDrain = /* @__PURE__ */ __name(() => new Promise((resolve2, reject) => {
         assert4(callback === null);
         if (socket[kError]) {
           reject(socket[kError]);
         } else {
           callback = resolve2;
         }
-      });
+      }), "waitForDrain");
       h2stream.on("close", onDrain).on("drain", onDrain);
       try {
         for await (const chunk of body2) {
@@ -7208,6 +7518,7 @@ var require_client_h2 = __commonJS({
         h2stream.off("close", onDrain).off("drain", onDrain);
       }
     }
+    __name(writeIterable, "writeIterable");
     module2.exports = connectH2;
   }
 });
@@ -7224,6 +7535,9 @@ var require_redirect_handler = __commonJS({
     var redirectableStatusCodes = [300, 301, 302, 303, 307, 308];
     var kBody = /* @__PURE__ */ Symbol("body");
     var BodyAsyncIterable = class {
+      static {
+        __name(this, "BodyAsyncIterable");
+      }
       constructor(body2) {
         this[kBody] = body2;
         this[kBodyUsed] = false;
@@ -7235,6 +7549,9 @@ var require_redirect_handler = __commonJS({
       }
     };
     var RedirectHandler = class {
+      static {
+        __name(this, "RedirectHandler");
+      }
       constructor(dispatch, maxRedirections, opts, handler) {
         if (maxRedirections != null && (!Number.isInteger(maxRedirections) || maxRedirections < 0)) {
           throw new InvalidArgumentError("maxRedirections must be a positive number");
@@ -7335,6 +7652,7 @@ var require_redirect_handler = __commonJS({
         }
       }
     }
+    __name(parseLocation, "parseLocation");
     function shouldRemoveHeader(header, removeContent, unknownOrigin) {
       if (header.length === 4) {
         return util4.headerNameToString(header) === "host";
@@ -7348,6 +7666,7 @@ var require_redirect_handler = __commonJS({
       }
       return false;
     }
+    __name(shouldRemoveHeader, "shouldRemoveHeader");
     function cleanRequestHeaders(headers, removeContent, unknownOrigin) {
       const ret = [];
       if (Array.isArray(headers)) {
@@ -7367,6 +7686,7 @@ var require_redirect_handler = __commonJS({
       }
       return ret;
     }
+    __name(cleanRequestHeaders, "cleanRequestHeaders");
     module2.exports = RedirectHandler;
   }
 });
@@ -7378,7 +7698,7 @@ var require_redirect_interceptor = __commonJS({
     var RedirectHandler = require_redirect_handler();
     function createRedirectInterceptor({ maxRedirections: defaultMaxRedirections }) {
       return (dispatch) => {
-        return function Intercept(opts, handler) {
+        return /* @__PURE__ */ __name(function Intercept(opts, handler) {
           const { maxRedirections = defaultMaxRedirections } = opts;
           if (!maxRedirections) {
             return dispatch(opts, handler);
@@ -7386,9 +7706,10 @@ var require_redirect_interceptor = __commonJS({
           const redirectHandler = new RedirectHandler(dispatch, maxRedirections, opts, handler);
           opts = { ...opts, maxRedirections: 0 };
           return dispatch(opts, redirectHandler);
-        };
+        }, "Intercept");
       };
     }
+    __name(createRedirectInterceptor, "createRedirectInterceptor");
     module2.exports = createRedirectInterceptor;
   }
 });
@@ -7456,12 +7777,16 @@ var require_client = __commonJS({
     var connectH2 = require_client_h2();
     var deprecatedInterceptorWarned = false;
     var kClosedResolve = /* @__PURE__ */ Symbol("kClosedResolve");
-    var noop = () => {
-    };
+    var noop = /* @__PURE__ */ __name(() => {
+    }, "noop");
     function getPipelining(client) {
       return client[kPipelining] ?? client[kHTTPContext]?.defaultPipelining ?? 1;
     }
+    __name(getPipelining, "getPipelining");
     var Client = class extends DispatcherBase {
+      static {
+        __name(this, "Client");
+      }
       /**
        *
        * @param {string|URL} url
@@ -7673,13 +7998,13 @@ var require_client = __commonJS({
             const request = requests[i];
             util4.errorRequest(this, request, err);
           }
-          const callback = () => {
+          const callback = /* @__PURE__ */ __name(() => {
             if (this[kClosedResolve]) {
               this[kClosedResolve]();
               this[kClosedResolve] = null;
             }
             resolve2(null);
-          };
+          }, "callback");
           if (this[kHTTPContext]) {
             this[kHTTPContext].destroy(err, callback);
             this[kHTTPContext] = null;
@@ -7702,6 +8027,7 @@ var require_client = __commonJS({
         assert4(client[kSize] === 0);
       }
     }
+    __name(onError, "onError");
     async function connect(client) {
       assert4(!client[kConnecting]);
       assert4(!client[kHTTPContext]);
@@ -7810,10 +8136,12 @@ var require_client = __commonJS({
       }
       client[kResume]();
     }
+    __name(connect, "connect");
     function emitDrain(client) {
       client[kNeedDrain] = 0;
       client.emit("drain", client[kUrl], [client]);
     }
+    __name(emitDrain, "emitDrain");
     function resume(client, sync) {
       if (client[kResuming] === 2) {
         return;
@@ -7827,6 +8155,7 @@ var require_client = __commonJS({
         client[kRunningIdx] = 0;
       }
     }
+    __name(resume, "resume");
     function _resume(client, sync) {
       while (true) {
         if (client.destroyed) {
@@ -7889,6 +8218,7 @@ var require_client = __commonJS({
         }
       }
     }
+    __name(_resume, "_resume");
     module2.exports = Client;
   }
 });
@@ -7900,6 +8230,9 @@ var require_fixed_queue = __commonJS({
     var kSize = 2048;
     var kMask = kSize - 1;
     var FixedCircularBuffer = class {
+      static {
+        __name(this, "FixedCircularBuffer");
+      }
       constructor() {
         this.bottom = 0;
         this.top = 0;
@@ -7926,6 +8259,9 @@ var require_fixed_queue = __commonJS({
       }
     };
     module2.exports = class FixedQueue {
+      static {
+        __name(this, "FixedQueue");
+      }
       constructor() {
         this.head = this.tail = new FixedCircularBuffer();
       }
@@ -7956,6 +8292,9 @@ var require_pool_stats = __commonJS({
     var { kFree, kConnected, kPending, kQueued, kRunning, kSize } = require_symbols();
     var kPool = /* @__PURE__ */ Symbol("pool");
     var PoolStats = class {
+      static {
+        __name(this, "PoolStats");
+      }
       constructor(pool) {
         this[kPool] = pool;
       }
@@ -8003,13 +8342,16 @@ var require_pool_base = __commonJS({
     var kRemoveClient = /* @__PURE__ */ Symbol("remove client");
     var kStats = /* @__PURE__ */ Symbol("stats");
     var PoolBase = class extends DispatcherBase {
+      static {
+        __name(this, "PoolBase");
+      }
       constructor() {
         super();
         this[kQueue] = new FixedQueue();
         this[kClients] = [];
         this[kQueued] = 0;
         const pool = this;
-        this[kOnDrain] = function onDrain(origin, targets) {
+        this[kOnDrain] = /* @__PURE__ */ __name(function onDrain(origin, targets) {
           const queue = pool[kQueue];
           let needDrain = false;
           while (!needDrain) {
@@ -8028,7 +8370,7 @@ var require_pool_base = __commonJS({
           if (pool[kClosedResolve] && queue.isEmpty()) {
             Promise.all(pool[kClients].map((c) => c.close())).then(pool[kClosedResolve]);
           }
-        };
+        }, "onDrain");
         this[kOnConnect] = (origin, targets) => {
           pool.emit("connect", origin, [pool, ...targets]);
         };
@@ -8161,7 +8503,11 @@ var require_pool = __commonJS({
     function defaultFactory(origin, opts) {
       return new Client(origin, opts);
     }
+    __name(defaultFactory, "defaultFactory");
     var Pool = class extends PoolBase {
+      static {
+        __name(this, "Pool");
+      }
       constructor(origin, {
         connections,
         factory = defaultFactory,
@@ -8264,10 +8610,15 @@ var require_balanced_pool = __commonJS({
       }
       return a;
     }
+    __name(getGreatestCommonDivisor, "getGreatestCommonDivisor");
     function defaultFactory(origin, opts) {
       return new Pool(origin, opts);
     }
+    __name(defaultFactory, "defaultFactory");
     var BalancedPool = class extends PoolBase {
+      static {
+        __name(this, "BalancedPool");
+      }
       constructor(upstreams = [], { factory = defaultFactory, ...opts } = {}) {
         super();
         this[kOptions] = opts;
@@ -8393,7 +8744,11 @@ var require_agent = __commonJS({
     function defaultFactory(origin, opts) {
       return opts && opts.connections === 1 ? new Client(origin, opts) : new Pool(origin, opts);
     }
+    __name(defaultFactory, "defaultFactory");
     var Agent3 = class extends DispatcherBase {
+      static {
+        __name(this, "Agent");
+      }
       constructor({ factory = defaultFactory, maxRedirections = 0, connect, ...options } = {}) {
         super();
         if (typeof factory !== "function") {
@@ -8491,18 +8846,24 @@ var require_proxy_agent = __commonJS({
     function defaultProtocolPort(protocol) {
       return protocol === "https:" ? 443 : 80;
     }
+    __name(defaultProtocolPort, "defaultProtocolPort");
     function defaultFactory(origin, opts) {
       return new Pool(origin, opts);
     }
-    var noop = () => {
-    };
+    __name(defaultFactory, "defaultFactory");
+    var noop = /* @__PURE__ */ __name(() => {
+    }, "noop");
     function defaultAgentFactory(origin, opts) {
       if (opts.connections === 1) {
         return new Client(origin, opts);
       }
       return new Pool(origin, opts);
     }
+    __name(defaultAgentFactory, "defaultAgentFactory");
     var Http1ProxyWrapper = class extends DispatcherBase {
+      static {
+        __name(this, "Http1ProxyWrapper");
+      }
       #client;
       constructor(proxyUrl, { headers = {}, connect, factory }) {
         super();
@@ -8548,6 +8909,9 @@ var require_proxy_agent = __commonJS({
       }
     };
     var ProxyAgent2 = class extends DispatcherBase {
+      static {
+        __name(this, "ProxyAgent");
+      }
       constructor(opts) {
         super();
         if (!opts || typeof opts === "object" && !(opts instanceof URL2) && !opts.uri) {
@@ -8578,7 +8942,7 @@ var require_proxy_agent = __commonJS({
         const connect = buildConnector({ ...opts.proxyTls });
         this[kConnectEndpoint] = buildConnector({ ...opts.requestTls });
         const agentFactory = opts.factory || defaultAgentFactory;
-        const factory = (origin2, options) => {
+        const factory = /* @__PURE__ */ __name((origin2, options) => {
           const { protocol: protocol2 } = new URL2(origin2);
           if (!this[kTunnelProxy] && protocol2 === "http:" && this[kProxy].protocol === "http:") {
             return new Http1ProxyWrapper(this[kProxy].uri, {
@@ -8588,12 +8952,12 @@ var require_proxy_agent = __commonJS({
             });
           }
           return agentFactory(origin2, options);
-        };
+        }, "factory");
         this[kClient] = clientFactory(url2, { connect });
         this[kAgent] = new Agent3({
           ...opts,
           factory,
-          connect: async (opts2, callback) => {
+          connect: /* @__PURE__ */ __name(async (opts2, callback) => {
             let requestedPath = opts2.host;
             if (!opts2.port) {
               requestedPath += `:${defaultProtocolPort(opts2.protocol)}`;
@@ -8632,7 +8996,7 @@ var require_proxy_agent = __commonJS({
                 callback(err);
               }
             }
-          }
+          }, "connect")
         });
       }
       dispatch(opts, handler) {
@@ -8682,12 +9046,14 @@ var require_proxy_agent = __commonJS({
       }
       return headers;
     }
+    __name(buildHeaders, "buildHeaders");
     function throwIfProxyAuthIsSent(headers) {
       const existProxyAuth = headers && Object.keys(headers).find((key) => key.toLowerCase() === "proxy-authorization");
       if (existProxyAuth) {
         throw new InvalidArgumentError("Proxy-Authorization should be sent in ProxyAgent constructor");
       }
     }
+    __name(throwIfProxyAuthIsSent, "throwIfProxyAuthIsSent");
     module2.exports = ProxyAgent2;
   }
 });
@@ -8706,6 +9072,9 @@ var require_env_http_proxy_agent = __commonJS({
     };
     var experimentalWarned = false;
     var EnvHttpProxyAgent = class extends DispatcherBase {
+      static {
+        __name(this, "EnvHttpProxyAgent");
+      }
       #noProxyValue = null;
       #noProxyEntries = null;
       #opts = null;
@@ -8845,7 +9214,11 @@ var require_retry_handler = __commonJS({
       const current = Date.now();
       return new Date(retryAfter).getTime() - current;
     }
+    __name(calculateRetryAfterHeader, "calculateRetryAfterHeader");
     var RetryHandler = class _RetryHandler {
+      static {
+        __name(this, "RetryHandler");
+      }
       constructor(opts, handlers) {
         const { retryOptions, ...dispatchOpts } = opts;
         const {
@@ -9120,6 +9493,7 @@ var require_retry_handler = __commonJS({
             this.handler.onError(err3);
           }
         }
+        __name(onRetry, "onRetry");
       }
     };
     module2.exports = RetryHandler;
@@ -9133,6 +9507,9 @@ var require_retry_agent = __commonJS({
     var Dispatcher = require_dispatcher();
     var RetryHandler = require_retry_handler();
     var RetryAgent = class extends Dispatcher {
+      static {
+        __name(this, "RetryAgent");
+      }
       #agent = null;
       #options = null;
       constructor(agent, options = {}) {
@@ -9176,9 +9553,12 @@ var require_readable = __commonJS({
     var kAbort = /* @__PURE__ */ Symbol("kAbort");
     var kContentType = /* @__PURE__ */ Symbol("kContentType");
     var kContentLength = /* @__PURE__ */ Symbol("kContentLength");
-    var noop = () => {
-    };
+    var noop = /* @__PURE__ */ __name(() => {
+    }, "noop");
     var BodyReadable = class extends Readable5 {
+      static {
+        __name(this, "BodyReadable");
+      }
       constructor({
         resume,
         abort,
@@ -9297,9 +9677,9 @@ var require_readable = __commonJS({
           if (this[kContentLength] > limit) {
             this.destroy(new AbortError3());
           }
-          const onAbort = () => {
+          const onAbort = /* @__PURE__ */ __name(() => {
             this.destroy(signal.reason ?? new AbortError3());
-          };
+          }, "onAbort");
           signal?.addEventListener("abort", onAbort);
           this.on("close", function() {
             signal?.removeEventListener("abort", onAbort);
@@ -9320,9 +9700,11 @@ var require_readable = __commonJS({
     function isLocked(self2) {
       return self2[kBody] && self2[kBody].locked === true || self2[kConsume];
     }
+    __name(isLocked, "isLocked");
     function isUnusable(self2) {
       return util4.isDisturbed(self2) || isLocked(self2);
     }
+    __name(isUnusable, "isUnusable");
     async function consume(stream, type) {
       assert4(!stream[kConsume]);
       return new Promise((resolve2, reject) => {
@@ -9359,6 +9741,7 @@ var require_readable = __commonJS({
         }
       });
     }
+    __name(consume, "consume");
     function consumeStart(consume2) {
       if (consume2.body === null) {
         return;
@@ -9386,6 +9769,7 @@ var require_readable = __commonJS({
       while (consume2.stream.read() != null) {
       }
     }
+    __name(consumeStart, "consumeStart");
     function chunksDecode(chunks, length) {
       if (chunks.length === 0 || length === 0) {
         return "";
@@ -9395,6 +9779,7 @@ var require_readable = __commonJS({
       const start = bufferLength > 2 && buffer2[0] === 239 && buffer2[1] === 187 && buffer2[2] === 191 ? 3 : 0;
       return buffer2.utf8Slice(start, bufferLength);
     }
+    __name(chunksDecode, "chunksDecode");
     function chunksConcat(chunks, length) {
       if (chunks.length === 0 || length === 0) {
         return new Uint8Array(0);
@@ -9411,6 +9796,7 @@ var require_readable = __commonJS({
       }
       return buffer2;
     }
+    __name(chunksConcat, "chunksConcat");
     function consumeEnd(consume2) {
       const { type, body: body2, resolve: resolve2, stream, length } = consume2;
       try {
@@ -9430,10 +9816,12 @@ var require_readable = __commonJS({
         stream.destroy(err);
       }
     }
+    __name(consumeEnd, "consumeEnd");
     function consumePush(consume2, chunk) {
       consume2.length += chunk.length;
       consume2.body.push(chunk);
     }
+    __name(consumePush, "consumePush");
     function consumeFinish(consume2, err) {
       if (consume2.body === null) {
         return;
@@ -9450,6 +9838,7 @@ var require_readable = __commonJS({
       consume2.length = 0;
       consume2.body = null;
     }
+    __name(consumeFinish, "consumeFinish");
     module2.exports = { Readable: BodyReadable, chunksDecode };
   }
 });
@@ -9501,12 +9890,13 @@ var require_util3 = __commonJS({
       }
       queueMicrotask(() => callback(new ResponseStatusCodeError(message, statusCode, headers, payload)));
     }
-    var isContentTypeApplicationJson = (contentType2) => {
+    __name(getResolveErrorBodyCallback, "getResolveErrorBodyCallback");
+    var isContentTypeApplicationJson = /* @__PURE__ */ __name((contentType2) => {
       return contentType2.length > 15 && contentType2[11] === "/" && contentType2[0] === "a" && contentType2[1] === "p" && contentType2[2] === "p" && contentType2[3] === "l" && contentType2[4] === "i" && contentType2[5] === "c" && contentType2[6] === "a" && contentType2[7] === "t" && contentType2[8] === "i" && contentType2[9] === "o" && contentType2[10] === "n" && contentType2[12] === "j" && contentType2[13] === "s" && contentType2[14] === "o" && contentType2[15] === "n";
-    };
-    var isContentTypeText = (contentType2) => {
+    }, "isContentTypeApplicationJson");
+    var isContentTypeText = /* @__PURE__ */ __name((contentType2) => {
       return contentType2.length > 4 && contentType2[4] === "/" && contentType2[0] === "t" && contentType2[1] === "e" && contentType2[2] === "x" && contentType2[3] === "t";
-    };
+    }, "isContentTypeText");
     module2.exports = {
       getResolveErrorBodyCallback,
       isContentTypeApplicationJson,
@@ -9526,6 +9916,9 @@ var require_api_request = __commonJS({
     var { getResolveErrorBodyCallback } = require_util3();
     var { AsyncResource } = require("node:async_hooks");
     var RequestHandler = class extends AsyncResource {
+      static {
+        __name(this, "RequestHandler");
+      }
       constructor(opts, callback) {
         if (!opts || typeof opts !== "object") {
           throw new InvalidArgumentError("invalid opts");
@@ -9696,6 +10089,7 @@ var require_api_request = __commonJS({
         queueMicrotask(() => callback(err, { opaque }));
       }
     }
+    __name(request, "request");
     module2.exports = request;
     module2.exports.RequestHandler = RequestHandler;
   }
@@ -9716,6 +10110,7 @@ var require_abort_signal = __commonJS({
       }
       removeSignal(self2);
     }
+    __name(abort, "abort");
     function addSignal(self2, signal) {
       self2.reason = null;
       self2[kSignal] = null;
@@ -9733,6 +10128,7 @@ var require_abort_signal = __commonJS({
       };
       addAbortListener(self2[kSignal], self2[kListener]);
     }
+    __name(addSignal, "addSignal");
     function removeSignal(self2) {
       if (!self2[kSignal]) {
         return;
@@ -9745,6 +10141,7 @@ var require_abort_signal = __commonJS({
       self2[kSignal] = null;
       self2[kListener] = null;
     }
+    __name(removeSignal, "removeSignal");
     module2.exports = {
       addSignal,
       removeSignal
@@ -9764,6 +10161,9 @@ var require_api_stream = __commonJS({
     var { AsyncResource } = require("node:async_hooks");
     var { addSignal, removeSignal } = require_abort_signal();
     var StreamHandler = class extends AsyncResource {
+      static {
+        __name(this, "StreamHandler");
+      }
       constructor(opts, factory, callback) {
         if (!opts || typeof opts !== "object") {
           throw new InvalidArgumentError("invalid opts");
@@ -9921,6 +10321,7 @@ var require_api_stream = __commonJS({
         queueMicrotask(() => callback(err, { opaque }));
       }
     }
+    __name(stream, "stream");
     module2.exports = stream;
   }
 });
@@ -9945,6 +10346,9 @@ var require_api_pipeline = __commonJS({
     var assert4 = require("node:assert");
     var kResume = /* @__PURE__ */ Symbol("resume");
     var PipelineRequest = class extends Readable5 {
+      static {
+        __name(this, "PipelineRequest");
+      }
       constructor() {
         super({ autoDestroy: true });
         this[kResume] = null;
@@ -9962,6 +10366,9 @@ var require_api_pipeline = __commonJS({
       }
     };
     var PipelineResponse = class extends Readable5 {
+      static {
+        __name(this, "PipelineResponse");
+      }
       constructor(resume) {
         super({ autoDestroy: true });
         this[kResume] = resume;
@@ -9977,6 +10384,9 @@ var require_api_pipeline = __commonJS({
       }
     };
     var PipelineHandler = class extends AsyncResource {
+      static {
+        __name(this, "PipelineHandler");
+      }
       constructor(opts, handler) {
         if (!opts || typeof opts !== "object") {
           throw new InvalidArgumentError("invalid opts");
@@ -10005,21 +10415,21 @@ var require_api_pipeline = __commonJS({
         this.ret = new Duplex({
           readableObjectMode: opts.objectMode,
           autoDestroy: true,
-          read: () => {
+          read: /* @__PURE__ */ __name(() => {
             const { body: body2 } = this;
             if (body2?.resume) {
               body2.resume();
             }
-          },
-          write: (chunk, encoding, callback) => {
+          }, "read"),
+          write: /* @__PURE__ */ __name((chunk, encoding, callback) => {
             const { req } = this;
             if (req.push(chunk, encoding) || req._readableState.destroyed) {
               callback();
             } else {
               req[kResume] = callback;
             }
-          },
-          destroy: (err, callback) => {
+          }, "write"),
+          destroy: /* @__PURE__ */ __name((err, callback) => {
             const { body: body2, req, res, ret, abort } = this;
             if (!err && !ret._readableState.endEmitted) {
               err = new RequestAbortedError();
@@ -10032,7 +10442,7 @@ var require_api_pipeline = __commonJS({
             util4.destroy(res, err);
             removeSignal(this);
             callback(err);
-          }
+          }, "destroy")
         }).on("prefinish", () => {
           const { req } = this;
           req.push(null);
@@ -10121,6 +10531,7 @@ var require_api_pipeline = __commonJS({
         return new PassThrough().destroy(err);
       }
     }
+    __name(pipeline, "pipeline");
     module2.exports = pipeline;
   }
 });
@@ -10135,6 +10546,9 @@ var require_api_upgrade = __commonJS({
     var { addSignal, removeSignal } = require_abort_signal();
     var assert4 = require("node:assert");
     var UpgradeHandler = class extends AsyncResource {
+      static {
+        __name(this, "UpgradeHandler");
+      }
       constructor(opts, callback) {
         if (!opts || typeof opts !== "object") {
           throw new InvalidArgumentError("invalid opts");
@@ -10213,6 +10627,7 @@ var require_api_upgrade = __commonJS({
         queueMicrotask(() => callback(err, { opaque }));
       }
     }
+    __name(upgrade, "upgrade");
     module2.exports = upgrade;
   }
 });
@@ -10227,6 +10642,9 @@ var require_api_connect = __commonJS({
     var util4 = require_util();
     var { addSignal, removeSignal } = require_abort_signal();
     var ConnectHandler = class extends AsyncResource {
+      static {
+        __name(this, "ConnectHandler");
+      }
       constructor(opts, callback) {
         if (!opts || typeof opts !== "object") {
           throw new InvalidArgumentError("invalid opts");
@@ -10303,6 +10721,7 @@ var require_api_connect = __commonJS({
         queueMicrotask(() => callback(err, { opaque }));
       }
     }
+    __name(connect, "connect");
     module2.exports = connect;
   }
 });
@@ -10326,6 +10745,9 @@ var require_mock_errors = __commonJS({
     var { UndiciError } = require_errors();
     var kMockNotMatchedError = /* @__PURE__ */ Symbol.for("undici.error.UND_MOCK_ERR_MOCK_NOT_MATCHED");
     var MockNotMatchedError = class _MockNotMatchedError extends UndiciError {
+      static {
+        __name(this, "MockNotMatchedError");
+      }
       constructor(message) {
         super(message);
         Error.captureStackTrace(this, _MockNotMatchedError);
@@ -10403,6 +10825,7 @@ var require_mock_utils = __commonJS({
       }
       return false;
     }
+    __name(matchValue, "matchValue");
     function lowerCaseEntries(headers) {
       return Object.fromEntries(
         Object.entries(headers).map(([headerName, headerValue]) => {
@@ -10410,6 +10833,7 @@ var require_mock_utils = __commonJS({
         })
       );
     }
+    __name(lowerCaseEntries, "lowerCaseEntries");
     function getHeaderByName(headers, key) {
       if (Array.isArray(headers)) {
         for (let i = 0; i < headers.length; i += 2) {
@@ -10424,6 +10848,7 @@ var require_mock_utils = __commonJS({
         return lowerCaseEntries(headers)[key.toLocaleLowerCase()];
       }
     }
+    __name(getHeaderByName, "getHeaderByName");
     function buildHeadersFromArray(headers) {
       const clone = headers.slice();
       const entries = [];
@@ -10432,6 +10857,7 @@ var require_mock_utils = __commonJS({
       }
       return Object.fromEntries(entries);
     }
+    __name(buildHeadersFromArray, "buildHeadersFromArray");
     function matchHeaders(mockDispatch2, headers) {
       if (typeof mockDispatch2.headers === "function") {
         if (Array.isArray(headers)) {
@@ -10453,6 +10879,7 @@ var require_mock_utils = __commonJS({
       }
       return true;
     }
+    __name(matchHeaders, "matchHeaders");
     function safeUrl(path13) {
       if (typeof path13 !== "string") {
         return path13;
@@ -10465,6 +10892,7 @@ var require_mock_utils = __commonJS({
       qp.sort();
       return [...pathSegments, qp.toString()].join("?");
     }
+    __name(safeUrl, "safeUrl");
     function matchKey(mockDispatch2, { path: path13, method, body: body2, headers }) {
       const pathMatch = matchValue(mockDispatch2.path, path13);
       const methodMatch = matchValue(mockDispatch2.method, method);
@@ -10472,6 +10900,7 @@ var require_mock_utils = __commonJS({
       const headersMatch = matchHeaders(mockDispatch2, headers);
       return pathMatch && methodMatch && bodyMatch && headersMatch;
     }
+    __name(matchKey, "matchKey");
     function getResponseData(data) {
       if (Buffer.isBuffer(data)) {
         return data;
@@ -10485,6 +10914,7 @@ var require_mock_utils = __commonJS({
         return data.toString();
       }
     }
+    __name(getResponseData, "getResponseData");
     function getMockDispatch(mockDispatches, key) {
       const basePath = key.query ? buildURL(key.path, key.query) : key.path;
       const resolvedPath = typeof basePath === "string" ? safeUrl(basePath) : basePath;
@@ -10507,6 +10937,7 @@ var require_mock_utils = __commonJS({
       }
       return matchedMockDispatches[0];
     }
+    __name(getMockDispatch, "getMockDispatch");
     function addMockDispatch(mockDispatches, key, data) {
       const baseData = { timesInvoked: 0, times: 1, persist: false, consumed: false };
       const replyData = typeof data === "function" ? { callback: data } : { ...data };
@@ -10514,6 +10945,7 @@ var require_mock_utils = __commonJS({
       mockDispatches.push(newMockDispatch);
       return newMockDispatch;
     }
+    __name(addMockDispatch, "addMockDispatch");
     function deleteMockDispatch(mockDispatches, key) {
       const index = mockDispatches.findIndex((dispatch) => {
         if (!dispatch.consumed) {
@@ -10525,6 +10957,7 @@ var require_mock_utils = __commonJS({
         mockDispatches.splice(index, 1);
       }
     }
+    __name(deleteMockDispatch, "deleteMockDispatch");
     function buildKey(opts) {
       const { path: path13, method, body: body2, headers, query } = opts;
       return {
@@ -10535,6 +10968,7 @@ var require_mock_utils = __commonJS({
         query
       };
     }
+    __name(buildKey, "buildKey");
     function generateKeyValues(data) {
       const keys = Object.keys(data);
       const result = [];
@@ -10552,9 +10986,11 @@ var require_mock_utils = __commonJS({
       }
       return result;
     }
+    __name(generateKeyValues, "generateKeyValues");
     function getStatusText(statusCode) {
       return STATUS_CODES[statusCode] || "unknown";
     }
+    __name(getStatusText, "getStatusText");
     async function getResponse(body2) {
       const buffers = [];
       for await (const data of body2) {
@@ -10562,6 +10998,7 @@ var require_mock_utils = __commonJS({
       }
       return Buffer.concat(buffers).toString("utf8");
     }
+    __name(getResponse, "getResponse");
     function mockDispatch(opts, handler) {
       const key = buildKey(opts);
       const mockDispatch2 = getMockDispatch(this[kDispatches], key);
@@ -10601,15 +11038,18 @@ var require_mock_utils = __commonJS({
         handler.onComplete?.(responseTrailers);
         deleteMockDispatch(mockDispatches, key);
       }
+      __name(handleReply, "handleReply");
       function resume() {
       }
+      __name(resume, "resume");
       return true;
     }
+    __name(mockDispatch, "mockDispatch");
     function buildMockDispatch() {
       const agent = this[kMockAgent];
       const origin = this[kOrigin];
       const originalDispatch = this[kOriginalDispatch];
-      return function dispatch(opts, handler) {
+      return /* @__PURE__ */ __name(function dispatch(opts, handler) {
         if (agent.isMockActive) {
           try {
             mockDispatch.call(this, opts, handler);
@@ -10631,8 +11071,9 @@ var require_mock_utils = __commonJS({
         } else {
           originalDispatch.call(this, opts, handler);
         }
-      };
+      }, "dispatch");
     }
+    __name(buildMockDispatch, "buildMockDispatch");
     function checkNetConnect(netConnect, origin) {
       const url2 = new URL(origin);
       if (netConnect === true) {
@@ -10642,12 +11083,14 @@ var require_mock_utils = __commonJS({
       }
       return false;
     }
+    __name(checkNetConnect, "checkNetConnect");
     function buildMockOptions(opts) {
       if (opts) {
         const { agent, ...mockOptions } = opts;
         return mockOptions;
       }
     }
+    __name(buildMockOptions, "buildMockOptions");
     module2.exports = {
       getResponseData,
       getMockDispatch,
@@ -10684,6 +11127,9 @@ var require_mock_interceptor = __commonJS({
     var { InvalidArgumentError } = require_errors();
     var { buildURL } = require_util();
     var MockScope = class {
+      static {
+        __name(this, "MockScope");
+      }
       constructor(mockDispatch) {
         this[kMockDispatch] = mockDispatch;
       }
@@ -10716,6 +11162,9 @@ var require_mock_interceptor = __commonJS({
       }
     };
     var MockInterceptor = class {
+      static {
+        __name(this, "MockInterceptor");
+      }
       constructor(opts, mockDispatches) {
         if (typeof opts !== "object") {
           throw new InvalidArgumentError("opts must be an object");
@@ -10763,7 +11212,7 @@ var require_mock_interceptor = __commonJS({
        */
       reply(replyOptionsCallbackOrStatusCode) {
         if (typeof replyOptionsCallbackOrStatusCode === "function") {
-          const wrappedDefaultsCallback = (opts) => {
+          const wrappedDefaultsCallback = /* @__PURE__ */ __name((opts) => {
             const resolvedData = replyOptionsCallbackOrStatusCode(opts);
             if (typeof resolvedData !== "object" || resolvedData === null) {
               throw new InvalidArgumentError("reply options callback must return an object");
@@ -10773,7 +11222,7 @@ var require_mock_interceptor = __commonJS({
             return {
               ...this.createMockScopeDispatchData(replyParameters2)
             };
-          };
+          }, "wrappedDefaultsCallback");
           const newMockDispatch2 = addMockDispatch(this[kDispatches], this[kDispatchKey], wrappedDefaultsCallback);
           return new MockScope(newMockDispatch2);
         }
@@ -10850,6 +11299,9 @@ var require_mock_client = __commonJS({
     var Symbols = require_symbols();
     var { InvalidArgumentError } = require_errors();
     var MockClient = class extends Client {
+      static {
+        __name(this, "MockClient");
+      }
       constructor(origin, opts) {
         super(origin, opts);
         if (!opts || !opts.agent || typeof opts.agent.dispatch !== "function") {
@@ -10903,6 +11355,9 @@ var require_mock_pool = __commonJS({
     var Symbols = require_symbols();
     var { InvalidArgumentError } = require_errors();
     var MockPool = class extends Pool {
+      static {
+        __name(this, "MockPool");
+      }
       constructor(origin, opts) {
         super(origin, opts);
         if (!opts || !opts.agent || typeof opts.agent.dispatch !== "function") {
@@ -10953,6 +11408,9 @@ var require_pluralizer = __commonJS({
       this: "these"
     };
     module2.exports = class Pluralizer {
+      static {
+        __name(this, "Pluralizer");
+      }
       constructor(singular, plural) {
         this.singular = singular;
         this.plural = plural;
@@ -10976,6 +11434,9 @@ var require_pending_interceptors_formatter = __commonJS({
     var PERSISTENT = process.versions.icu ? "\u2705" : "Y ";
     var NOT_PERSISTENT = process.versions.icu ? "\u274C" : "N ";
     module2.exports = class PendingInterceptorsFormatter {
+      static {
+        __name(this, "PendingInterceptorsFormatter");
+      }
       constructor({ disableColors } = {}) {
         this.transform = new Transform2({
           transform(chunk, _enc, cb) {
@@ -11033,6 +11494,9 @@ var require_mock_agent = __commonJS({
     var Pluralizer = require_pluralizer();
     var PendingInterceptorsFormatter = require_pending_interceptors_formatter();
     var MockAgent = class extends Dispatcher {
+      static {
+        __name(this, "MockAgent");
+      }
       constructor(opts) {
         super(opts);
         this[kNetConnect] = true;
@@ -11159,9 +11623,11 @@ var require_global2 = __commonJS({
         configurable: false
       });
     }
+    __name(setGlobalDispatcher, "setGlobalDispatcher");
     function getGlobalDispatcher() {
       return globalThis[globalDispatcher];
     }
+    __name(getGlobalDispatcher, "getGlobalDispatcher");
     module2.exports = {
       setGlobalDispatcher,
       getGlobalDispatcher
@@ -11174,6 +11640,9 @@ var require_decorator_handler = __commonJS({
   "node_modules/@actions/http-client/node_modules/undici/lib/handler/decorator-handler.js"(exports2, module2) {
     "use strict";
     module2.exports = class DecoratorHandler {
+      static {
+        __name(this, "DecoratorHandler");
+      }
       #handler;
       constructor(handler) {
         if (typeof handler !== "object" || handler === null) {
@@ -11217,7 +11686,7 @@ var require_redirect = __commonJS({
     module2.exports = (opts) => {
       const globalMaxRedirections = opts?.maxRedirections;
       return (dispatch) => {
-        return function redirectInterceptor(opts2, handler) {
+        return /* @__PURE__ */ __name(function redirectInterceptor(opts2, handler) {
           const { maxRedirections = globalMaxRedirections, ...baseOpts } = opts2;
           if (!maxRedirections) {
             return dispatch(opts2, handler);
@@ -11229,7 +11698,7 @@ var require_redirect = __commonJS({
             handler
           );
           return dispatch(baseOpts, redirectHandler);
-        };
+        }, "redirectInterceptor");
       };
     };
   }
@@ -11242,7 +11711,7 @@ var require_retry = __commonJS({
     var RetryHandler = require_retry_handler();
     module2.exports = (globalOpts) => {
       return (dispatch) => {
-        return function retryInterceptor(opts, handler) {
+        return /* @__PURE__ */ __name(function retryInterceptor(opts, handler) {
           return dispatch(
             opts,
             new RetryHandler(
@@ -11253,7 +11722,7 @@ var require_retry = __commonJS({
               }
             )
           );
-        };
+        }, "retryInterceptor");
       };
     };
   }
@@ -11267,6 +11736,9 @@ var require_dump = __commonJS({
     var { InvalidArgumentError, RequestAbortedError } = require_errors();
     var DecoratorHandler = require_decorator_handler();
     var DumpHandler = class extends DecoratorHandler {
+      static {
+        __name(this, "DumpHandler");
+      }
       #maxSize = 1024 * 1024;
       #abort = null;
       #dumped = false;
@@ -11343,16 +11815,17 @@ var require_dump = __commonJS({
       maxSize: 1024 * 1024
     }) {
       return (dispatch) => {
-        return function Intercept(opts, handler) {
+        return /* @__PURE__ */ __name(function Intercept(opts, handler) {
           const { dumpMaxSize = defaultMaxSize } = opts;
           const dumpHandler = new DumpHandler(
             { maxSize: dumpMaxSize },
             handler
           );
           return dispatch(opts, dumpHandler);
-        };
+        }, "Intercept");
       };
     }
+    __name(createDumpInterceptor, "createDumpInterceptor");
     module2.exports = createDumpInterceptor;
   }
 });
@@ -11367,6 +11840,9 @@ var require_dns = __commonJS({
     var { InvalidArgumentError, InformationalError } = require_errors();
     var maxInt = Math.pow(2, 31) - 1;
     var DNSInstance = class {
+      static {
+        __name(this, "DNSInstance");
+      }
       #maxTTL = 0;
       #maxItems = 0;
       #records = /* @__PURE__ */ new Map();
@@ -11533,6 +12009,9 @@ var require_dns = __commonJS({
       }
     };
     var DNSDispatchHandler = class extends DecoratorHandler {
+      static {
+        __name(this, "DNSDispatchHandler");
+      }
       #state = null;
       #opts = null;
       #dispatch = null;
@@ -11614,7 +12093,7 @@ var require_dns = __commonJS({
       };
       const instance = new DNSInstance(opts);
       return (dispatch) => {
-        return function dnsInterceptor(origDispatchOpts, handler) {
+        return /* @__PURE__ */ __name(function dnsInterceptor(origDispatchOpts, handler) {
           const origin = origDispatchOpts.origin.constructor === URL ? origDispatchOpts.origin : new URL(origDispatchOpts.origin);
           if (isIP(origin.hostname) !== 0) {
             return dispatch(origDispatchOpts, handler);
@@ -11640,7 +12119,7 @@ var require_dns = __commonJS({
             );
           });
           return true;
-        };
+        }, "dnsInterceptor");
       };
     };
   }
@@ -11665,6 +12144,7 @@ var require_headers = __commonJS({
     function isHTTPWhiteSpaceCharCode(code) {
       return code === 10 || code === 13 || code === 9 || code === 32;
     }
+    __name(isHTTPWhiteSpaceCharCode, "isHTTPWhiteSpaceCharCode");
     function headerValueNormalize(potentialValue) {
       let i = 0;
       let j = potentialValue.length;
@@ -11672,6 +12152,7 @@ var require_headers = __commonJS({
       while (j > i && isHTTPWhiteSpaceCharCode(potentialValue.charCodeAt(i))) ++i;
       return i === 0 && j === potentialValue.length ? potentialValue : potentialValue.substring(i, j);
     }
+    __name(headerValueNormalize, "headerValueNormalize");
     function fill(headers, object) {
       if (Array.isArray(object)) {
         for (let i = 0; i < object.length; ++i) {
@@ -11697,6 +12178,7 @@ var require_headers = __commonJS({
         });
       }
     }
+    __name(fill, "fill");
     function appendHeader(headers, name, value) {
       value = headerValueNormalize(value);
       if (!isValidHeaderName(name)) {
@@ -11717,10 +12199,15 @@ var require_headers = __commonJS({
       }
       return getHeadersList(headers).append(name, value, false);
     }
+    __name(appendHeader, "appendHeader");
     function compareHeaderName(a, b) {
       return a[0] < b[0] ? -1 : 1;
     }
+    __name(compareHeaderName, "compareHeaderName");
     var HeadersList = class _HeadersList {
+      static {
+        __name(this, "HeadersList");
+      }
       /** @type {[string, string][]|null} */
       cookies = null;
       constructor(init) {
@@ -11886,6 +12373,9 @@ var require_headers = __commonJS({
       }
     };
     var Headers2 = class _Headers {
+      static {
+        __name(this, "Headers");
+      }
       #guard;
       #headersList;
       constructor(init = void 0) {
@@ -12122,6 +12612,9 @@ var require_response = __commonJS({
     var { types: types2 } = require("node:util");
     var textEncoder = new TextEncoder("utf-8");
     var Response = class _Response {
+      static {
+        __name(this, "Response");
+      }
       // Creates network error Response.
       static error() {
         const responseObject = fromInnerResponse(makeNetworkError(), "immutable");
@@ -12299,6 +12792,7 @@ var require_response = __commonJS({
       }
       return newResponse;
     }
+    __name(cloneResponse, "cloneResponse");
     function makeResponse(init) {
       return {
         aborted: false,
@@ -12315,6 +12809,7 @@ var require_response = __commonJS({
         urlList: init?.urlList ? [...init.urlList] : []
       };
     }
+    __name(makeResponse, "makeResponse");
     function makeNetworkError(reason) {
       const isError3 = isErrorLike(reason);
       return makeResponse({
@@ -12324,6 +12819,7 @@ var require_response = __commonJS({
         aborted: reason && reason.name === "AbortError"
       });
     }
+    __name(makeNetworkError, "makeNetworkError");
     function isNetworkError(response) {
       return (
         // A network error is a response whose type is "error",
@@ -12331,6 +12827,7 @@ var require_response = __commonJS({
         response.status === 0
       );
     }
+    __name(isNetworkError, "isNetworkError");
     function makeFilteredResponse(response, state3) {
       state3 = {
         internalResponse: response,
@@ -12347,6 +12844,7 @@ var require_response = __commonJS({
         }
       });
     }
+    __name(makeFilteredResponse, "makeFilteredResponse");
     function filterResponse(response, type) {
       if (type === "basic") {
         return makeFilteredResponse(response, {
@@ -12378,10 +12876,12 @@ var require_response = __commonJS({
         assert4(false);
       }
     }
+    __name(filterResponse, "filterResponse");
     function makeAppropriateNetworkError(fetchParams, err = null) {
       assert4(isCancelled(fetchParams));
       return isAborted(fetchParams) ? makeNetworkError(Object.assign(new DOMException("The operation was aborted.", "AbortError"), { cause: err })) : makeNetworkError(Object.assign(new DOMException("Request was cancelled."), { cause: err }));
     }
+    __name(makeAppropriateNetworkError, "makeAppropriateNetworkError");
     function initializeResponse(response, init, body2) {
       if (init.status !== null && (init.status < 200 || init.status > 599)) {
         throw new RangeError('init["status"] must be in the range of 200 to 599, inclusive.');
@@ -12413,6 +12913,7 @@ var require_response = __commonJS({
         }
       }
     }
+    __name(initializeResponse, "initializeResponse");
     function fromInnerResponse(innerResponse, guard) {
       const response = new Response(kConstruct);
       response[kState] = innerResponse;
@@ -12424,6 +12925,7 @@ var require_response = __commonJS({
       }
       return response;
     }
+    __name(fromInnerResponse, "fromInnerResponse");
     webidl.converters.ReadableStream = webidl.interfaceConverter(
       ReadableStream
     );
@@ -12464,12 +12966,12 @@ var require_response = __commonJS({
       {
         key: "status",
         converter: webidl.converters["unsigned short"],
-        defaultValue: () => 200
+        defaultValue: /* @__PURE__ */ __name(() => 200, "defaultValue")
       },
       {
         key: "statusText",
         converter: webidl.converters.ByteString,
-        defaultValue: () => ""
+        defaultValue: /* @__PURE__ */ __name(() => "", "defaultValue")
       },
       {
         key: "headers",
@@ -12495,6 +12997,9 @@ var require_dispatcher_weakref = __commonJS({
     "use strict";
     var { kConnected, kSize } = require_symbols();
     var CompatWeakRef = class {
+      static {
+        __name(this, "CompatWeakRef");
+      }
       constructor(value) {
         this.value = value;
       }
@@ -12503,6 +13008,9 @@ var require_dispatcher_weakref = __commonJS({
       }
     };
     var CompatFinalizer = class {
+      static {
+        __name(this, "CompatFinalizer");
+      }
       constructor(finalizer) {
         this.finalizer = finalizer;
       }
@@ -12590,9 +13098,14 @@ var require_request2 = __commonJS({
           }
         }
       }
+      __name(abort, "abort");
     }
+    __name(buildAbort, "buildAbort");
     var patchMethodWarning = false;
     var Request = class _Request {
+      static {
+        __name(this, "Request");
+      }
       // https://fetch.spec.whatwg.org/#dom-request
       constructor(input, init = {}) {
         webidl.util.markAsUncloneable(this);
@@ -13082,6 +13595,7 @@ var require_request2 = __commonJS({
         headersList: init.headersList ? new HeadersList(init.headersList) : new HeadersList()
       };
     }
+    __name(makeRequest, "makeRequest");
     function cloneRequest(request) {
       const newRequest = makeRequest({ ...request, body: null });
       if (request.body != null) {
@@ -13089,6 +13603,7 @@ var require_request2 = __commonJS({
       }
       return newRequest;
     }
+    __name(cloneRequest, "cloneRequest");
     function fromInnerRequest(innerRequest, signal, guard) {
       const request = new Request(kConstruct);
       request[kState] = innerRequest;
@@ -13098,6 +13613,7 @@ var require_request2 = __commonJS({
       setHeadersGuard(request[kHeaders], guard);
       return request;
     }
+    __name(fromInnerRequest, "fromInnerRequest");
     Object.defineProperties(Request.prototype, {
       method: kEnumerableProperty,
       url: kEnumerableProperty,
@@ -13296,6 +13812,9 @@ var require_fetch = __commonJS({
     var defaultUserAgent = typeof __UNDICI_IS_NODE__ !== "undefined" || typeof esbuildDetection !== "undefined" ? "node" : "undici";
     var resolveObjectURL;
     var Fetch = class extends EE {
+      static {
+        __name(this, "Fetch");
+      }
       constructor(dispatcher) {
         super();
         this.dispatcher = dispatcher;
@@ -13328,6 +13847,7 @@ var require_fetch = __commonJS({
     function handleFetchDone(response) {
       finalizeAndReportTiming(response, "fetch");
     }
+    __name(handleFetchDone, "handleFetchDone");
     function fetch(input, init = void 0) {
       webidl.argumentLengthCheck(arguments, 1, "globalThis.fetch");
       let p = createDeferredPromise();
@@ -13360,7 +13880,7 @@ var require_fetch = __commonJS({
           abortFetch(p, request, realResponse, requestObject.signal.reason);
         }
       );
-      const processResponse = (response) => {
+      const processResponse = /* @__PURE__ */ __name((response) => {
         if (locallyAborted) {
           return;
         }
@@ -13375,7 +13895,7 @@ var require_fetch = __commonJS({
         responseObject = new WeakRef(fromInnerResponse(response, "immutable"));
         p.resolve(responseObject.deref());
         p = null;
-      };
+      }, "processResponse");
       controller = fetching({
         request,
         processResponseEndOfBody: handleFetchDone,
@@ -13385,6 +13905,7 @@ var require_fetch = __commonJS({
       });
       return p.promise;
     }
+    __name(fetch, "fetch");
     function finalizeAndReportTiming(response, initiatorType = "other") {
       if (response.type === "error" && response.aborted) {
         return;
@@ -13417,6 +13938,7 @@ var require_fetch = __commonJS({
         cacheState
       );
     }
+    __name(finalizeAndReportTiming, "finalizeAndReportTiming");
     var markResourceTiming = performance.markResourceTiming;
     function abortFetch(p, request, responseObject, error2) {
       if (p) {
@@ -13443,6 +13965,7 @@ var require_fetch = __commonJS({
         });
       }
     }
+    __name(abortFetch, "abortFetch");
     function fetching({
       request,
       processRequestBodyChunkLength,
@@ -13509,6 +14032,7 @@ var require_fetch = __commonJS({
       });
       return fetchParams.controller;
     }
+    __name(fetching, "fetching");
     async function mainFetch(fetchParams, recursive = false) {
       const request = fetchParams.request;
       let response = null;
@@ -13588,24 +14112,25 @@ var require_fetch = __commonJS({
         fetchParams.controller.dump = true;
       }
       if (request.integrity) {
-        const processBodyError = (reason) => fetchFinale(fetchParams, makeNetworkError(reason));
+        const processBodyError = /* @__PURE__ */ __name((reason) => fetchFinale(fetchParams, makeNetworkError(reason)), "processBodyError");
         if (request.responseTainting === "opaque" || response.body == null) {
           processBodyError(response.error);
           return;
         }
-        const processBody = (bytes) => {
+        const processBody = /* @__PURE__ */ __name((bytes) => {
           if (!bytesMatch(bytes, request.integrity)) {
             processBodyError("integrity mismatch");
             return;
           }
           response.body = safelyExtractBody(bytes)[0];
           fetchFinale(fetchParams, response);
-        };
+        }, "processBody");
         await fullyReadBody(response.body, processBody, processBodyError);
       } else {
         fetchFinale(fetchParams, response);
       }
     }
+    __name(mainFetch, "mainFetch");
     function schemeFetch(fetchParams) {
       if (isCancelled(fetchParams) && fetchParams.request.redirectCount === 0) {
         return Promise.resolve(makeAppropriateNetworkError(fetchParams));
@@ -13697,15 +14222,17 @@ var require_fetch = __commonJS({
         }
       }
     }
+    __name(schemeFetch, "schemeFetch");
     function finalizeResponse(fetchParams, response) {
       fetchParams.request.done = true;
       if (fetchParams.processResponseDone != null) {
         queueMicrotask(() => fetchParams.processResponseDone(response));
       }
     }
+    __name(finalizeResponse, "finalizeResponse");
     function fetchFinale(fetchParams, response) {
       let timingInfo = fetchParams.timingInfo;
-      const processResponseEndOfBody = () => {
+      const processResponseEndOfBody = /* @__PURE__ */ __name(() => {
         const unsafeEndTime = Date.now();
         if (fetchParams.request.destination === "document") {
           fetchParams.controller.fullTimingInfo = timingInfo;
@@ -13733,7 +14260,7 @@ var require_fetch = __commonJS({
             markResourceTiming(timingInfo, fetchParams.request.url.href, fetchParams.request.initiatorType, globalThis, cacheState, bodyInfo, responseStatus);
           }
         };
-        const processResponseEndOfBodyTask = () => {
+        const processResponseEndOfBodyTask = /* @__PURE__ */ __name(() => {
           fetchParams.request.done = true;
           if (fetchParams.processResponseEndOfBody != null) {
             queueMicrotask(() => fetchParams.processResponseEndOfBody(response));
@@ -13741,9 +14268,9 @@ var require_fetch = __commonJS({
           if (fetchParams.request.initiatorType != null) {
             fetchParams.controller.reportTimingSteps();
           }
-        };
+        }, "processResponseEndOfBodyTask");
         queueMicrotask(() => processResponseEndOfBodyTask());
-      };
+      }, "processResponseEndOfBody");
       if (fetchParams.processResponse != null) {
         queueMicrotask(() => {
           fetchParams.processResponse(response);
@@ -13759,6 +14286,7 @@ var require_fetch = __commonJS({
         });
       }
     }
+    __name(fetchFinale, "fetchFinale");
     async function httpFetch(fetchParams) {
       const request = fetchParams.request;
       let response = null;
@@ -13803,6 +14331,7 @@ var require_fetch = __commonJS({
       response.timingInfo = timingInfo;
       return response;
     }
+    __name(httpFetch, "httpFetch");
     function httpRedirectFetch(fetchParams, response) {
       const request = fetchParams.request;
       const actualResponse = response.internalResponse ? response.internalResponse : response;
@@ -13862,6 +14391,7 @@ var require_fetch = __commonJS({
       setRequestReferrerPolicyOnRedirect(request, actualResponse);
       return mainFetch(fetchParams, true);
     }
+    __name(httpRedirectFetch, "httpRedirectFetch");
     async function httpNetworkOrCacheFetch(fetchParams, isAuthenticationFetch = false, isNewConnectionFetch = false) {
       const request = fetchParams.request;
       let httpFetchParams = null;
@@ -13982,6 +14512,7 @@ var require_fetch = __commonJS({
       }
       return response;
     }
+    __name(httpNetworkOrCacheFetch, "httpNetworkOrCacheFetch");
     async function httpNetworkFetch(fetchParams, includeCredentials = false, forceNewConnection = false) {
       assert4(!fetchParams.controller.connection || fetchParams.controller.connection.destroyed);
       fetchParams.controller.connection = {
@@ -14011,22 +14542,22 @@ var require_fetch = __commonJS({
       if (request.body == null && fetchParams.processRequestEndOfBody) {
         queueMicrotask(() => fetchParams.processRequestEndOfBody());
       } else if (request.body != null) {
-        const processBodyChunk = async function* (bytes) {
+        const processBodyChunk = /* @__PURE__ */ __name(async function* (bytes) {
           if (isCancelled(fetchParams)) {
             return;
           }
           yield bytes;
           fetchParams.processRequestBodyChunkLength?.(bytes.byteLength);
-        };
-        const processEndOfBody = () => {
+        }, "processBodyChunk");
+        const processEndOfBody = /* @__PURE__ */ __name(() => {
           if (isCancelled(fetchParams)) {
             return;
           }
           if (fetchParams.processRequestEndOfBody) {
             fetchParams.processRequestEndOfBody();
           }
-        };
-        const processBodyError = (e) => {
+        }, "processEndOfBody");
+        const processBodyError = /* @__PURE__ */ __name((e) => {
           if (isCancelled(fetchParams)) {
             return;
           }
@@ -14035,7 +14566,7 @@ var require_fetch = __commonJS({
           } else {
             fetchParams.controller.terminate(e);
           }
-        };
+        }, "processBodyError");
         requestBody = (async function* () {
           try {
             for await (const bytes of request.body.stream) {
@@ -14063,14 +14594,14 @@ var require_fetch = __commonJS({
         }
         return makeNetworkError(err);
       }
-      const pullAlgorithm = async () => {
+      const pullAlgorithm = /* @__PURE__ */ __name(async () => {
         await fetchParams.controller.resume();
-      };
-      const cancelAlgorithm = (reason) => {
+      }, "pullAlgorithm");
+      const cancelAlgorithm = /* @__PURE__ */ __name((reason) => {
         if (!isCancelled(fetchParams)) {
           fetchParams.controller.abort(reason);
         }
-      };
+      }, "cancelAlgorithm");
       const stream = new ReadableStream(
         {
           async start(controller) {
@@ -14146,6 +14677,7 @@ var require_fetch = __commonJS({
         }
         fetchParams.controller.connection.destroy();
       }
+      __name(onAborted, "onAborted");
       return response;
       function dispatch({ body: body2 }) {
         const url2 = requestCurrentURL(request);
@@ -14283,7 +14815,9 @@ var require_fetch = __commonJS({
           }
         ));
       }
+      __name(dispatch, "dispatch");
     }
+    __name(httpNetworkFetch, "httpNetworkFetch");
     module2.exports = {
       fetch,
       Fetch,
@@ -14315,6 +14849,9 @@ var require_progressevent = __commonJS({
     var { webidl } = require_webidl();
     var kState = /* @__PURE__ */ Symbol("ProgressEvent state");
     var ProgressEvent = class _ProgressEvent extends Event {
+      static {
+        __name(this, "ProgressEvent");
+      }
       constructor(type, eventInitDict = {}) {
         type = webidl.converters.DOMString(type, "ProgressEvent constructor", "type");
         eventInitDict = webidl.converters.ProgressEventInit(eventInitDict ?? {});
@@ -14342,32 +14879,32 @@ var require_progressevent = __commonJS({
       {
         key: "lengthComputable",
         converter: webidl.converters.boolean,
-        defaultValue: () => false
+        defaultValue: /* @__PURE__ */ __name(() => false, "defaultValue")
       },
       {
         key: "loaded",
         converter: webidl.converters["unsigned long long"],
-        defaultValue: () => 0
+        defaultValue: /* @__PURE__ */ __name(() => 0, "defaultValue")
       },
       {
         key: "total",
         converter: webidl.converters["unsigned long long"],
-        defaultValue: () => 0
+        defaultValue: /* @__PURE__ */ __name(() => 0, "defaultValue")
       },
       {
         key: "bubbles",
         converter: webidl.converters.boolean,
-        defaultValue: () => false
+        defaultValue: /* @__PURE__ */ __name(() => false, "defaultValue")
       },
       {
         key: "cancelable",
         converter: webidl.converters.boolean,
-        defaultValue: () => false
+        defaultValue: /* @__PURE__ */ __name(() => false, "defaultValue")
       },
       {
         key: "composed",
         converter: webidl.converters.boolean,
-        defaultValue: () => false
+        defaultValue: /* @__PURE__ */ __name(() => false, "defaultValue")
       }
     ]);
     module2.exports = {
@@ -14656,6 +15193,7 @@ var require_encoding = __commonJS({
           return "failure";
       }
     }
+    __name(getEncoding, "getEncoding");
     module2.exports = {
       getEncoding
     };
@@ -14752,6 +15290,7 @@ var require_util4 = __commonJS({
         }
       })();
     }
+    __name(readOperation, "readOperation");
     function fireAProgressEvent(e, reader) {
       const event = new ProgressEvent(e, {
         bubbles: false,
@@ -14759,6 +15298,7 @@ var require_util4 = __commonJS({
       });
       reader.dispatchEvent(event);
     }
+    __name(fireAProgressEvent, "fireAProgressEvent");
     function packageData(bytes, type, mimeType, encodingName) {
       switch (type) {
         case "DataURL": {
@@ -14806,6 +15346,7 @@ var require_util4 = __commonJS({
         }
       }
     }
+    __name(packageData, "packageData");
     function decode(ioQueue, encoding) {
       const bytes = combineByteSequences(ioQueue);
       const BOMEncoding = BOMSniffing(bytes);
@@ -14817,6 +15358,7 @@ var require_util4 = __commonJS({
       const sliced = bytes.slice(slice);
       return new TextDecoder(encoding).decode(sliced);
     }
+    __name(decode, "decode");
     function BOMSniffing(ioQueue) {
       const [a, b, c] = ioQueue;
       if (a === 239 && b === 187 && c === 191) {
@@ -14828,6 +15370,7 @@ var require_util4 = __commonJS({
       }
       return null;
     }
+    __name(BOMSniffing, "BOMSniffing");
     function combineByteSequences(sequences) {
       const size = sequences.reduce((a, b) => {
         return a + b.byteLength;
@@ -14839,6 +15382,7 @@ var require_util4 = __commonJS({
         return a;
       }, new Uint8Array(size));
     }
+    __name(combineByteSequences, "combineByteSequences");
     module2.exports = {
       staticPropertyDescriptors,
       readOperation,
@@ -14866,6 +15410,9 @@ var require_filereader = __commonJS({
     var { webidl } = require_webidl();
     var { kEnumerableProperty } = require_util();
     var FileReader = class _FileReader extends EventTarget {
+      static {
+        __name(this, "FileReader");
+      }
       constructor() {
         super();
         this[kState] = "empty";
@@ -15128,6 +15675,7 @@ var require_util5 = __commonJS({
       const serializedB = URLSerializer(B, excludeFragment);
       return serializedA === serializedB;
     }
+    __name(urlEquals, "urlEquals");
     function getFieldValues(header) {
       assert4(header !== null);
       const values = [];
@@ -15139,6 +15687,7 @@ var require_util5 = __commonJS({
       }
       return values;
     }
+    __name(getFieldValues, "getFieldValues");
     module2.exports = {
       urlEquals,
       getFieldValues
@@ -15161,6 +15710,9 @@ var require_cache = __commonJS({
     var { urlIsHttpHttpsScheme, createDeferredPromise, readAllBytes } = require_util2();
     var assert4 = require("node:assert");
     var Cache = class _Cache {
+      static {
+        __name(this, "Cache");
+      }
       /**
        * @see https://w3c.github.io/ServiceWorker/#dfn-relevant-request-response-list
        * @type {requestResponseList}
@@ -15660,17 +16212,17 @@ var require_cache = __commonJS({
       {
         key: "ignoreSearch",
         converter: webidl.converters.boolean,
-        defaultValue: () => false
+        defaultValue: /* @__PURE__ */ __name(() => false, "defaultValue")
       },
       {
         key: "ignoreMethod",
         converter: webidl.converters.boolean,
-        defaultValue: () => false
+        defaultValue: /* @__PURE__ */ __name(() => false, "defaultValue")
       },
       {
         key: "ignoreVary",
         converter: webidl.converters.boolean,
-        defaultValue: () => false
+        defaultValue: /* @__PURE__ */ __name(() => false, "defaultValue")
       }
     ];
     webidl.converters.CacheQueryOptions = webidl.dictionaryConverter(cacheQueryOptionConverters);
@@ -15700,6 +16252,9 @@ var require_cachestorage = __commonJS({
     var { webidl } = require_webidl();
     var { kEnumerableProperty } = require_util();
     var CacheStorage = class _CacheStorage {
+      static {
+        __name(this, "CacheStorage");
+      }
       /**
        * @see https://w3c.github.io/ServiceWorker/#dfn-relevant-name-to-cache-map
        * @type {Map<string, import('./cache').requestResponseList}
@@ -15827,6 +16382,7 @@ var require_util6 = __commonJS({
       }
       return false;
     }
+    __name(isCTLExcludingHtab, "isCTLExcludingHtab");
     function validateCookieName(name) {
       for (let i = 0; i < name.length; ++i) {
         const code = name.charCodeAt(i);
@@ -15853,6 +16409,7 @@ var require_util6 = __commonJS({
         }
       }
     }
+    __name(validateCookieName, "validateCookieName");
     function validateCookieValue(value) {
       let len = value.length;
       let i = 0;
@@ -15875,6 +16432,7 @@ var require_util6 = __commonJS({
         }
       }
     }
+    __name(validateCookieValue, "validateCookieValue");
     function validateCookiePath(path13) {
       for (let i = 0; i < path13.length; ++i) {
         const code = path13.charCodeAt(i);
@@ -15885,11 +16443,13 @@ var require_util6 = __commonJS({
         }
       }
     }
+    __name(validateCookiePath, "validateCookiePath");
     function validateCookieDomain(domain) {
       if (domain.startsWith("-") || domain.endsWith(".") || domain.endsWith("-")) {
         throw new Error("Invalid cookie domain");
       }
     }
+    __name(validateCookieDomain, "validateCookieDomain");
     var IMFDays = [
       "Sun",
       "Mon",
@@ -15920,11 +16480,13 @@ var require_util6 = __commonJS({
       }
       return `${IMFDays[date.getUTCDay()]}, ${IMFPaddedNumbers[date.getUTCDate()]} ${IMFMonths[date.getUTCMonth()]} ${date.getUTCFullYear()} ${IMFPaddedNumbers[date.getUTCHours()]}:${IMFPaddedNumbers[date.getUTCMinutes()]}:${IMFPaddedNumbers[date.getUTCSeconds()]} GMT`;
     }
+    __name(toIMFDate, "toIMFDate");
     function validateCookieMaxAge(maxAge) {
       if (maxAge < 0) {
         throw new Error("Invalid cookie max-age");
       }
     }
+    __name(validateCookieMaxAge, "validateCookieMaxAge");
     function stringify3(cookie) {
       if (cookie.name.length === 0) {
         return null;
@@ -15973,6 +16535,7 @@ var require_util6 = __commonJS({
       }
       return out.join("; ");
     }
+    __name(stringify3, "stringify");
     module2.exports = {
       isCTLExcludingHtab,
       validateCookieName,
@@ -16029,6 +16592,7 @@ var require_parse = __commonJS({
         ...parseUnparsedAttributes(unparsedAttributes)
       };
     }
+    __name(parseSetCookie, "parseSetCookie");
     function parseUnparsedAttributes(unparsedAttributes, cookieAttributeList = {}) {
       if (unparsedAttributes.length === 0) {
         return cookieAttributeList;
@@ -16117,6 +16681,7 @@ var require_parse = __commonJS({
       }
       return parseUnparsedAttributes(unparsedAttributes, cookieAttributeList);
     }
+    __name(parseUnparsedAttributes, "parseUnparsedAttributes");
     module2.exports = {
       parseSetCookie,
       parseUnparsedAttributes
@@ -16146,6 +16711,7 @@ var require_cookies = __commonJS({
       }
       return out;
     }
+    __name(getCookies, "getCookies");
     function deleteCookie(headers, name, attributes) {
       webidl.brandCheck(headers, Headers2, { strict: false });
       const prefix2 = "deleteCookie";
@@ -16159,6 +16725,7 @@ var require_cookies = __commonJS({
         ...attributes
       });
     }
+    __name(deleteCookie, "deleteCookie");
     function getSetCookies(headers) {
       webidl.argumentLengthCheck(arguments, 1, "getSetCookies");
       webidl.brandCheck(headers, Headers2, { strict: false });
@@ -16168,6 +16735,7 @@ var require_cookies = __commonJS({
       }
       return cookies.map((pair) => parseSetCookie(pair));
     }
+    __name(getSetCookies, "getSetCookies");
     function setCookie(headers, cookie) {
       webidl.argumentLengthCheck(arguments, 2, "setCookie");
       webidl.brandCheck(headers, Headers2, { strict: false });
@@ -16177,16 +16745,17 @@ var require_cookies = __commonJS({
         headers.append("Set-Cookie", str);
       }
     }
+    __name(setCookie, "setCookie");
     webidl.converters.DeleteCookieAttributes = webidl.dictionaryConverter([
       {
         converter: webidl.nullableConverter(webidl.converters.DOMString),
         key: "path",
-        defaultValue: () => null
+        defaultValue: /* @__PURE__ */ __name(() => null, "defaultValue")
       },
       {
         converter: webidl.nullableConverter(webidl.converters.DOMString),
         key: "domain",
-        defaultValue: () => null
+        defaultValue: /* @__PURE__ */ __name(() => null, "defaultValue")
       }
     ]);
     webidl.converters.Cookie = webidl.dictionaryConverter([
@@ -16206,32 +16775,32 @@ var require_cookies = __commonJS({
           return new Date(value);
         }),
         key: "expires",
-        defaultValue: () => null
+        defaultValue: /* @__PURE__ */ __name(() => null, "defaultValue")
       },
       {
         converter: webidl.nullableConverter(webidl.converters["long long"]),
         key: "maxAge",
-        defaultValue: () => null
+        defaultValue: /* @__PURE__ */ __name(() => null, "defaultValue")
       },
       {
         converter: webidl.nullableConverter(webidl.converters.DOMString),
         key: "domain",
-        defaultValue: () => null
+        defaultValue: /* @__PURE__ */ __name(() => null, "defaultValue")
       },
       {
         converter: webidl.nullableConverter(webidl.converters.DOMString),
         key: "path",
-        defaultValue: () => null
+        defaultValue: /* @__PURE__ */ __name(() => null, "defaultValue")
       },
       {
         converter: webidl.nullableConverter(webidl.converters.boolean),
         key: "secure",
-        defaultValue: () => null
+        defaultValue: /* @__PURE__ */ __name(() => null, "defaultValue")
       },
       {
         converter: webidl.nullableConverter(webidl.converters.boolean),
         key: "httpOnly",
-        defaultValue: () => null
+        defaultValue: /* @__PURE__ */ __name(() => null, "defaultValue")
       },
       {
         converter: webidl.converters.USVString,
@@ -16241,7 +16810,7 @@ var require_cookies = __commonJS({
       {
         converter: webidl.sequenceConverter(webidl.converters.DOMString),
         key: "unparsed",
-        defaultValue: () => new Array(0)
+        defaultValue: /* @__PURE__ */ __name(() => new Array(0), "defaultValue")
       }
     ]);
     module2.exports = {
@@ -16262,6 +16831,9 @@ var require_events = __commonJS({
     var { kConstruct } = require_symbols();
     var { MessagePort } = require("node:worker_threads");
     var MessageEvent = class _MessageEvent extends Event {
+      static {
+        __name(this, "MessageEvent");
+      }
       #eventInit;
       constructor(type, eventInitDict = {}) {
         if (type === kConstruct) {
@@ -16327,6 +16899,9 @@ var require_events = __commonJS({
     var { createFastMessageEvent } = MessageEvent;
     delete MessageEvent.createFastMessageEvent;
     var CloseEvent = class _CloseEvent extends Event {
+      static {
+        __name(this, "CloseEvent");
+      }
       #eventInit;
       constructor(type, eventInitDict = {}) {
         const prefix2 = "CloseEvent constructor";
@@ -16351,6 +16926,9 @@ var require_events = __commonJS({
       }
     };
     var ErrorEvent = class _ErrorEvent extends Event {
+      static {
+        __name(this, "ErrorEvent");
+      }
       #eventInit;
       constructor(type, eventInitDict) {
         const prefix2 = "ErrorEvent constructor";
@@ -16422,17 +17000,17 @@ var require_events = __commonJS({
       {
         key: "bubbles",
         converter: webidl.converters.boolean,
-        defaultValue: () => false
+        defaultValue: /* @__PURE__ */ __name(() => false, "defaultValue")
       },
       {
         key: "cancelable",
         converter: webidl.converters.boolean,
-        defaultValue: () => false
+        defaultValue: /* @__PURE__ */ __name(() => false, "defaultValue")
       },
       {
         key: "composed",
         converter: webidl.converters.boolean,
-        defaultValue: () => false
+        defaultValue: /* @__PURE__ */ __name(() => false, "defaultValue")
       }
     ];
     webidl.converters.MessageEventInit = webidl.dictionaryConverter([
@@ -16440,29 +17018,29 @@ var require_events = __commonJS({
       {
         key: "data",
         converter: webidl.converters.any,
-        defaultValue: () => null
+        defaultValue: /* @__PURE__ */ __name(() => null, "defaultValue")
       },
       {
         key: "origin",
         converter: webidl.converters.USVString,
-        defaultValue: () => ""
+        defaultValue: /* @__PURE__ */ __name(() => "", "defaultValue")
       },
       {
         key: "lastEventId",
         converter: webidl.converters.DOMString,
-        defaultValue: () => ""
+        defaultValue: /* @__PURE__ */ __name(() => "", "defaultValue")
       },
       {
         key: "source",
         // Node doesn't implement WindowProxy or ServiceWorker, so the only
         // valid value for source is a MessagePort.
         converter: webidl.nullableConverter(webidl.converters.MessagePort),
-        defaultValue: () => null
+        defaultValue: /* @__PURE__ */ __name(() => null, "defaultValue")
       },
       {
         key: "ports",
         converter: webidl.converters["sequence<MessagePort>"],
-        defaultValue: () => new Array(0)
+        defaultValue: /* @__PURE__ */ __name(() => new Array(0), "defaultValue")
       }
     ]);
     webidl.converters.CloseEventInit = webidl.dictionaryConverter([
@@ -16470,17 +17048,17 @@ var require_events = __commonJS({
       {
         key: "wasClean",
         converter: webidl.converters.boolean,
-        defaultValue: () => false
+        defaultValue: /* @__PURE__ */ __name(() => false, "defaultValue")
       },
       {
         key: "code",
         converter: webidl.converters["unsigned short"],
-        defaultValue: () => 0
+        defaultValue: /* @__PURE__ */ __name(() => 0, "defaultValue")
       },
       {
         key: "reason",
         converter: webidl.converters.USVString,
-        defaultValue: () => ""
+        defaultValue: /* @__PURE__ */ __name(() => "", "defaultValue")
       }
     ]);
     webidl.converters.ErrorEventInit = webidl.dictionaryConverter([
@@ -16488,22 +17066,22 @@ var require_events = __commonJS({
       {
         key: "message",
         converter: webidl.converters.DOMString,
-        defaultValue: () => ""
+        defaultValue: /* @__PURE__ */ __name(() => "", "defaultValue")
       },
       {
         key: "filename",
         converter: webidl.converters.USVString,
-        defaultValue: () => ""
+        defaultValue: /* @__PURE__ */ __name(() => "", "defaultValue")
       },
       {
         key: "lineno",
         converter: webidl.converters["unsigned long"],
-        defaultValue: () => 0
+        defaultValue: /* @__PURE__ */ __name(() => 0, "defaultValue")
       },
       {
         key: "colno",
         converter: webidl.converters["unsigned long"],
-        defaultValue: () => 0
+        defaultValue: /* @__PURE__ */ __name(() => 0, "defaultValue")
       },
       {
         key: "error",
@@ -16605,19 +17183,24 @@ var require_util7 = __commonJS({
     function isConnecting(ws) {
       return ws[kReadyState] === states.CONNECTING;
     }
+    __name(isConnecting, "isConnecting");
     function isEstablished(ws) {
       return ws[kReadyState] === states.OPEN;
     }
+    __name(isEstablished, "isEstablished");
     function isClosing(ws) {
       return ws[kReadyState] === states.CLOSING;
     }
+    __name(isClosing, "isClosing");
     function isClosed(ws) {
       return ws[kReadyState] === states.CLOSED;
     }
+    __name(isClosed, "isClosed");
     function fireEvent(e, target, eventFactory = (type, init) => new Event(type, init), eventInitDict = {}) {
       const event = eventFactory(e, eventInitDict);
       target.dispatchEvent(event);
     }
+    __name(fireEvent, "fireEvent");
     function websocketMessageReceived(ws, type, data) {
       if (ws[kReadyState] !== states.OPEN) {
         return;
@@ -16642,12 +17225,14 @@ var require_util7 = __commonJS({
         data: dataForEvent
       });
     }
+    __name(websocketMessageReceived, "websocketMessageReceived");
     function toArrayBuffer(buffer2) {
       if (buffer2.byteLength === buffer2.buffer.byteLength) {
         return buffer2.buffer;
       }
       return buffer2.buffer.slice(buffer2.byteOffset, buffer2.byteOffset + buffer2.byteLength);
     }
+    __name(toArrayBuffer, "toArrayBuffer");
     function isValidSubprotocol(protocol) {
       if (protocol.length === 0) {
         return false;
@@ -16677,6 +17262,7 @@ var require_util7 = __commonJS({
       }
       return true;
     }
+    __name(isValidSubprotocol, "isValidSubprotocol");
     function isValidStatusCode(code) {
       if (code >= 1e3 && code < 1015) {
         return code !== 1004 && // reserved
@@ -16685,6 +17271,7 @@ var require_util7 = __commonJS({
       }
       return code >= 3e3 && code <= 4999;
     }
+    __name(isValidStatusCode, "isValidStatusCode");
     function failWebsocketConnection(ws, reason) {
       const { [kController]: controller, [kResponse]: response } = ws;
       controller.abort();
@@ -16698,18 +17285,23 @@ var require_util7 = __commonJS({
         });
       }
     }
+    __name(failWebsocketConnection, "failWebsocketConnection");
     function isControlFrame(opcode) {
       return opcode === opcodes.CLOSE || opcode === opcodes.PING || opcode === opcodes.PONG;
     }
+    __name(isControlFrame, "isControlFrame");
     function isContinuationFrame(opcode) {
       return opcode === opcodes.CONTINUATION;
     }
+    __name(isContinuationFrame, "isContinuationFrame");
     function isTextBinaryFrame(opcode) {
       return opcode === opcodes.TEXT || opcode === opcodes.BINARY;
     }
+    __name(isTextBinaryFrame, "isTextBinaryFrame");
     function isValidOpcode(opcode) {
       return isTextBinaryFrame(opcode) || isContinuationFrame(opcode) || isControlFrame(opcode);
     }
+    __name(isValidOpcode, "isValidOpcode");
     function parseExtensions(extensions) {
       const position = { position: 0 };
       const extensionList = /* @__PURE__ */ new Map();
@@ -16724,6 +17316,7 @@ var require_util7 = __commonJS({
       }
       return extensionList;
     }
+    __name(parseExtensions, "parseExtensions");
     function isValidClientWindowBits(value) {
       if (value.length === 0) {
         return false;
@@ -16737,6 +17330,7 @@ var require_util7 = __commonJS({
       const num = Number.parseInt(value, 10);
       return num >= 8 && num <= 15;
     }
+    __name(isValidClientWindowBits, "isValidClientWindowBits");
     var hasIntl = typeof process.versions.icu === "string";
     var fatalDecoder = hasIntl ? new TextDecoder("utf-8", { fatal: true }) : void 0;
     var utf8Decode = hasIntl ? fatalDecoder.decode.bind(fatalDecoder) : function(buffer2) {
@@ -16780,12 +17374,12 @@ var require_frame = __commonJS({
     } catch {
       crypto3 = {
         // not full compatibility, but minimum.
-        randomFillSync: function randomFillSync(buffer3, _offset, _size) {
+        randomFillSync: /* @__PURE__ */ __name(function randomFillSync(buffer3, _offset, _size) {
           for (let i = 0; i < buffer3.length; ++i) {
             buffer3[i] = Math.random() * 255 | 0;
           }
           return buffer3;
-        }
+        }, "randomFillSync")
       };
     }
     function generateMask() {
@@ -16795,7 +17389,11 @@ var require_frame = __commonJS({
       }
       return [buffer2[bufIdx++], buffer2[bufIdx++], buffer2[bufIdx++], buffer2[bufIdx++]];
     }
+    __name(generateMask, "generateMask");
     var WebsocketFrameSend = class {
+      static {
+        __name(this, "WebsocketFrameSend");
+      }
       /**
        * @param {Buffer|undefined} data
        */
@@ -16952,6 +17550,7 @@ var require_connection = __commonJS({
       });
       return controller;
     }
+    __name(establishWebSocketConnection, "establishWebSocketConnection");
     function closeWebSocketConnection(ws, code, reason, reasonByteLength) {
       if (isClosing(ws) || isClosed(ws)) {
       } else if (!isEstablished(ws)) {
@@ -16978,11 +17577,13 @@ var require_connection = __commonJS({
         ws[kReadyState] = states.CLOSING;
       }
     }
+    __name(closeWebSocketConnection, "closeWebSocketConnection");
     function onSocketData(chunk) {
       if (!this.ws[kByteParser].write(chunk)) {
         this.pause();
       }
     }
+    __name(onSocketData, "onSocketData");
     function onSocketClose() {
       const { ws } = this;
       const { [kResponse]: response } = ws;
@@ -17013,6 +17614,7 @@ var require_connection = __commonJS({
         });
       }
     }
+    __name(onSocketClose, "onSocketClose");
     function onSocketError(error2) {
       const { ws } = this;
       ws[kReadyState] = states.CLOSING;
@@ -17021,6 +17623,7 @@ var require_connection = __commonJS({
       }
       this.destroy();
     }
+    __name(onSocketError, "onSocketError");
     module2.exports = {
       establishWebSocketConnection,
       closeWebSocketConnection
@@ -17040,6 +17643,9 @@ var require_permessage_deflate = __commonJS({
     var kLength = /* @__PURE__ */ Symbol("kLength");
     var kDefaultMaxDecompressedSize = 4 * 1024 * 1024;
     var PerMessageDeflate = class {
+      static {
+        __name(this, "PerMessageDeflate");
+      }
       /** @type {import('node:zlib').InflateRaw} */
       #inflate;
       #options = {};
@@ -17144,6 +17750,9 @@ var require_receiver = __commonJS({
     var { closeWebSocketConnection } = require_connection();
     var { PerMessageDeflate } = require_permessage_deflate();
     var ByteParser = class extends Writable {
+      static {
+        __name(this, "ByteParser");
+      }
       #buffers = [];
       #byteOffset = 0;
       #loop = false;
@@ -17439,6 +18048,9 @@ var require_sender = __commonJS({
     var FixedQueue = require_fixed_queue();
     var FastBuffer = Buffer[Symbol.species];
     var SendQueue = class {
+      static {
+        __name(this, "SendQueue");
+      }
       /**
        * @type {FixedQueue}
        */
@@ -17497,6 +18109,7 @@ var require_sender = __commonJS({
     function createFrame(data, hint) {
       return new WebsocketFrameSend(toBuffer(data, hint)).createFrame(hint === sendHints.string ? opcodes.TEXT : opcodes.BINARY);
     }
+    __name(createFrame, "createFrame");
     function toBuffer(data, hint) {
       switch (hint) {
         case sendHints.string:
@@ -17508,6 +18121,7 @@ var require_sender = __commonJS({
           return new FastBuffer(data.buffer, data.byteOffset, data.byteLength);
       }
     }
+    __name(toBuffer, "toBuffer");
     module2.exports = { SendQueue };
   }
 });
@@ -17544,6 +18158,9 @@ var require_websocket = __commonJS({
     var { ErrorEvent, CloseEvent } = require_events();
     var { SendQueue } = require_sender();
     var WebSocket = class _WebSocket extends EventTarget {
+      static {
+        __name(this, "WebSocket");
+      }
       #events = {
         open: null,
         error: null,
@@ -17846,12 +18463,12 @@ var require_websocket = __commonJS({
       {
         key: "protocols",
         converter: webidl.converters["DOMString or sequence<DOMString>"],
-        defaultValue: () => new Array(0)
+        defaultValue: /* @__PURE__ */ __name(() => new Array(0), "defaultValue")
       },
       {
         key: "dispatcher",
         converter: webidl.converters.any,
-        defaultValue: () => getGlobalDispatcher()
+        defaultValue: /* @__PURE__ */ __name(() => getGlobalDispatcher(), "defaultValue")
       },
       {
         key: "headers",
@@ -17878,6 +18495,7 @@ var require_websocket = __commonJS({
     function onParserDrain() {
       this.ws[kResponse].socket.resume();
     }
+    __name(onParserDrain, "onParserDrain");
     function onParserError(err) {
       let message;
       let code;
@@ -17890,6 +18508,7 @@ var require_websocket = __commonJS({
       fireEvent("error", this, () => new ErrorEvent("error", { error: err, message }));
       closeWebSocketConnection(this, code);
     }
+    __name(onParserError, "onParserError");
     module2.exports = {
       WebSocket
     };
@@ -17903,6 +18522,7 @@ var require_util8 = __commonJS({
     function isValidLastEventId(value) {
       return value.indexOf("\0") === -1;
     }
+    __name(isValidLastEventId, "isValidLastEventId");
     function isASCIINumber(value) {
       if (value.length === 0) return false;
       for (let i = 0; i < value.length; i++) {
@@ -17910,11 +18530,13 @@ var require_util8 = __commonJS({
       }
       return true;
     }
+    __name(isASCIINumber, "isASCIINumber");
     function delay4(ms) {
       return new Promise((resolve2) => {
         setTimeout(resolve2, ms).unref();
       });
     }
+    __name(delay4, "delay");
     module2.exports = {
       isValidLastEventId,
       isASCIINumber,
@@ -17935,6 +18557,9 @@ var require_eventsource_stream = __commonJS({
     var COLON = 58;
     var SPACE = 32;
     var EventSourceStream = class extends Transform2 {
+      static {
+        __name(this, "EventSourceStream");
+      }
       /**
        * @type {eventSourceSettings}
        */
@@ -18176,6 +18801,9 @@ var require_eventsource = __commonJS({
     var ANONYMOUS = "anonymous";
     var USE_CREDENTIALS = "use-credentials";
     var EventSource = class _EventSource extends EventTarget {
+      static {
+        __name(this, "EventSource");
+      }
       #events = {
         open: null,
         error: null,
@@ -18276,13 +18904,13 @@ var require_eventsource = __commonJS({
           request: this.#request,
           dispatcher: this.#dispatcher
         };
-        const processEventSourceEndOfBody = (response) => {
+        const processEventSourceEndOfBody = /* @__PURE__ */ __name((response) => {
           if (isNetworkError(response)) {
             this.dispatchEvent(new Event("error"));
             this.close();
           }
           this.#reconnect();
-        };
+        }, "processEventSourceEndOfBody");
         fetchParams.processResponseEndOfBody = processEventSourceEndOfBody;
         fetchParams.processResponse = (response) => {
           if (isNetworkError(response)) {
@@ -18308,12 +18936,12 @@ var require_eventsource = __commonJS({
           this.#state.origin = response.urlList[response.urlList.length - 1].origin;
           const eventSourceStream = new EventSourceStream({
             eventSourceSettings: this.#state,
-            push: (event) => {
+            push: /* @__PURE__ */ __name((event) => {
               this.dispatchEvent(createFastMessageEvent(
                 event.type,
                 event.options
               ));
-            }
+            }, "push")
           });
           pipeline(
             response.body.stream,
@@ -18435,7 +19063,7 @@ var require_eventsource = __commonJS({
       {
         key: "withCredentials",
         converter: webidl.converters.boolean,
-        defaultValue: () => false
+        defaultValue: /* @__PURE__ */ __name(() => false, "defaultValue")
       },
       {
         key: "dispatcher",
@@ -18540,10 +19168,11 @@ var require_undici = __commonJS({
         }, handler);
       };
     }
+    __name(makeDispatcher, "makeDispatcher");
     module2.exports.setGlobalDispatcher = setGlobalDispatcher;
     module2.exports.getGlobalDispatcher = getGlobalDispatcher;
     var fetchImpl = require_fetch().fetch;
-    module2.exports.fetch = async function fetch(init, options = void 0) {
+    module2.exports.fetch = /* @__PURE__ */ __name(async function fetch(init, options = void 0) {
       try {
         return await fetchImpl(init, options);
       } catch (err) {
@@ -18552,7 +19181,7 @@ var require_undici = __commonJS({
         }
         throw err;
       }
-    };
+    }, "fetch");
     module2.exports.Headers = require_headers().Headers;
     module2.exports.Response = require_response().Response;
     module2.exports.Request = require_request2().Request;
@@ -18627,10 +19256,12 @@ var require_balanced_match = __commonJS({
         post: str.slice(r[1] + b.length)
       };
     }
+    __name(balanced2, "balanced");
     function maybeMatch2(reg, str) {
       var m = str.match(reg);
       return m ? m[0] : null;
     }
+    __name(maybeMatch2, "maybeMatch");
     balanced2.range = range3;
     function range3(a, b, str) {
       var begs, beg, left, right, result;
@@ -18662,6 +19293,7 @@ var require_balanced_match = __commonJS({
       }
       return result;
     }
+    __name(range3, "range");
   }
 });
 
@@ -18679,12 +19311,15 @@ var require_brace_expansion = __commonJS({
     function numeric2(str) {
       return parseInt(str, 10) == str ? parseInt(str, 10) : str.charCodeAt(0);
     }
+    __name(numeric2, "numeric");
     function escapeBraces2(str) {
       return str.split("\\\\").join(escSlash2).split("\\{").join(escOpen2).split("\\}").join(escClose2).split("\\,").join(escComma2).split("\\.").join(escPeriod2);
     }
+    __name(escapeBraces2, "escapeBraces");
     function unescapeBraces2(str) {
       return str.split(escSlash2).join("\\").split(escOpen2).join("{").split(escClose2).join("}").split(escComma2).join(",").split(escPeriod2).join(".");
     }
+    __name(unescapeBraces2, "unescapeBraces");
     function parseCommaParts2(str) {
       if (!str)
         return [""];
@@ -18705,6 +19340,7 @@ var require_brace_expansion = __commonJS({
       parts.push.apply(parts, p);
       return parts;
     }
+    __name(parseCommaParts2, "parseCommaParts");
     function expandTop(str) {
       if (!str)
         return [];
@@ -18713,18 +19349,23 @@ var require_brace_expansion = __commonJS({
       }
       return expand2(escapeBraces2(str), true).map(unescapeBraces2);
     }
+    __name(expandTop, "expandTop");
     function embrace2(str) {
       return "{" + str + "}";
     }
+    __name(embrace2, "embrace");
     function isPadded2(el) {
       return /^-?0\d/.test(el);
     }
+    __name(isPadded2, "isPadded");
     function lte2(i, y) {
       return i <= y;
     }
+    __name(lte2, "lte");
     function gte2(i, y) {
       return i >= y;
     }
+    __name(gte2, "gte");
     function expand2(str, isTop) {
       var expansions = [];
       var m = balanced2("{", "}", str);
@@ -18806,6 +19447,7 @@ var require_brace_expansion = __commonJS({
       }
       return expansions;
     }
+    __name(expand2, "expand");
   }
 });
 
@@ -18843,6 +19485,7 @@ var require_minimatch = __commonJS({
         return set;
       }, {});
     }
+    __name(charSet, "charSet");
     var slashSplit = /\/+/;
     minimatch3.filter = filter3;
     function filter3(pattern, options) {
@@ -18851,6 +19494,7 @@ var require_minimatch = __commonJS({
         return minimatch3(p, pattern, options);
       };
     }
+    __name(filter3, "filter");
     function ext2(a, b) {
       b = b || {};
       var t = {};
@@ -18862,32 +19506,33 @@ var require_minimatch = __commonJS({
       });
       return t;
     }
+    __name(ext2, "ext");
     minimatch3.defaults = function(def) {
       if (!def || typeof def !== "object" || !Object.keys(def).length) {
         return minimatch3;
       }
       var orig = minimatch3;
-      var m = function minimatch4(p, pattern, options) {
+      var m = /* @__PURE__ */ __name(function minimatch4(p, pattern, options) {
         return orig(p, pattern, ext2(def, options));
-      };
-      m.Minimatch = function Minimatch4(pattern, options) {
+      }, "minimatch");
+      m.Minimatch = /* @__PURE__ */ __name(function Minimatch4(pattern, options) {
         return new orig.Minimatch(pattern, ext2(def, options));
-      };
-      m.Minimatch.defaults = function defaults2(options) {
+      }, "Minimatch");
+      m.Minimatch.defaults = /* @__PURE__ */ __name(function defaults2(options) {
         return orig.defaults(ext2(def, options)).Minimatch;
-      };
-      m.filter = function filter4(pattern, options) {
+      }, "defaults");
+      m.filter = /* @__PURE__ */ __name(function filter4(pattern, options) {
         return orig.filter(pattern, ext2(def, options));
-      };
-      m.defaults = function defaults2(options) {
+      }, "filter");
+      m.defaults = /* @__PURE__ */ __name(function defaults2(options) {
         return orig.defaults(ext2(def, options));
-      };
-      m.makeRe = function makeRe3(pattern, options) {
+      }, "defaults");
+      m.makeRe = /* @__PURE__ */ __name(function makeRe3(pattern, options) {
         return orig.makeRe(pattern, ext2(def, options));
-      };
-      m.braceExpand = function braceExpand3(pattern, options) {
+      }, "makeRe");
+      m.braceExpand = /* @__PURE__ */ __name(function braceExpand3(pattern, options) {
         return orig.braceExpand(pattern, ext2(def, options));
-      };
+      }, "braceExpand");
       m.match = function(list, pattern, options) {
         return orig.match(list, pattern, ext2(def, options));
       };
@@ -18904,6 +19549,7 @@ var require_minimatch = __commonJS({
       }
       return new Minimatch3(pattern, options).match(p);
     }
+    __name(minimatch3, "minimatch");
     function Minimatch3(pattern, options) {
       if (!(this instanceof Minimatch3)) {
         return new Minimatch3(pattern, options);
@@ -18924,6 +19570,7 @@ var require_minimatch = __commonJS({
       this.partial = !!options.partial;
       this.make();
     }
+    __name(Minimatch3, "Minimatch");
     Minimatch3.prototype.debug = function() {
     };
     Minimatch3.prototype.make = make;
@@ -18940,9 +19587,9 @@ var require_minimatch = __commonJS({
       }
       this.parseNegate();
       var set = this.globSet = this.braceExpand();
-      if (options.debug) this.debug = function debug3() {
+      if (options.debug) this.debug = /* @__PURE__ */ __name(function debug3() {
         console.error.apply(console, arguments);
-      };
+      }, "debug");
       this.debug(this.pattern, set);
       set = this.globParts = set.map(function(s) {
         return s.split(slashSplit);
@@ -18958,6 +19605,7 @@ var require_minimatch = __commonJS({
       this.debug(this.pattern, set);
       this.set = set;
     }
+    __name(make, "make");
     Minimatch3.prototype.parseNegate = parseNegate;
     function parseNegate() {
       var pattern = this.pattern;
@@ -18972,6 +19620,7 @@ var require_minimatch = __commonJS({
       if (negateOffset) this.pattern = pattern.substr(negateOffset);
       this.negate = negate;
     }
+    __name(parseNegate, "parseNegate");
     minimatch3.braceExpand = function(pattern, options) {
       return braceExpand2(pattern, options);
     };
@@ -18991,15 +19640,16 @@ var require_minimatch = __commonJS({
       }
       return expand2(pattern);
     }
+    __name(braceExpand2, "braceExpand");
     var MAX_PATTERN_LENGTH2 = 1024 * 64;
-    var assertValidPattern2 = function(pattern) {
+    var assertValidPattern2 = /* @__PURE__ */ __name(function(pattern) {
       if (typeof pattern !== "string") {
         throw new TypeError("invalid pattern");
       }
       if (pattern.length > MAX_PATTERN_LENGTH2) {
         throw new TypeError("pattern is too long");
       }
-    };
+    }, "assertValidPattern");
     Minimatch3.prototype.parse = parse4;
     var SUBPARSE = {};
     function parse4(pattern, isSub) {
@@ -19042,6 +19692,7 @@ var require_minimatch = __commonJS({
           stateChar = false;
         }
       }
+      __name(clearStateChar, "clearStateChar");
       for (var i = 0, len = pattern.length, c; i < len && (c = pattern.charAt(i)); i++) {
         this.debug("%s	%s %s %j", pattern, i, re, c);
         if (escaping && reSpecials2[c]) {
@@ -19235,6 +19886,7 @@ var require_minimatch = __commonJS({
       regExp._src = re;
       return regExp;
     }
+    __name(parse4, "parse");
     minimatch3.makeRe = function(pattern, options) {
       return new Minimatch3(pattern, options || {}).makeRe();
     };
@@ -19263,6 +19915,7 @@ var require_minimatch = __commonJS({
       }
       return this.regexp;
     }
+    __name(makeRe2, "makeRe");
     minimatch3.match = function(list, pattern, options) {
       options = options || {};
       var mm = new Minimatch3(pattern, options);
@@ -19274,7 +19927,7 @@ var require_minimatch = __commonJS({
       }
       return list;
     };
-    Minimatch3.prototype.match = function match4(f, partial) {
+    Minimatch3.prototype.match = /* @__PURE__ */ __name(function match4(f, partial) {
       if (typeof partial === "undefined") partial = this.partial;
       this.debug("match", f, this.pattern);
       if (this.comment) return false;
@@ -19308,7 +19961,7 @@ var require_minimatch = __commonJS({
       }
       if (options.flipNegate) return false;
       return this.negate;
-    };
+    }, "match");
     Minimatch3.prototype.matchOne = function(file, pattern, partial) {
       var options = this.options;
       this.debug(
@@ -19376,9 +20029,11 @@ var require_minimatch = __commonJS({
     function globUnescape(s) {
       return s.replace(/\\(.)/g, "$1");
     }
+    __name(globUnescape, "globUnescape");
     function regExpEscape3(s) {
       return s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
     }
+    __name(regExpEscape3, "regExpEscape");
   }
 });
 
@@ -19447,13 +20102,13 @@ var require_re = __commonJS({
       ["\\d", MAX_LENGTH],
       [LETTERDASHNUMBER, MAX_SAFE_BUILD_LENGTH]
     ];
-    var makeSafeRegex = (value) => {
+    var makeSafeRegex = /* @__PURE__ */ __name((value) => {
       for (const [token, max] of safeRegexReplacements) {
         value = value.split(`${token}*`).join(`${token}{0,${max}}`).split(`${token}+`).join(`${token}{1,${max}}`);
       }
       return value;
-    };
-    var createToken = (name, value, isGlobal) => {
+    }, "makeSafeRegex");
+    var createToken = /* @__PURE__ */ __name((name, value, isGlobal) => {
       const safe = makeSafeRegex(value);
       const index = R++;
       debug3(name, index, value);
@@ -19462,7 +20117,7 @@ var require_re = __commonJS({
       safeSrc[index] = safe;
       re[index] = new RegExp(value, isGlobal ? "g" : void 0);
       safeRe[index] = new RegExp(safe, isGlobal ? "g" : void 0);
-    };
+    }, "createToken");
     createToken("NUMERICIDENTIFIER", "0|[1-9]\\d*");
     createToken("NUMERICIDENTIFIERLOOSE", "\\d+");
     createToken("NONNUMERICIDENTIFIER", `\\d*[a-zA-Z-]${LETTERDASHNUMBER}*`);
@@ -19518,7 +20173,7 @@ var require_parse_options = __commonJS({
     "use strict";
     var looseOption = Object.freeze({ loose: true });
     var emptyOpts = Object.freeze({});
-    var parseOptions = (options) => {
+    var parseOptions = /* @__PURE__ */ __name((options) => {
       if (!options) {
         return emptyOpts;
       }
@@ -19526,7 +20181,7 @@ var require_parse_options = __commonJS({
         return looseOption;
       }
       return options;
-    };
+    }, "parseOptions");
     module2.exports = parseOptions;
   }
 });
@@ -19536,7 +20191,7 @@ var require_identifiers = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/internal/identifiers.js"(exports2, module2) {
     "use strict";
     var numeric2 = /^[0-9]+$/;
-    var compareIdentifiers = (a, b) => {
+    var compareIdentifiers = /* @__PURE__ */ __name((a, b) => {
       if (typeof a === "number" && typeof b === "number") {
         return a === b ? 0 : a < b ? -1 : 1;
       }
@@ -19547,8 +20202,8 @@ var require_identifiers = __commonJS({
         b = +b;
       }
       return a === b ? 0 : anum && !bnum ? -1 : bnum && !anum ? 1 : a < b ? -1 : 1;
-    };
-    var rcompareIdentifiers = (a, b) => compareIdentifiers(b, a);
+    }, "compareIdentifiers");
+    var rcompareIdentifiers = /* @__PURE__ */ __name((a, b) => compareIdentifiers(b, a), "rcompareIdentifiers");
     module2.exports = {
       compareIdentifiers,
       rcompareIdentifiers
@@ -19566,6 +20221,9 @@ var require_semver = __commonJS({
     var parseOptions = require_parse_options();
     var { compareIdentifiers } = require_identifiers();
     var SemVer = class _SemVer {
+      static {
+        __name(this, "SemVer");
+      }
       constructor(version3, options) {
         options = parseOptions(options);
         if (version3 instanceof _SemVer) {
@@ -19840,7 +20498,7 @@ var require_parse2 = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/parse.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
-    var parse4 = (version3, options, throwErrors = false) => {
+    var parse4 = /* @__PURE__ */ __name((version3, options, throwErrors = false) => {
       if (version3 instanceof SemVer) {
         return version3;
       }
@@ -19852,7 +20510,7 @@ var require_parse2 = __commonJS({
         }
         throw er;
       }
-    };
+    }, "parse");
     module2.exports = parse4;
   }
 });
@@ -19862,10 +20520,10 @@ var require_valid = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/valid.js"(exports2, module2) {
     "use strict";
     var parse4 = require_parse2();
-    var valid2 = (version3, options) => {
+    var valid2 = /* @__PURE__ */ __name((version3, options) => {
       const v = parse4(version3, options);
       return v ? v.version : null;
-    };
+    }, "valid");
     module2.exports = valid2;
   }
 });
@@ -19875,10 +20533,10 @@ var require_clean = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/clean.js"(exports2, module2) {
     "use strict";
     var parse4 = require_parse2();
-    var clean3 = (version3, options) => {
+    var clean3 = /* @__PURE__ */ __name((version3, options) => {
       const s = parse4(version3.trim().replace(/^[=v]+/, ""), options);
       return s ? s.version : null;
-    };
+    }, "clean");
     module2.exports = clean3;
   }
 });
@@ -19888,7 +20546,7 @@ var require_inc = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/inc.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
-    var inc2 = (version3, release, options, identifier, identifierBase) => {
+    var inc2 = /* @__PURE__ */ __name((version3, release, options, identifier, identifierBase) => {
       if (typeof options === "string") {
         identifierBase = identifier;
         identifier = options;
@@ -19902,7 +20560,7 @@ var require_inc = __commonJS({
       } catch (er) {
         return null;
       }
-    };
+    }, "inc");
     module2.exports = inc2;
   }
 });
@@ -19912,7 +20570,7 @@ var require_diff = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/diff.js"(exports2, module2) {
     "use strict";
     var parse4 = require_parse2();
-    var diff = (version1, version22) => {
+    var diff = /* @__PURE__ */ __name((version1, version22) => {
       const v1 = parse4(version1, null, true);
       const v2 = parse4(version22, null, true);
       const comparison = v1.compare(v2);
@@ -19946,7 +20604,7 @@ var require_diff = __commonJS({
         return prefix2 + "patch";
       }
       return "prerelease";
-    };
+    }, "diff");
     module2.exports = diff;
   }
 });
@@ -19956,7 +20614,7 @@ var require_major = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/major.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
-    var major2 = (a, loose) => new SemVer(a, loose).major;
+    var major2 = /* @__PURE__ */ __name((a, loose) => new SemVer(a, loose).major, "major");
     module2.exports = major2;
   }
 });
@@ -19966,7 +20624,7 @@ var require_minor = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/minor.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
-    var minor2 = (a, loose) => new SemVer(a, loose).minor;
+    var minor2 = /* @__PURE__ */ __name((a, loose) => new SemVer(a, loose).minor, "minor");
     module2.exports = minor2;
   }
 });
@@ -19976,7 +20634,7 @@ var require_patch = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/patch.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
-    var patch2 = (a, loose) => new SemVer(a, loose).patch;
+    var patch2 = /* @__PURE__ */ __name((a, loose) => new SemVer(a, loose).patch, "patch");
     module2.exports = patch2;
   }
 });
@@ -19986,10 +20644,10 @@ var require_prerelease = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/prerelease.js"(exports2, module2) {
     "use strict";
     var parse4 = require_parse2();
-    var prerelease = (version3, options) => {
+    var prerelease = /* @__PURE__ */ __name((version3, options) => {
       const parsed = parse4(version3, options);
       return parsed && parsed.prerelease.length ? parsed.prerelease : null;
-    };
+    }, "prerelease");
     module2.exports = prerelease;
   }
 });
@@ -19999,7 +20657,7 @@ var require_compare = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/compare.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
-    var compare2 = (a, b, loose) => new SemVer(a, loose).compare(new SemVer(b, loose));
+    var compare2 = /* @__PURE__ */ __name((a, b, loose) => new SemVer(a, loose).compare(new SemVer(b, loose)), "compare");
     module2.exports = compare2;
   }
 });
@@ -20009,7 +20667,7 @@ var require_rcompare = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/rcompare.js"(exports2, module2) {
     "use strict";
     var compare2 = require_compare();
-    var rcompare2 = (a, b, loose) => compare2(b, a, loose);
+    var rcompare2 = /* @__PURE__ */ __name((a, b, loose) => compare2(b, a, loose), "rcompare");
     module2.exports = rcompare2;
   }
 });
@@ -20019,7 +20677,7 @@ var require_compare_loose = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/compare-loose.js"(exports2, module2) {
     "use strict";
     var compare2 = require_compare();
-    var compareLoose = (a, b) => compare2(a, b, true);
+    var compareLoose = /* @__PURE__ */ __name((a, b) => compare2(a, b, true), "compareLoose");
     module2.exports = compareLoose;
   }
 });
@@ -20029,11 +20687,11 @@ var require_compare_build = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/compare-build.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
-    var compareBuild = (a, b, loose) => {
+    var compareBuild = /* @__PURE__ */ __name((a, b, loose) => {
       const versionA = new SemVer(a, loose);
       const versionB = new SemVer(b, loose);
       return versionA.compare(versionB) || versionA.compareBuild(versionB);
-    };
+    }, "compareBuild");
     module2.exports = compareBuild;
   }
 });
@@ -20043,7 +20701,7 @@ var require_sort = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/sort.js"(exports2, module2) {
     "use strict";
     var compareBuild = require_compare_build();
-    var sort = (list, loose) => list.sort((a, b) => compareBuild(a, b, loose));
+    var sort = /* @__PURE__ */ __name((list, loose) => list.sort((a, b) => compareBuild(a, b, loose)), "sort");
     module2.exports = sort;
   }
 });
@@ -20053,7 +20711,7 @@ var require_rsort = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/rsort.js"(exports2, module2) {
     "use strict";
     var compareBuild = require_compare_build();
-    var rsort = (list, loose) => list.sort((a, b) => compareBuild(b, a, loose));
+    var rsort = /* @__PURE__ */ __name((list, loose) => list.sort((a, b) => compareBuild(b, a, loose)), "rsort");
     module2.exports = rsort;
   }
 });
@@ -20063,7 +20721,7 @@ var require_gt = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/gt.js"(exports2, module2) {
     "use strict";
     var compare2 = require_compare();
-    var gt2 = (a, b, loose) => compare2(a, b, loose) > 0;
+    var gt2 = /* @__PURE__ */ __name((a, b, loose) => compare2(a, b, loose) > 0, "gt");
     module2.exports = gt2;
   }
 });
@@ -20073,7 +20731,7 @@ var require_lt = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/lt.js"(exports2, module2) {
     "use strict";
     var compare2 = require_compare();
-    var lt2 = (a, b, loose) => compare2(a, b, loose) < 0;
+    var lt2 = /* @__PURE__ */ __name((a, b, loose) => compare2(a, b, loose) < 0, "lt");
     module2.exports = lt2;
   }
 });
@@ -20083,7 +20741,7 @@ var require_eq = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/eq.js"(exports2, module2) {
     "use strict";
     var compare2 = require_compare();
-    var eq2 = (a, b, loose) => compare2(a, b, loose) === 0;
+    var eq2 = /* @__PURE__ */ __name((a, b, loose) => compare2(a, b, loose) === 0, "eq");
     module2.exports = eq2;
   }
 });
@@ -20093,7 +20751,7 @@ var require_neq = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/neq.js"(exports2, module2) {
     "use strict";
     var compare2 = require_compare();
-    var neq = (a, b, loose) => compare2(a, b, loose) !== 0;
+    var neq = /* @__PURE__ */ __name((a, b, loose) => compare2(a, b, loose) !== 0, "neq");
     module2.exports = neq;
   }
 });
@@ -20103,7 +20761,7 @@ var require_gte = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/gte.js"(exports2, module2) {
     "use strict";
     var compare2 = require_compare();
-    var gte2 = (a, b, loose) => compare2(a, b, loose) >= 0;
+    var gte2 = /* @__PURE__ */ __name((a, b, loose) => compare2(a, b, loose) >= 0, "gte");
     module2.exports = gte2;
   }
 });
@@ -20113,7 +20771,7 @@ var require_lte = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/lte.js"(exports2, module2) {
     "use strict";
     var compare2 = require_compare();
-    var lte2 = (a, b, loose) => compare2(a, b, loose) <= 0;
+    var lte2 = /* @__PURE__ */ __name((a, b, loose) => compare2(a, b, loose) <= 0, "lte");
     module2.exports = lte2;
   }
 });
@@ -20128,7 +20786,7 @@ var require_cmp = __commonJS({
     var gte2 = require_gte();
     var lt2 = require_lt();
     var lte2 = require_lte();
-    var cmp = (a, op, b, loose) => {
+    var cmp = /* @__PURE__ */ __name((a, op, b, loose) => {
       switch (op) {
         case "===":
           if (typeof a === "object") {
@@ -20163,7 +20821,7 @@ var require_cmp = __commonJS({
         default:
           throw new TypeError(`Invalid operator: ${op}`);
       }
-    };
+    }, "cmp");
     module2.exports = cmp;
   }
 });
@@ -20175,7 +20833,7 @@ var require_coerce = __commonJS({
     var SemVer = require_semver();
     var parse4 = require_parse2();
     var { safeRe: re, t } = require_re();
-    var coerce = (version3, options) => {
+    var coerce = /* @__PURE__ */ __name((version3, options) => {
       if (version3 instanceof SemVer) {
         return version3;
       }
@@ -20209,7 +20867,7 @@ var require_coerce = __commonJS({
       const prerelease = options.includePrerelease && match4[5] ? `-${match4[5]}` : "";
       const build = options.includePrerelease && match4[6] ? `+${match4[6]}` : "";
       return parse4(`${major2}.${minor2}.${patch2}${prerelease}${build}`, options);
-    };
+    }, "coerce");
     module2.exports = coerce;
   }
 });
@@ -20219,6 +20877,9 @@ var require_lrucache = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/internal/lrucache.js"(exports2, module2) {
     "use strict";
     var LRUCache = class {
+      static {
+        __name(this, "LRUCache");
+      }
       constructor() {
         this.max = 1e3;
         this.map = /* @__PURE__ */ new Map();
@@ -20258,6 +20919,9 @@ var require_range = __commonJS({
     "use strict";
     var SPACE_CHARACTERS = /\s+/g;
     var Range = class _Range {
+      static {
+        __name(this, "Range");
+      }
       constructor(range3, options) {
         options = parseOptions(options);
         if (range3 instanceof _Range) {
@@ -20410,9 +21074,9 @@ var require_range = __commonJS({
       caretTrimReplace
     } = require_re();
     var { FLAG_INCLUDE_PRERELEASE, FLAG_LOOSE } = require_constants6();
-    var isNullSet = (c) => c.value === "<0.0.0-0";
-    var isAny = (c) => c.value === "";
-    var isSatisfiable = (comparators, options) => {
+    var isNullSet = /* @__PURE__ */ __name((c) => c.value === "<0.0.0-0", "isNullSet");
+    var isAny = /* @__PURE__ */ __name((c) => c.value === "", "isAny");
+    var isSatisfiable = /* @__PURE__ */ __name((comparators, options) => {
       let result = true;
       const remainingComparators = comparators.slice();
       let testComparator = remainingComparators.pop();
@@ -20423,8 +21087,8 @@ var require_range = __commonJS({
         testComparator = remainingComparators.pop();
       }
       return result;
-    };
-    var parseComparator = (comp26, options) => {
+    }, "isSatisfiable");
+    var parseComparator = /* @__PURE__ */ __name((comp26, options) => {
       comp26 = comp26.replace(re[t.BUILD], "");
       debug3("comp", comp26, options);
       comp26 = replaceCarets(comp26, options);
@@ -20436,12 +21100,12 @@ var require_range = __commonJS({
       comp26 = replaceStars(comp26, options);
       debug3("stars", comp26);
       return comp26;
-    };
-    var isX = (id) => !id || id.toLowerCase() === "x" || id === "*";
-    var replaceTildes = (comp26, options) => {
+    }, "parseComparator");
+    var isX = /* @__PURE__ */ __name((id) => !id || id.toLowerCase() === "x" || id === "*", "isX");
+    var replaceTildes = /* @__PURE__ */ __name((comp26, options) => {
       return comp26.trim().split(/\s+/).map((c) => replaceTilde(c, options)).join(" ");
-    };
-    var replaceTilde = (comp26, options) => {
+    }, "replaceTildes");
+    var replaceTilde = /* @__PURE__ */ __name((comp26, options) => {
       const r = options.loose ? re[t.TILDELOOSE] : re[t.TILDE];
       return comp26.replace(r, (_, M, m, p, pr) => {
         debug3("tilde", comp26, _, M, m, p, pr);
@@ -20461,11 +21125,11 @@ var require_range = __commonJS({
         debug3("tilde return", ret);
         return ret;
       });
-    };
-    var replaceCarets = (comp26, options) => {
+    }, "replaceTilde");
+    var replaceCarets = /* @__PURE__ */ __name((comp26, options) => {
       return comp26.trim().split(/\s+/).map((c) => replaceCaret(c, options)).join(" ");
-    };
-    var replaceCaret = (comp26, options) => {
+    }, "replaceCarets");
+    var replaceCaret = /* @__PURE__ */ __name((comp26, options) => {
       debug3("caret", comp26, options);
       const r = options.loose ? re[t.CARETLOOSE] : re[t.CARET];
       const z = options.includePrerelease ? "-0" : "";
@@ -20508,12 +21172,12 @@ var require_range = __commonJS({
         debug3("caret return", ret);
         return ret;
       });
-    };
-    var replaceXRanges = (comp26, options) => {
+    }, "replaceCaret");
+    var replaceXRanges = /* @__PURE__ */ __name((comp26, options) => {
       debug3("replaceXRanges", comp26, options);
       return comp26.split(/\s+/).map((c) => replaceXRange(c, options)).join(" ");
-    };
-    var replaceXRange = (comp26, options) => {
+    }, "replaceXRanges");
+    var replaceXRange = /* @__PURE__ */ __name((comp26, options) => {
       comp26 = comp26.trim();
       const r = options.loose ? re[t.XRANGELOOSE] : re[t.XRANGE];
       return comp26.replace(r, (ret, gtlt, M, m, p, pr) => {
@@ -20567,16 +21231,16 @@ var require_range = __commonJS({
         debug3("xRange return", ret);
         return ret;
       });
-    };
-    var replaceStars = (comp26, options) => {
+    }, "replaceXRange");
+    var replaceStars = /* @__PURE__ */ __name((comp26, options) => {
       debug3("replaceStars", comp26, options);
       return comp26.trim().replace(re[t.STAR], "");
-    };
-    var replaceGTE0 = (comp26, options) => {
+    }, "replaceStars");
+    var replaceGTE0 = /* @__PURE__ */ __name((comp26, options) => {
       debug3("replaceGTE0", comp26, options);
       return comp26.trim().replace(re[options.includePrerelease ? t.GTE0PRE : t.GTE0], "");
-    };
-    var hyphenReplace = (incPr) => ($0, from, fM, fm, fp, fpr, fb, to, tM, tm, tp, tpr) => {
+    }, "replaceGTE0");
+    var hyphenReplace = /* @__PURE__ */ __name((incPr) => ($0, from, fM, fm, fp, fpr, fb, to, tM, tm, tp, tpr) => {
       if (isX(fM)) {
         from = "";
       } else if (isX(fm)) {
@@ -20602,8 +21266,8 @@ var require_range = __commonJS({
         to = `<=${to}`;
       }
       return `${from} ${to}`.trim();
-    };
-    var testSet = (set, version3, options) => {
+    }, "hyphenReplace");
+    var testSet = /* @__PURE__ */ __name((set, version3, options) => {
       for (let i = 0; i < set.length; i++) {
         if (!set[i].test(version3)) {
           return false;
@@ -20625,7 +21289,7 @@ var require_range = __commonJS({
         return false;
       }
       return true;
-    };
+    }, "testSet");
   }
 });
 
@@ -20635,6 +21299,9 @@ var require_comparator = __commonJS({
     "use strict";
     var ANY = /* @__PURE__ */ Symbol("SemVer ANY");
     var Comparator = class _Comparator {
+      static {
+        __name(this, "Comparator");
+      }
       static get ANY() {
         return ANY;
       }
@@ -20747,14 +21414,14 @@ var require_satisfies = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/functions/satisfies.js"(exports2, module2) {
     "use strict";
     var Range = require_range();
-    var satisfies2 = (version3, range3, options) => {
+    var satisfies2 = /* @__PURE__ */ __name((version3, range3, options) => {
       try {
         range3 = new Range(range3, options);
       } catch (er) {
         return false;
       }
       return range3.test(version3);
-    };
+    }, "satisfies");
     module2.exports = satisfies2;
   }
 });
@@ -20764,7 +21431,7 @@ var require_to_comparators = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/ranges/to-comparators.js"(exports2, module2) {
     "use strict";
     var Range = require_range();
-    var toComparators = (range3, options) => new Range(range3, options).set.map((comp26) => comp26.map((c) => c.value).join(" ").trim().split(" "));
+    var toComparators = /* @__PURE__ */ __name((range3, options) => new Range(range3, options).set.map((comp26) => comp26.map((c) => c.value).join(" ").trim().split(" ")), "toComparators");
     module2.exports = toComparators;
   }
 });
@@ -20775,7 +21442,7 @@ var require_max_satisfying = __commonJS({
     "use strict";
     var SemVer = require_semver();
     var Range = require_range();
-    var maxSatisfying2 = (versions, range3, options) => {
+    var maxSatisfying2 = /* @__PURE__ */ __name((versions, range3, options) => {
       let max = null;
       let maxSV = null;
       let rangeObj = null;
@@ -20793,7 +21460,7 @@ var require_max_satisfying = __commonJS({
         }
       });
       return max;
-    };
+    }, "maxSatisfying");
     module2.exports = maxSatisfying2;
   }
 });
@@ -20804,7 +21471,7 @@ var require_min_satisfying = __commonJS({
     "use strict";
     var SemVer = require_semver();
     var Range = require_range();
-    var minSatisfying2 = (versions, range3, options) => {
+    var minSatisfying2 = /* @__PURE__ */ __name((versions, range3, options) => {
       let min = null;
       let minSV = null;
       let rangeObj = null;
@@ -20822,7 +21489,7 @@ var require_min_satisfying = __commonJS({
         }
       });
       return min;
-    };
+    }, "minSatisfying");
     module2.exports = minSatisfying2;
   }
 });
@@ -20834,7 +21501,7 @@ var require_min_version = __commonJS({
     var SemVer = require_semver();
     var Range = require_range();
     var gt2 = require_gt();
-    var minVersion = (range3, loose) => {
+    var minVersion = /* @__PURE__ */ __name((range3, loose) => {
       range3 = new Range(range3, loose);
       let minver = new SemVer("0.0.0");
       if (range3.test(minver)) {
@@ -20881,7 +21548,7 @@ var require_min_version = __commonJS({
         return minver;
       }
       return null;
-    };
+    }, "minVersion");
     module2.exports = minVersion;
   }
 });
@@ -20891,13 +21558,13 @@ var require_valid2 = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/ranges/valid.js"(exports2, module2) {
     "use strict";
     var Range = require_range();
-    var validRange2 = (range3, options) => {
+    var validRange2 = /* @__PURE__ */ __name((range3, options) => {
       try {
         return new Range(range3, options).range || "*";
       } catch (er) {
         return null;
       }
-    };
+    }, "validRange");
     module2.exports = validRange2;
   }
 });
@@ -20915,7 +21582,7 @@ var require_outside = __commonJS({
     var lt2 = require_lt();
     var lte2 = require_lte();
     var gte2 = require_gte();
-    var outside = (version3, range3, hilo, options) => {
+    var outside = /* @__PURE__ */ __name((version3, range3, hilo, options) => {
       version3 = new SemVer(version3, options);
       range3 = new Range(range3, options);
       let gtfn, ltefn, ltfn, comp26, ecomp;
@@ -20966,7 +21633,7 @@ var require_outside = __commonJS({
         }
       }
       return true;
-    };
+    }, "outside");
     module2.exports = outside;
   }
 });
@@ -20976,7 +21643,7 @@ var require_gtr = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/ranges/gtr.js"(exports2, module2) {
     "use strict";
     var outside = require_outside();
-    var gtr = (version3, range3, options) => outside(version3, range3, ">", options);
+    var gtr = /* @__PURE__ */ __name((version3, range3, options) => outside(version3, range3, ">", options), "gtr");
     module2.exports = gtr;
   }
 });
@@ -20986,7 +21653,7 @@ var require_ltr = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/ranges/ltr.js"(exports2, module2) {
     "use strict";
     var outside = require_outside();
-    var ltr = (version3, range3, options) => outside(version3, range3, "<", options);
+    var ltr = /* @__PURE__ */ __name((version3, range3, options) => outside(version3, range3, "<", options), "ltr");
     module2.exports = ltr;
   }
 });
@@ -20996,11 +21663,11 @@ var require_intersects = __commonJS({
   "node_modules/@actions/cache/node_modules/semver/ranges/intersects.js"(exports2, module2) {
     "use strict";
     var Range = require_range();
-    var intersects = (r1, r2, options) => {
+    var intersects = /* @__PURE__ */ __name((r1, r2, options) => {
       r1 = new Range(r1, options);
       r2 = new Range(r2, options);
       return r1.intersects(r2, options);
-    };
+    }, "intersects");
     module2.exports = intersects;
   }
 });
@@ -21064,7 +21731,7 @@ var require_subset = __commonJS({
     var { ANY } = Comparator;
     var satisfies2 = require_satisfies();
     var compare2 = require_compare();
-    var subset = (sub, dom, options = {}) => {
+    var subset = /* @__PURE__ */ __name((sub, dom, options = {}) => {
       if (sub === dom) {
         return true;
       }
@@ -21084,10 +21751,10 @@ var require_subset = __commonJS({
         }
       }
       return true;
-    };
+    }, "subset");
     var minimumVersionWithPreRelease = [new Comparator(">=0.0.0-0")];
     var minimumVersion = [new Comparator(">=0.0.0")];
-    var simpleSubset = (sub, dom, options) => {
+    var simpleSubset = /* @__PURE__ */ __name((sub, dom, options) => {
       if (sub === dom) {
         return true;
       }
@@ -21198,21 +21865,21 @@ var require_subset = __commonJS({
         return false;
       }
       return true;
-    };
-    var higherGT = (a, b, options) => {
+    }, "simpleSubset");
+    var higherGT = /* @__PURE__ */ __name((a, b, options) => {
       if (!a) {
         return b;
       }
       const comp26 = compare2(a.semver, b.semver, options);
       return comp26 > 0 ? a : comp26 < 0 ? b : b.operator === ">" && a.operator === ">=" ? b : a;
-    };
-    var lowerLT = (a, b, options) => {
+    }, "higherGT");
+    var lowerLT = /* @__PURE__ */ __name((a, b, options) => {
       if (!a) {
         return b;
       }
       const comp26 = compare2(a.semver, b.semver, options);
       return comp26 < 0 ? a : comp26 > 0 ? b : b.operator === "<" && a.operator === "<=" ? b : a;
-    };
+    }, "lowerLT");
     module2.exports = subset;
   }
 });
@@ -21389,6 +22056,7 @@ var require_ms = __commonJS({
           return void 0;
       }
     }
+    __name(parse4, "parse");
     function fmtShort(ms) {
       var msAbs = Math.abs(ms);
       if (msAbs >= d) {
@@ -21405,6 +22073,7 @@ var require_ms = __commonJS({
       }
       return ms + "ms";
     }
+    __name(fmtShort, "fmtShort");
     function fmtLong(ms) {
       var msAbs = Math.abs(ms);
       if (msAbs >= d) {
@@ -21421,10 +22090,12 @@ var require_ms = __commonJS({
       }
       return ms + " ms";
     }
+    __name(fmtLong, "fmtLong");
     function plural(ms, msAbs, n, name) {
       var isPlural = msAbs >= n * 1.5;
       return Math.round(ms / n) + " " + name + (isPlural ? "s" : "");
     }
+    __name(plural, "plural");
   }
 });
 
@@ -21454,6 +22125,7 @@ var require_common = __commonJS({
         }
         return createDebug.colors[Math.abs(hash) % createDebug.colors.length];
       }
+      __name(selectColor, "selectColor");
       createDebug.selectColor = selectColor;
       function createDebug(namespace) {
         let prevTime;
@@ -21494,6 +22166,7 @@ var require_common = __commonJS({
           const logFn = self2.log || createDebug.log;
           logFn.apply(self2, args);
         }
+        __name(debug3, "debug");
         debug3.namespace = namespace;
         debug3.useColors = createDebug.useColors();
         debug3.color = createDebug.selectColor(namespace);
@@ -21502,7 +22175,7 @@ var require_common = __commonJS({
         Object.defineProperty(debug3, "enabled", {
           enumerable: true,
           configurable: false,
-          get: () => {
+          get: /* @__PURE__ */ __name(() => {
             if (enableOverride !== null) {
               return enableOverride;
             }
@@ -21511,21 +22184,23 @@ var require_common = __commonJS({
               enabledCache = createDebug.enabled(namespace);
             }
             return enabledCache;
-          },
-          set: (v) => {
+          }, "get"),
+          set: /* @__PURE__ */ __name((v) => {
             enableOverride = v;
-          }
+          }, "set")
         });
         if (typeof createDebug.init === "function") {
           createDebug.init(debug3);
         }
         return debug3;
       }
+      __name(createDebug, "createDebug");
       function extend2(namespace, delimiter3) {
         const newDebug = createDebug(this.namespace + (typeof delimiter3 === "undefined" ? ":" : delimiter3) + namespace);
         newDebug.log = this.log;
         return newDebug;
       }
+      __name(extend2, "extend");
       function enable2(namespaces) {
         createDebug.save(namespaces);
         createDebug.namespaces = namespaces;
@@ -21546,6 +22221,7 @@ var require_common = __commonJS({
           }
         }
       }
+      __name(enable2, "enable");
       function disable2() {
         const namespaces = [
           ...createDebug.names.map(toNamespace),
@@ -21554,6 +22230,7 @@ var require_common = __commonJS({
         createDebug.enable("");
         return namespaces;
       }
+      __name(disable2, "disable");
       function enabled2(name) {
         if (name[name.length - 1] === "*") {
           return true;
@@ -21572,21 +22249,26 @@ var require_common = __commonJS({
         }
         return false;
       }
+      __name(enabled2, "enabled");
       function toNamespace(regexp) {
         return regexp.toString().substring(2, regexp.toString().length - 2).replace(/\.\*\?$/, "*");
       }
+      __name(toNamespace, "toNamespace");
       function coerce(val) {
         if (val instanceof Error) {
           return val.stack || val.message;
         }
         return val;
       }
+      __name(coerce, "coerce");
       function destroy2() {
         console.warn("Instance method `debug.destroy()` is deprecated and no longer does anything. It will be removed in the next major version of `debug`.");
       }
+      __name(destroy2, "destroy");
       createDebug.enable(createDebug.load());
       return createDebug;
     }
+    __name(setup, "setup");
     module2.exports = setup;
   }
 });
@@ -21699,6 +22381,7 @@ var require_browser = __commonJS({
       typeof navigator !== "undefined" && navigator.userAgent && navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31 || // Double check webkit in userAgent just in case we are in a worker
       typeof navigator !== "undefined" && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/);
     }
+    __name(useColors, "useColors");
     function formatArgs(args) {
       args[0] = (this.useColors ? "%c" : "") + this.namespace + (this.useColors ? " %c" : " ") + args[0] + (this.useColors ? "%c " : " ") + "+" + module2.exports.humanize(this.diff);
       if (!this.useColors) {
@@ -21719,6 +22402,7 @@ var require_browser = __commonJS({
       });
       args.splice(lastC, 0, c);
     }
+    __name(formatArgs, "formatArgs");
     exports2.log = console.debug || console.log || (() => {
     });
     function save(namespaces) {
@@ -21731,6 +22415,7 @@ var require_browser = __commonJS({
       } catch (error2) {
       }
     }
+    __name(save, "save");
     function load() {
       let r;
       try {
@@ -21742,12 +22427,14 @@ var require_browser = __commonJS({
       }
       return r;
     }
+    __name(load, "load");
     function localstorage() {
       try {
         return localStorage;
       } catch (error2) {
       }
     }
+    __name(localstorage, "localstorage");
     module2.exports = require_common()(exports2);
     var { formatters } = module2.exports;
     formatters.j = function(v) {
@@ -21807,6 +22494,7 @@ var require_supports_color = __commonJS({
         has16m: level >= 3
       };
     }
+    __name(translateLevel, "translateLevel");
     function supportsColor(haveStream, streamIsTTY) {
       if (forceColor === 0) {
         return 0;
@@ -21863,10 +22551,12 @@ var require_supports_color = __commonJS({
       }
       return min;
     }
+    __name(supportsColor, "supportsColor");
     function getSupportLevel(stream) {
       const level = supportsColor(stream, stream && stream.isTTY);
       return translateLevel(level);
     }
+    __name(getSupportLevel, "getSupportLevel");
     module2.exports = {
       supportsColor: getSupportLevel,
       stdout: translateLevel(supportsColor(true, tty.isatty(1))),
@@ -21998,6 +22688,7 @@ var require_node = __commonJS({
     function useColors() {
       return "colors" in exports2.inspectOpts ? Boolean(exports2.inspectOpts.colors) : tty.isatty(process.stderr.fd);
     }
+    __name(useColors, "useColors");
     function formatArgs(args) {
       const { namespace: name, useColors: useColors2 } = this;
       if (useColors2) {
@@ -22010,15 +22701,18 @@ var require_node = __commonJS({
         args[0] = getDate() + name + " " + args[0];
       }
     }
+    __name(formatArgs, "formatArgs");
     function getDate() {
       if (exports2.inspectOpts.hideDate) {
         return "";
       }
       return (/* @__PURE__ */ new Date()).toISOString() + " ";
     }
+    __name(getDate, "getDate");
     function log2(...args) {
       return process.stderr.write(util4.format(...args) + "\n");
     }
+    __name(log2, "log");
     function save(namespaces) {
       if (namespaces) {
         process.env.DEBUG = namespaces;
@@ -22026,9 +22720,11 @@ var require_node = __commonJS({
         delete process.env.DEBUG;
       }
     }
+    __name(save, "save");
     function load() {
       return process.env.DEBUG;
     }
+    __name(load, "load");
     function init(debug3) {
       debug3.inspectOpts = {};
       const keys = Object.keys(exports2.inspectOpts);
@@ -22036,6 +22732,7 @@ var require_node = __commonJS({
         debug3.inspectOpts[keys[i]] = exports2.inspectOpts[keys[i]];
       }
     }
+    __name(init, "init");
     module2.exports = require_common()(exports2);
     var { formatters } = module2.exports;
     formatters.o = function(v) {
@@ -22068,9 +22765,9 @@ var require_helpers = __commonJS({
       if (k2 === void 0) k2 = k;
       var desc = Object.getOwnPropertyDescriptor(m, k);
       if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: function() {
+        desc = { enumerable: true, get: /* @__PURE__ */ __name(function() {
           return m[k];
-        } };
+        }, "get") };
       }
       Object.defineProperty(o, k2, desc);
     }) : (function(o, m, k, k2) {
@@ -22104,6 +22801,7 @@ var require_helpers = __commonJS({
       }
       return Buffer.concat(chunks, length);
     }
+    __name(toBuffer, "toBuffer");
     exports2.toBuffer = toBuffer;
     async function json(stream) {
       const buf = await toBuffer(stream);
@@ -22116,6 +22814,7 @@ var require_helpers = __commonJS({
         throw err;
       }
     }
+    __name(json, "json");
     exports2.json = json;
     function req(url2, opts = {}) {
       const href = typeof url2 === "string" ? url2 : url2.href;
@@ -22126,6 +22825,7 @@ var require_helpers = __commonJS({
       req2.then = promise.then.bind(promise);
       return req2;
     }
+    __name(req, "req");
     exports2.req = req;
   }
 });
@@ -22138,9 +22838,9 @@ var require_dist = __commonJS({
       if (k2 === void 0) k2 = k;
       var desc = Object.getOwnPropertyDescriptor(m, k);
       if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: function() {
+        desc = { enumerable: true, get: /* @__PURE__ */ __name(function() {
           return m[k];
-        } };
+        }, "get") };
       }
       Object.defineProperty(o, k2, desc);
     }) : (function(o, m, k, k2) {
@@ -22172,6 +22872,9 @@ var require_dist = __commonJS({
     __exportStar(require_helpers(), exports2);
     var INTERNAL = /* @__PURE__ */ Symbol("AgentBaseInternalState");
     var Agent3 = class extends http3.Agent {
+      static {
+        __name(this, "Agent");
+      }
       constructor(opts) {
         super(opts);
         this[INTERNAL] = {};
@@ -22308,21 +23011,25 @@ var require_parse_proxy_response = __commonJS({
           else
             socket.once("readable", read);
         }
+        __name(read, "read");
         function cleanup() {
           socket.removeListener("end", onend);
           socket.removeListener("error", onerror);
           socket.removeListener("readable", read);
         }
+        __name(cleanup, "cleanup");
         function onend() {
           cleanup();
           debug3("onend");
           reject(new Error("Proxy connection ended before receiving CONNECT response"));
         }
+        __name(onend, "onend");
         function onerror(err) {
           cleanup();
           debug3("onerror %o", err);
           reject(err);
         }
+        __name(onerror, "onerror");
         function ondata(b) {
           buffers.push(b);
           buffersLength += b.length;
@@ -22373,11 +23080,13 @@ var require_parse_proxy_response = __commonJS({
             buffered
           });
         }
+        __name(ondata, "ondata");
         socket.on("error", onerror);
         socket.on("end", onend);
         read();
       });
     }
+    __name(parseProxyResponse, "parseProxyResponse");
     exports2.parseProxyResponse = parseProxyResponse;
   }
 });
@@ -22390,9 +23099,9 @@ var require_dist2 = __commonJS({
       if (k2 === void 0) k2 = k;
       var desc = Object.getOwnPropertyDescriptor(m, k);
       if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: function() {
+        desc = { enumerable: true, get: /* @__PURE__ */ __name(function() {
           return m[k];
-        } };
+        }, "get") };
       }
       Object.defineProperty(o, k2, desc);
     }) : (function(o, m, k, k2) {
@@ -22426,7 +23135,7 @@ var require_dist2 = __commonJS({
     var url_1 = require("url");
     var parse_proxy_response_1 = require_parse_proxy_response();
     var debug3 = (0, debug_1.default)("https-proxy-agent");
-    var setServernameFromNonIpHost = (options) => {
+    var setServernameFromNonIpHost = /* @__PURE__ */ __name((options) => {
       if (options.servername === void 0 && options.host && !net.isIP(options.host)) {
         return {
           ...options,
@@ -22434,8 +23143,11 @@ var require_dist2 = __commonJS({
         };
       }
       return options;
-    };
+    }, "setServernameFromNonIpHost");
     var HttpsProxyAgent2 = class extends agent_base_1.Agent {
+      static {
+        __name(this, "HttpsProxyAgent");
+      }
       constructor(proxy, opts) {
         super(opts);
         this.options = { path: void 0 };
@@ -22519,6 +23231,7 @@ var require_dist2 = __commonJS({
     function resume(socket) {
       socket.resume();
     }
+    __name(resume, "resume");
     function omit(obj, ...keys) {
       const ret = {};
       let key;
@@ -22529,6 +23242,7 @@ var require_dist2 = __commonJS({
       }
       return ret;
     }
+    __name(omit, "omit");
   }
 });
 
@@ -22540,9 +23254,9 @@ var require_dist3 = __commonJS({
       if (k2 === void 0) k2 = k;
       var desc = Object.getOwnPropertyDescriptor(m, k);
       if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: function() {
+        desc = { enumerable: true, get: /* @__PURE__ */ __name(function() {
           return m[k];
-        } };
+        }, "get") };
       }
       Object.defineProperty(o, k2, desc);
     }) : (function(o, m, k, k2) {
@@ -22576,6 +23290,9 @@ var require_dist3 = __commonJS({
     var url_1 = require("url");
     var debug3 = (0, debug_1.default)("http-proxy-agent");
     var HttpProxyAgent2 = class extends agent_base_1.Agent {
+      static {
+        __name(this, "HttpProxyAgent");
+      }
       constructor(proxy, opts) {
         super(opts);
         this.proxy = typeof proxy === "string" ? new url_1.URL(proxy) : proxy;
@@ -22659,6 +23376,7 @@ var require_dist3 = __commonJS({
       }
       return ret;
     }
+    __name(omit, "omit");
   }
 });
 
@@ -22782,10 +23500,12 @@ var require_json_typings = __commonJS({
       }
       return t;
     }
+    __name(typeofJsonValue, "typeofJsonValue");
     exports2.typeofJsonValue = typeofJsonValue;
     function isJsonObject(value) {
       return value !== null && typeof value == "object" && !Array.isArray(value);
     }
+    __name(isJsonObject, "isJsonObject");
     exports2.isJsonObject = isJsonObject;
   }
 });
@@ -22851,6 +23571,7 @@ var require_base64 = __commonJS({
         throw Error(`invalid base64 string.`);
       return bytes.subarray(0, bytePos);
     }
+    __name(base64decode, "base64decode");
     exports2.base64decode = base64decode;
     function base64encode2(bytes) {
       let base64 = "", groupPos = 0, b, p = 0;
@@ -22882,6 +23603,7 @@ var require_base64 = __commonJS({
       }
       return base64;
     }
+    __name(base64encode2, "base64encode");
     exports2.base64encode = base64encode2;
   }
 });
@@ -22892,7 +23614,7 @@ var require_protobufjs_utf8 = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.utf8read = void 0;
-    var fromCharCodes = (chunk) => String.fromCharCode.apply(String, chunk);
+    var fromCharCodes = /* @__PURE__ */ __name((chunk) => String.fromCharCode.apply(String, chunk), "fromCharCodes");
     function utf8read(bytes) {
       if (bytes.length < 1)
         return "";
@@ -22922,6 +23644,7 @@ var require_protobufjs_utf8 = __commonJS({
       }
       return fromCharCodes(chunk.slice(0, i));
     }
+    __name(utf8read, "utf8read");
     exports2.utf8read = utf8read;
   }
 });
@@ -22951,11 +23674,12 @@ var require_binary_format_contract = __commonJS({
         return [];
       };
       UnknownFieldHandler5.last = (message, fieldNo) => UnknownFieldHandler5.list(message, fieldNo).slice(-1)[0];
-      const is = (message) => message && Array.isArray(message[UnknownFieldHandler5.symbol]);
+      const is = /* @__PURE__ */ __name((message) => message && Array.isArray(message[UnknownFieldHandler5.symbol]), "is");
     })(UnknownFieldHandler4 = exports2.UnknownFieldHandler || (exports2.UnknownFieldHandler = {}));
     function mergeBinaryOptions(a, b) {
       return Object.assign(Object.assign({}, a), b);
     }
+    __name(mergeBinaryOptions, "mergeBinaryOptions");
     exports2.mergeBinaryOptions = mergeBinaryOptions;
     var WireType4;
     (function(WireType5) {
@@ -23003,6 +23727,7 @@ var require_goog_varint = __commonJS({
       }
       throw new Error("invalid varint");
     }
+    __name(varint64read, "varint64read");
     exports2.varint64read = varint64read;
     function varint64write(lo, hi, bytes) {
       for (let i = 0; i < 28; i = i + 7) {
@@ -23031,6 +23756,7 @@ var require_goog_varint = __commonJS({
       }
       bytes.push(hi >>> 31 & 1);
     }
+    __name(varint64write, "varint64write");
     exports2.varint64write = varint64write;
     var TWO_PWR_32_DBL = (1 << 16) * (1 << 16);
     function int64fromString(dec) {
@@ -23049,12 +23775,14 @@ var require_goog_varint = __commonJS({
           lowBits = lowBits % TWO_PWR_32_DBL;
         }
       }
+      __name(add1e6digit, "add1e6digit");
       add1e6digit(-24, -18);
       add1e6digit(-18, -12);
       add1e6digit(-12, -6);
       add1e6digit(-6);
       return [minus, lowBits, highBits];
     }
+    __name(int64fromString, "int64fromString");
     exports2.int64fromString = int64fromString;
     function int64toString(bitsLow, bitsHigh) {
       if (bitsHigh >>> 0 <= 2097151) {
@@ -23082,6 +23810,7 @@ var require_goog_varint = __commonJS({
         }
         return partial;
       }
+      __name(decimalFrom1e7, "decimalFrom1e7");
       return decimalFrom1e7(
         digitC,
         /*needLeadingZeros=*/
@@ -23098,6 +23827,7 @@ var require_goog_varint = __commonJS({
         1
       );
     }
+    __name(int64toString, "int64toString");
     exports2.int64toString = int64toString;
     function varint32write(value, bytes) {
       if (value >= 0) {
@@ -23114,6 +23844,7 @@ var require_goog_varint = __commonJS({
         bytes.push(1);
       }
     }
+    __name(varint32write, "varint32write");
     exports2.varint32write = varint32write;
     function varint32read() {
       let b = this.buf[this.pos++];
@@ -23149,6 +23880,7 @@ var require_goog_varint = __commonJS({
       this.assertBounds();
       return result >>> 0;
     }
+    __name(varint32read, "varint32read");
     exports2.varint32read = varint32read;
   }
 });
@@ -23173,16 +23905,21 @@ var require_pb_long = __commonJS({
         V: dv
       } : void 0;
     }
+    __name(detectBi, "detectBi");
     exports2.detectBi = detectBi;
     detectBi();
     function assertBi(bi) {
       if (!bi)
         throw new Error("BigInt unavailable, see https://github.com/timostamm/protobuf-ts/blob/v1.0.8/MANUAL.md#bigint-support");
     }
+    __name(assertBi, "assertBi");
     var RE_DECIMAL_STR = /^-?[0-9]+$/;
     var TWO_PWR_32_DBL = 4294967296;
     var HALF_2_PWR_32 = 2147483648;
     var SharedPbLong = class {
+      static {
+        __name(this, "SharedPbLong");
+      }
       /**
        * Create a new instance with the given bits.
        */
@@ -23207,6 +23944,9 @@ var require_pb_long = __commonJS({
       }
     };
     var PbULong = class _PbULong extends SharedPbLong {
+      static {
+        __name(this, "PbULong");
+      }
       /**
        * Create instance from a `string`, `number` or `bigint`.
        */
@@ -23275,6 +24015,9 @@ var require_pb_long = __commonJS({
     exports2.PbULong = PbULong;
     PbULong.ZERO = new PbULong(0, 0);
     var PbLong = class _PbLong extends SharedPbLong {
+      static {
+        __name(this, "PbLong");
+      }
       /**
        * Create instance from a `string`, `number` or `bigint`.
        */
@@ -23382,13 +24125,17 @@ var require_binary_reader = __commonJS({
     var goog_varint_1 = require_goog_varint();
     var defaultsRead = {
       readUnknownField: true,
-      readerFactory: (bytes) => new BinaryReader(bytes)
+      readerFactory: /* @__PURE__ */ __name((bytes) => new BinaryReader(bytes), "readerFactory")
     };
     function binaryReadOptions(options) {
       return options ? Object.assign(Object.assign({}, defaultsRead), options) : defaultsRead;
     }
+    __name(binaryReadOptions, "binaryReadOptions");
     exports2.binaryReadOptions = binaryReadOptions;
     var BinaryReader = class {
+      static {
+        __name(this, "BinaryReader");
+      }
       constructor(buf, textDecoder) {
         this.varint64 = goog_varint_1.varint64read;
         this.uint32 = goog_varint_1.varint32read;
@@ -23559,10 +24306,12 @@ var require_assert = __commonJS({
         throw new Error(msg);
       }
     }
+    __name(assert4, "assert");
     exports2.assert = assert4;
     function assertNever(value, msg) {
       throw new Error(msg !== null && msg !== void 0 ? msg : "Unexpected object: " + value);
     }
+    __name(assertNever, "assertNever");
     exports2.assertNever = assertNever;
     var FLOAT32_MAX = 34028234663852886e22;
     var FLOAT32_MIN = -34028234663852886e22;
@@ -23575,6 +24324,7 @@ var require_assert = __commonJS({
       if (!Number.isInteger(arg) || arg > INT32_MAX || arg < INT32_MIN)
         throw new Error("invalid int 32: " + arg);
     }
+    __name(assertInt32, "assertInt32");
     exports2.assertInt32 = assertInt32;
     function assertUInt32(arg) {
       if (typeof arg !== "number")
@@ -23582,6 +24332,7 @@ var require_assert = __commonJS({
       if (!Number.isInteger(arg) || arg > UINT32_MAX || arg < 0)
         throw new Error("invalid uint 32: " + arg);
     }
+    __name(assertUInt32, "assertUInt32");
     exports2.assertUInt32 = assertUInt32;
     function assertFloat32(arg) {
       if (typeof arg !== "number")
@@ -23591,6 +24342,7 @@ var require_assert = __commonJS({
       if (arg > FLOAT32_MAX || arg < FLOAT32_MIN)
         throw new Error("invalid float 32: " + arg);
     }
+    __name(assertFloat32, "assertFloat32");
     exports2.assertFloat32 = assertFloat32;
   }
 });
@@ -23606,13 +24358,17 @@ var require_binary_writer = __commonJS({
     var assert_1 = require_assert();
     var defaultsWrite = {
       writeUnknownFields: true,
-      writerFactory: () => new BinaryWriter()
+      writerFactory: /* @__PURE__ */ __name(() => new BinaryWriter(), "writerFactory")
     };
     function binaryWriteOptions(options) {
       return options ? Object.assign(Object.assign({}, defaultsWrite), options) : defaultsWrite;
     }
+    __name(binaryWriteOptions, "binaryWriteOptions");
     exports2.binaryWriteOptions = binaryWriteOptions;
     var BinaryWriter = class {
+      static {
+        __name(this, "BinaryWriter");
+      }
       constructor(textEncoder) {
         this.stack = [];
         this.textEncoder = textEncoder !== null && textEncoder !== void 0 ? textEncoder : new TextEncoder();
@@ -23838,10 +24594,12 @@ var require_json_format_contract = __commonJS({
     function jsonReadOptions(options) {
       return options ? Object.assign(Object.assign({}, defaultsRead), options) : defaultsRead;
     }
+    __name(jsonReadOptions, "jsonReadOptions");
     exports2.jsonReadOptions = jsonReadOptions;
     function jsonWriteOptions(options) {
       return options ? Object.assign(Object.assign({}, defaultsWrite), options) : defaultsWrite;
     }
+    __name(jsonWriteOptions, "jsonWriteOptions");
     exports2.jsonWriteOptions = jsonWriteOptions;
     function mergeJsonOptions(a, b) {
       var _a2, _b;
@@ -23849,6 +24607,7 @@ var require_json_format_contract = __commonJS({
       c.typeRegistry = [...(_a2 = a === null || a === void 0 ? void 0 : a.typeRegistry) !== null && _a2 !== void 0 ? _a2 : [], ...(_b = b === null || b === void 0 ? void 0 : b.typeRegistry) !== null && _b !== void 0 ? _b : []];
       return c;
     }
+    __name(mergeJsonOptions, "mergeJsonOptions");
     exports2.mergeJsonOptions = mergeJsonOptions;
   }
 });
@@ -23890,6 +24649,7 @@ var require_lower_camel_case = __commonJS({
       }
       return sb.join("");
     }
+    __name(lowerCamelCase, "lowerCamelCase");
     exports2.lowerCamelCase = lowerCamelCase;
   }
 });
@@ -23939,12 +24699,14 @@ var require_reflection_info = __commonJS({
       field.opt = (_d = field.opt) !== null && _d !== void 0 ? _d : field.repeat ? false : field.oneof ? false : field.kind == "message";
       return field;
     }
+    __name(normalizeFieldInfo, "normalizeFieldInfo");
     exports2.normalizeFieldInfo = normalizeFieldInfo;
     function readFieldOptions(messageType, fieldName, extensionName, extensionType) {
       var _a2;
       const options = (_a2 = messageType.fields.find((m, i) => m.localName == fieldName || i == fieldName)) === null || _a2 === void 0 ? void 0 : _a2.options;
       return options && options[extensionName] ? extensionType.fromJson(options[extensionName]) : void 0;
     }
+    __name(readFieldOptions, "readFieldOptions");
     exports2.readFieldOptions = readFieldOptions;
     function readFieldOption(messageType, fieldName, extensionName, extensionType) {
       var _a2;
@@ -23958,6 +24720,7 @@ var require_reflection_info = __commonJS({
       }
       return extensionType ? extensionType.fromJson(optionVal) : optionVal;
     }
+    __name(readFieldOption, "readFieldOption");
     exports2.readFieldOption = readFieldOption;
     function readMessageOption(messageType, extensionName, extensionType) {
       const options = messageType.options;
@@ -23967,6 +24730,7 @@ var require_reflection_info = __commonJS({
       }
       return extensionType ? extensionType.fromJson(optionVal) : optionVal;
     }
+    __name(readMessageOption, "readMessageOption");
     exports2.readMessageOption = readMessageOption;
   }
 });
@@ -23992,10 +24756,12 @@ var require_oneof = __commonJS({
           return false;
       }
     }
+    __name(isOneofGroup, "isOneofGroup");
     exports2.isOneofGroup = isOneofGroup;
     function getOneofValue(oneof, kind) {
       return oneof[kind];
     }
+    __name(getOneofValue, "getOneofValue");
     exports2.getOneofValue = getOneofValue;
     function setOneofValue(oneof, kind, value) {
       if (oneof.oneofKind !== void 0) {
@@ -24006,6 +24772,7 @@ var require_oneof = __commonJS({
         oneof[kind] = value;
       }
     }
+    __name(setOneofValue, "setOneofValue");
     exports2.setOneofValue = setOneofValue;
     function setUnknownOneofValue(oneof, kind, value) {
       if (oneof.oneofKind !== void 0) {
@@ -24016,6 +24783,7 @@ var require_oneof = __commonJS({
         oneof[kind] = value;
       }
     }
+    __name(setUnknownOneofValue, "setUnknownOneofValue");
     exports2.setUnknownOneofValue = setUnknownOneofValue;
     function clearOneofValue(oneof) {
       if (oneof.oneofKind !== void 0) {
@@ -24023,6 +24791,7 @@ var require_oneof = __commonJS({
       }
       oneof.oneofKind = void 0;
     }
+    __name(clearOneofValue, "clearOneofValue");
     exports2.clearOneofValue = clearOneofValue;
     function getSelectedOneofValue(oneof) {
       if (oneof.oneofKind === void 0) {
@@ -24030,6 +24799,7 @@ var require_oneof = __commonJS({
       }
       return oneof[oneof.oneofKind];
     }
+    __name(getSelectedOneofValue, "getSelectedOneofValue");
     exports2.getSelectedOneofValue = getSelectedOneofValue;
   }
 });
@@ -24043,6 +24813,9 @@ var require_reflection_type_check = __commonJS({
     var reflection_info_1 = require_reflection_info();
     var oneof_1 = require_oneof();
     var ReflectionTypeCheck = class {
+      static {
+        __name(this, "ReflectionTypeCheck");
+      }
       constructor(info3) {
         var _a2;
         this.fields = (_a2 = info3.fields) !== null && _a2 !== void 0 ? _a2 : [];
@@ -24274,6 +25047,7 @@ var require_reflection_long_convert = __commonJS({
           return long.toString();
       }
     }
+    __name(reflectionLongConvert, "reflectionLongConvert");
     exports2.reflectionLongConvert = reflectionLongConvert;
   }
 });
@@ -24291,6 +25065,9 @@ var require_reflection_json_reader = __commonJS({
     var assert_1 = require_assert();
     var reflection_long_convert_1 = require_reflection_long_convert();
     var ReflectionJsonReader = class {
+      static {
+        __name(this, "ReflectionJsonReader");
+      }
       constructor(info3) {
         this.info = info3;
       }
@@ -24588,6 +25365,9 @@ var require_reflection_json_writer = __commonJS({
     var reflection_info_1 = require_reflection_info();
     var assert_1 = require_assert();
     var ReflectionJsonWriter = class {
+      static {
+        __name(this, "ReflectionJsonWriter");
+      }
       constructor(info3) {
         var _a2;
         this.fields = (_a2 = info3.fields) !== null && _a2 !== void 0 ? _a2 : [];
@@ -24828,6 +25608,7 @@ var require_reflection_scalar_default = __commonJS({
           return 0;
       }
     }
+    __name(reflectionScalarDefault, "reflectionScalarDefault");
     exports2.reflectionScalarDefault = reflectionScalarDefault;
   }
 });
@@ -24843,6 +25624,9 @@ var require_reflection_binary_reader = __commonJS({
     var reflection_long_convert_1 = require_reflection_long_convert();
     var reflection_scalar_default_1 = require_reflection_scalar_default();
     var ReflectionBinaryReader = class {
+      static {
+        __name(this, "ReflectionBinaryReader");
+      }
       constructor(info3) {
         this.info = info3;
       }
@@ -25017,6 +25801,9 @@ var require_reflection_binary_writer = __commonJS({
     var assert_1 = require_assert();
     var pb_long_1 = require_pb_long();
     var ReflectionBinaryWriter = class {
+      static {
+        __name(this, "ReflectionBinaryWriter");
+      }
       constructor(info3) {
         this.info = info3;
       }
@@ -25258,6 +26045,7 @@ var require_reflection_create = __commonJS({
       }
       return msg;
     }
+    __name(reflectionCreate, "reflectionCreate");
     exports2.reflectionCreate = reflectionCreate;
   }
 });
@@ -25328,6 +26116,7 @@ var require_reflection_merge_partial = __commonJS({
         }
       }
     }
+    __name(reflectionMergePartial4, "reflectionMergePartial");
     exports2.reflectionMergePartial = reflectionMergePartial4;
   }
 });
@@ -25368,6 +26157,7 @@ var require_reflection_equals = __commonJS({
       }
       return true;
     }
+    __name(reflectionEquals, "reflectionEquals");
     exports2.reflectionEquals = reflectionEquals;
     var objectValues = Object.values;
     function primitiveEq(type, a, b) {
@@ -25384,6 +26174,7 @@ var require_reflection_equals = __commonJS({
           return false;
       return true;
     }
+    __name(primitiveEq, "primitiveEq");
     function repeatedPrimitiveEq(type, a, b) {
       if (a.length !== b.length)
         return false;
@@ -25392,6 +26183,7 @@ var require_reflection_equals = __commonJS({
           return false;
       return true;
     }
+    __name(repeatedPrimitiveEq, "repeatedPrimitiveEq");
     function repeatedMsgEq(type, a, b) {
       if (a.length !== b.length)
         return false;
@@ -25400,6 +26192,7 @@ var require_reflection_equals = __commonJS({
           return false;
       return true;
     }
+    __name(repeatedMsgEq, "repeatedMsgEq");
   }
 });
 
@@ -25426,6 +26219,9 @@ var require_message_type = __commonJS({
     var baseDescriptors = Object.getOwnPropertyDescriptors(Object.getPrototypeOf({}));
     var messageTypeDescriptor = baseDescriptors[message_type_contract_1.MESSAGE_TYPE] = {};
     var MessageType4 = class {
+      static {
+        __name(this, "MessageType");
+      }
       constructor(name, fields, options) {
         this.defaultCheckDepth = 16;
         this.typeName = name;
@@ -25592,6 +26388,7 @@ var require_reflection_contains_message_type = __commonJS({
     function containsMessageType(msg) {
       return msg[message_type_contract_1.MESSAGE_TYPE] != null;
     }
+    __name(containsMessageType, "containsMessageType");
     exports2.containsMessageType = containsMessageType;
   }
 });
@@ -25629,6 +26426,7 @@ var require_enum_object = __commonJS({
       }
       return true;
     }
+    __name(isEnumObject, "isEnumObject");
     exports2.isEnumObject = isEnumObject;
     function listEnumValues(enumObject) {
       if (!isEnumObject(enumObject))
@@ -25639,14 +26437,17 @@ var require_enum_object = __commonJS({
           values.push({ name, number });
       return values;
     }
+    __name(listEnumValues, "listEnumValues");
     exports2.listEnumValues = listEnumValues;
     function listEnumNames(enumObject) {
       return listEnumValues(enumObject).map((val) => val.name);
     }
+    __name(listEnumNames, "listEnumNames");
     exports2.listEnumNames = listEnumNames;
     function listEnumNumbers(enumObject) {
       return listEnumValues(enumObject).map((val) => val.number).filter((num, index, arr) => arr.indexOf(num) == index);
     }
+    __name(listEnumNumbers, "listEnumNumbers");
     exports2.listEnumNumbers = listEnumNumbers;
   }
 });
@@ -25657,183 +26458,183 @@ var require_commonjs = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     var json_typings_1 = require_json_typings();
-    Object.defineProperty(exports2, "typeofJsonValue", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "typeofJsonValue", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return json_typings_1.typeofJsonValue;
-    } });
-    Object.defineProperty(exports2, "isJsonObject", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "isJsonObject", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return json_typings_1.isJsonObject;
-    } });
+    }, "get") });
     var base64_1 = require_base64();
-    Object.defineProperty(exports2, "base64decode", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "base64decode", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return base64_1.base64decode;
-    } });
-    Object.defineProperty(exports2, "base64encode", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "base64encode", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return base64_1.base64encode;
-    } });
+    }, "get") });
     var protobufjs_utf8_1 = require_protobufjs_utf8();
-    Object.defineProperty(exports2, "utf8read", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "utf8read", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return protobufjs_utf8_1.utf8read;
-    } });
+    }, "get") });
     var binary_format_contract_1 = require_binary_format_contract();
-    Object.defineProperty(exports2, "WireType", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "WireType", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return binary_format_contract_1.WireType;
-    } });
-    Object.defineProperty(exports2, "mergeBinaryOptions", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "mergeBinaryOptions", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return binary_format_contract_1.mergeBinaryOptions;
-    } });
-    Object.defineProperty(exports2, "UnknownFieldHandler", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "UnknownFieldHandler", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return binary_format_contract_1.UnknownFieldHandler;
-    } });
+    }, "get") });
     var binary_reader_1 = require_binary_reader();
-    Object.defineProperty(exports2, "BinaryReader", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "BinaryReader", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return binary_reader_1.BinaryReader;
-    } });
-    Object.defineProperty(exports2, "binaryReadOptions", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "binaryReadOptions", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return binary_reader_1.binaryReadOptions;
-    } });
+    }, "get") });
     var binary_writer_1 = require_binary_writer();
-    Object.defineProperty(exports2, "BinaryWriter", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "BinaryWriter", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return binary_writer_1.BinaryWriter;
-    } });
-    Object.defineProperty(exports2, "binaryWriteOptions", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "binaryWriteOptions", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return binary_writer_1.binaryWriteOptions;
-    } });
+    }, "get") });
     var pb_long_1 = require_pb_long();
-    Object.defineProperty(exports2, "PbLong", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "PbLong", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return pb_long_1.PbLong;
-    } });
-    Object.defineProperty(exports2, "PbULong", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "PbULong", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return pb_long_1.PbULong;
-    } });
+    }, "get") });
     var json_format_contract_1 = require_json_format_contract();
-    Object.defineProperty(exports2, "jsonReadOptions", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "jsonReadOptions", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return json_format_contract_1.jsonReadOptions;
-    } });
-    Object.defineProperty(exports2, "jsonWriteOptions", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "jsonWriteOptions", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return json_format_contract_1.jsonWriteOptions;
-    } });
-    Object.defineProperty(exports2, "mergeJsonOptions", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "mergeJsonOptions", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return json_format_contract_1.mergeJsonOptions;
-    } });
+    }, "get") });
     var message_type_contract_1 = require_message_type_contract();
-    Object.defineProperty(exports2, "MESSAGE_TYPE", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "MESSAGE_TYPE", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return message_type_contract_1.MESSAGE_TYPE;
-    } });
+    }, "get") });
     var message_type_1 = require_message_type();
-    Object.defineProperty(exports2, "MessageType", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "MessageType", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return message_type_1.MessageType;
-    } });
+    }, "get") });
     var reflection_info_1 = require_reflection_info();
-    Object.defineProperty(exports2, "ScalarType", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "ScalarType", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return reflection_info_1.ScalarType;
-    } });
-    Object.defineProperty(exports2, "LongType", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "LongType", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return reflection_info_1.LongType;
-    } });
-    Object.defineProperty(exports2, "RepeatType", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "RepeatType", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return reflection_info_1.RepeatType;
-    } });
-    Object.defineProperty(exports2, "normalizeFieldInfo", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "normalizeFieldInfo", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return reflection_info_1.normalizeFieldInfo;
-    } });
-    Object.defineProperty(exports2, "readFieldOptions", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "readFieldOptions", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return reflection_info_1.readFieldOptions;
-    } });
-    Object.defineProperty(exports2, "readFieldOption", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "readFieldOption", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return reflection_info_1.readFieldOption;
-    } });
-    Object.defineProperty(exports2, "readMessageOption", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "readMessageOption", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return reflection_info_1.readMessageOption;
-    } });
+    }, "get") });
     var reflection_type_check_1 = require_reflection_type_check();
-    Object.defineProperty(exports2, "ReflectionTypeCheck", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "ReflectionTypeCheck", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return reflection_type_check_1.ReflectionTypeCheck;
-    } });
+    }, "get") });
     var reflection_create_1 = require_reflection_create();
-    Object.defineProperty(exports2, "reflectionCreate", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "reflectionCreate", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return reflection_create_1.reflectionCreate;
-    } });
+    }, "get") });
     var reflection_scalar_default_1 = require_reflection_scalar_default();
-    Object.defineProperty(exports2, "reflectionScalarDefault", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "reflectionScalarDefault", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return reflection_scalar_default_1.reflectionScalarDefault;
-    } });
+    }, "get") });
     var reflection_merge_partial_1 = require_reflection_merge_partial();
-    Object.defineProperty(exports2, "reflectionMergePartial", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "reflectionMergePartial", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return reflection_merge_partial_1.reflectionMergePartial;
-    } });
+    }, "get") });
     var reflection_equals_1 = require_reflection_equals();
-    Object.defineProperty(exports2, "reflectionEquals", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "reflectionEquals", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return reflection_equals_1.reflectionEquals;
-    } });
+    }, "get") });
     var reflection_binary_reader_1 = require_reflection_binary_reader();
-    Object.defineProperty(exports2, "ReflectionBinaryReader", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "ReflectionBinaryReader", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return reflection_binary_reader_1.ReflectionBinaryReader;
-    } });
+    }, "get") });
     var reflection_binary_writer_1 = require_reflection_binary_writer();
-    Object.defineProperty(exports2, "ReflectionBinaryWriter", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "ReflectionBinaryWriter", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return reflection_binary_writer_1.ReflectionBinaryWriter;
-    } });
+    }, "get") });
     var reflection_json_reader_1 = require_reflection_json_reader();
-    Object.defineProperty(exports2, "ReflectionJsonReader", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "ReflectionJsonReader", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return reflection_json_reader_1.ReflectionJsonReader;
-    } });
+    }, "get") });
     var reflection_json_writer_1 = require_reflection_json_writer();
-    Object.defineProperty(exports2, "ReflectionJsonWriter", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "ReflectionJsonWriter", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return reflection_json_writer_1.ReflectionJsonWriter;
-    } });
+    }, "get") });
     var reflection_contains_message_type_1 = require_reflection_contains_message_type();
-    Object.defineProperty(exports2, "containsMessageType", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "containsMessageType", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return reflection_contains_message_type_1.containsMessageType;
-    } });
+    }, "get") });
     var oneof_1 = require_oneof();
-    Object.defineProperty(exports2, "isOneofGroup", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "isOneofGroup", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return oneof_1.isOneofGroup;
-    } });
-    Object.defineProperty(exports2, "setOneofValue", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "setOneofValue", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return oneof_1.setOneofValue;
-    } });
-    Object.defineProperty(exports2, "getOneofValue", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "getOneofValue", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return oneof_1.getOneofValue;
-    } });
-    Object.defineProperty(exports2, "clearOneofValue", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "clearOneofValue", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return oneof_1.clearOneofValue;
-    } });
-    Object.defineProperty(exports2, "getSelectedOneofValue", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "getSelectedOneofValue", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return oneof_1.getSelectedOneofValue;
-    } });
+    }, "get") });
     var enum_object_1 = require_enum_object();
-    Object.defineProperty(exports2, "listEnumValues", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "listEnumValues", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return enum_object_1.listEnumValues;
-    } });
-    Object.defineProperty(exports2, "listEnumNames", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "listEnumNames", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return enum_object_1.listEnumNames;
-    } });
-    Object.defineProperty(exports2, "listEnumNumbers", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "listEnumNumbers", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return enum_object_1.listEnumNumbers;
-    } });
-    Object.defineProperty(exports2, "isEnumObject", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "isEnumObject", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return enum_object_1.isEnumObject;
-    } });
+    }, "get") });
     var lower_camel_case_1 = require_lower_camel_case();
-    Object.defineProperty(exports2, "lowerCamelCase", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "lowerCamelCase", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return lower_camel_case_1.lowerCamelCase;
-    } });
+    }, "get") });
     var assert_1 = require_assert();
-    Object.defineProperty(exports2, "assert", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "assert", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return assert_1.assert;
-    } });
-    Object.defineProperty(exports2, "assertNever", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "assertNever", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return assert_1.assertNever;
-    } });
-    Object.defineProperty(exports2, "assertInt32", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "assertInt32", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return assert_1.assertInt32;
-    } });
-    Object.defineProperty(exports2, "assertUInt32", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "assertUInt32", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return assert_1.assertUInt32;
-    } });
-    Object.defineProperty(exports2, "assertFloat32", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "assertFloat32", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return assert_1.assertFloat32;
-    } });
+    }, "get") });
   }
 });
 
@@ -25855,12 +26656,14 @@ var require_reflection_info2 = __commonJS({
       m.idempotency = (_c = m.idempotency) !== null && _c !== void 0 ? _c : void 0;
       return m;
     }
+    __name(normalizeMethodInfo, "normalizeMethodInfo");
     exports2.normalizeMethodInfo = normalizeMethodInfo;
     function readMethodOptions(service, methodName, extensionName, extensionType) {
       var _a2;
       const options = (_a2 = service.methods.find((m, i) => m.localName === methodName || i === methodName)) === null || _a2 === void 0 ? void 0 : _a2.options;
       return options && options[extensionName] ? extensionType.fromJson(options[extensionName]) : void 0;
     }
+    __name(readMethodOptions, "readMethodOptions");
     exports2.readMethodOptions = readMethodOptions;
     function readMethodOption(service, methodName, extensionName, extensionType) {
       var _a2;
@@ -25874,6 +26677,7 @@ var require_reflection_info2 = __commonJS({
       }
       return extensionType ? extensionType.fromJson(optionVal) : optionVal;
     }
+    __name(readMethodOption, "readMethodOption");
     exports2.readMethodOption = readMethodOption;
     function readServiceOption(service, extensionName, extensionType) {
       const options = service.options;
@@ -25886,6 +26690,7 @@ var require_reflection_info2 = __commonJS({
       }
       return extensionType ? extensionType.fromJson(optionVal) : optionVal;
     }
+    __name(readServiceOption, "readServiceOption");
     exports2.readServiceOption = readServiceOption;
   }
 });
@@ -25898,6 +26703,9 @@ var require_service_type = __commonJS({
     exports2.ServiceType = void 0;
     var reflection_info_1 = require_reflection_info2();
     var ServiceType2 = class {
+      static {
+        __name(this, "ServiceType");
+      }
       constructor(typeName, methods, options) {
         this.typeName = typeName;
         this.methods = methods.map((i) => reflection_info_1.normalizeMethodInfo(i, this));
@@ -25915,6 +26723,9 @@ var require_rpc_error = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.RpcError = void 0;
     var RpcError = class extends Error {
+      static {
+        __name(this, "RpcError");
+      }
       constructor(message, code = "UNKNOWN", meta) {
         super(message);
         this.name = "RpcError";
@@ -25980,6 +26791,7 @@ var require_rpc_options = __commonJS({
       }
       return o;
     }
+    __name(mergeRpcOptions, "mergeRpcOptions");
     exports2.mergeRpcOptions = mergeRpcOptions;
     function copy(a, into) {
       if (!a)
@@ -25994,6 +26806,7 @@ var require_rpc_options = __commonJS({
           c[k] = v;
       }
     }
+    __name(copy, "copy");
   }
 });
 
@@ -26010,6 +26823,9 @@ var require_deferred = __commonJS({
       DeferredState2[DeferredState2["RESOLVED"] = 2] = "RESOLVED";
     })(DeferredState = exports2.DeferredState || (exports2.DeferredState = {}));
     var Deferred = class {
+      static {
+        __name(this, "Deferred");
+      }
       /**
        * @param preventUnhandledRejectionWarning - prevents the warning
        * "Unhandled Promise rejection" by adding a noop rejection handler.
@@ -26091,6 +26907,9 @@ var require_rpc_output_stream = __commonJS({
     var deferred_1 = require_deferred();
     var runtime_1 = require_commonjs();
     var RpcOutputStreamController = class {
+      static {
+        __name(this, "RpcOutputStreamController");
+      }
       constructor() {
         this._lis = {
           nxt: [],
@@ -26204,7 +27023,7 @@ var require_rpc_output_stream = __commonJS({
         else if (this._closed !== false)
           this.pushIt(this._closed);
         return {
-          next: () => {
+          next: /* @__PURE__ */ __name(() => {
             let state3 = this._itState;
             runtime_1.assert(state3, "bad state");
             runtime_1.assert(!state3.p, "iterator contract broken");
@@ -26213,7 +27032,7 @@ var require_rpc_output_stream = __commonJS({
               return "value" in first ? Promise.resolve(first) : Promise.reject(first);
             state3.p = new deferred_1.Deferred();
             return state3.p.promise;
-          }
+          }, "next")
         };
       }
       // "push" a new iterator result.
@@ -26244,6 +27063,7 @@ var require_unary_call = __commonJS({
           resolve2(value);
         });
       }
+      __name(adopt, "adopt");
       return new (P || (P = Promise))(function(resolve2, reject) {
         function fulfilled(value) {
           try {
@@ -26252,6 +27072,7 @@ var require_unary_call = __commonJS({
             reject(e);
           }
         }
+        __name(fulfilled, "fulfilled");
         function rejected(value) {
           try {
             step(generator["throw"](value));
@@ -26259,15 +27080,20 @@ var require_unary_call = __commonJS({
             reject(e);
           }
         }
+        __name(rejected, "rejected");
         function step(result) {
           result.done ? resolve2(result.value) : adopt(result.value).then(fulfilled, rejected);
         }
+        __name(step, "step");
         step((generator = generator.apply(thisArg, _arguments || [])).next());
       });
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.UnaryCall = void 0;
     var UnaryCall = class {
+      static {
+        __name(this, "UnaryCall");
+      }
       constructor(method, requestHeaders, request, headers, response, status, trailers) {
         this.method = method;
         this.requestHeaders = requestHeaders;
@@ -26313,6 +27139,7 @@ var require_server_streaming_call = __commonJS({
           resolve2(value);
         });
       }
+      __name(adopt, "adopt");
       return new (P || (P = Promise))(function(resolve2, reject) {
         function fulfilled(value) {
           try {
@@ -26321,6 +27148,7 @@ var require_server_streaming_call = __commonJS({
             reject(e);
           }
         }
+        __name(fulfilled, "fulfilled");
         function rejected(value) {
           try {
             step(generator["throw"](value));
@@ -26328,15 +27156,20 @@ var require_server_streaming_call = __commonJS({
             reject(e);
           }
         }
+        __name(rejected, "rejected");
         function step(result) {
           result.done ? resolve2(result.value) : adopt(result.value).then(fulfilled, rejected);
         }
+        __name(step, "step");
         step((generator = generator.apply(thisArg, _arguments || [])).next());
       });
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.ServerStreamingCall = void 0;
     var ServerStreamingCall = class {
+      static {
+        __name(this, "ServerStreamingCall");
+      }
       constructor(method, requestHeaders, request, headers, response, status, trailers) {
         this.method = method;
         this.requestHeaders = requestHeaders;
@@ -26383,6 +27216,7 @@ var require_client_streaming_call = __commonJS({
           resolve2(value);
         });
       }
+      __name(adopt, "adopt");
       return new (P || (P = Promise))(function(resolve2, reject) {
         function fulfilled(value) {
           try {
@@ -26391,6 +27225,7 @@ var require_client_streaming_call = __commonJS({
             reject(e);
           }
         }
+        __name(fulfilled, "fulfilled");
         function rejected(value) {
           try {
             step(generator["throw"](value));
@@ -26398,15 +27233,20 @@ var require_client_streaming_call = __commonJS({
             reject(e);
           }
         }
+        __name(rejected, "rejected");
         function step(result) {
           result.done ? resolve2(result.value) : adopt(result.value).then(fulfilled, rejected);
         }
+        __name(step, "step");
         step((generator = generator.apply(thisArg, _arguments || [])).next());
       });
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.ClientStreamingCall = void 0;
     var ClientStreamingCall = class {
+      static {
+        __name(this, "ClientStreamingCall");
+      }
       constructor(method, requestHeaders, request, headers, response, status, trailers) {
         this.method = method;
         this.requestHeaders = requestHeaders;
@@ -26452,6 +27292,7 @@ var require_duplex_streaming_call = __commonJS({
           resolve2(value);
         });
       }
+      __name(adopt, "adopt");
       return new (P || (P = Promise))(function(resolve2, reject) {
         function fulfilled(value) {
           try {
@@ -26460,6 +27301,7 @@ var require_duplex_streaming_call = __commonJS({
             reject(e);
           }
         }
+        __name(fulfilled, "fulfilled");
         function rejected(value) {
           try {
             step(generator["throw"](value));
@@ -26467,15 +27309,20 @@ var require_duplex_streaming_call = __commonJS({
             reject(e);
           }
         }
+        __name(rejected, "rejected");
         function step(result) {
           result.done ? resolve2(result.value) : adopt(result.value).then(fulfilled, rejected);
         }
+        __name(step, "step");
         step((generator = generator.apply(thisArg, _arguments || [])).next());
       });
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.DuplexStreamingCall = void 0;
     var DuplexStreamingCall = class {
+      static {
+        __name(this, "DuplexStreamingCall");
+      }
       constructor(method, requestHeaders, request, headers, response, status, trailers) {
         this.method = method;
         this.requestHeaders = requestHeaders;
@@ -26520,6 +27367,7 @@ var require_test_transport = __commonJS({
           resolve2(value);
         });
       }
+      __name(adopt, "adopt");
       return new (P || (P = Promise))(function(resolve2, reject) {
         function fulfilled(value) {
           try {
@@ -26528,6 +27376,7 @@ var require_test_transport = __commonJS({
             reject(e);
           }
         }
+        __name(fulfilled, "fulfilled");
         function rejected(value) {
           try {
             step(generator["throw"](value));
@@ -26535,9 +27384,11 @@ var require_test_transport = __commonJS({
             reject(e);
           }
         }
+        __name(rejected, "rejected");
         function step(result) {
           result.done ? resolve2(result.value) : adopt(result.value).then(fulfilled, rejected);
         }
+        __name(step, "step");
         step((generator = generator.apply(thisArg, _arguments || [])).next());
       });
     };
@@ -26552,6 +27403,9 @@ var require_test_transport = __commonJS({
     var client_streaming_call_1 = require_client_streaming_call();
     var duplex_streaming_call_1 = require_duplex_streaming_call();
     var TestTransport = class _TestTransport {
+      static {
+        __name(this, "TestTransport");
+      }
       /**
        * Initialize with mock data. Omitted fields have default value.
        */
@@ -26747,7 +27601,11 @@ var require_test_transport = __commonJS({
         }
       });
     }
+    __name(delay4, "delay");
     var TestInputStream = class {
+      static {
+        __name(this, "TestInputStream");
+      }
       constructor(data, abort) {
         this._completed = false;
         this._sent = [];
@@ -26792,55 +27650,60 @@ var require_rpc_interceptor = __commonJS({
     function stackIntercept(kind, transport, method, options, input) {
       var _a2, _b, _c, _d;
       if (kind == "unary") {
-        let tail = (mtd, inp, opt) => transport.unary(mtd, inp, opt);
+        let tail = /* @__PURE__ */ __name((mtd, inp, opt) => transport.unary(mtd, inp, opt), "tail");
         for (const curr of ((_a2 = options.interceptors) !== null && _a2 !== void 0 ? _a2 : []).filter((i) => i.interceptUnary).reverse()) {
           const next = tail;
-          tail = (mtd, inp, opt) => curr.interceptUnary(next, mtd, inp, opt);
+          tail = /* @__PURE__ */ __name((mtd, inp, opt) => curr.interceptUnary(next, mtd, inp, opt), "tail");
         }
         return tail(method, input, options);
       }
       if (kind == "serverStreaming") {
-        let tail = (mtd, inp, opt) => transport.serverStreaming(mtd, inp, opt);
+        let tail = /* @__PURE__ */ __name((mtd, inp, opt) => transport.serverStreaming(mtd, inp, opt), "tail");
         for (const curr of ((_b = options.interceptors) !== null && _b !== void 0 ? _b : []).filter((i) => i.interceptServerStreaming).reverse()) {
           const next = tail;
-          tail = (mtd, inp, opt) => curr.interceptServerStreaming(next, mtd, inp, opt);
+          tail = /* @__PURE__ */ __name((mtd, inp, opt) => curr.interceptServerStreaming(next, mtd, inp, opt), "tail");
         }
         return tail(method, input, options);
       }
       if (kind == "clientStreaming") {
-        let tail = (mtd, opt) => transport.clientStreaming(mtd, opt);
+        let tail = /* @__PURE__ */ __name((mtd, opt) => transport.clientStreaming(mtd, opt), "tail");
         for (const curr of ((_c = options.interceptors) !== null && _c !== void 0 ? _c : []).filter((i) => i.interceptClientStreaming).reverse()) {
           const next = tail;
-          tail = (mtd, opt) => curr.interceptClientStreaming(next, mtd, opt);
+          tail = /* @__PURE__ */ __name((mtd, opt) => curr.interceptClientStreaming(next, mtd, opt), "tail");
         }
         return tail(method, options);
       }
       if (kind == "duplex") {
-        let tail = (mtd, opt) => transport.duplex(mtd, opt);
+        let tail = /* @__PURE__ */ __name((mtd, opt) => transport.duplex(mtd, opt), "tail");
         for (const curr of ((_d = options.interceptors) !== null && _d !== void 0 ? _d : []).filter((i) => i.interceptDuplex).reverse()) {
           const next = tail;
-          tail = (mtd, opt) => curr.interceptDuplex(next, mtd, opt);
+          tail = /* @__PURE__ */ __name((mtd, opt) => curr.interceptDuplex(next, mtd, opt), "tail");
         }
         return tail(method, options);
       }
       runtime_1.assertNever(kind);
     }
+    __name(stackIntercept, "stackIntercept");
     exports2.stackIntercept = stackIntercept;
     function stackUnaryInterceptors(transport, method, input, options) {
       return stackIntercept("unary", transport, method, options, input);
     }
+    __name(stackUnaryInterceptors, "stackUnaryInterceptors");
     exports2.stackUnaryInterceptors = stackUnaryInterceptors;
     function stackServerStreamingInterceptors(transport, method, input, options) {
       return stackIntercept("serverStreaming", transport, method, options, input);
     }
+    __name(stackServerStreamingInterceptors, "stackServerStreamingInterceptors");
     exports2.stackServerStreamingInterceptors = stackServerStreamingInterceptors;
     function stackClientStreamingInterceptors(transport, method, options) {
       return stackIntercept("clientStreaming", transport, method, options);
     }
+    __name(stackClientStreamingInterceptors, "stackClientStreamingInterceptors");
     exports2.stackClientStreamingInterceptors = stackClientStreamingInterceptors;
     function stackDuplexStreamingInterceptors(transport, method, options) {
       return stackIntercept("duplex", transport, method, options);
     }
+    __name(stackDuplexStreamingInterceptors, "stackDuplexStreamingInterceptors");
     exports2.stackDuplexStreamingInterceptors = stackDuplexStreamingInterceptors;
   }
 });
@@ -26852,6 +27715,9 @@ var require_server_call_context = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.ServerCallContextController = void 0;
     var ServerCallContextController = class {
+      static {
+        __name(this, "ServerCallContextController");
+      }
       constructor(method, headers, deadline, sendResponseHeadersFn, defaultStatus = { code: "OK", detail: "" }) {
         this._cancelled = false;
         this._listeners = [];
@@ -26917,78 +27783,78 @@ var require_commonjs2 = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     var service_type_1 = require_service_type();
-    Object.defineProperty(exports2, "ServiceType", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "ServiceType", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return service_type_1.ServiceType;
-    } });
+    }, "get") });
     var reflection_info_1 = require_reflection_info2();
-    Object.defineProperty(exports2, "readMethodOptions", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "readMethodOptions", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return reflection_info_1.readMethodOptions;
-    } });
-    Object.defineProperty(exports2, "readMethodOption", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "readMethodOption", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return reflection_info_1.readMethodOption;
-    } });
-    Object.defineProperty(exports2, "readServiceOption", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "readServiceOption", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return reflection_info_1.readServiceOption;
-    } });
+    }, "get") });
     var rpc_error_1 = require_rpc_error();
-    Object.defineProperty(exports2, "RpcError", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "RpcError", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return rpc_error_1.RpcError;
-    } });
+    }, "get") });
     var rpc_options_1 = require_rpc_options();
-    Object.defineProperty(exports2, "mergeRpcOptions", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "mergeRpcOptions", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return rpc_options_1.mergeRpcOptions;
-    } });
+    }, "get") });
     var rpc_output_stream_1 = require_rpc_output_stream();
-    Object.defineProperty(exports2, "RpcOutputStreamController", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "RpcOutputStreamController", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return rpc_output_stream_1.RpcOutputStreamController;
-    } });
+    }, "get") });
     var test_transport_1 = require_test_transport();
-    Object.defineProperty(exports2, "TestTransport", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "TestTransport", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return test_transport_1.TestTransport;
-    } });
+    }, "get") });
     var deferred_1 = require_deferred();
-    Object.defineProperty(exports2, "Deferred", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "Deferred", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return deferred_1.Deferred;
-    } });
-    Object.defineProperty(exports2, "DeferredState", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "DeferredState", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return deferred_1.DeferredState;
-    } });
+    }, "get") });
     var duplex_streaming_call_1 = require_duplex_streaming_call();
-    Object.defineProperty(exports2, "DuplexStreamingCall", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "DuplexStreamingCall", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return duplex_streaming_call_1.DuplexStreamingCall;
-    } });
+    }, "get") });
     var client_streaming_call_1 = require_client_streaming_call();
-    Object.defineProperty(exports2, "ClientStreamingCall", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "ClientStreamingCall", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return client_streaming_call_1.ClientStreamingCall;
-    } });
+    }, "get") });
     var server_streaming_call_1 = require_server_streaming_call();
-    Object.defineProperty(exports2, "ServerStreamingCall", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "ServerStreamingCall", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return server_streaming_call_1.ServerStreamingCall;
-    } });
+    }, "get") });
     var unary_call_1 = require_unary_call();
-    Object.defineProperty(exports2, "UnaryCall", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "UnaryCall", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return unary_call_1.UnaryCall;
-    } });
+    }, "get") });
     var rpc_interceptor_1 = require_rpc_interceptor();
-    Object.defineProperty(exports2, "stackIntercept", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "stackIntercept", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return rpc_interceptor_1.stackIntercept;
-    } });
-    Object.defineProperty(exports2, "stackDuplexStreamingInterceptors", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "stackDuplexStreamingInterceptors", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return rpc_interceptor_1.stackDuplexStreamingInterceptors;
-    } });
-    Object.defineProperty(exports2, "stackClientStreamingInterceptors", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "stackClientStreamingInterceptors", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return rpc_interceptor_1.stackClientStreamingInterceptors;
-    } });
-    Object.defineProperty(exports2, "stackServerStreamingInterceptors", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "stackServerStreamingInterceptors", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return rpc_interceptor_1.stackServerStreamingInterceptors;
-    } });
-    Object.defineProperty(exports2, "stackUnaryInterceptors", { enumerable: true, get: function() {
+    }, "get") });
+    Object.defineProperty(exports2, "stackUnaryInterceptors", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return rpc_interceptor_1.stackUnaryInterceptors;
-    } });
+    }, "get") });
     var server_call_context_1 = require_server_call_context();
-    Object.defineProperty(exports2, "ServerCallContextController", { enumerable: true, get: function() {
+    Object.defineProperty(exports2, "ServerCallContextController", { enumerable: true, get: /* @__PURE__ */ __name(function() {
       return server_call_context_1.ServerCallContextController;
-    } });
+    }, "get") });
   }
 });
 
@@ -27012,6 +27878,7 @@ function toCommandValue(input) {
   }
   return JSON.stringify(input);
 }
+__name(toCommandValue, "toCommandValue");
 function toCommandProperties(annotationProperties) {
   if (!Object.keys(annotationProperties).length) {
     return {};
@@ -27025,14 +27892,19 @@ function toCommandProperties(annotationProperties) {
     endColumn: annotationProperties.endColumn
   };
 }
+__name(toCommandProperties, "toCommandProperties");
 
 // node_modules/@actions/core/lib/command.js
 function issueCommand(command, properties, message) {
   const cmd = new Command(command, properties, message);
   process.stdout.write(cmd.toString() + os.EOL);
 }
+__name(issueCommand, "issueCommand");
 var CMD_STRING = "::";
 var Command = class {
+  static {
+    __name(this, "Command");
+  }
   constructor(command, properties, message) {
     if (!command) {
       command = "missing.command";
@@ -27067,9 +27939,11 @@ var Command = class {
 function escapeData(s) {
   return toCommandValue(s).replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
 }
+__name(escapeData, "escapeData");
 function escapeProperty(s) {
   return toCommandValue(s).replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A").replace(/:/g, "%3A").replace(/,/g, "%2C");
 }
+__name(escapeProperty, "escapeProperty");
 
 // node_modules/@actions/core/lib/core.js
 var os4 = __toESM(require("os"), 1);
@@ -27102,6 +27976,7 @@ function getProxyUrl(reqUrl) {
     return void 0;
   }
 }
+__name(getProxyUrl, "getProxyUrl");
 function checkBypass(reqUrl) {
   if (!reqUrl.hostname) {
     return false;
@@ -27133,11 +28008,16 @@ function checkBypass(reqUrl) {
   }
   return false;
 }
+__name(checkBypass, "checkBypass");
 function isLoopbackAddress(host) {
   const hostLower = host.toLowerCase();
   return hostLower === "localhost" || hostLower.startsWith("127.") || hostLower.startsWith("[::1]") || hostLower.startsWith("[0:0:0:0:0:0:0:1]");
 }
+__name(isLoopbackAddress, "isLoopbackAddress");
 var DecodedURL = class extends URL {
+  static {
+    __name(this, "DecodedURL");
+  }
   constructor(url2, base) {
     super(url2, base);
     this._decodedUsername = decodeURIComponent(super.username);
@@ -27160,6 +28040,7 @@ var __awaiter = function(thisArg, _arguments, P, generator) {
       resolve2(value);
     });
   }
+  __name(adopt, "adopt");
   return new (P || (P = Promise))(function(resolve2, reject) {
     function fulfilled(value) {
       try {
@@ -27168,6 +28049,7 @@ var __awaiter = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(fulfilled, "fulfilled");
     function rejected(value) {
       try {
         step(generator["throw"](value));
@@ -27175,9 +28057,11 @@ var __awaiter = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(rejected, "rejected");
     function step(result) {
       result.done ? resolve2(result.value) : adopt(result.value).then(fulfilled, rejected);
     }
+    __name(step, "step");
     step((generator = generator.apply(thisArg, _arguments || [])).next());
   });
 };
@@ -27236,6 +28120,9 @@ var RetryableHttpVerbs = ["OPTIONS", "GET", "DELETE", "HEAD"];
 var ExponentialBackoffCeiling = 10;
 var ExponentialBackoffTimeSlice = 5;
 var HttpClientError = class _HttpClientError extends Error {
+  static {
+    __name(this, "HttpClientError");
+  }
   constructor(message, statusCode) {
     super(message);
     this.name = "HttpClientError";
@@ -27244,6 +28131,9 @@ var HttpClientError = class _HttpClientError extends Error {
   }
 };
 var HttpClientResponse = class {
+  static {
+    __name(this, "HttpClientResponse");
+  }
   constructor(message) {
     this.message = message;
   }
@@ -27275,6 +28165,9 @@ var HttpClientResponse = class {
   }
 };
 var HttpClient = class {
+  static {
+    __name(this, "HttpClient");
+  }
   constructor(userAgent, handlers, requestOptions) {
     this._ignoreSslError = false;
     this._allowRedirects = true;
@@ -27481,6 +28374,7 @@ var HttpClient = class {
             resolve2(res);
           }
         }
+        __name(callbackForResult, "callbackForResult");
         this.requestRawWithCallback(info3, data, callbackForResult);
       });
     });
@@ -27505,6 +28399,7 @@ var HttpClient = class {
         onResult(err, res);
       }
     }
+    __name(handleResult, "handleResult");
     const req = info3.httpModule.request(info3.options, (msg) => {
       const res = new HttpClientResponse(msg);
       handleResult(void 0, res);
@@ -27746,6 +28641,7 @@ var HttpClient = class {
           }
           return value;
         }
+        __name(dateTimeDeserializer, "dateTimeDeserializer");
         let obj;
         let contents;
         try {
@@ -27780,7 +28676,7 @@ var HttpClient = class {
     });
   }
 };
-var lowercaseKeys = (obj) => Object.keys(obj).reduce((c, k) => (c[k.toLowerCase()] = obj[k], c), {});
+var lowercaseKeys = /* @__PURE__ */ __name((obj) => Object.keys(obj).reduce((c, k) => (c[k.toLowerCase()] = obj[k], c), {}), "lowercaseKeys");
 
 // node_modules/@actions/http-client/lib/auth.js
 var __awaiter2 = function(thisArg, _arguments, P, generator) {
@@ -27789,6 +28685,7 @@ var __awaiter2 = function(thisArg, _arguments, P, generator) {
       resolve2(value);
     });
   }
+  __name(adopt, "adopt");
   return new (P || (P = Promise))(function(resolve2, reject) {
     function fulfilled(value) {
       try {
@@ -27797,6 +28694,7 @@ var __awaiter2 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(fulfilled, "fulfilled");
     function rejected(value) {
       try {
         step(generator["throw"](value));
@@ -27804,13 +28702,18 @@ var __awaiter2 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(rejected, "rejected");
     function step(result) {
       result.done ? resolve2(result.value) : adopt(result.value).then(fulfilled, rejected);
     }
+    __name(step, "step");
     step((generator = generator.apply(thisArg, _arguments || [])).next());
   });
 };
 var BearerCredentialHandler = class {
+  static {
+    __name(this, "BearerCredentialHandler");
+  }
   constructor(token) {
     this.token = token;
   }
@@ -27842,6 +28745,7 @@ var __awaiter3 = function(thisArg, _arguments, P, generator) {
       resolve2(value);
     });
   }
+  __name(adopt, "adopt");
   return new (P || (P = Promise))(function(resolve2, reject) {
     function fulfilled(value) {
       try {
@@ -27850,6 +28754,7 @@ var __awaiter3 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(fulfilled, "fulfilled");
     function rejected(value) {
       try {
         step(generator["throw"](value));
@@ -27857,15 +28762,20 @@ var __awaiter3 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(rejected, "rejected");
     function step(result) {
       result.done ? resolve2(result.value) : adopt(result.value).then(fulfilled, rejected);
     }
+    __name(step, "step");
     step((generator = generator.apply(thisArg, _arguments || [])).next());
   });
 };
 var { access, appendFile, writeFile } = import_fs.promises;
 var SUMMARY_ENV_VAR = "GITHUB_STEP_SUMMARY";
 var Summary = class {
+  static {
+    __name(this, "Summary");
+  }
   constructor() {
     this._buffer = "";
   }
@@ -28139,6 +29049,7 @@ var __awaiter4 = function(thisArg, _arguments, P, generator) {
       resolve2(value);
     });
   }
+  __name(adopt, "adopt");
   return new (P || (P = Promise))(function(resolve2, reject) {
     function fulfilled(value) {
       try {
@@ -28147,6 +29058,7 @@ var __awaiter4 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(fulfilled, "fulfilled");
     function rejected(value) {
       try {
         step(generator["throw"](value));
@@ -28154,9 +29066,11 @@ var __awaiter4 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(rejected, "rejected");
     function step(result) {
       result.done ? resolve2(result.value) : adopt(result.value).then(fulfilled, rejected);
     }
+    __name(step, "step");
     step((generator = generator.apply(thisArg, _arguments || [])).next());
   });
 };
@@ -28176,6 +29090,7 @@ function exists(fsPath) {
     return true;
   });
 }
+__name(exists, "exists");
 function isRooted(p) {
   p = normalizeSeparators(p);
   if (!p) {
@@ -28186,6 +29101,7 @@ function isRooted(p) {
   }
   return p.startsWith("/");
 }
+__name(isRooted, "isRooted");
 function tryGetExecutablePath(filePath, extensions) {
   return __awaiter4(this, void 0, void 0, function* () {
     let stats = void 0;
@@ -28244,6 +29160,7 @@ function tryGetExecutablePath(filePath, extensions) {
     return "";
   });
 }
+__name(tryGetExecutablePath, "tryGetExecutablePath");
 function normalizeSeparators(p) {
   p = p || "";
   if (IS_WINDOWS) {
@@ -28252,9 +29169,11 @@ function normalizeSeparators(p) {
   }
   return p.replace(/\/\/+/g, "/");
 }
+__name(normalizeSeparators, "normalizeSeparators");
 function isUnixExecutable(stats) {
   return (stats.mode & 1) > 0 || (stats.mode & 8) > 0 && process.getgid !== void 0 && stats.gid === process.getgid() || (stats.mode & 64) > 0 && process.getuid !== void 0 && stats.uid === process.getuid();
 }
+__name(isUnixExecutable, "isUnixExecutable");
 
 // node_modules/@actions/io/lib/io.js
 var __awaiter5 = function(thisArg, _arguments, P, generator) {
@@ -28263,6 +29182,7 @@ var __awaiter5 = function(thisArg, _arguments, P, generator) {
       resolve2(value);
     });
   }
+  __name(adopt, "adopt");
   return new (P || (P = Promise))(function(resolve2, reject) {
     function fulfilled(value) {
       try {
@@ -28271,6 +29191,7 @@ var __awaiter5 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(fulfilled, "fulfilled");
     function rejected(value) {
       try {
         step(generator["throw"](value));
@@ -28278,9 +29199,11 @@ var __awaiter5 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(rejected, "rejected");
     function step(result) {
       result.done ? resolve2(result.value) : adopt(result.value).then(fulfilled, rejected);
     }
+    __name(step, "step");
     step((generator = generator.apply(thisArg, _arguments || [])).next());
   });
 };
@@ -28290,6 +29213,7 @@ function mkdirP(fsPath) {
     yield mkdir(fsPath, { recursive: true });
   });
 }
+__name(mkdirP, "mkdirP");
 function which(tool, check) {
   return __awaiter5(this, void 0, void 0, function* () {
     if (!tool) {
@@ -28313,6 +29237,7 @@ function which(tool, check) {
     return "";
   });
 }
+__name(which, "which");
 function findInPath(tool) {
   return __awaiter5(this, void 0, void 0, function* () {
     if (!tool) {
@@ -28354,6 +29279,7 @@ function findInPath(tool) {
     return matches;
   });
 }
+__name(findInPath, "findInPath");
 
 // node_modules/@actions/exec/lib/toolrunner.js
 var import_timers = require("timers");
@@ -28363,6 +29289,7 @@ var __awaiter6 = function(thisArg, _arguments, P, generator) {
       resolve2(value);
     });
   }
+  __name(adopt, "adopt");
   return new (P || (P = Promise))(function(resolve2, reject) {
     function fulfilled(value) {
       try {
@@ -28371,6 +29298,7 @@ var __awaiter6 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(fulfilled, "fulfilled");
     function rejected(value) {
       try {
         step(generator["throw"](value));
@@ -28378,14 +29306,19 @@ var __awaiter6 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(rejected, "rejected");
     function step(result) {
       result.done ? resolve2(result.value) : adopt(result.value).then(fulfilled, rejected);
     }
+    __name(step, "step");
     step((generator = generator.apply(thisArg, _arguments || [])).next());
   });
 };
 var IS_WINDOWS2 = process.platform === "win32";
 var ToolRunner = class extends events.EventEmitter {
+  static {
+    __name(this, "ToolRunner");
+  }
   constructor(toolPath, args, options) {
     super();
     if (!toolPath) {
@@ -28706,6 +29639,7 @@ function argStringToArray(argString) {
     arg += c;
     escaped = false;
   }
+  __name(append, "append");
   for (let i = 0; i < argString.length; i++) {
     const c = argString.charAt(i);
     if (c === '"') {
@@ -28738,7 +29672,11 @@ function argStringToArray(argString) {
   }
   return args;
 }
+__name(argStringToArray, "argStringToArray");
 var ExecState = class _ExecState extends events.EventEmitter {
+  static {
+    __name(this, "ExecState");
+  }
   constructor(options, toolPath) {
     super();
     this.processClosed = false;
@@ -28808,6 +29746,7 @@ var __awaiter7 = function(thisArg, _arguments, P, generator) {
       resolve2(value);
     });
   }
+  __name(adopt, "adopt");
   return new (P || (P = Promise))(function(resolve2, reject) {
     function fulfilled(value) {
       try {
@@ -28816,6 +29755,7 @@ var __awaiter7 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(fulfilled, "fulfilled");
     function rejected(value) {
       try {
         step(generator["throw"](value));
@@ -28823,9 +29763,11 @@ var __awaiter7 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(rejected, "rejected");
     function step(result) {
       result.done ? resolve2(result.value) : adopt(result.value).then(fulfilled, rejected);
     }
+    __name(step, "step");
     step((generator = generator.apply(thisArg, _arguments || [])).next());
   });
 };
@@ -28841,6 +29783,7 @@ function exec(commandLine, args, options) {
     return runner.exec();
   });
 }
+__name(exec, "exec");
 
 // node_modules/@actions/core/lib/platform.js
 var platform = import_os2.default.platform();
@@ -28855,6 +29798,7 @@ var ExitCode;
 function setSecret(secret) {
   issueCommand("add-mask", {}, secret);
 }
+__name(setSecret, "setSecret");
 function getInput(name, options) {
   const val = process.env[`INPUT_${name.replace(/ /g, "_").toUpperCase()}`] || "";
   if (options && options.required && !val) {
@@ -28865,6 +29809,7 @@ function getInput(name, options) {
   }
   return val.trim();
 }
+__name(getInput, "getInput");
 function getBooleanInput(name, options) {
   const trueValue = ["true", "True", "TRUE"];
   const falseValue = ["false", "False", "FALSE"];
@@ -28876,28 +29821,36 @@ function getBooleanInput(name, options) {
   throw new TypeError(`Input does not meet YAML 1.2 "Core Schema" specification: ${name}
 Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
 }
+__name(getBooleanInput, "getBooleanInput");
 function setFailed(message) {
   process.exitCode = ExitCode.Failure;
   error(message);
 }
+__name(setFailed, "setFailed");
 function isDebug() {
   return process.env["RUNNER_DEBUG"] === "1";
 }
+__name(isDebug, "isDebug");
 function debug(message) {
   issueCommand("debug", {}, message);
 }
+__name(debug, "debug");
 function error(message, properties = {}) {
   issueCommand("error", toCommandProperties(properties), message instanceof Error ? message.toString() : message);
 }
+__name(error, "error");
 function warning(message, properties = {}) {
   issueCommand("warning", toCommandProperties(properties), message instanceof Error ? message.toString() : message);
 }
+__name(warning, "warning");
 function info(message) {
   process.stdout.write(message + os4.EOL);
 }
+__name(info, "info");
 function getState(name) {
   return process.env[`STATE_${name}`] || "";
 }
+__name(getState, "getState");
 
 // node_modules/@actions/cache/lib/cache.js
 var path10 = __toESM(require("path"), 1);
@@ -28938,6 +29891,7 @@ function getOptions(copy) {
   }
   return result;
 }
+__name(getOptions, "getOptions");
 
 // node_modules/@actions/cache/node_modules/@actions/glob/lib/internal-globber.js
 var path7 = __toESM(require("path"), 1);
@@ -28957,6 +29911,7 @@ function dirname4(p) {
   }
   return result;
 }
+__name(dirname4, "dirname");
 function ensureAbsoluteRoot(root, itemPath) {
   (0, import_assert2.default)(root, `ensureAbsoluteRoot parameter 'root' must not be empty`);
   (0, import_assert2.default)(itemPath, `ensureAbsoluteRoot parameter 'itemPath' must not be empty`);
@@ -28992,6 +29947,7 @@ function ensureAbsoluteRoot(root, itemPath) {
   }
   return root + itemPath;
 }
+__name(ensureAbsoluteRoot, "ensureAbsoluteRoot");
 function hasAbsoluteRoot(itemPath) {
   (0, import_assert2.default)(itemPath, `hasAbsoluteRoot parameter 'itemPath' must not be empty`);
   itemPath = normalizeSeparators2(itemPath);
@@ -29000,6 +29956,7 @@ function hasAbsoluteRoot(itemPath) {
   }
   return itemPath.startsWith("/");
 }
+__name(hasAbsoluteRoot, "hasAbsoluteRoot");
 function hasRoot(itemPath) {
   (0, import_assert2.default)(itemPath, `isRooted parameter 'itemPath' must not be empty`);
   itemPath = normalizeSeparators2(itemPath);
@@ -29008,6 +29965,7 @@ function hasRoot(itemPath) {
   }
   return itemPath.startsWith("/");
 }
+__name(hasRoot, "hasRoot");
 function normalizeSeparators2(p) {
   p = p || "";
   if (IS_WINDOWS3) {
@@ -29017,6 +29975,7 @@ function normalizeSeparators2(p) {
   }
   return p.replace(/\/\/+/g, "/");
 }
+__name(normalizeSeparators2, "normalizeSeparators");
 function safeTrimTrailingSeparator(p) {
   if (!p) {
     return "";
@@ -29033,6 +29992,7 @@ function safeTrimTrailingSeparator(p) {
   }
   return p.substr(0, p.length - 1);
 }
+__name(safeTrimTrailingSeparator, "safeTrimTrailingSeparator");
 
 // node_modules/@actions/cache/node_modules/@actions/glob/lib/internal-match-kind.js
 var MatchKind;
@@ -29076,6 +30036,7 @@ function getSearchPaths(patterns) {
   }
   return result;
 }
+__name(getSearchPaths, "getSearchPaths");
 function match(patterns, itemPath) {
   let result = MatchKind.None;
   for (const pattern of patterns) {
@@ -29087,9 +30048,11 @@ function match(patterns, itemPath) {
   }
   return result;
 }
+__name(match, "match");
 function partialMatch(patterns, itemPath) {
   return patterns.some((x) => !x.negate && x.partialMatch(itemPath));
 }
+__name(partialMatch, "partialMatch");
 
 // node_modules/@actions/cache/node_modules/@actions/glob/lib/internal-pattern.js
 var os5 = __toESM(require("os"), 1);
@@ -29102,6 +30065,9 @@ var path5 = __toESM(require("path"), 1);
 var import_assert3 = __toESM(require("assert"), 1);
 var IS_WINDOWS5 = process.platform === "win32";
 var Path = class {
+  static {
+    __name(this, "Path");
+  }
   /**
    * Constructs a Path
    * @param itemPath Path or array of segments
@@ -29163,6 +30129,9 @@ var Path = class {
 var { Minimatch } = import_minimatch.default;
 var IS_WINDOWS6 = process.platform === "win32";
 var Pattern = class _Pattern {
+  static {
+    __name(this, "Pattern");
+  }
   constructor(patternOrNegate, isImplicitPattern = false, segments, homedir2) {
     this.negate = false;
     let pattern;
@@ -29322,6 +30291,9 @@ var Pattern = class _Pattern {
 
 // node_modules/@actions/cache/node_modules/@actions/glob/lib/internal-search-state.js
 var SearchState = class {
+  static {
+    __name(this, "SearchState");
+  }
   constructor(path13, level) {
     this.path = path13;
     this.level = level;
@@ -29335,6 +30307,7 @@ var __awaiter8 = function(thisArg, _arguments, P, generator) {
       resolve2(value);
     });
   }
+  __name(adopt, "adopt");
   return new (P || (P = Promise))(function(resolve2, reject) {
     function fulfilled(value) {
       try {
@@ -29343,6 +30316,7 @@ var __awaiter8 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(fulfilled, "fulfilled");
     function rejected(value) {
       try {
         step(generator["throw"](value));
@@ -29350,9 +30324,11 @@ var __awaiter8 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(rejected, "rejected");
     function step(result) {
       result.done ? resolve2(result.value) : adopt(result.value).then(fulfilled, rejected);
     }
+    __name(step, "step");
     step((generator = generator.apply(thisArg, _arguments || [])).next());
   });
 };
@@ -29369,11 +30345,13 @@ var __asyncValues = function(o) {
       });
     };
   }
+  __name(verb, "verb");
   function settle(resolve2, reject, d, v) {
     Promise.resolve(v).then(function(v2) {
       resolve2({ value: v2, done: d });
     }, reject);
   }
+  __name(settle, "settle");
 };
 var __await = function(v) {
   return this instanceof __await ? (this.v = v, this) : new __await(v);
@@ -29389,6 +30367,7 @@ var __asyncGenerator = function(thisArg, _arguments, generator) {
       return Promise.resolve(v).then(f, reject);
     };
   }
+  __name(awaitReturn, "awaitReturn");
   function verb(n, f) {
     if (g[n]) {
       i[n] = function(v) {
@@ -29399,6 +30378,7 @@ var __asyncGenerator = function(thisArg, _arguments, generator) {
       if (f) i[n] = f(i[n]);
     }
   }
+  __name(verb, "verb");
   function resume(n, v) {
     try {
       step(g[n](v));
@@ -29406,21 +30386,29 @@ var __asyncGenerator = function(thisArg, _arguments, generator) {
       settle(q[0][3], e);
     }
   }
+  __name(resume, "resume");
   function step(r) {
     r.value instanceof __await ? Promise.resolve(r.value.v).then(fulfill, reject) : settle(q[0][2], r);
   }
+  __name(step, "step");
   function fulfill(value) {
     resume("next", value);
   }
+  __name(fulfill, "fulfill");
   function reject(value) {
     resume("throw", value);
   }
+  __name(reject, "reject");
   function settle(f, v) {
     if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]);
   }
+  __name(settle, "settle");
 };
 var IS_WINDOWS7 = process.platform === "win32";
 var DefaultGlobber = class _DefaultGlobber {
+  static {
+    __name(this, "DefaultGlobber");
+  }
   constructor(options) {
     this.patterns = [];
     this.searchPaths = [];
@@ -29453,7 +30441,7 @@ var DefaultGlobber = class _DefaultGlobber {
     });
   }
   globGenerator() {
-    return __asyncGenerator(this, arguments, function* globGenerator_1() {
+    return __asyncGenerator(this, arguments, /* @__PURE__ */ __name(function* globGenerator_1() {
       const options = getOptions(this.options);
       const patterns = [];
       for (const pattern of this.patterns) {
@@ -29506,7 +30494,7 @@ var DefaultGlobber = class _DefaultGlobber {
           yield yield __await(item.path);
         }
       }
-    });
+    }, "globGenerator_1"));
   }
   /**
    * Constructs a DefaultGlobber
@@ -29572,6 +30560,7 @@ var __awaiter9 = function(thisArg, _arguments, P, generator) {
       resolve2(value);
     });
   }
+  __name(adopt, "adopt");
   return new (P || (P = Promise))(function(resolve2, reject) {
     function fulfilled(value) {
       try {
@@ -29580,6 +30569,7 @@ var __awaiter9 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(fulfilled, "fulfilled");
     function rejected(value) {
       try {
         step(generator["throw"](value));
@@ -29587,9 +30577,11 @@ var __awaiter9 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(rejected, "rejected");
     function step(result) {
       result.done ? resolve2(result.value) : adopt(result.value).then(fulfilled, rejected);
     }
+    __name(step, "step");
     step((generator = generator.apply(thisArg, _arguments || [])).next());
   });
 };
@@ -29598,6 +30590,7 @@ function create(patterns, options) {
     return yield DefaultGlobber.create(patterns, options);
   });
 }
+__name(create, "create");
 
 // node_modules/@actions/cache/lib/internal/cacheUtils.js
 var crypto2 = __toESM(require("crypto"), 1);
@@ -29638,6 +30631,7 @@ var __awaiter10 = function(thisArg, _arguments, P, generator) {
       resolve2(value);
     });
   }
+  __name(adopt, "adopt");
   return new (P || (P = Promise))(function(resolve2, reject) {
     function fulfilled(value) {
       try {
@@ -29646,6 +30640,7 @@ var __awaiter10 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(fulfilled, "fulfilled");
     function rejected(value) {
       try {
         step(generator["throw"](value));
@@ -29653,9 +30648,11 @@ var __awaiter10 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(rejected, "rejected");
     function step(result) {
       result.done ? resolve2(result.value) : adopt(result.value).then(fulfilled, rejected);
     }
+    __name(step, "step");
     step((generator = generator.apply(thisArg, _arguments || [])).next());
   });
 };
@@ -29672,11 +30669,13 @@ var __asyncValues2 = function(o) {
       });
     };
   }
+  __name(verb, "verb");
   function settle(resolve2, reject, d, v) {
     Promise.resolve(v).then(function(v2) {
       resolve2({ value: v2, done: d });
     }, reject);
   }
+  __name(settle, "settle");
 };
 var versionSalt = "1.0";
 function createTempDirectory() {
@@ -29701,9 +30700,11 @@ function createTempDirectory() {
     return dest;
   });
 }
+__name(createTempDirectory, "createTempDirectory");
 function getArchiveFileSizeInBytes(filePath) {
   return fs3.statSync(filePath).size;
 }
+__name(getArchiveFileSizeInBytes, "getArchiveFileSizeInBytes");
 function resolvePaths(patterns) {
   return __awaiter10(this, void 0, void 0, function* () {
     var _a2, e_1, _b, _c;
@@ -29738,11 +30739,13 @@ function resolvePaths(patterns) {
     return paths;
   });
 }
+__name(resolvePaths, "resolvePaths");
 function unlinkFile(filePath) {
   return __awaiter10(this, void 0, void 0, function* () {
     return util.promisify(fs3.unlink)(filePath);
   });
 }
+__name(unlinkFile, "unlinkFile");
 function getVersion(app_1) {
   return __awaiter10(this, arguments, void 0, function* (app, additionalArgs = []) {
     let versionOutput = "";
@@ -29753,8 +30756,8 @@ function getVersion(app_1) {
         ignoreReturnCode: true,
         silent: true,
         listeners: {
-          stdout: (data) => versionOutput += data.toString(),
-          stderr: (data) => versionOutput += data.toString()
+          stdout: /* @__PURE__ */ __name((data) => versionOutput += data.toString(), "stdout"),
+          stderr: /* @__PURE__ */ __name((data) => versionOutput += data.toString(), "stderr")
         }
       });
     } catch (err) {
@@ -29765,6 +30768,7 @@ function getVersion(app_1) {
     return versionOutput;
   });
 }
+__name(getVersion, "getVersion");
 function getCompressionMethod() {
   return __awaiter10(this, void 0, void 0, function* () {
     const versionOutput = yield getVersion("zstd", ["--quiet"]);
@@ -29777,9 +30781,11 @@ function getCompressionMethod() {
     }
   });
 }
+__name(getCompressionMethod, "getCompressionMethod");
 function getCacheFileName(compressionMethod) {
   return compressionMethod === CompressionMethod.Gzip ? CacheFilename.Gzip : CacheFilename.Zstd;
 }
+__name(getCacheFileName, "getCacheFileName");
 function getGnuTarPathOnWindows() {
   return __awaiter10(this, void 0, void 0, function* () {
     if (fs3.existsSync(GnuTarPathOnWindows)) {
@@ -29789,12 +30795,14 @@ function getGnuTarPathOnWindows() {
     return versionOutput.toLowerCase().includes("gnu tar") ? which("tar") : "";
   });
 }
+__name(getGnuTarPathOnWindows, "getGnuTarPathOnWindows");
 function assertDefined(name, value) {
   if (value === void 0) {
     throw Error(`Expected ${name} but value was undefiend`);
   }
   return value;
 }
+__name(assertDefined, "assertDefined");
 function getCacheVersion(paths, compressionMethod, enableCrossOsArchive = false) {
   const components = paths.slice();
   if (compressionMethod) {
@@ -29806,6 +30814,7 @@ function getCacheVersion(paths, compressionMethod, enableCrossOsArchive = false)
   components.push(versionSalt);
   return crypto2.createHash("sha256").update(components.join("|")).digest("hex");
 }
+__name(getCacheVersion, "getCacheVersion");
 function getRuntimeToken() {
   const token = process.env["ACTIONS_RUNTIME_TOKEN"];
   if (!token) {
@@ -29813,12 +30822,16 @@ function getRuntimeToken() {
   }
   return token;
 }
+__name(getRuntimeToken, "getRuntimeToken");
 
 // node_modules/@actions/cache/lib/internal/cacheHttpClient.js
 var fs5 = __toESM(require("fs"), 1);
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/abort-controller/AbortError.js
 var AbortError = class extends Error {
+  static {
+    __name(this, "AbortError");
+  }
   constructor(message) {
     super(message);
     this.name = "AbortError";
@@ -29832,6 +30845,7 @@ var import_node_process = __toESM(require("node:process"), 1);
 function log(message, ...args) {
   import_node_process.default.stderr.write(`${import_node_util.default.format(message, ...args)}${import_node_os.EOL}`);
 }
+__name(log, "log");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/logger/debug.js
 var debugEnvVariable = typeof process !== "undefined" && process.env && process.env.DEBUG || void 0;
@@ -29866,6 +30880,7 @@ function enable(namespaces) {
     instance.enabled = enabled(instance.namespace);
   }
 }
+__name(enable, "enable");
 function enabled(namespace) {
   if (namespace.endsWith("*")) {
     return true;
@@ -29882,6 +30897,7 @@ function enabled(namespace) {
   }
   return false;
 }
+__name(enabled, "enabled");
 function namespaceMatches(namespace, patternToMatch) {
   if (patternToMatch.indexOf("*") === -1) {
     return namespace === patternToMatch;
@@ -29951,11 +30967,13 @@ function namespaceMatches(namespace, patternToMatch) {
   const trailingWildCard = patternIndex === pattern.length - 1 && pattern[patternIndex] === "*";
   return namespaceDone && (patternDone || trailingWildCard);
 }
+__name(namespaceMatches, "namespaceMatches");
 function disable() {
   const result = enabledString || "";
   enable("");
   return result;
 }
+__name(disable, "disable");
 function createDebugger(namespace) {
   const newDebugger = Object.assign(debug3, {
     enabled: enabled(namespace),
@@ -29973,9 +30991,11 @@ function createDebugger(namespace) {
     }
     newDebugger.log(...args);
   }
+  __name(debug3, "debug");
   debuggers.push(newDebugger);
   return newDebugger;
 }
+__name(createDebugger, "createDebugger");
 function destroy() {
   const index = debuggers.indexOf(this);
   if (index >= 0) {
@@ -29984,11 +31004,13 @@ function destroy() {
   }
   return false;
 }
+__name(destroy, "destroy");
 function extend(namespace) {
   const newDebugger = createDebugger(`${this.namespace}:${namespace}`);
   newDebugger.log = this.log;
   return newDebugger;
 }
+__name(extend, "extend");
 var debug_default = debugObj;
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/logger/logger.js
@@ -30004,9 +31026,11 @@ function patchLogMethod(parent, child2) {
     parent.log(...args);
   };
 }
+__name(patchLogMethod, "patchLogMethod");
 function isTypeSpecRuntimeLogLevel(level) {
   return TYPESPEC_RUNTIME_LOG_LEVELS.includes(level);
 }
+__name(isTypeSpecRuntimeLogLevel, "isTypeSpecRuntimeLogLevel");
 function createLoggerContext(options) {
   const registeredLoggers = /* @__PURE__ */ new Set();
   const logLevelFromEnv = typeof process !== "undefined" && process.env && process.env[options.logLevelEnvVarName] || void 0;
@@ -30028,6 +31052,7 @@ function createLoggerContext(options) {
     }
     debug_default.enable(enabledNamespaces2.join(","));
   }
+  __name(contextSetLogLevel, "contextSetLogLevel");
   if (logLevelFromEnv) {
     if (isTypeSpecRuntimeLogLevel(logLevelFromEnv)) {
       contextSetLogLevel(logLevelFromEnv);
@@ -30038,6 +31063,7 @@ function createLoggerContext(options) {
   function shouldEnable(logger7) {
     return Boolean(logLevel && levelMap[logger7.level] <= levelMap[logLevel]);
   }
+  __name(shouldEnable, "shouldEnable");
   function createLogger(parent, level) {
     const logger7 = Object.assign(parent.extend(level), {
       level
@@ -30050,9 +31076,11 @@ function createLoggerContext(options) {
     registeredLoggers.add(logger7);
     return logger7;
   }
+  __name(createLogger, "createLogger");
   function contextGetLogLevel() {
     return logLevel;
   }
+  __name(contextGetLogLevel, "contextGetLogLevel");
   function contextCreateClientLogger(namespace) {
     const clientRootLogger = clientLogger.extend(namespace);
     patchLogMethod(clientLogger, clientRootLogger);
@@ -30063,6 +31091,7 @@ function createLoggerContext(options) {
       verbose: createLogger(clientRootLogger, "verbose")
     };
   }
+  __name(contextCreateClientLogger, "contextCreateClientLogger");
   return {
     setLogLevel: contextSetLogLevel,
     getLogLevel: contextGetLogLevel,
@@ -30070,6 +31099,7 @@ function createLoggerContext(options) {
     logger: clientLogger
   };
 }
+__name(createLoggerContext, "createLoggerContext");
 var context = createLoggerContext({
   logLevelEnvVarName: "TYPESPEC_RUNTIME_LOG_LEVEL",
   namespace: "typeSpecRuntime"
@@ -30078,17 +31108,23 @@ var TypeSpecRuntimeLogger = context.logger;
 function createClientLogger(namespace) {
   return context.createClientLogger(namespace);
 }
+__name(createClientLogger, "createClientLogger");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/httpHeaders.js
 function normalizeName(name) {
   return name.toLowerCase();
 }
+__name(normalizeName, "normalizeName");
 function* headerIterator(map) {
   for (const entry of map.values()) {
     yield [entry.name, entry.value];
   }
 }
+__name(headerIterator, "headerIterator");
 var HttpHeadersImpl = class {
+  static {
+    __name(this, "HttpHeadersImpl");
+  }
   _headersMap;
   constructor(rawHeaders) {
     this._headersMap = /* @__PURE__ */ new Map();
@@ -30161,14 +31197,19 @@ var HttpHeadersImpl = class {
 function createHttpHeaders(rawHeaders) {
   return new HttpHeadersImpl(rawHeaders);
 }
+__name(createHttpHeaders, "createHttpHeaders");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/util/uuidUtils.js
 function randomUUID2() {
   return crypto.randomUUID();
 }
+__name(randomUUID2, "randomUUID");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/pipelineRequest.js
 var PipelineRequestImpl = class {
+  static {
+    __name(this, "PipelineRequestImpl");
+  }
   url;
   method;
   headers;
@@ -30213,10 +31254,14 @@ var PipelineRequestImpl = class {
 function createPipelineRequest(options) {
   return new PipelineRequestImpl(options);
 }
+__name(createPipelineRequest, "createPipelineRequest");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/pipeline.js
 var ValidPhaseNames = /* @__PURE__ */ new Set(["Deserialize", "Serialize", "Retry", "Sign"]);
 var HttpPipeline = class _HttpPipeline {
+  static {
+    __name(this, "HttpPipeline");
+  }
   _policies = [];
   _orderedPolicies;
   constructor(policies) {
@@ -30284,6 +31329,7 @@ var HttpPipeline = class _HttpPipeline {
         hasAfterPolicies: false
       };
     }
+    __name(createPhase, "createPhase");
     const serializePhase = createPhase("Serialize");
     const noPhase = createPhase("None");
     const deserializePhase = createPhase("Deserialize");
@@ -30303,6 +31349,7 @@ var HttpPipeline = class _HttpPipeline {
         return noPhase;
       }
     }
+    __name(getPhase, "getPhase");
     for (const descriptor of this._policies) {
       const policy = descriptor.policy;
       const options = descriptor.options;
@@ -30365,6 +31412,7 @@ var HttpPipeline = class _HttpPipeline {
         }
       }
     }
+    __name(walkPhase, "walkPhase");
     function walkPhases() {
       for (const phase of orderedPhases) {
         walkPhase(phase);
@@ -30379,6 +31427,7 @@ var HttpPipeline = class _HttpPipeline {
         }
       }
     }
+    __name(walkPhases, "walkPhases");
     let iteration = 0;
     while (policyMap.size > 0) {
       iteration++;
@@ -30394,11 +31443,13 @@ var HttpPipeline = class _HttpPipeline {
 function createEmptyPipeline() {
   return HttpPipeline.create();
 }
+__name(createEmptyPipeline, "createEmptyPipeline");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/util/object.js
 function isObject(input) {
   return typeof input === "object" && input !== null && !Array.isArray(input) && !(input instanceof RegExp) && !(input instanceof Date);
 }
+__name(isObject, "isObject");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/util/error.js
 function isError(e) {
@@ -30409,6 +31460,7 @@ function isError(e) {
   }
   return false;
 }
+__name(isError, "isError");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/util/inspect.js
 var import_node_util2 = require("node:util");
@@ -30459,6 +31511,9 @@ var defaultAllowedHeaderNames = [
 ];
 var defaultAllowedQueryParameters = ["api-version"];
 var Sanitizer = class {
+  static {
+    __name(this, "Sanitizer");
+  }
   allowedHeaderNames;
   allowedQueryParameters;
   constructor({ additionalAllowedHeaderNames: allowedHeaderNames = [], additionalAllowedQueryParameters: allowedQueryParameters = [] } = {}) {
@@ -30553,6 +31608,9 @@ var Sanitizer = class {
 // node_modules/@typespec/ts-http-runtime/dist/esm/restError.js
 var errorSanitizer = new Sanitizer();
 var RestError = class _RestError extends Error {
+  static {
+    __name(this, "RestError");
+  }
   /**
    * Something went wrong when making the request.
    * This means the actual request failed for some reason,
@@ -30598,14 +31656,14 @@ var RestError = class _RestError extends Error {
       maxSockets: this.request.agent.maxSockets
     } : void 0;
     Object.defineProperty(this, custom, {
-      value: () => {
+      value: /* @__PURE__ */ __name(() => {
         return `RestError: ${this.message} 
  ${errorSanitizer.sanitize({
           ...this,
           request: { ...this.request, agent },
           response: this.response
         })}`;
-      },
+      }, "value"),
       enumerable: false
     });
     Object.setPrototypeOf(this, _RestError.prototype);
@@ -30617,11 +31675,13 @@ function isRestError(e) {
   }
   return isError(e) && e.name === "RestError";
 }
+__name(isRestError, "isRestError");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/util/bytesEncoding.js
 function stringToUint8Array(value, format) {
   return Buffer.from(value, format);
 }
+__name(stringToUint8Array, "stringToUint8Array");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/nodeHttpClient.js
 var import_node_http = __toESM(require("node:http"), 1);
@@ -30637,26 +31697,32 @@ var DEFAULT_TLS_SETTINGS = {};
 function isReadableStream(body2) {
   return body2 && typeof body2.pipe === "function";
 }
+__name(isReadableStream, "isReadableStream");
 function isStreamComplete(stream) {
   if (stream.readable === false) {
     return Promise.resolve();
   }
   return new Promise((resolve2) => {
-    const handler = () => {
+    const handler = /* @__PURE__ */ __name(() => {
       resolve2();
       stream.removeListener("close", handler);
       stream.removeListener("end", handler);
       stream.removeListener("error", handler);
-    };
+    }, "handler");
     stream.on("close", handler);
     stream.on("end", handler);
     stream.on("error", handler);
   });
 }
+__name(isStreamComplete, "isStreamComplete");
 function isArrayBuffer(body2) {
   return body2 && typeof body2.byteLength === "number";
 }
+__name(isArrayBuffer, "isArrayBuffer");
 var ReportTransform = class extends import_node_stream.Transform {
+  static {
+    __name(this, "ReportTransform");
+  }
   loadedBytes = 0;
   progressCallback;
   // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
@@ -30676,6 +31742,9 @@ var ReportTransform = class extends import_node_stream.Transform {
   }
 };
 var NodeHttpClient = class {
+  static {
+    __name(this, "NodeHttpClient");
+  }
   cachedHttpAgent;
   cachedHttpsAgents = /* @__PURE__ */ new WeakMap();
   /**
@@ -30689,11 +31758,11 @@ var NodeHttpClient = class {
       if (request.abortSignal.aborted) {
         throw new AbortError("The operation was aborted. Request has already been canceled.");
       }
-      abortListener = (event) => {
+      abortListener = /* @__PURE__ */ __name((event) => {
         if (event.type === "abort") {
           abortController.abort();
         }
-      };
+      }, "abortListener");
       request.abortSignal.addEventListener("abort", abortListener);
     }
     let timeoutId;
@@ -30869,6 +31938,7 @@ function getResponseHeaders(res) {
   }
   return headers;
 }
+__name(getResponseHeaders, "getResponseHeaders");
 function getDecodedResponseStream(stream, headers) {
   const contentEncoding = headers.get("Content-Encoding");
   if (contentEncoding === "gzip") {
@@ -30882,6 +31952,7 @@ function getDecodedResponseStream(stream, headers) {
   }
   return stream;
 }
+__name(getDecodedResponseStream, "getDecodedResponseStream");
 function streamToText(stream) {
   return new Promise((resolve2, reject) => {
     const buffer2 = [];
@@ -30906,6 +31977,7 @@ function streamToText(stream) {
     });
   });
 }
+__name(streamToText, "streamToText");
 function getBodyLength(body2) {
   if (!body2) {
     return 0;
@@ -30921,14 +31993,17 @@ function getBodyLength(body2) {
     return null;
   }
 }
+__name(getBodyLength, "getBodyLength");
 function createNodeHttpClient() {
   return new NodeHttpClient();
 }
+__name(createNodeHttpClient, "createNodeHttpClient");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/defaultHttpClient.js
 function createDefaultHttpClient() {
   return createNodeHttpClient();
 }
+__name(createDefaultHttpClient, "createDefaultHttpClient");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/policies/logPolicy.js
 var logPolicyName = "logPolicy";
@@ -30952,6 +32027,7 @@ function logPolicy(options = {}) {
     }
   };
 }
+__name(logPolicy, "logPolicy");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/policies/redirectPolicy.js
 var redirectPolicyName = "redirectPolicy";
@@ -30966,6 +32042,7 @@ function redirectPolicy(options = {}) {
     }
   };
 }
+__name(redirectPolicy, "redirectPolicy");
 async function handleRedirect(next, response, maxRetries, allowCrossOriginRedirects, currentRetries = 0) {
   const { request, status, headers } = response;
   const locationHeader = headers.get("location");
@@ -30990,11 +32067,13 @@ async function handleRedirect(next, response, maxRetries, allowCrossOriginRedire
   }
   return response;
 }
+__name(handleRedirect, "handleRedirect");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/util/userAgentPlatform.js
 function getHeaderName() {
   return "User-Agent";
 }
+__name(getHeaderName, "getHeaderName");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/constants.js
 var DEFAULT_RETRY_POLICY_COUNT = 3;
@@ -31003,6 +32082,7 @@ var DEFAULT_RETRY_POLICY_COUNT = 3;
 function getUserAgentHeaderName() {
   return getHeaderName();
 }
+__name(getUserAgentHeaderName, "getUserAgentHeaderName");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/policies/userAgentPolicy.js
 var UserAgentHeaderName = getUserAgentHeaderName();
@@ -31020,6 +32100,7 @@ function decompressResponsePolicy() {
     }
   };
 }
+__name(decompressResponsePolicy, "decompressResponsePolicy");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/util/random.js
 function getRandomIntegerInclusive(min, max) {
@@ -31028,6 +32109,7 @@ function getRandomIntegerInclusive(min, max) {
   const offset = Math.floor(Math.random() * (max - min + 1));
   return offset + min;
 }
+__name(getRandomIntegerInclusive, "getRandomIntegerInclusive");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/util/delay.js
 function calculateRetryDelay(retryAttempt, config) {
@@ -31036,6 +32118,7 @@ function calculateRetryDelay(retryAttempt, config) {
   const retryAfterInMs = clampedDelay / 2 + getRandomIntegerInclusive(0, clampedDelay / 2);
   return { retryAfterInMs };
 }
+__name(calculateRetryDelay, "calculateRetryDelay");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/util/helpers.js
 var StandardAbortMessage = "The operation was aborted.";
@@ -31043,21 +32126,21 @@ function delay(delayInMs, value, options) {
   return new Promise((resolve2, reject) => {
     let timer = void 0;
     let onAborted = void 0;
-    const rejectOnAbort = () => {
+    const rejectOnAbort = /* @__PURE__ */ __name(() => {
       return reject(new AbortError(options?.abortErrorMsg ? options?.abortErrorMsg : StandardAbortMessage));
-    };
-    const removeListeners = () => {
+    }, "rejectOnAbort");
+    const removeListeners = /* @__PURE__ */ __name(() => {
       if (options?.abortSignal && onAborted) {
         options.abortSignal.removeEventListener("abort", onAborted);
       }
-    };
-    onAborted = () => {
+    }, "removeListeners");
+    onAborted = /* @__PURE__ */ __name(() => {
       if (timer) {
         clearTimeout(timer);
       }
       removeListeners();
       return rejectOnAbort();
-    };
+    }, "onAborted");
     if (options?.abortSignal && options.abortSignal.aborted) {
       return rejectOnAbort();
     }
@@ -31070,6 +32153,7 @@ function delay(delayInMs, value, options) {
     }
   });
 }
+__name(delay, "delay");
 function parseHeaderValueAsNumber(response, headerName) {
   const value = response.headers.get(headerName);
   if (!value)
@@ -31079,6 +32163,7 @@ function parseHeaderValueAsNumber(response, headerName) {
     return;
   return valueAsNum;
 }
+__name(parseHeaderValueAsNumber, "parseHeaderValueAsNumber");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/retryStrategies/throttlingRetryStrategy.js
 var RetryAfterHeader = "Retry-After";
@@ -31104,9 +32189,11 @@ function getRetryAfterInMs(response) {
     return void 0;
   }
 }
+__name(getRetryAfterInMs, "getRetryAfterInMs");
 function isThrottlingRetryResponse(response) {
   return Number.isFinite(getRetryAfterInMs(response));
 }
+__name(isThrottlingRetryResponse, "isThrottlingRetryResponse");
 function throttlingRetryStrategy() {
   return {
     name: "throttlingRetryStrategy",
@@ -31121,6 +32208,7 @@ function throttlingRetryStrategy() {
     }
   };
 }
+__name(throttlingRetryStrategy, "throttlingRetryStrategy");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/retryStrategies/exponentialRetryStrategy.js
 var DEFAULT_CLIENT_RETRY_INTERVAL = 1e3;
@@ -31149,15 +32237,18 @@ function exponentialRetryStrategy(options = {}) {
     }
   };
 }
+__name(exponentialRetryStrategy, "exponentialRetryStrategy");
 function isExponentialRetryResponse(response) {
   return Boolean(response && response.status !== void 0 && (response.status >= 500 || response.status === 408) && response.status !== 501 && response.status !== 505);
 }
+__name(isExponentialRetryResponse, "isExponentialRetryResponse");
 function isSystemError(err) {
   if (!err) {
     return false;
   }
   return err.code === "ETIMEDOUT" || err.code === "ESOCKETTIMEDOUT" || err.code === "ECONNREFUSED" || err.code === "ECONNRESET" || err.code === "ENOENT" || err.code === "ENOTFOUND";
 }
+__name(isSystemError, "isSystemError");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/policies/retryPolicy.js
 var retryPolicyLogger = createClientLogger("ts-http-runtime retryPolicy");
@@ -31242,6 +32333,7 @@ function retryPolicy(strategies, options = { maxRetries: DEFAULT_RETRY_POLICY_CO
     }
   };
 }
+__name(retryPolicy, "retryPolicy");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/policies/defaultRetryPolicy.js
 var defaultRetryPolicyName = "defaultRetryPolicy";
@@ -31253,6 +32345,7 @@ function defaultRetryPolicy(options = {}) {
     }).sendRequest
   };
 }
+__name(defaultRetryPolicy, "defaultRetryPolicy");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/util/checkEnvironment.js
 var isBrowser = typeof window !== "undefined" && typeof window.document !== "undefined";
@@ -31272,6 +32365,7 @@ function formDataToFormDataMap(formData) {
   }
   return formDataMap;
 }
+__name(formDataToFormDataMap, "formDataToFormDataMap");
 function formDataPolicy() {
   return {
     name: formDataPolicyName,
@@ -31293,6 +32387,7 @@ function formDataPolicy() {
     }
   };
 }
+__name(formDataPolicy, "formDataPolicy");
 function wwwFormUrlEncode(formData) {
   const urlSearchParams = new URLSearchParams();
   for (const [key, value] of Object.entries(formData)) {
@@ -31306,6 +32401,7 @@ function wwwFormUrlEncode(formData) {
   }
   return urlSearchParams.toString();
 }
+__name(wwwFormUrlEncode, "wwwFormUrlEncode");
 async function prepareFormData(formData, request) {
   const contentType2 = request.headers.get("Content-Type");
   if (contentType2 && !contentType2.startsWith("multipart/form-data")) {
@@ -31338,6 +32434,7 @@ async function prepareFormData(formData, request) {
   }
   request.multipartBody = { parts };
 }
+__name(prepareFormData, "prepareFormData");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/policies/proxyPolicy.js
 var import_https_proxy_agent = __toESM(require_dist2(), 1);
@@ -31358,6 +32455,7 @@ function getEnvironmentValue(name) {
   }
   return void 0;
 }
+__name(getEnvironmentValue, "getEnvironmentValue");
 function loadEnvironmentProxyValue() {
   if (!process) {
     return void 0;
@@ -31367,6 +32465,7 @@ function loadEnvironmentProxyValue() {
   const httpProxy = getEnvironmentValue(HTTP_PROXY);
   return httpsProxy || allProxy || httpProxy;
 }
+__name(loadEnvironmentProxyValue, "loadEnvironmentProxyValue");
 function isBypassed(uri, noProxyList, bypassedMap) {
   if (noProxyList.length === 0) {
     return false;
@@ -31394,6 +32493,7 @@ function isBypassed(uri, noProxyList, bypassedMap) {
   bypassedMap?.set(host, isBypassedFlag);
   return isBypassedFlag;
 }
+__name(isBypassed, "isBypassed");
 function loadNoProxy() {
   const noProxy = getEnvironmentValue(NO_PROXY);
   noProxyListLoaded = true;
@@ -31402,6 +32502,7 @@ function loadNoProxy() {
   }
   return [];
 }
+__name(loadNoProxy, "loadNoProxy");
 function getDefaultProxySettings(proxyUrl) {
   if (!proxyUrl) {
     proxyUrl = loadEnvironmentProxyValue();
@@ -31418,10 +32519,12 @@ function getDefaultProxySettings(proxyUrl) {
     password: parsedUrl.password
   };
 }
+__name(getDefaultProxySettings, "getDefaultProxySettings");
 function getDefaultProxySettingsInternal() {
   const envProxy = loadEnvironmentProxyValue();
   return envProxy ? new URL(envProxy) : void 0;
 }
+__name(getDefaultProxySettingsInternal, "getDefaultProxySettingsInternal");
 function getUrlFromProxySettings(settings) {
   let parsedProxyUrl;
   try {
@@ -31438,6 +32541,7 @@ function getUrlFromProxySettings(settings) {
   }
   return parsedProxyUrl;
 }
+__name(getUrlFromProxySettings, "getUrlFromProxySettings");
 function setProxyAgentOnRequest(request, cachedAgents, proxyUrl) {
   if (request.agent) {
     return;
@@ -31460,6 +32564,7 @@ function setProxyAgentOnRequest(request, cachedAgents, proxyUrl) {
     request.agent = cachedAgents.httpsProxyAgent;
   }
 }
+__name(setProxyAgentOnRequest, "setProxyAgentOnRequest");
 function proxyPolicy(proxySettings, options) {
   if (!noProxyListLoaded) {
     globalNoProxyList.push(...loadNoProxy());
@@ -31478,39 +32583,43 @@ function proxyPolicy(proxySettings, options) {
     }
   };
 }
+__name(proxyPolicy, "proxyPolicy");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/policies/agentPolicy.js
 var agentPolicyName = "agentPolicy";
 function agentPolicy(agent) {
   return {
     name: agentPolicyName,
-    sendRequest: async (req, next) => {
+    sendRequest: /* @__PURE__ */ __name(async (req, next) => {
       if (!req.agent) {
         req.agent = agent;
       }
       return next(req);
-    }
+    }, "sendRequest")
   };
 }
+__name(agentPolicy, "agentPolicy");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/policies/tlsPolicy.js
 var tlsPolicyName = "tlsPolicy";
 function tlsPolicy(tlsSettings) {
   return {
     name: tlsPolicyName,
-    sendRequest: async (req, next) => {
+    sendRequest: /* @__PURE__ */ __name(async (req, next) => {
       if (!req.tlsSettings) {
         req.tlsSettings = tlsSettings;
       }
       return next(req);
-    }
+    }, "sendRequest")
   };
 }
+__name(tlsPolicy, "tlsPolicy");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/util/typeGuards.js
 function isBlob(x) {
   return typeof x.stream === "function";
 }
+__name(isBlob, "isBlob");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/util/concat.js
 var import_stream = require("stream");
@@ -31528,6 +32637,7 @@ async function* streamAsyncIterator() {
     reader.releaseLock();
   }
 }
+__name(streamAsyncIterator, "streamAsyncIterator");
 function makeAsyncIterable(webStream) {
   if (!webStream[Symbol.asyncIterator]) {
     webStream[Symbol.asyncIterator] = streamAsyncIterator.bind(webStream);
@@ -31536,6 +32646,7 @@ function makeAsyncIterable(webStream) {
     webStream.values = streamAsyncIterator.bind(webStream);
   }
 }
+__name(makeAsyncIterable, "makeAsyncIterable");
 function ensureNodeStream(stream) {
   if (stream instanceof ReadableStream) {
     makeAsyncIterable(stream);
@@ -31544,6 +32655,7 @@ function ensureNodeStream(stream) {
     return stream;
   }
 }
+__name(ensureNodeStream, "ensureNodeStream");
 function toStream(source) {
   if (source instanceof Uint8Array) {
     return import_stream.Readable.from(Buffer.from(source));
@@ -31553,6 +32665,7 @@ function toStream(source) {
     return ensureNodeStream(source);
   }
 }
+__name(toStream, "toStream");
 async function concat(sources) {
   return function() {
     const streams = sources.map((x) => typeof x === "function" ? x() : x).map(toStream);
@@ -31565,11 +32678,13 @@ async function concat(sources) {
     })());
   };
 }
+__name(concat, "concat");
 
 // node_modules/@typespec/ts-http-runtime/dist/esm/policies/multipartPolicy.js
 function generateBoundary() {
   return `----AzSDKFormBoundary${randomUUID2()}`;
 }
+__name(generateBoundary, "generateBoundary");
 function encodeHeaders(headers) {
   let result = "";
   for (const [key, value] of headers) {
@@ -31578,6 +32693,7 @@ function encodeHeaders(headers) {
   }
   return result;
 }
+__name(encodeHeaders, "encodeHeaders");
 function getLength(source) {
   if (source instanceof Uint8Array) {
     return source.byteLength;
@@ -31587,6 +32703,7 @@ function getLength(source) {
     return void 0;
   }
 }
+__name(getLength, "getLength");
 function getTotalLength(sources) {
   let total = 0;
   for (const source of sources) {
@@ -31599,6 +32716,7 @@ function getTotalLength(sources) {
   }
   return total;
 }
+__name(getTotalLength, "getTotalLength");
 async function buildRequestBody(request, parts, boundary) {
   const sources = [
     stringToUint8Array(`--${boundary}`, "utf-8"),
@@ -31618,6 +32736,7 @@ async function buildRequestBody(request, parts, boundary) {
   }
   request.body = await concat(sources);
 }
+__name(buildRequestBody, "buildRequestBody");
 var multipartPolicyName = "multipartPolicy";
 var maxBoundaryLength = 70;
 var validBoundaryCharacters = new Set(`abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'()+,-./:=?`);
@@ -31629,6 +32748,7 @@ function assertValidBoundary(boundary) {
     throw new Error(`Multipart boundary "${boundary}" contains invalid characters`);
   }
 }
+__name(assertValidBoundary, "assertValidBoundary");
 function multipartPolicy() {
   return {
     name: multipartPolicyName,
@@ -31662,11 +32782,13 @@ function multipartPolicy() {
     }
   };
 }
+__name(multipartPolicy, "multipartPolicy");
 
 // node_modules/@azure/core-rest-pipeline/dist/esm/pipeline.js
 function createEmptyPipeline2() {
   return createEmptyPipeline();
 }
+__name(createEmptyPipeline2, "createEmptyPipeline");
 
 // node_modules/@azure/logger/dist/esm/index.js
 var context2 = createLoggerContext({
@@ -31677,6 +32799,7 @@ var AzureLogger = context2.logger;
 function createClientLogger2(namespace) {
   return context2.createClientLogger(namespace);
 }
+__name(createClientLogger2, "createClientLogger");
 
 // node_modules/@azure/core-rest-pipeline/dist/esm/log.js
 var logger2 = createClientLogger2("core-rest-pipeline");
@@ -31688,12 +32811,14 @@ function logPolicy2(options = {}) {
     ...options
   });
 }
+__name(logPolicy2, "logPolicy");
 
 // node_modules/@azure/core-rest-pipeline/dist/esm/policies/redirectPolicy.js
 var redirectPolicyName2 = redirectPolicyName;
 function redirectPolicy2(options = {}) {
   return redirectPolicy(options);
 }
+__name(redirectPolicy2, "redirectPolicy");
 
 // node_modules/@azure/core-rest-pipeline/dist/esm/util/userAgentPlatform.js
 var import_node_os2 = __toESM(require("node:os"), 1);
@@ -31701,6 +32826,7 @@ var import_node_process2 = __toESM(require("node:process"), 1);
 function getHeaderName2() {
   return "User-Agent";
 }
+__name(getHeaderName2, "getHeaderName");
 async function setPlatformSpecificData2(map) {
   if (import_node_process2.default && import_node_process2.default.versions) {
     const osInfo = `${import_node_os2.default.type()} ${import_node_os2.default.release()}; ${import_node_os2.default.arch()}`;
@@ -31714,6 +32840,7 @@ async function setPlatformSpecificData2(map) {
     }
   }
 }
+__name(setPlatformSpecificData2, "setPlatformSpecificData");
 
 // node_modules/@azure/core-rest-pipeline/dist/esm/constants.js
 var SDK_VERSION2 = "1.22.3";
@@ -31727,9 +32854,11 @@ function getUserAgentString(telemetryInfo) {
   }
   return parts.join(" ");
 }
+__name(getUserAgentString, "getUserAgentString");
 function getUserAgentHeaderName2() {
   return getHeaderName2();
 }
+__name(getUserAgentHeaderName2, "getUserAgentHeaderName");
 async function getUserAgentValue2(prefix2) {
   const runtimeInfo = /* @__PURE__ */ new Map();
   runtimeInfo.set("core-rest-pipeline", SDK_VERSION2);
@@ -31738,6 +32867,7 @@ async function getUserAgentValue2(prefix2) {
   const userAgentValue = prefix2 ? `${prefix2} ${defaultAgent}` : defaultAgent;
   return userAgentValue;
 }
+__name(getUserAgentValue2, "getUserAgentValue");
 
 // node_modules/@azure/core-rest-pipeline/dist/esm/policies/userAgentPolicy.js
 var UserAgentHeaderName2 = getUserAgentHeaderName2();
@@ -31754,9 +32884,13 @@ function userAgentPolicy2(options = {}) {
     }
   };
 }
+__name(userAgentPolicy2, "userAgentPolicy");
 
 // node_modules/@azure/abort-controller/dist/esm/AbortError.js
 var AbortError2 = class extends Error {
+  static {
+    __name(this, "AbortError");
+  }
   constructor(message) {
     super(message);
     this.name = "AbortError";
@@ -31770,14 +32904,17 @@ function createAbortablePromise(buildPromise, options) {
     function rejectOnAbort() {
       reject(new AbortError2(abortErrorMsg ?? "The operation was aborted."));
     }
+    __name(rejectOnAbort, "rejectOnAbort");
     function removeListeners() {
       abortSignal?.removeEventListener("abort", onAbort);
     }
+    __name(removeListeners, "removeListeners");
     function onAbort() {
       cleanupBeforeAbort?.();
       removeListeners();
       rejectOnAbort();
     }
+    __name(onAbort, "onAbort");
     if (abortSignal?.aborted) {
       return rejectOnAbort();
     }
@@ -31795,6 +32932,7 @@ function createAbortablePromise(buildPromise, options) {
     abortSignal?.addEventListener("abort", onAbort);
   });
 }
+__name(createAbortablePromise, "createAbortablePromise");
 
 // node_modules/@azure/core-util/dist/esm/delay.js
 var StandardAbortMessage2 = "The delay was aborted.";
@@ -31804,11 +32942,12 @@ function delay2(timeInMs, options) {
   return createAbortablePromise((resolve2) => {
     token = setTimeout(resolve2, timeInMs);
   }, {
-    cleanupBeforeAbort: () => clearTimeout(token),
+    cleanupBeforeAbort: /* @__PURE__ */ __name(() => clearTimeout(token), "cleanupBeforeAbort"),
     abortSignal,
     abortErrorMsg: abortErrorMsg ?? StandardAbortMessage2
   });
 }
+__name(delay2, "delay");
 
 // node_modules/@azure/core-util/dist/esm/error.js
 function getErrorMessage(e) {
@@ -31828,14 +32967,17 @@ function getErrorMessage(e) {
     return `Unknown error ${stringified}`;
   }
 }
+__name(getErrorMessage, "getErrorMessage");
 
 // node_modules/@azure/core-util/dist/esm/index.js
 function isError2(e) {
   return isError(e);
 }
+__name(isError2, "isError");
 function randomUUID3() {
   return randomUUID2();
 }
+__name(randomUUID3, "randomUUID");
 var isNodeLike2 = isNodeLike;
 
 // node_modules/@azure/core-rest-pipeline/dist/esm/util/file.js
@@ -31843,6 +32985,7 @@ var rawContent = /* @__PURE__ */ Symbol("rawContent");
 function hasRawContent(x) {
   return typeof x[rawContent] === "function";
 }
+__name(hasRawContent, "hasRawContent");
 function getRawContent(blob) {
   if (hasRawContent(blob)) {
     return blob[rawContent]();
@@ -31850,6 +32993,7 @@ function getRawContent(blob) {
     return blob;
   }
 }
+__name(getRawContent, "getRawContent");
 
 // node_modules/@azure/core-rest-pipeline/dist/esm/policies/multipartPolicy.js
 var multipartPolicyName2 = multipartPolicyName;
@@ -31857,7 +33001,7 @@ function multipartPolicy2() {
   const tspPolicy = multipartPolicy();
   return {
     name: multipartPolicyName2,
-    sendRequest: async (request, next) => {
+    sendRequest: /* @__PURE__ */ __name(async (request, next) => {
       if (request.multipartBody) {
         for (const part of request.multipartBody.parts) {
           if (hasRawContent(part.body)) {
@@ -31866,33 +33010,39 @@ function multipartPolicy2() {
         }
       }
       return tspPolicy.sendRequest(request, next);
-    }
+    }, "sendRequest")
   };
 }
+__name(multipartPolicy2, "multipartPolicy");
 
 // node_modules/@azure/core-rest-pipeline/dist/esm/policies/decompressResponsePolicy.js
 var decompressResponsePolicyName2 = decompressResponsePolicyName;
 function decompressResponsePolicy2() {
   return decompressResponsePolicy();
 }
+__name(decompressResponsePolicy2, "decompressResponsePolicy");
 
 // node_modules/@azure/core-rest-pipeline/dist/esm/policies/defaultRetryPolicy.js
 function defaultRetryPolicy2(options = {}) {
   return defaultRetryPolicy(options);
 }
+__name(defaultRetryPolicy2, "defaultRetryPolicy");
 
 // node_modules/@azure/core-rest-pipeline/dist/esm/policies/formDataPolicy.js
 function formDataPolicy2() {
   return formDataPolicy();
 }
+__name(formDataPolicy2, "formDataPolicy");
 
 // node_modules/@azure/core-rest-pipeline/dist/esm/policies/proxyPolicy.js
 function getDefaultProxySettings2(proxyUrl) {
   return getDefaultProxySettings(proxyUrl);
 }
+__name(getDefaultProxySettings2, "getDefaultProxySettings");
 function proxyPolicy2(proxySettings, options) {
   return proxyPolicy(proxySettings, options);
 }
+__name(proxyPolicy2, "proxyPolicy");
 
 // node_modules/@azure/core-rest-pipeline/dist/esm/policies/setClientRequestIdPolicy.js
 var setClientRequestIdPolicyName = "setClientRequestIdPolicy";
@@ -31907,16 +33057,19 @@ function setClientRequestIdPolicy(requestIdHeaderName = "x-ms-client-request-id"
     }
   };
 }
+__name(setClientRequestIdPolicy, "setClientRequestIdPolicy");
 
 // node_modules/@azure/core-rest-pipeline/dist/esm/policies/agentPolicy.js
 function agentPolicy2(agent) {
   return agentPolicy(agent);
 }
+__name(agentPolicy2, "agentPolicy");
 
 // node_modules/@azure/core-rest-pipeline/dist/esm/policies/tlsPolicy.js
 function tlsPolicy2(tlsSettings) {
   return tlsPolicy(tlsSettings);
 }
+__name(tlsPolicy2, "tlsPolicy");
 
 // node_modules/@azure/core-tracing/dist/esm/tracingContext.js
 var knownContextKeys = {
@@ -31933,7 +33086,11 @@ function createTracingContext(options = {}) {
   }
   return context3;
 }
+__name(createTracingContext, "createTracingContext");
 var TracingContextImpl = class _TracingContextImpl {
+  static {
+    __name(this, "TracingContextImpl");
+  }
   _contextMap;
   constructor(initialContext) {
     this._contextMap = initialContext instanceof _TracingContextImpl ? new Map(initialContext._contextMap) : /* @__PURE__ */ new Map();
@@ -31960,44 +33117,47 @@ var state = import_state.state;
 // node_modules/@azure/core-tracing/dist/esm/instrumenter.js
 function createDefaultTracingSpan() {
   return {
-    end: () => {
-    },
-    isRecording: () => false,
-    recordException: () => {
-    },
-    setAttribute: () => {
-    },
-    setStatus: () => {
-    },
-    addEvent: () => {
-    }
+    end: /* @__PURE__ */ __name(() => {
+    }, "end"),
+    isRecording: /* @__PURE__ */ __name(() => false, "isRecording"),
+    recordException: /* @__PURE__ */ __name(() => {
+    }, "recordException"),
+    setAttribute: /* @__PURE__ */ __name(() => {
+    }, "setAttribute"),
+    setStatus: /* @__PURE__ */ __name(() => {
+    }, "setStatus"),
+    addEvent: /* @__PURE__ */ __name(() => {
+    }, "addEvent")
   };
 }
+__name(createDefaultTracingSpan, "createDefaultTracingSpan");
 function createDefaultInstrumenter() {
   return {
-    createRequestHeaders: () => {
+    createRequestHeaders: /* @__PURE__ */ __name(() => {
       return {};
-    },
-    parseTraceparentHeader: () => {
+    }, "createRequestHeaders"),
+    parseTraceparentHeader: /* @__PURE__ */ __name(() => {
       return void 0;
-    },
-    startSpan: (_name, spanOptions) => {
+    }, "parseTraceparentHeader"),
+    startSpan: /* @__PURE__ */ __name((_name, spanOptions) => {
       return {
         span: createDefaultTracingSpan(),
         tracingContext: createTracingContext({ parentContext: spanOptions.tracingContext })
       };
-    },
+    }, "startSpan"),
     withContext(_context, callback, ...callbackArgs) {
       return callback(...callbackArgs);
     }
   };
 }
+__name(createDefaultInstrumenter, "createDefaultInstrumenter");
 function getInstrumenter() {
   if (!state.instrumenterImplementation) {
     state.instrumenterImplementation = createDefaultInstrumenter();
   }
   return state.instrumenterImplementation;
 }
+__name(getInstrumenter, "getInstrumenter");
 
 // node_modules/@azure/core-tracing/dist/esm/tracingClient.js
 function createTracingClient(options) {
@@ -32023,6 +33183,7 @@ function createTracingClient(options) {
       updatedOptions
     };
   }
+  __name(startSpan, "startSpan");
   async function withSpan(name, operationOptions, callback, spanOptions) {
     const { span, updatedOptions } = startSpan(name, operationOptions, spanOptions);
     try {
@@ -32036,15 +33197,19 @@ function createTracingClient(options) {
       span.end();
     }
   }
+  __name(withSpan, "withSpan");
   function withContext(context3, callback, ...callbackArgs) {
     return getInstrumenter().withContext(context3, callback, ...callbackArgs);
   }
+  __name(withContext, "withContext");
   function parseTraceparentHeader(traceparentHeader) {
     return getInstrumenter().parseTraceparentHeader(traceparentHeader);
   }
+  __name(parseTraceparentHeader, "parseTraceparentHeader");
   function createRequestHeaders(tracingContext) {
     return getInstrumenter().createRequestHeaders(tracingContext);
   }
+  __name(createRequestHeaders, "createRequestHeaders");
   return {
     startSpan,
     withSpan,
@@ -32053,12 +33218,14 @@ function createTracingClient(options) {
     createRequestHeaders
   };
 }
+__name(createTracingClient, "createTracingClient");
 
 // node_modules/@azure/core-rest-pipeline/dist/esm/restError.js
 var RestError2 = RestError;
 function isRestError2(e) {
   return isRestError(e);
 }
+__name(isRestError2, "isRestError");
 
 // node_modules/@azure/core-rest-pipeline/dist/esm/policies/tracingPolicy.js
 var tracingPolicyName = "tracingPolicy";
@@ -32099,6 +33266,7 @@ function tracingPolicy(options = {}) {
     }
   };
 }
+__name(tracingPolicy, "tracingPolicy");
 function tryCreateTracingClient() {
   try {
     return createTracingClient({
@@ -32111,6 +33279,7 @@ function tryCreateTracingClient() {
     return void 0;
   }
 }
+__name(tryCreateTracingClient, "tryCreateTracingClient");
 function tryCreateSpan(tracingClient2, request, spanAttributes) {
   try {
     const { span, updatedOptions } = tracingClient2.startSpan(`HTTP ${request.method}`, { tracingOptions: request.tracingOptions }, {
@@ -32131,6 +33300,7 @@ function tryCreateSpan(tracingClient2, request, spanAttributes) {
     return void 0;
   }
 }
+__name(tryCreateSpan, "tryCreateSpan");
 function tryProcessError(span, error2) {
   try {
     span.setStatus({
@@ -32145,6 +33315,7 @@ function tryProcessError(span, error2) {
     logger2.warning(`Skipping tracing span processing due to an error: ${getErrorMessage(e)}`);
   }
 }
+__name(tryProcessError, "tryProcessError");
 function tryProcessResponse(span, response) {
   try {
     span.setAttribute("http.status_code", response.status);
@@ -32162,6 +33333,7 @@ function tryProcessResponse(span, response) {
     logger2.warning(`Skipping tracing span processing due to an error: ${getErrorMessage(e)}`);
   }
 }
+__name(tryProcessResponse, "tryProcessResponse");
 
 // node_modules/@azure/core-rest-pipeline/dist/esm/util/wrapAbortSignal.js
 function wrapAbortSignalLike(abortSignalLike) {
@@ -32179,20 +33351,23 @@ function wrapAbortSignalLike(abortSignalLike) {
       needsCleanup = false;
     }
   }
+  __name(cleanup, "cleanup");
   function listener() {
     controller.abort(abortSignalLike.reason);
     cleanup();
   }
+  __name(listener, "listener");
   abortSignalLike.addEventListener("abort", listener);
   return { abortSignal: controller.signal, cleanup };
 }
+__name(wrapAbortSignalLike, "wrapAbortSignalLike");
 
 // node_modules/@azure/core-rest-pipeline/dist/esm/policies/wrapAbortSignalLikePolicy.js
 var wrapAbortSignalLikePolicyName = "wrapAbortSignalLikePolicy";
 function wrapAbortSignalLikePolicy() {
   return {
     name: wrapAbortSignalLikePolicyName,
-    sendRequest: async (request, next) => {
+    sendRequest: /* @__PURE__ */ __name(async (request, next) => {
       if (!request.abortSignal) {
         return next(request);
       }
@@ -32203,9 +33378,10 @@ function wrapAbortSignalLikePolicy() {
       } finally {
         cleanup?.();
       }
-    }
+    }, "sendRequest")
   };
 }
+__name(wrapAbortSignalLikePolicy, "wrapAbortSignalLikePolicy");
 
 // node_modules/@azure/core-rest-pipeline/dist/esm/createPipelineFromOptions.js
 function createPipelineFromOptions2(options) {
@@ -32235,6 +33411,7 @@ function createPipelineFromOptions2(options) {
   pipeline.addPolicy(logPolicy2(options.loggingOptions), { afterPhase: "Sign" });
   return pipeline;
 }
+__name(createPipelineFromOptions2, "createPipelineFromOptions");
 
 // node_modules/@azure/core-rest-pipeline/dist/esm/defaultHttpClient.js
 function createDefaultHttpClient2() {
@@ -32251,16 +33428,19 @@ function createDefaultHttpClient2() {
     }
   };
 }
+__name(createDefaultHttpClient2, "createDefaultHttpClient");
 
 // node_modules/@azure/core-rest-pipeline/dist/esm/httpHeaders.js
 function createHttpHeaders2(rawHeaders) {
   return createHttpHeaders(rawHeaders);
 }
+__name(createHttpHeaders2, "createHttpHeaders");
 
 // node_modules/@azure/core-rest-pipeline/dist/esm/pipelineRequest.js
 function createPipelineRequest2(options) {
   return createPipelineRequest(options);
 }
+__name(createPipelineRequest2, "createPipelineRequest");
 
 // node_modules/@azure/core-rest-pipeline/dist/esm/policies/retryPolicy.js
 var retryPolicyLogger2 = createClientLogger2("core-rest-pipeline retryPolicy");
@@ -32290,6 +33470,7 @@ async function beginRefresh(getAccessToken, retryIntervalInMs, refreshTimeout) {
       return finalToken;
     }
   }
+  __name(tryGetAccessToken, "tryGetAccessToken");
   let token = await tryGetAccessToken();
   while (token === null) {
     await delay2(retryIntervalInMs);
@@ -32297,6 +33478,7 @@ async function beginRefresh(getAccessToken, retryIntervalInMs, refreshTimeout) {
   }
   return token;
 }
+__name(beginRefresh, "beginRefresh");
 function createTokenCycler(credential, tokenCyclerOptions) {
   let refreshWorker = null;
   let token = null;
@@ -32335,7 +33517,7 @@ function createTokenCycler(credential, tokenCyclerOptions) {
   };
   function refresh(scopes, getTokenOptions) {
     if (!cycler.isRefreshing) {
-      const tryGetAccessToken = () => credential.getToken(scopes, getTokenOptions);
+      const tryGetAccessToken = /* @__PURE__ */ __name(() => credential.getToken(scopes, getTokenOptions), "tryGetAccessToken");
       refreshWorker = beginRefresh(
         tryGetAccessToken,
         options.retryIntervalInMs,
@@ -32355,6 +33537,7 @@ function createTokenCycler(credential, tokenCyclerOptions) {
     }
     return refreshWorker;
   }
+  __name(refresh, "refresh");
   return async (scopes, tokenOptions) => {
     const hasClaimChallenge = Boolean(tokenOptions.claims);
     const tenantIdChanged = tenantId !== tokenOptions.tenantId;
@@ -32371,6 +33554,7 @@ function createTokenCycler(credential, tokenCyclerOptions) {
     return token;
   };
 }
+__name(createTokenCycler, "createTokenCycler");
 
 // node_modules/@azure/core-rest-pipeline/dist/esm/policies/bearerTokenAuthenticationPolicy.js
 var bearerTokenAuthenticationPolicyName = "bearerTokenAuthenticationPolicy";
@@ -32385,6 +33569,7 @@ async function trySendRequest(request, next) {
     }
   }
 }
+__name(trySendRequest, "trySendRequest");
 async function defaultAuthorizeRequest(options) {
   const { scopes, getAccessToken, request } = options;
   const getTokenOptions = {
@@ -32397,9 +33582,11 @@ async function defaultAuthorizeRequest(options) {
     options.request.headers.set("Authorization", `Bearer ${accessToken.token}`);
   }
 }
+__name(defaultAuthorizeRequest, "defaultAuthorizeRequest");
 function isChallengeResponse(response) {
   return response.status === 401 && response.headers.has("WWW-Authenticate");
 }
+__name(isChallengeResponse, "isChallengeResponse");
 async function authorizeRequestOnCaeChallenge(onChallengeOptions, caeClaims) {
   const { scopes } = onChallengeOptions;
   const accessToken = await onChallengeOptions.getAccessToken(scopes, {
@@ -32412,6 +33599,7 @@ async function authorizeRequestOnCaeChallenge(onChallengeOptions, caeClaims) {
   onChallengeOptions.request.headers.set("Authorization", `${accessToken.tokenType ?? "Bearer"} ${accessToken.token}`);
   return true;
 }
+__name(authorizeRequestOnCaeChallenge, "authorizeRequestOnCaeChallenge");
 function bearerTokenAuthenticationPolicy(options) {
   const { credential, scopes, challengeCallbacks } = options;
   const logger7 = options.logger || logger2;
@@ -32515,6 +33703,7 @@ function bearerTokenAuthenticationPolicy(options) {
     }
   };
 }
+__name(bearerTokenAuthenticationPolicy, "bearerTokenAuthenticationPolicy");
 function parseChallenges(challenges) {
   const challengeRegex = /(\w+)\s+((?:\w+=(?:"[^"]*"|[^,]*),?\s*)+)/g;
   const paramRegex = /(\w+)="([^"]*)"/g;
@@ -32532,6 +33721,7 @@ function parseChallenges(challenges) {
   }
   return parsedChallenges;
 }
+__name(parseChallenges, "parseChallenges");
 function getCaeChallengeClaims(challenges) {
   if (!challenges) {
     return;
@@ -32539,12 +33729,14 @@ function getCaeChallengeClaims(challenges) {
   const parsedChallenges = parseChallenges(challenges);
   return parsedChallenges.find((x) => x.scheme === "Bearer" && x.params.claims && x.params.error === "insufficient_claims")?.params.claims;
 }
+__name(getCaeChallengeClaims, "getCaeChallengeClaims");
 
 // node_modules/@azure/core-auth/dist/esm/tokenCredential.js
 function isTokenCredential(credential) {
   const castCredential = credential;
   return castCredential && typeof castCredential.getToken === "function" && (castCredential.signRequest === void 0 || castCredential.getToken.length > 0);
 }
+__name(isTokenCredential, "isTokenCredential");
 
 // node_modules/@azure/core-http-compat/dist/esm/policies/disableKeepAlivePolicy.js
 var disableKeepAlivePolicyName = "DisableKeepAlivePolicy";
@@ -32557,18 +33749,22 @@ function createDisableKeepAlivePolicy() {
     }
   };
 }
+__name(createDisableKeepAlivePolicy, "createDisableKeepAlivePolicy");
 function pipelineContainsDisableKeepAlivePolicy(pipeline) {
   return pipeline.getOrderedPolicies().some((policy) => policy.name === disableKeepAlivePolicyName);
 }
+__name(pipelineContainsDisableKeepAlivePolicy, "pipelineContainsDisableKeepAlivePolicy");
 
 // node_modules/@azure/core-client/dist/esm/base64.js
 function encodeByteArray(value) {
   const bufferValue = value instanceof Buffer ? value : Buffer.from(value.buffer);
   return bufferValue.toString("base64");
 }
+__name(encodeByteArray, "encodeByteArray");
 function decodeString(value) {
   return Buffer.from(value, "base64");
 }
+__name(decodeString, "decodeString");
 
 // node_modules/@azure/core-client/dist/esm/interfaces.js
 var XML_ATTRKEY = "$";
@@ -32578,14 +33774,17 @@ var XML_CHARKEY = "_";
 function isPrimitiveBody(value, mapperTypeName) {
   return mapperTypeName !== "Composite" && mapperTypeName !== "Dictionary" && (typeof value === "string" || typeof value === "number" || typeof value === "boolean" || mapperTypeName?.match(/^(Date|DateTime|DateTimeRfc1123|UnixTime|ByteArray|Base64Url)$/i) !== null || value === void 0 || value === null);
 }
+__name(isPrimitiveBody, "isPrimitiveBody");
 var validateISODuration = /^(-|\+)?P(?:([-+]?[0-9,.]*)Y)?(?:([-+]?[0-9,.]*)M)?(?:([-+]?[0-9,.]*)W)?(?:([-+]?[0-9,.]*)D)?(?:T(?:([-+]?[0-9,.]*)H)?(?:([-+]?[0-9,.]*)M)?(?:([-+]?[0-9,.]*)S)?)?$/;
 function isDuration(value) {
   return validateISODuration.test(value);
 }
+__name(isDuration, "isDuration");
 var validUuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/i;
 function isValidUuid(uuid) {
   return validUuidRegex.test(uuid);
 }
+__name(isValidUuid, "isValidUuid");
 function handleNullableResponseAndWrappableBody(responseObject) {
   const combinedHeadersAndBody = {
     ...responseObject.headers,
@@ -32600,6 +33799,7 @@ function handleNullableResponseAndWrappableBody(responseObject) {
     } : combinedHeadersAndBody;
   }
 }
+__name(handleNullableResponseAndWrappableBody, "handleNullableResponseAndWrappableBody");
 function flattenResponse(fullResponse, responseSpec) {
   const parsedHeaders = fullResponse.parsedHeaders;
   if (fullResponse.request.method === "HEAD") {
@@ -32641,9 +33841,13 @@ function flattenResponse(fullResponse, responseSpec) {
     shouldWrapBody: isPrimitiveBody(fullResponse.parsedBody, expectedBodyTypeName)
   });
 }
+__name(flattenResponse, "flattenResponse");
 
 // node_modules/@azure/core-client/dist/esm/serializer.js
 var SerializerImpl = class {
+  static {
+    __name(this, "SerializerImpl");
+  }
   modelMappers;
   isXML;
   constructor(modelMappers = {}, isXML = false) {
@@ -32654,9 +33858,9 @@ var SerializerImpl = class {
    * @deprecated Removing the constraints validation on client side.
    */
   validateConstraints(mapper, value, objectName) {
-    const failValidation = (constraintName, constraintValue) => {
+    const failValidation = /* @__PURE__ */ __name((constraintName, constraintValue) => {
       throw new Error(`"${objectName}" with value "${value}" should satisfy the constraint "${constraintName}": ${constraintValue}.`);
-    };
+    }, "failValidation");
     if (mapper.constraints && value !== void 0 && value !== null) {
       const { ExclusiveMaximum, ExclusiveMinimum, InclusiveMaximum, InclusiveMinimum, MaxItems, MaxLength, MinItems, MinLength, MultipleOf, Pattern: Pattern3, UniqueItems } = mapper.constraints;
       if (ExclusiveMaximum !== void 0 && value >= ExclusiveMaximum) {
@@ -32848,6 +34052,7 @@ var SerializerImpl = class {
 function createSerializer(modelMappers = {}, isXML = false) {
   return new SerializerImpl(modelMappers, isXML);
 }
+__name(createSerializer, "createSerializer");
 function trimEnd(str, ch) {
   let len = str.length;
   while (len - 1 >= 0 && str[len - 1] === ch) {
@@ -32855,6 +34060,7 @@ function trimEnd(str, ch) {
   }
   return str.substr(0, len);
 }
+__name(trimEnd, "trimEnd");
 function bufferToBase64Url(buffer2) {
   if (!buffer2) {
     return void 0;
@@ -32865,6 +34071,7 @@ function bufferToBase64Url(buffer2) {
   const str = encodeByteArray(buffer2);
   return trimEnd(str, "=").replace(/\+/g, "-").replace(/\//g, "_");
 }
+__name(bufferToBase64Url, "bufferToBase64Url");
 function base64UrlToByteArray(str) {
   if (!str) {
     return void 0;
@@ -32875,6 +34082,7 @@ function base64UrlToByteArray(str) {
   str = str.replace(/-/g, "+").replace(/_/g, "/");
   return decodeString(str);
 }
+__name(base64UrlToByteArray, "base64UrlToByteArray");
 function splitSerializeName(prop) {
   const classes = [];
   let partialclass = "";
@@ -32892,6 +34100,7 @@ function splitSerializeName(prop) {
   }
   return classes;
 }
+__name(splitSerializeName, "splitSerializeName");
 function dateToUnixTime(d) {
   if (!d) {
     return void 0;
@@ -32901,12 +34110,14 @@ function dateToUnixTime(d) {
   }
   return Math.floor(d.getTime() / 1e3);
 }
+__name(dateToUnixTime, "dateToUnixTime");
 function unixTimeToDate(n) {
   if (!n) {
     return void 0;
   }
   return new Date(n * 1e3);
 }
+__name(unixTimeToDate, "unixTimeToDate");
 function serializeBasicTypes(typeName, objectName, value) {
   if (value !== null && value !== void 0) {
     if (typeName.match(/^Number$/i) !== null) {
@@ -32937,6 +34148,7 @@ function serializeBasicTypes(typeName, objectName, value) {
   }
   return value;
 }
+__name(serializeBasicTypes, "serializeBasicTypes");
 function serializeEnumType(objectName, allowedValues, value) {
   if (!allowedValues) {
     throw new Error(`Please provide a set of allowedValues to validate ${objectName} as an Enum Type.`);
@@ -32952,6 +34164,7 @@ function serializeEnumType(objectName, allowedValues, value) {
   }
   return value;
 }
+__name(serializeEnumType, "serializeEnumType");
 function serializeByteArrayType(objectName, value) {
   if (value !== void 0 && value !== null) {
     if (!(value instanceof Uint8Array)) {
@@ -32961,6 +34174,7 @@ function serializeByteArrayType(objectName, value) {
   }
   return value;
 }
+__name(serializeByteArrayType, "serializeByteArrayType");
 function serializeBase64UrlType(objectName, value) {
   if (value !== void 0 && value !== null) {
     if (!(value instanceof Uint8Array)) {
@@ -32970,6 +34184,7 @@ function serializeBase64UrlType(objectName, value) {
   }
   return value;
 }
+__name(serializeBase64UrlType, "serializeBase64UrlType");
 function serializeDateTypes(typeName, value, objectName) {
   if (value !== void 0 && value !== null) {
     if (typeName.match(/^Date$/i) !== null) {
@@ -33000,6 +34215,7 @@ function serializeDateTypes(typeName, value, objectName) {
   }
   return value;
 }
+__name(serializeDateTypes, "serializeDateTypes");
 function serializeSequenceType(serializer, mapper, object, objectName, isXml, options) {
   if (!Array.isArray(object)) {
     throw new Error(`${objectName} must be of type Array.`);
@@ -33030,6 +34246,7 @@ function serializeSequenceType(serializer, mapper, object, objectName, isXml, op
   }
   return tempArray;
 }
+__name(serializeSequenceType, "serializeSequenceType");
 function serializeDictionaryType(serializer, mapper, object, objectName, isXml, options) {
   if (typeof object !== "object") {
     throw new Error(`${objectName} must be of type object.`);
@@ -33051,6 +34268,7 @@ function serializeDictionaryType(serializer, mapper, object, objectName, isXml, 
   }
   return tempDictionary;
 }
+__name(serializeDictionaryType, "serializeDictionaryType");
 function resolveAdditionalProperties(serializer, mapper, objectName) {
   const additionalProperties = mapper.type.additionalProperties;
   if (!additionalProperties && mapper.type.className) {
@@ -33059,6 +34277,7 @@ function resolveAdditionalProperties(serializer, mapper, objectName) {
   }
   return additionalProperties;
 }
+__name(resolveAdditionalProperties, "resolveAdditionalProperties");
 function resolveReferencedMapper(serializer, mapper, objectName) {
   const className = mapper.type.className;
   if (!className) {
@@ -33066,6 +34285,7 @@ function resolveReferencedMapper(serializer, mapper, objectName) {
   }
   return serializer.modelMappers[className];
 }
+__name(resolveReferencedMapper, "resolveReferencedMapper");
 function resolveModelProperties(serializer, mapper, objectName) {
   let modelProps = mapper.type.modelProperties;
   if (!modelProps) {
@@ -33080,6 +34300,7 @@ function resolveModelProperties(serializer, mapper, objectName) {
   }
   return modelProps;
 }
+__name(resolveModelProperties, "resolveModelProperties");
 function serializeCompositeType(serializer, mapper, object, objectName, isXml, options) {
   if (getPolymorphicDiscriminatorRecursively(serializer, mapper)) {
     mapper = getPolymorphicMapper(serializer, mapper, object, "clientName");
@@ -33153,6 +34374,7 @@ function serializeCompositeType(serializer, mapper, object, objectName, isXml, o
   }
   return object;
 }
+__name(serializeCompositeType, "serializeCompositeType");
 function getXmlObjectValue(propertyMapper, serializedValue, isXml, options) {
   if (!isXml || !propertyMapper.xmlNamespace) {
     return serializedValue;
@@ -33173,9 +34395,11 @@ function getXmlObjectValue(propertyMapper, serializedValue, isXml, options) {
   result[XML_ATTRKEY] = xmlNamespace;
   return result;
 }
+__name(getXmlObjectValue, "getXmlObjectValue");
 function isSpecialXmlProperty(propertyName, options) {
   return [XML_ATTRKEY, options.xml.xmlCharKey].includes(propertyName);
 }
+__name(isSpecialXmlProperty, "isSpecialXmlProperty");
 function deserializeCompositeType(serializer, mapper, responseBody, objectName, options) {
   const xmlCharKey = options.xml.xmlCharKey ?? XML_CHARKEY;
   if (getPolymorphicDiscriminatorRecursively(serializer, mapper)) {
@@ -33261,7 +34485,7 @@ function deserializeCompositeType(serializer, mapper, responseBody, objectName, 
   }
   const additionalPropertiesMapper = mapper.type.additionalProperties;
   if (additionalPropertiesMapper) {
-    const isAdditionalProperty = (responsePropName) => {
+    const isAdditionalProperty = /* @__PURE__ */ __name((responsePropName) => {
       for (const clientPropName in modelProps) {
         const paths = splitSerializeName(modelProps[clientPropName].serializedName);
         if (paths[0] === responsePropName) {
@@ -33269,7 +34493,7 @@ function deserializeCompositeType(serializer, mapper, responseBody, objectName, 
         }
       }
       return true;
-    };
+    }, "isAdditionalProperty");
     for (const responsePropName in responseBody) {
       if (isAdditionalProperty(responsePropName)) {
         instance[responsePropName] = serializer.deserialize(additionalPropertiesMapper, responseBody[responsePropName], objectName + '["' + responsePropName + '"]', options);
@@ -33284,6 +34508,7 @@ function deserializeCompositeType(serializer, mapper, responseBody, objectName, 
   }
   return instance;
 }
+__name(deserializeCompositeType, "deserializeCompositeType");
 function deserializeDictionaryType(serializer, mapper, responseBody, objectName, options) {
   const value = mapper.type.value;
   if (!value || typeof value !== "object") {
@@ -33298,6 +34523,7 @@ function deserializeDictionaryType(serializer, mapper, responseBody, objectName,
   }
   return responseBody;
 }
+__name(deserializeDictionaryType, "deserializeDictionaryType");
 function deserializeSequenceType(serializer, mapper, responseBody, objectName, options) {
   let element = mapper.type.element;
   if (!element || typeof element !== "object") {
@@ -33318,6 +34544,7 @@ function deserializeSequenceType(serializer, mapper, responseBody, objectName, o
   }
   return responseBody;
 }
+__name(deserializeSequenceType, "deserializeSequenceType");
 function getIndexDiscriminator(discriminators, discriminatorValue, typeName) {
   const typeNamesToCheck = [typeName];
   while (typeNamesToCheck.length) {
@@ -33335,6 +34562,7 @@ function getIndexDiscriminator(discriminators, discriminatorValue, typeName) {
   }
   return void 0;
 }
+__name(getIndexDiscriminator, "getIndexDiscriminator");
 function getPolymorphicMapper(serializer, mapper, object, polymorphicPropertyName) {
   const polymorphicDiscriminator = getPolymorphicDiscriminatorRecursively(serializer, mapper);
   if (polymorphicDiscriminator) {
@@ -33355,12 +34583,15 @@ function getPolymorphicMapper(serializer, mapper, object, polymorphicPropertyNam
   }
   return mapper;
 }
+__name(getPolymorphicMapper, "getPolymorphicMapper");
 function getPolymorphicDiscriminatorRecursively(serializer, mapper) {
   return mapper.type.polymorphicDiscriminator || getPolymorphicDiscriminatorSafely(serializer, mapper.type.uberParent) || getPolymorphicDiscriminatorSafely(serializer, mapper.type.className);
 }
+__name(getPolymorphicDiscriminatorRecursively, "getPolymorphicDiscriminatorRecursively");
 function getPolymorphicDiscriminatorSafely(serializer, typeName) {
   return typeName && serializer.modelMappers[typeName] && serializer.modelMappers[typeName].type.polymorphicDiscriminator;
 }
+__name(getPolymorphicDiscriminatorSafely, "getPolymorphicDiscriminatorSafely");
 var MapperTypeNames = {
   Base64Url: "Base64Url",
   Boolean: "Boolean",
@@ -33429,6 +34660,7 @@ function getOperationArgumentValueFromParameter(operationArguments, parameter, f
   }
   return value;
 }
+__name(getOperationArgumentValueFromParameter, "getOperationArgumentValueFromParameter");
 function getPropertyFromParameterPath(parent, parameterPath) {
   const result = { propertyFound: false };
   let i = 0;
@@ -33446,10 +34678,12 @@ function getPropertyFromParameterPath(parent, parameterPath) {
   }
   return result;
 }
+__name(getPropertyFromParameterPath, "getPropertyFromParameterPath");
 var originalRequestSymbol = /* @__PURE__ */ Symbol.for("@azure/core-client original request");
 function hasOriginalRequest(request) {
   return originalRequestSymbol in request;
 }
+__name(hasOriginalRequest, "hasOriginalRequest");
 function getOperationRequestInfo(request) {
   if (hasOriginalRequest(request)) {
     return getOperationRequestInfo(request[originalRequestSymbol]);
@@ -33461,6 +34695,7 @@ function getOperationRequestInfo(request) {
   }
   return info3;
 }
+__name(getOperationRequestInfo, "getOperationRequestInfo");
 
 // node_modules/@azure/core-client/dist/esm/deserializationPolicy.js
 var defaultJsonContentTypes = ["application/json", "text/json"];
@@ -33486,6 +34721,7 @@ function deserializationPolicy(options = {}) {
     }
   };
 }
+__name(deserializationPolicy, "deserializationPolicy");
 function getOperationResponseMap(parsedResponse) {
   let result;
   const request = parsedResponse.request;
@@ -33500,6 +34736,7 @@ function getOperationResponseMap(parsedResponse) {
   }
   return result;
 }
+__name(getOperationResponseMap, "getOperationResponseMap");
 function shouldDeserializeResponse(parsedResponse) {
   const request = parsedResponse.request;
   const operationInfo = getOperationRequestInfo(request);
@@ -33514,6 +34751,7 @@ function shouldDeserializeResponse(parsedResponse) {
   }
   return result;
 }
+__name(shouldDeserializeResponse, "shouldDeserializeResponse");
 async function deserializeResponseBody(jsonContentTypes, xmlContentTypes, response, options, parseXML2) {
   const parsedResponse = await parse(jsonContentTypes, xmlContentTypes, response, options, parseXML2);
   if (!shouldDeserializeResponse(parsedResponse)) {
@@ -33556,10 +34794,12 @@ async function deserializeResponseBody(jsonContentTypes, xmlContentTypes, respon
   }
   return parsedResponse;
 }
+__name(deserializeResponseBody, "deserializeResponseBody");
 function isOperationSpecEmpty(operationSpec) {
   const expectedStatusCodes = Object.keys(operationSpec.responses);
   return expectedStatusCodes.length === 0 || expectedStatusCodes.length === 1 && expectedStatusCodes[0] === "default";
 }
+__name(isOperationSpecEmpty, "isOperationSpecEmpty");
 function handleErrorResponse(parsedResponse, operationSpec, responseSpec, options) {
   const isSuccessByStatus = 200 <= parsedResponse.status && parsedResponse.status < 300;
   const isExpectedStatusCode = isOperationSpecEmpty(operationSpec) ? isSuccessByStatus : !!responseSpec;
@@ -33616,6 +34856,7 @@ function handleErrorResponse(parsedResponse, operationSpec, responseSpec, option
   }
   return { error: error2, shouldReturnResponse: false };
 }
+__name(handleErrorResponse, "handleErrorResponse");
 async function parse(jsonContentTypes, xmlContentTypes, operationResponse, opts, parseXML2) {
   if (!operationResponse.request.streamResponseStatusCodes?.has(operationResponse.status) && operationResponse.bodyAsText) {
     const text = operationResponse.bodyAsText;
@@ -33647,6 +34888,7 @@ async function parse(jsonContentTypes, xmlContentTypes, operationResponse, opts,
   }
   return operationResponse;
 }
+__name(parse, "parse");
 
 // node_modules/@azure/core-client/dist/esm/interfaceHelpers.js
 function getStreamingResponseStatusCodes(operationSpec) {
@@ -33659,6 +34901,7 @@ function getStreamingResponseStatusCodes(operationSpec) {
   }
   return result;
 }
+__name(getStreamingResponseStatusCodes, "getStreamingResponseStatusCodes");
 function getPathStringFromParameter(parameter) {
   const { parameterPath, mapper } = parameter;
   let result;
@@ -33671,6 +34914,7 @@ function getPathStringFromParameter(parameter) {
   }
   return result;
 }
+__name(getPathStringFromParameter, "getPathStringFromParameter");
 
 // node_modules/@azure/core-client/dist/esm/serializationPolicy.js
 var serializationPolicyName = "serializationPolicy";
@@ -33690,6 +34934,7 @@ function serializationPolicy(options = {}) {
     }
   };
 }
+__name(serializationPolicy, "serializationPolicy");
 function serializeHeaders(request, operationArguments, operationSpec) {
   if (operationSpec.headerParameters) {
     for (const headerParameter of operationSpec.headerParameters) {
@@ -33714,6 +34959,7 @@ function serializeHeaders(request, operationArguments, operationSpec) {
     }
   }
 }
+__name(serializeHeaders, "serializeHeaders");
 function serializeRequestBody(request, operationArguments, operationSpec, stringifyXML2 = function() {
   throw new Error("XML serialization unsupported!");
 }) {
@@ -33767,6 +35013,7 @@ function serializeRequestBody(request, operationArguments, operationSpec, string
     }
   }
 }
+__name(serializeRequestBody, "serializeRequestBody");
 function getXmlValueWithNamespace(xmlNamespace, xmlnsKey, typeName, serializedValue, options) {
   if (xmlNamespace && !["Composite", "Sequence", "Dictionary"].includes(typeName)) {
     const result = {};
@@ -33776,6 +35023,7 @@ function getXmlValueWithNamespace(xmlNamespace, xmlnsKey, typeName, serializedVa
   }
   return serializedValue;
 }
+__name(getXmlValueWithNamespace, "getXmlValueWithNamespace");
 function prepareXMLRootList(obj, elementName, xmlNamespaceKey, xmlNamespace) {
   if (!Array.isArray(obj)) {
     obj = [obj];
@@ -33787,6 +35035,7 @@ function prepareXMLRootList(obj, elementName, xmlNamespaceKey, xmlNamespace) {
   result[XML_ATTRKEY] = { [xmlNamespaceKey]: xmlNamespace };
   return result;
 }
+__name(prepareXMLRootList, "prepareXMLRootList");
 
 // node_modules/@azure/core-client/dist/esm/pipeline.js
 function createClientPipeline(options = {}) {
@@ -33803,6 +35052,7 @@ function createClientPipeline(options = {}) {
   });
   return pipeline;
 }
+__name(createClientPipeline, "createClientPipeline");
 
 // node_modules/@azure/core-client/dist/esm/httpClientCache.js
 var cachedHttpClient;
@@ -33812,6 +35062,7 @@ function getCachedDefaultHttpClient() {
   }
   return cachedHttpClient;
 }
+__name(getCachedDefaultHttpClient, "getCachedDefaultHttpClient");
 
 // node_modules/@azure/core-client/dist/esm/urlHelpers.js
 var CollectionFormatToDelimiterMap = {
@@ -33841,6 +35092,7 @@ function getRequestUrl(baseUri, operationSpec, operationArguments, fallbackObjec
   requestUrl = appendQueryParams(requestUrl, queryParams, sequenceParams, isAbsolutePath);
   return requestUrl;
 }
+__name(getRequestUrl, "getRequestUrl");
 function replaceAll(input, replacements) {
   let result = input;
   for (const [searchValue, replaceValue] of replacements) {
@@ -33848,6 +35100,7 @@ function replaceAll(input, replacements) {
   }
   return result;
 }
+__name(replaceAll, "replaceAll");
 function calculateUrlReplacements(operationSpec, operationArguments, fallbackObject) {
   const result = /* @__PURE__ */ new Map();
   if (operationSpec.urlParameters?.length) {
@@ -33863,9 +35116,11 @@ function calculateUrlReplacements(operationSpec, operationArguments, fallbackObj
   }
   return result;
 }
+__name(calculateUrlReplacements, "calculateUrlReplacements");
 function isAbsoluteUrl(url2) {
   return url2.includes("://");
 }
+__name(isAbsoluteUrl, "isAbsoluteUrl");
 function appendPath(url2, pathToAppend) {
   if (!pathToAppend) {
     return url2;
@@ -33892,6 +35147,7 @@ function appendPath(url2, pathToAppend) {
   parsedUrl.pathname = newPath;
   return parsedUrl.toString();
 }
+__name(appendPath, "appendPath");
 function calculateQueryParameters(operationSpec, operationArguments, fallbackObject) {
   const result = /* @__PURE__ */ new Map();
   const sequenceParams = /* @__PURE__ */ new Set();
@@ -33938,6 +35194,7 @@ function calculateQueryParameters(operationSpec, operationArguments, fallbackObj
     sequenceParams
   };
 }
+__name(calculateQueryParameters, "calculateQueryParameters");
 function simpleParseQueryParams(queryString) {
   const result = /* @__PURE__ */ new Map();
   if (!queryString || queryString[0] !== "?") {
@@ -33960,6 +35217,7 @@ function simpleParseQueryParams(queryString) {
   }
   return result;
 }
+__name(simpleParseQueryParams, "simpleParseQueryParams");
 function appendQueryParams(url2, queryParams, sequenceParams, noOverwrite = false) {
   if (queryParams.size === 0) {
     return url2;
@@ -34004,12 +35262,16 @@ function appendQueryParams(url2, queryParams, sequenceParams, noOverwrite = fals
   parsedUrl.search = searchPieces.length ? `?${searchPieces.join("&")}` : "";
   return parsedUrl.toString();
 }
+__name(appendQueryParams, "appendQueryParams");
 
 // node_modules/@azure/core-client/dist/esm/log.js
 var logger3 = createClientLogger2("core-client");
 
 // node_modules/@azure/core-client/dist/esm/serviceClient.js
 var ServiceClient = class {
+  static {
+    __name(this, "ServiceClient");
+  }
   /**
    * If specified, this is the base URI that requests will be made against for this ServiceClient.
    * If it is not specified, then all OperationSpecs must contain a baseUrl property.
@@ -34144,6 +35406,7 @@ function createDefaultPipeline2(options) {
     credentialOptions
   });
 }
+__name(createDefaultPipeline2, "createDefaultPipeline");
 function getCredentialScopes(options) {
   if (options.credentialScopes) {
     return options.credentialScopes;
@@ -34159,6 +35422,7 @@ function getCredentialScopes(options) {
   }
   return void 0;
 }
+__name(getCredentialScopes, "getCredentialScopes");
 
 // node_modules/@azure/core-client/dist/esm/authorizeRequestOnTenantChallenge.js
 var Constants = {
@@ -34176,7 +35440,8 @@ var Constants = {
 function isUuid(text) {
   return /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/.test(text);
 }
-var authorizeRequestOnTenantChallenge = async (challengeOptions) => {
+__name(isUuid, "isUuid");
+var authorizeRequestOnTenantChallenge = /* @__PURE__ */ __name(async (challengeOptions) => {
   const requestOptions = requestToOptions(challengeOptions.request);
   const challenge = getChallenge(challengeOptions.response);
   if (challenge) {
@@ -34197,7 +35462,7 @@ var authorizeRequestOnTenantChallenge = async (challengeOptions) => {
     return true;
   }
   return false;
-};
+}, "authorizeRequestOnTenantChallenge");
 function extractTenantId(challengeInfo) {
   const parsedAuthUri = new URL(challengeInfo.authorization_uri);
   const pathSegments = parsedAuthUri.pathname.split("/");
@@ -34207,6 +35472,7 @@ function extractTenantId(challengeInfo) {
   }
   return void 0;
 }
+__name(extractTenantId, "extractTenantId");
 function buildScopes(challengeOptions, challengeInfo) {
   if (!challengeInfo.resource_id) {
     return challengeOptions.scopes;
@@ -34219,6 +35485,7 @@ function buildScopes(challengeOptions, challengeInfo) {
   }
   return [scope];
 }
+__name(buildScopes, "buildScopes");
 function getChallenge(response) {
   const challenge = response.headers.get("WWW-Authenticate");
   if (response.status === 401 && challenge) {
@@ -34226,12 +35493,14 @@ function getChallenge(response) {
   }
   return;
 }
+__name(getChallenge, "getChallenge");
 function parseChallenge(challenge) {
   const bearerChallenge = challenge.slice("Bearer ".length);
   const challengeParts = `${bearerChallenge.trim()} `.split(" ").filter((x) => x);
   const keyValuePairs = challengeParts.map((keyValue) => (([key, value]) => ({ [key]: value }))(keyValue.trim().split("=")));
   return keyValuePairs.reduce((a, b) => ({ ...a, ...b }), {});
 }
+__name(parseChallenge, "parseChallenge");
 function requestToOptions(request) {
   return {
     abortSignal: request.abortSignal,
@@ -34241,6 +35510,7 @@ function requestToOptions(request) {
     tracingOptions: request.tracingOptions
   };
 }
+__name(requestToOptions, "requestToOptions");
 
 // node_modules/@azure/core-http-compat/dist/esm/util.js
 var originalRequestSymbol2 = /* @__PURE__ */ Symbol("Original PipelineRequest");
@@ -34277,6 +35547,7 @@ function toPipelineRequest(webResource, options = {}) {
     return newRequest;
   }
 }
+__name(toPipelineRequest, "toPipelineRequest");
 function toWebResourceLike(request, options) {
   const originalRequest = options?.originalRequest ?? request;
   const webResource = {
@@ -34350,13 +35621,19 @@ function toWebResourceLike(request, options) {
     return webResource;
   }
 }
+__name(toWebResourceLike, "toWebResourceLike");
 function toHttpHeadersLike(headers) {
   return new HttpHeaders(headers.toJSON({ preserveCase: true }));
 }
+__name(toHttpHeadersLike, "toHttpHeadersLike");
 function getHeaderKey(headerName) {
   return headerName.toLowerCase();
 }
+__name(getHeaderKey, "getHeaderKey");
 var HttpHeaders = class _HttpHeaders {
+  static {
+    __name(this, "HttpHeaders");
+  }
   _headersMap;
   constructor(rawHeaders) {
     this._headersMap = {};
@@ -34512,6 +35789,7 @@ function toCompatResponse(response, options) {
     };
   }
 }
+__name(toCompatResponse, "toCompatResponse");
 function toPipelineResponse(compatResponse) {
   const extendedCompatResponse = compatResponse;
   const response = extendedCompatResponse[originalResponse];
@@ -34527,9 +35805,13 @@ function toPipelineResponse(compatResponse) {
     };
   }
 }
+__name(toPipelineResponse, "toPipelineResponse");
 
 // node_modules/@azure/core-http-compat/dist/esm/extendedClient.js
 var ExtendedServiceClient = class extends ServiceClient {
+  static {
+    __name(this, "ExtendedServiceClient");
+  }
   constructor(options) {
     super(options);
     if (options.keepAliveOptions?.enable === false && !pipelineContainsDisableKeepAlivePolicy(this.pipeline)) {
@@ -34557,6 +35839,7 @@ var ExtendedServiceClient = class extends ServiceClient {
         userProvidedCallBack(rawResponse, flatResponse, error2);
       }
     }
+    __name(onResponse, "onResponse");
     operationArguments.options = {
       ...operationArguments.options,
       onResponse
@@ -34607,16 +35890,18 @@ function createRequestPolicyFactoryPolicy(factories) {
     }
   };
 }
+__name(createRequestPolicyFactoryPolicy, "createRequestPolicyFactoryPolicy");
 
 // node_modules/@azure/core-http-compat/dist/esm/httpClientAdapter.js
 function convertHttpClient(requestPolicyClient) {
   return {
-    sendRequest: async (request) => {
+    sendRequest: /* @__PURE__ */ __name(async (request) => {
       const response = await requestPolicyClient.sendRequest(toWebResourceLike(request, { createProxy: true }));
       return toPipelineResponse(response);
-    }
+    }, "sendRequest")
   };
 }
+__name(convertHttpClient, "convertHttpClient");
 
 // node_modules/fast-xml-parser/src/util.js
 var nameStartChar = ":A-Za-z_\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02FF\\u0370-\\u037D\\u037F-\\u1FFF\\u200C-\\u200D\\u2070-\\u218F\\u2C00-\\u2FEF\\u3001-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFFD";
@@ -34638,13 +35923,15 @@ function getAllMatches(string, regex) {
   }
   return matches;
 }
-var isName = function(string) {
+__name(getAllMatches, "getAllMatches");
+var isName = /* @__PURE__ */ __name(function(string) {
   const match4 = regexName.exec(string);
   return !(match4 === null || typeof match4 === "undefined");
-};
+}, "isName");
 function isExist(v) {
   return typeof v !== "undefined";
 }
+__name(isExist, "isExist");
 var DANGEROUS_PROPERTY_NAMES = [
   // '__proto__',
   // 'constructor',
@@ -34800,9 +36087,11 @@ function validate(xmlData, options) {
   }
   return true;
 }
+__name(validate, "validate");
 function isWhiteSpace(char) {
   return char === " " || char === "	" || char === "\n" || char === "\r";
 }
+__name(isWhiteSpace, "isWhiteSpace");
 function readPI(xmlData, i) {
   const start = i;
   for (; i < xmlData.length; i++) {
@@ -34820,6 +36109,7 @@ function readPI(xmlData, i) {
   }
   return i;
 }
+__name(readPI, "readPI");
 function readCommentAndCDATA(xmlData, i) {
   if (xmlData.length > i + 5 && xmlData[i + 1] === "-" && xmlData[i + 2] === "-") {
     for (i += 3; i < xmlData.length; i++) {
@@ -34850,6 +36140,7 @@ function readCommentAndCDATA(xmlData, i) {
   }
   return i;
 }
+__name(readCommentAndCDATA, "readCommentAndCDATA");
 var doubleQuote = '"';
 var singleQuote = "'";
 function readAttributeStr(xmlData, i) {
@@ -34881,6 +36172,7 @@ function readAttributeStr(xmlData, i) {
     tagClosed
   };
 }
+__name(readAttributeStr, "readAttributeStr");
 var validAttrStrRegxp = new RegExp(`(\\s*)([^\\s=]+)(\\s*=)?(\\s*(['"])(([\\s\\S])*?)\\5)?`, "g");
 function validateAttributeString(attrStr, options) {
   const matches = getAllMatches(attrStr, validAttrStrRegxp);
@@ -34905,6 +36197,7 @@ function validateAttributeString(attrStr, options) {
   }
   return true;
 }
+__name(validateAttributeString, "validateAttributeString");
 function validateNumberAmpersand(xmlData, i) {
   let re = /\d/;
   if (xmlData[i] === "x") {
@@ -34919,6 +36212,7 @@ function validateNumberAmpersand(xmlData, i) {
   }
   return -1;
 }
+__name(validateNumberAmpersand, "validateNumberAmpersand");
 function validateAmpersand(xmlData, i) {
   i++;
   if (xmlData[i] === ";")
@@ -34937,6 +36231,7 @@ function validateAmpersand(xmlData, i) {
   }
   return i;
 }
+__name(validateAmpersand, "validateAmpersand");
 function getErrorObject(code, message, lineNumber) {
   return {
     err: {
@@ -34947,12 +36242,15 @@ function getErrorObject(code, message, lineNumber) {
     }
   };
 }
+__name(getErrorObject, "getErrorObject");
 function validateAttrName(attrName) {
   return isName(attrName);
 }
+__name(validateAttrName, "validateAttrName");
 function validateTagName(tagname) {
   return isName(tagname);
 }
+__name(validateTagName, "validateTagName");
 function getLineNumberForPosition(xmlData, index) {
   const lines = xmlData.substring(0, index).split(/\r?\n/);
   return {
@@ -34961,17 +36259,19 @@ function getLineNumberForPosition(xmlData, index) {
     col: lines[lines.length - 1].length + 1
   };
 }
+__name(getLineNumberForPosition, "getLineNumberForPosition");
 function getPositionFromMatch(match4) {
   return match4.startIndex + match4[1].length;
 }
+__name(getPositionFromMatch, "getPositionFromMatch");
 
 // node_modules/fast-xml-parser/src/xmlparser/OptionsBuilder.js
-var defaultOnDangerousProperty = (name) => {
+var defaultOnDangerousProperty = /* @__PURE__ */ __name((name) => {
   if (DANGEROUS_PROPERTY_NAMES.includes(name)) {
     return "__" + name;
   }
   return name;
-};
+}, "defaultOnDangerousProperty");
 var defaultOptions2 = {
   preserveOrder: false,
   attributeNamePrefix: "@_",
@@ -34993,16 +36293,16 @@ var defaultOptions2 = {
     leadingZeros: true,
     eNotation: true
   },
-  tagValueProcessor: function(tagName, val) {
+  tagValueProcessor: /* @__PURE__ */ __name(function(tagName, val) {
     return val;
-  },
-  attributeValueProcessor: function(attrName, val) {
+  }, "tagValueProcessor"),
+  attributeValueProcessor: /* @__PURE__ */ __name(function(attrName, val) {
     return val;
-  },
+  }, "attributeValueProcessor"),
   stopNodes: [],
   //nested tags will not be parsed even for errors
   alwaysCreateTextNode: false,
-  isArray: () => false,
+  isArray: /* @__PURE__ */ __name(() => false, "isArray"),
   commentPropName: false,
   unpairedTags: [],
   processEntities: true,
@@ -35011,9 +36311,9 @@ var defaultOptions2 = {
   ignorePiTags: false,
   transformTagName: false,
   transformAttributeName: false,
-  updateTag: function(tagName, jPath, attrs) {
+  updateTag: /* @__PURE__ */ __name(function(tagName, jPath, attrs) {
     return tagName;
-  },
+  }, "updateTag"),
   // skipEmptyListItem: false
   captureMetaData: false,
   maxNestedTags: 100,
@@ -35038,6 +36338,7 @@ function validatePropertyName(propertyName, optionName) {
     );
   }
 }
+__name(validatePropertyName, "validatePropertyName");
 function normalizeProcessEntities(value) {
   if (typeof value === "boolean") {
     return {
@@ -35067,7 +36368,8 @@ function normalizeProcessEntities(value) {
   }
   return normalizeProcessEntities(true);
 }
-var buildOptions = function(options) {
+__name(normalizeProcessEntities, "normalizeProcessEntities");
+var buildOptions = /* @__PURE__ */ __name(function(options) {
   const built = Object.assign({}, defaultOptions2, options);
   const propertyNameOptions = [
     { value: built.attributeNamePrefix, name: "attributeNamePrefix" },
@@ -35094,7 +36396,7 @@ var buildOptions = function(options) {
     });
   }
   return built;
-};
+}, "buildOptions");
 
 // node_modules/fast-xml-parser/src/xmlparser/xmlNode.js
 var METADATA_SYMBOL;
@@ -35104,6 +36406,9 @@ if (typeof Symbol !== "function") {
   METADATA_SYMBOL = /* @__PURE__ */ Symbol("XML Node Metadata");
 }
 var XmlNode = class {
+  static {
+    __name(this, "XmlNode");
+  }
   constructor(tagname) {
     this.tagname = tagname;
     this.child = [];
@@ -35132,6 +36437,9 @@ var XmlNode = class {
 
 // node_modules/fast-xml-parser/src/xmlparser/DocTypeReader.js
 var DocTypeReader = class {
+  static {
+    __name(this, "DocTypeReader");
+  }
   constructor(options) {
     this.suppressValidationErr = !options;
     this.options = options;
@@ -35388,24 +36696,26 @@ var DocTypeReader = class {
     };
   }
 };
-var skipWhitespace = (data, index) => {
+var skipWhitespace = /* @__PURE__ */ __name((data, index) => {
   while (index < data.length && /\s/.test(data[index])) {
     index++;
   }
   return index;
-};
+}, "skipWhitespace");
 function hasSeq(data, seq, i) {
   for (let j = 0; j < seq.length; j++) {
     if (seq[j] !== data[i + j + 1]) return false;
   }
   return true;
 }
+__name(hasSeq, "hasSeq");
 function validateEntityName(name) {
   if (isName(name))
     return name;
   else
     throw new Error(`Invalid entity name ${name}`);
 }
+__name(validateEntityName, "validateEntityName");
 
 // node_modules/strnum/strnum.js
 var hexRegex = /^[-+]?0x[a-fA-F0-9]+$/;
@@ -35469,6 +36779,7 @@ function toNumber(str, options = {}) {
     }
   }
 }
+__name(toNumber, "toNumber");
 var eNotationRegx = /^([-+])?(0*)(\d*(\.\d*)?[eE][-\+]?\d+)$/;
 function resolveEnotation(str, trimmedStr, options) {
   if (!options.eNotation) return str;
@@ -35492,6 +36803,7 @@ function resolveEnotation(str, trimmedStr, options) {
     return str;
   }
 }
+__name(resolveEnotation, "resolveEnotation");
 function trimZeros(numStr) {
   if (numStr && numStr.indexOf(".") !== -1) {
     numStr = numStr.replace(/0+$/, "");
@@ -35502,12 +36814,14 @@ function trimZeros(numStr) {
   }
   return numStr;
 }
+__name(trimZeros, "trimZeros");
 function parse_int(numStr, base) {
   if (parseInt) return parseInt(numStr, base);
   else if (Number.parseInt) return Number.parseInt(numStr, base);
   else if (window && window.parseInt) return window.parseInt(numStr, base);
   else throw new Error("parseInt, Number.parseInt, window.parseInt are not supported");
 }
+__name(parse_int, "parse_int");
 function handleInfinity(str, num, options) {
   const isPositive = num === Infinity;
   switch (options.infinity.toLowerCase()) {
@@ -35523,6 +36837,7 @@ function handleInfinity(str, num, options) {
       return str;
   }
 }
+__name(handleInfinity, "handleInfinity");
 
 // node_modules/fast-xml-parser/src/ignoreAttributes.js
 function getIgnoreAttributesFn(ignoreAttributes) {
@@ -35543,9 +36858,13 @@ function getIgnoreAttributesFn(ignoreAttributes) {
   }
   return () => false;
 }
+__name(getIgnoreAttributesFn, "getIgnoreAttributesFn");
 
 // node_modules/path-expression-matcher/src/Expression.js
 var Expression = class {
+  static {
+    __name(this, "Expression");
+  }
   /**
    * Create a new Expression
    * @param {string} pattern - Pattern string (e.g., "root.users.user", "..user[id]")
@@ -35708,6 +37027,9 @@ var Expression = class {
 
 // node_modules/path-expression-matcher/src/Matcher.js
 var Matcher = class {
+  static {
+    __name(this, "Matcher");
+  }
   /**
    * Create a new Matcher
    * @param {Object} options - Configuration options
@@ -36033,6 +37355,7 @@ function extractRawAttributes(prefixedAttrs, options) {
   }
   return rawAttrs;
 }
+__name(extractRawAttributes, "extractRawAttributes");
 function extractNamespace(rawTagName) {
   if (!rawTagName || typeof rawTagName !== "string") return void 0;
   const colonIndex = rawTagName.indexOf(":");
@@ -36044,7 +37367,11 @@ function extractNamespace(rawTagName) {
   }
   return void 0;
 }
+__name(extractNamespace, "extractNamespace");
 var OrderedObjParser = class {
+  static {
+    __name(this, "OrderedObjParser");
+  }
   constructor(options) {
     this.options = options;
     this.currentNode = null;
@@ -36071,8 +37398,8 @@ var OrderedObjParser = class {
       "copyright": { regex: /&(copy|#169);/g, val: "\xA9" },
       "reg": { regex: /&(reg|#174);/g, val: "\xAE" },
       "inr": { regex: /&(inr|#8377);/g, val: "\u20B9" },
-      "num_dec": { regex: /&#([0-9]{1,7});/g, val: (_, str) => fromCodePoint(str, 10, "&#") },
-      "num_hex": { regex: /&#x([0-9a-fA-F]{1,6});/g, val: (_, str) => fromCodePoint(str, 16, "&#x") }
+      "num_dec": { regex: /&#([0-9]{1,7});/g, val: /* @__PURE__ */ __name((_, str) => fromCodePoint(str, 10, "&#"), "val") },
+      "num_hex": { regex: /&#x([0-9a-fA-F]{1,6});/g, val: /* @__PURE__ */ __name((_, str) => fromCodePoint(str, 16, "&#x"), "val") }
     };
     this.addExternalEntities = addExternalEntities;
     this.parseXml = parseXml;
@@ -36113,6 +37440,7 @@ function addExternalEntities(externalEntities) {
     };
   }
 }
+__name(addExternalEntities, "addExternalEntities");
 function parseTextData(val, tagName, jPath, dontTrim, hasAttributes, isLeafNode, escapeEntities) {
   if (val !== void 0) {
     if (this.options.trimValues && !dontTrim) {
@@ -36139,6 +37467,7 @@ function parseTextData(val, tagName, jPath, dontTrim, hasAttributes, isLeafNode,
     }
   }
 }
+__name(parseTextData, "parseTextData");
 function resolveNameSpace(tagname) {
   if (this.options.removeNSPrefix) {
     const tags2 = tagname.split(":");
@@ -36152,6 +37481,7 @@ function resolveNameSpace(tagname) {
   }
   return tagname;
 }
+__name(resolveNameSpace, "resolveNameSpace");
 var attrsRegx = new RegExp(`([^\\s=]+)\\s*(=\\s*(['"])([\\s\\S]*?)\\3)?`, "gm");
 function buildAttributesMap(attrStr, jPath, tagName) {
   if (this.options.ignoreAttributes !== true && typeof attrStr === "string") {
@@ -36221,7 +37551,8 @@ function buildAttributesMap(attrStr, jPath, tagName) {
     return attrs;
   }
 }
-var parseXml = function(xmlData) {
+__name(buildAttributesMap, "buildAttributesMap");
+var parseXml = /* @__PURE__ */ __name(function(xmlData) {
   xmlData = xmlData.replace(/\r\n?/g, "\n");
   const xmlObj = new XmlNode("!xml");
   let currentNode = xmlObj;
@@ -36411,7 +37742,7 @@ var parseXml = function(xmlData) {
     }
   }
   return xmlObj.child;
-};
+}, "parseXml");
 function addChild(currentNode, childNode, matcher, startIndex) {
   if (!this.options.captureMetaData) startIndex = void 0;
   const jPathOrMatcher = this.options.jPath ? matcher.toString() : matcher;
@@ -36424,6 +37755,7 @@ function addChild(currentNode, childNode, matcher, startIndex) {
     currentNode.addChild(childNode, startIndex);
   }
 }
+__name(addChild, "addChild");
 function replaceEntitiesValue(val, tagName, jPath) {
   const entityConfig = this.options.processEntities;
   if (!entityConfig || !entityConfig.enabled) {
@@ -36479,6 +37811,7 @@ function replaceEntitiesValue(val, tagName, jPath) {
   val = val.replace(this.ampEntity.regex, this.ampEntity.val);
   return val;
 }
+__name(replaceEntitiesValue, "replaceEntitiesValue");
 function saveTextToParentTag(textData, parentNode, matcher, isLeafNode) {
   if (textData) {
     if (isLeafNode === void 0) isLeafNode = parentNode.child.length === 0;
@@ -36496,6 +37829,7 @@ function saveTextToParentTag(textData, parentNode, matcher, isLeafNode) {
   }
   return textData;
 }
+__name(saveTextToParentTag, "saveTextToParentTag");
 function isItStopNode(stopNodeExpressions, matcher) {
   if (!stopNodeExpressions || stopNodeExpressions.length === 0) return false;
   for (let i = 0; i < stopNodeExpressions.length; i++) {
@@ -36505,6 +37839,7 @@ function isItStopNode(stopNodeExpressions, matcher) {
   }
   return false;
 }
+__name(isItStopNode, "isItStopNode");
 function tagExpWithClosingIndex(xmlData, i, closingChar = ">") {
   let attrBoundary;
   let tagExp = "";
@@ -36534,6 +37869,7 @@ function tagExpWithClosingIndex(xmlData, i, closingChar = ">") {
     tagExp += ch;
   }
 }
+__name(tagExpWithClosingIndex, "tagExpWithClosingIndex");
 function findClosingIndex(xmlData, str, i, errMsg) {
   const closingIndex = xmlData.indexOf(str, i);
   if (closingIndex === -1) {
@@ -36542,6 +37878,7 @@ function findClosingIndex(xmlData, str, i, errMsg) {
     return closingIndex + str.length - 1;
   }
 }
+__name(findClosingIndex, "findClosingIndex");
 function readTagExp(xmlData, i, removeNSPrefix, closingChar = ">") {
   const result = tagExpWithClosingIndex(xmlData, i + 1, closingChar);
   if (!result) return;
@@ -36570,6 +37907,7 @@ function readTagExp(xmlData, i, removeNSPrefix, closingChar = ">") {
     rawTagName
   };
 }
+__name(readTagExp, "readTagExp");
 function readStopNodeData(xmlData, tagName, i) {
   const startIndex = i;
   let openTagCount = 1;
@@ -36610,6 +37948,7 @@ function readStopNodeData(xmlData, tagName, i) {
     }
   }
 }
+__name(readStopNodeData, "readStopNodeData");
 function parseValue(val, shouldParse, options) {
   if (shouldParse && typeof val === "string") {
     const newval = val.trim();
@@ -36624,6 +37963,7 @@ function parseValue(val, shouldParse, options) {
     }
   }
 }
+__name(parseValue, "parseValue");
 function fromCodePoint(str, base, prefix2) {
   const codePoint = Number.parseInt(str, base);
   if (codePoint >= 0 && codePoint <= 1114111) {
@@ -36632,6 +37972,7 @@ function fromCodePoint(str, base, prefix2) {
     return prefix2 + str + ";";
   }
 }
+__name(fromCodePoint, "fromCodePoint");
 function transformTagName(fn, tagName, tagExp, options) {
   if (fn) {
     const newTagName = fn(tagName);
@@ -36643,6 +37984,7 @@ function transformTagName(fn, tagName, tagExp, options) {
   tagName = sanitizeName(tagName, options);
   return { tagName, tagExp };
 }
+__name(transformTagName, "transformTagName");
 function sanitizeName(name, options) {
   if (criticalProperties.includes(name)) {
     throw new Error(`[SECURITY] Invalid name: "${name}" is a reserved JavaScript keyword that could cause prototype pollution`);
@@ -36651,6 +37993,7 @@ function sanitizeName(name, options) {
   }
   return name;
 }
+__name(sanitizeName, "sanitizeName");
 
 // node_modules/fast-xml-parser/src/xmlparser/node2json.js
 var METADATA_SYMBOL2 = XmlNode.getMetaDataSymbol();
@@ -36668,9 +38011,11 @@ function stripAttributePrefix(attrs, prefix2) {
   }
   return rawAttrs;
 }
+__name(stripAttributePrefix, "stripAttributePrefix");
 function prettify(node, options, matcher) {
   return compress(node, options, matcher);
 }
+__name(prettify, "prettify");
 function compress(arr, options, matcher) {
   let text;
   const compressedObj = {};
@@ -36726,6 +38071,7 @@ function compress(arr, options, matcher) {
   } else if (text !== void 0) compressedObj[options.textNodeName] = text;
   return compressedObj;
 }
+__name(compress, "compress");
 function propName(obj) {
   const keys = Object.keys(obj);
   for (let i = 0; i < keys.length; i++) {
@@ -36733,6 +38079,7 @@ function propName(obj) {
     if (key !== ":@") return key;
   }
 }
+__name(propName, "propName");
 function assignAttributes(obj, attrMap, matcher, options) {
   if (attrMap) {
     const keys = Object.keys(attrMap);
@@ -36749,6 +38096,7 @@ function assignAttributes(obj, attrMap, matcher, options) {
     }
   }
 }
+__name(assignAttributes, "assignAttributes");
 function isLeafTag(obj, options) {
   const { textNodeName } = options;
   const propCount = Object.keys(obj).length;
@@ -36760,9 +38108,13 @@ function isLeafTag(obj, options) {
   }
   return false;
 }
+__name(isLeafTag, "isLeafTag");
 
 // node_modules/fast-xml-parser/src/xmlparser/XMLParser.js
 var XMLParser = class {
+  static {
+    __name(this, "XMLParser");
+  }
   constructor(options) {
     this.externalEntities = {};
     this.options = buildOptions(options);
@@ -36843,6 +38195,7 @@ function toXml(jArray, options) {
   const matcher = new Matcher();
   return arrToStr(jArray, options, indentation, matcher, stopNodeExpressions);
 }
+__name(toXml, "toXml");
 function arrToStr(arr, options, indentation, matcher, stopNodeExpressions) {
   let xmlStr = "";
   let isPreviousElementTag = false;
@@ -36930,6 +38283,7 @@ function arrToStr(arr, options, indentation, matcher, stopNodeExpressions) {
   }
   return xmlStr;
 }
+__name(arrToStr, "arrToStr");
 function extractAttributeValues(attrMap, options) {
   if (!attrMap || options.ignoreAttributes) return null;
   const attrValues = {};
@@ -36942,6 +38296,7 @@ function extractAttributeValues(attrMap, options) {
   }
   return hasAttrs ? attrValues : null;
 }
+__name(extractAttributeValues, "extractAttributeValues");
 function getRawContent2(arr, options) {
   if (!Array.isArray(arr)) {
     if (arr !== void 0 && arr !== null) {
@@ -36973,6 +38328,7 @@ function getRawContent2(arr, options) {
   }
   return content;
 }
+__name(getRawContent2, "getRawContent");
 function attr_to_str_raw(attrMap, options) {
   let attrStr = "";
   if (attrMap && !options.ignoreAttributes) {
@@ -36988,6 +38344,7 @@ function attr_to_str_raw(attrMap, options) {
   }
   return attrStr;
 }
+__name(attr_to_str_raw, "attr_to_str_raw");
 function propName2(obj) {
   const keys = Object.keys(obj);
   for (let i = 0; i < keys.length; i++) {
@@ -36996,6 +38353,7 @@ function propName2(obj) {
     if (key !== ":@") return key;
   }
 }
+__name(propName2, "propName");
 function attr_to_str(attrMap, options, isStopNode) {
   let attrStr = "";
   if (attrMap && !options.ignoreAttributes) {
@@ -37017,6 +38375,7 @@ function attr_to_str(attrMap, options, isStopNode) {
   }
   return attrStr;
 }
+__name(attr_to_str, "attr_to_str");
 function checkStopNode(matcher, stopNodeExpressions) {
   if (!stopNodeExpressions || stopNodeExpressions.length === 0) return false;
   for (let i = 0; i < stopNodeExpressions.length; i++) {
@@ -37026,6 +38385,7 @@ function checkStopNode(matcher, stopNodeExpressions) {
   }
   return false;
 }
+__name(checkStopNode, "checkStopNode");
 function replaceEntitiesValue2(textValue, options) {
   if (textValue && textValue.length > 0 && options.processEntities) {
     for (let i = 0; i < options.entities.length; i++) {
@@ -37035,6 +38395,7 @@ function replaceEntitiesValue2(textValue, options) {
   }
   return textValue;
 }
+__name(replaceEntitiesValue2, "replaceEntitiesValue");
 
 // node_modules/fast-xml-builder/src/ignoreAttributes.js
 function getIgnoreAttributesFn2(ignoreAttributes) {
@@ -37055,6 +38416,7 @@ function getIgnoreAttributesFn2(ignoreAttributes) {
   }
   return () => false;
 }
+__name(getIgnoreAttributesFn2, "getIgnoreAttributesFn");
 
 // node_modules/fast-xml-builder/src/fxb.js
 var defaultOptions3 = {
@@ -37068,12 +38430,12 @@ var defaultOptions3 = {
   suppressEmptyNode: false,
   suppressUnpairedNode: true,
   suppressBooleanAttributes: true,
-  tagValueProcessor: function(key, a) {
+  tagValueProcessor: /* @__PURE__ */ __name(function(key, a) {
     return a;
-  },
-  attributeValueProcessor: function(attrName, a) {
+  }, "tagValueProcessor"),
+  attributeValueProcessor: /* @__PURE__ */ __name(function(attrName, a) {
     return a;
-  },
+  }, "attributeValueProcessor"),
   preserveOrder: false,
   commentPropName: false,
   unpairedTags: [],
@@ -37136,6 +38498,7 @@ function Builder(options) {
     this.newLine = "";
   }
 }
+__name(Builder, "Builder");
 Builder.prototype.build = function(jObj) {
   if (this.options.preserveOrder) {
     return toXml(jObj, this.options);
@@ -37285,6 +38648,7 @@ function processTextOrObjNode(object, key, level, matcher) {
     return this.buildObjectNode(result.val, key, result.attrStr, level);
   }
 }
+__name(processTextOrObjNode, "processTextOrObjNode");
 Builder.prototype.extractAttributes = function(obj) {
   if (!obj || typeof obj !== "object") return null;
   const attrValues = {};
@@ -37457,6 +38821,7 @@ Builder.prototype.replaceEntitiesValue = function(textValue) {
 function indentate(level) {
   return this.options.indentBy.repeat(level);
 }
+__name(indentate, "indentate");
 function isAttribute(name) {
   if (name.startsWith(this.options.attributeNamePrefix) && name !== this.options.textNodeName) {
     return name.substr(this.attrPrefixLen);
@@ -37464,6 +38829,7 @@ function isAttribute(name) {
     return false;
   }
 }
+__name(isAttribute, "isAttribute");
 
 // node_modules/fast-xml-parser/src/xmlbuilder/json2xml.js
 var json2xml_default = Builder;
@@ -37487,13 +38853,16 @@ function getCommonOptions(options) {
     suppressBooleanAttributes: false
   };
 }
+__name(getCommonOptions, "getCommonOptions");
 function getSerializerOptions(options = {}) {
   var _a2, _b;
   return Object.assign(Object.assign({}, getCommonOptions(options)), { attributeNamePrefix: "@_", format: true, suppressEmptyNode: true, indentBy: "", rootNodeName: (_a2 = options.rootName) !== null && _a2 !== void 0 ? _a2 : "root", cdataPropName: (_b = options.cdataPropName) !== null && _b !== void 0 ? _b : "__cdata" });
 }
+__name(getSerializerOptions, "getSerializerOptions");
 function getParserOptions(options = {}) {
   return Object.assign(Object.assign({}, getCommonOptions(options)), { parseAttributeValue: false, parseTagValue: false, attributeNamePrefix: "", stopNodes: options.stopNodes, processEntities: true, trimValues: false });
 }
+__name(getParserOptions, "getParserOptions");
 function stringifyXML(obj, opts = {}) {
   const parserOptions = getSerializerOptions(opts);
   const j2x = new json2xml_default(parserOptions);
@@ -37501,6 +38870,7 @@ function stringifyXML(obj, opts = {}) {
   const xmlData = j2x.build(node);
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>${xmlData}`.replace(/\n/g, "");
 }
+__name(stringifyXML, "stringifyXML");
 async function parseXML(str, opts = {}) {
   if (!str) {
     throw new Error("Document is empty");
@@ -37522,6 +38892,7 @@ async function parseXML(str, opts = {}) {
   }
   return parsedXml;
 }
+__name(parseXML, "parseXML");
 
 // node_modules/@azure/storage-blob/dist/esm/log.js
 var logger4 = createClientLogger2("storage-blob");
@@ -37532,6 +38903,9 @@ var import_events = require("events");
 // node_modules/@azure/storage-common/dist/esm/BuffersStream.js
 var import_node_stream2 = require("node:stream");
 var BuffersStream = class extends import_node_stream2.Readable {
+  static {
+    __name(this, "BuffersStream");
+  }
   buffers;
   byteLength;
   /**
@@ -37618,6 +38992,9 @@ var BuffersStream = class extends import_node_stream2.Readable {
 var import_node_buffer = __toESM(require("node:buffer"), 1);
 var maxBufferLength = import_node_buffer.default.constants.MAX_LENGTH;
 var PooledBuffer = class {
+  static {
+    __name(this, "PooledBuffer");
+  }
   /**
    * Internal buffers used to keep the data.
    * Each buffer has a length of the maxBufferLength except last one.
@@ -37696,6 +39073,9 @@ var PooledBuffer = class {
 
 // node_modules/@azure/storage-common/dist/esm/BufferScheduler.js
 var BufferScheduler = class {
+  static {
+    __name(this, "BufferScheduler");
+  }
   /**
    * Size of buffers in incoming and outgoing queues. This class will try to align
    * data read from Readable stream into buffer chunks with bufferSize defined.
@@ -37946,9 +39326,13 @@ function getCachedDefaultHttpClient2() {
   }
   return _defaultHttpClient;
 }
+__name(getCachedDefaultHttpClient2, "getCachedDefaultHttpClient");
 
 // node_modules/@azure/storage-common/dist/esm/policies/RequestPolicy.js
 var BaseRequestPolicy = class {
+  static {
+    __name(this, "BaseRequestPolicy");
+  }
   _nextPolicy;
   _options;
   /**
@@ -38035,11 +39419,13 @@ function setURLParameter(url2, name, value) {
   urlParsed.search = searchPieces.length ? `?${searchPieces.join("&")}` : "";
   return urlParsed.toString();
 }
+__name(setURLParameter, "setURLParameter");
 function setURLHost(url2, host) {
   const urlParsed = new URL(url2);
   urlParsed.hostname = host;
   return urlParsed.toString();
 }
+__name(setURLHost, "setURLHost");
 function getURLPath(url2) {
   try {
     const urlParsed = new URL(url2);
@@ -38048,6 +39434,7 @@ function getURLPath(url2) {
     return void 0;
   }
 }
+__name(getURLPath, "getURLPath");
 function getURLQueries(url2) {
   let queryString = new URL(url2).search;
   if (!queryString) {
@@ -38070,30 +39457,35 @@ function getURLQueries(url2) {
   }
   return queries;
 }
+__name(getURLQueries, "getURLQueries");
 async function delay3(timeInMs, aborter, abortError) {
   return new Promise((resolve2, reject) => {
     let timeout;
-    const abortHandler = () => {
+    const abortHandler = /* @__PURE__ */ __name(() => {
       if (timeout !== void 0) {
         clearTimeout(timeout);
       }
       reject(abortError);
-    };
-    const resolveHandler = () => {
+    }, "abortHandler");
+    const resolveHandler = /* @__PURE__ */ __name(() => {
       if (aborter !== void 0) {
         aborter.removeEventListener("abort", abortHandler);
       }
       resolve2();
-    };
+    }, "resolveHandler");
     timeout = setTimeout(resolveHandler, timeInMs);
     if (aborter !== void 0) {
       aborter.addEventListener("abort", abortHandler);
     }
   });
 }
+__name(delay3, "delay");
 
 // node_modules/@azure/storage-common/dist/esm/policies/StorageBrowserPolicy.js
 var StorageBrowserPolicy = class extends BaseRequestPolicy {
+  static {
+    __name(this, "StorageBrowserPolicy");
+  }
   /**
    * Creates an instance of StorageBrowserPolicy.
    * @param nextPolicy -
@@ -38124,6 +39516,9 @@ var StorageBrowserPolicy = class extends BaseRequestPolicy {
 
 // node_modules/@azure/storage-common/dist/esm/StorageBrowserPolicyFactory.js
 var StorageBrowserPolicyFactory = class {
+  static {
+    __name(this, "StorageBrowserPolicyFactory");
+  }
   /**
    * Creates a StorageBrowserPolicyFactory object.
    *
@@ -38137,6 +39532,9 @@ var StorageBrowserPolicyFactory = class {
 
 // node_modules/@azure/storage-common/dist/esm/policies/CredentialPolicy.js
 var CredentialPolicy = class extends BaseRequestPolicy {
+  static {
+    __name(this, "CredentialPolicy");
+  }
   /**
    * Sends out request.
    *
@@ -38158,6 +39556,9 @@ var CredentialPolicy = class extends BaseRequestPolicy {
 
 // node_modules/@azure/storage-common/dist/esm/policies/AnonymousCredentialPolicy.js
 var AnonymousCredentialPolicy = class extends CredentialPolicy {
+  static {
+    __name(this, "AnonymousCredentialPolicy");
+  }
   /**
    * Creates an instance of AnonymousCredentialPolicy.
    * @param nextPolicy -
@@ -38172,6 +39573,9 @@ var AnonymousCredentialPolicy = class extends CredentialPolicy {
 
 // node_modules/@azure/storage-common/dist/esm/credentials/Credential.js
 var Credential = class {
+  static {
+    __name(this, "Credential");
+  }
   /**
    * Creates a RequestPolicy object.
    *
@@ -38185,6 +39589,9 @@ var Credential = class {
 
 // node_modules/@azure/storage-common/dist/esm/credentials/AnonymousCredential.js
 var AnonymousCredential = class extends Credential {
+  static {
+    __name(this, "AnonymousCredential");
+  }
   /**
    * Creates an {@link AnonymousCredentialPolicy} object.
    *
@@ -38595,6 +40002,7 @@ function compareHeader(lhs, rhs) {
     return -1;
   return 1;
 }
+__name(compareHeader, "compareHeader");
 function isLessThan(lhs, rhs) {
   const tables = [table_lv0, table_lv2, table_lv4];
   let curr_level = 0;
@@ -38623,9 +40031,13 @@ function isLessThan(lhs, rhs) {
   }
   return false;
 }
+__name(isLessThan, "isLessThan");
 
 // node_modules/@azure/storage-common/dist/esm/policies/StorageSharedKeyCredentialPolicy.js
 var StorageSharedKeyCredentialPolicy = class extends CredentialPolicy {
+  static {
+    __name(this, "StorageSharedKeyCredentialPolicy");
+  }
   /**
    * Reference to StorageSharedKeyCredential which generates StorageSharedKeyCredentialPolicy
    */
@@ -38750,6 +40162,9 @@ ${key}:${decodeURIComponent(lowercaseQueries[key])}`;
 
 // node_modules/@azure/storage-common/dist/esm/credentials/StorageSharedKeyCredential.js
 var StorageSharedKeyCredential = class extends Credential {
+  static {
+    __name(this, "StorageSharedKeyCredential");
+  }
   /**
    * Azure Storage account name; readonly.
    */
@@ -38809,6 +40224,9 @@ var DEFAULT_RETRY_OPTIONS = {
 };
 var RETRY_ABORT_ERROR = new AbortError2("The operation was aborted.");
 var StorageRetryPolicy = class extends BaseRequestPolicy {
+  static {
+    __name(this, "StorageRetryPolicy");
+  }
   /**
    * RetryOptions.
    */
@@ -38966,6 +40384,9 @@ var StorageRetryPolicy = class extends BaseRequestPolicy {
 
 // node_modules/@azure/storage-common/dist/esm/StorageRetryPolicyFactory.js
 var StorageRetryPolicyFactory = class {
+  static {
+    __name(this, "StorageRetryPolicyFactory");
+  }
   retryOptions;
   /**
    * Creates an instance of StorageRetryPolicyFactory.
@@ -39003,6 +40424,7 @@ function storageBrowserPolicy() {
     }
   };
 }
+__name(storageBrowserPolicy, "storageBrowserPolicy");
 
 // node_modules/@azure/storage-common/dist/esm/policies/StorageCorrectContentLengthPolicy.js
 var storageCorrectContentLengthPolicyName = "StorageCorrectContentLengthPolicy";
@@ -39012,6 +40434,7 @@ function storageCorrectContentLengthPolicy() {
       request.headers.set(HeaderConstants.CONTENT_LENGTH, Buffer.byteLength(request.body));
     }
   }
+  __name(correctContentLength, "correctContentLength");
   return {
     name: storageCorrectContentLengthPolicyName,
     async sendRequest(request, next) {
@@ -39020,6 +40443,7 @@ function storageCorrectContentLengthPolicy() {
     }
   };
 }
+__name(storageCorrectContentLengthPolicy, "storageCorrectContentLengthPolicy");
 
 // node_modules/@azure/storage-common/dist/esm/policies/StorageRetryPolicyV2.js
 var storageRetryPolicyName = "storageRetryPolicy";
@@ -39094,6 +40518,7 @@ function storageRetryPolicy(options = {}) {
     }
     return false;
   }
+  __name(shouldRetry, "shouldRetry");
   function calculateDelay(isPrimaryRetry, attempt) {
     let delayTimeInMs = 0;
     if (isPrimaryRetry) {
@@ -39111,6 +40536,7 @@ function storageRetryPolicy(options = {}) {
     logger5.info(`RetryPolicy: Delay for ${delayTimeInMs}ms`);
     return delayTimeInMs;
   }
+  __name(calculateDelay, "calculateDelay");
   return {
     name: storageRetryPolicyName,
     async sendRequest(request, next) {
@@ -39155,6 +40581,7 @@ function storageRetryPolicy(options = {}) {
     }
   };
 }
+__name(storageRetryPolicy, "storageRetryPolicy");
 
 // node_modules/@azure/storage-common/dist/esm/policies/StorageSharedKeyCredentialPolicyV2.js
 var import_node_crypto2 = require("node:crypto");
@@ -39182,6 +40609,7 @@ function storageSharedKeyCredentialPolicy(options) {
     const signature = (0, import_node_crypto2.createHmac)("sha256", options.accountKey).update(stringToSign, "utf8").digest("base64");
     request.headers.set(HeaderConstants.AUTHORIZATION, `SharedKey ${options.accountName}:${signature}`);
   }
+  __name(signRequest, "signRequest");
   function getHeaderValueToSign(request, headerName) {
     const value = request.headers.get(headerName);
     if (!value) {
@@ -39192,6 +40620,7 @@ function storageSharedKeyCredentialPolicy(options) {
     }
     return value;
   }
+  __name(getHeaderValueToSign, "getHeaderValueToSign");
   function getCanonicalizedHeadersString(request) {
     let headersArray = [];
     for (const [name, value] of request.headers) {
@@ -39215,6 +40644,7 @@ function storageSharedKeyCredentialPolicy(options) {
     });
     return canonicalizedHeadersStringToSign;
   }
+  __name(getCanonicalizedHeadersString, "getCanonicalizedHeadersString");
   function getCanonicalizedResourceString(request) {
     const path13 = getURLPath(request.url) || "/";
     let canonicalizedResourceString = "";
@@ -39238,6 +40668,7 @@ ${key}:${decodeURIComponent(lowercaseQueries[key])}`;
     }
     return canonicalizedResourceString;
   }
+  __name(getCanonicalizedResourceString, "getCanonicalizedResourceString");
   return {
     name: storageSharedKeyCredentialPolicyName,
     async sendRequest(request, next) {
@@ -39246,6 +40677,7 @@ ${key}:${decodeURIComponent(lowercaseQueries[key])}`;
     }
   };
 }
+__name(storageSharedKeyCredentialPolicy, "storageSharedKeyCredentialPolicy");
 
 // node_modules/@azure/storage-common/dist/esm/policies/StorageRequestFailureDetailsParserPolicy.js
 var storageRequestFailureDetailsParserPolicyName = "storageRequestFailureDetailsParserPolicy";
@@ -39267,10 +40699,14 @@ function storageRequestFailureDetailsParserPolicy() {
     }
   };
 }
+__name(storageRequestFailureDetailsParserPolicy, "storageRequestFailureDetailsParserPolicy");
 
 // node_modules/@azure/storage-common/dist/esm/credentials/UserDelegationKeyCredential.js
 var import_node_crypto3 = require("node:crypto");
 var UserDelegationKeyCredential = class {
+  static {
+    __name(this, "UserDelegationKeyCredential");
+  }
   /**
    * Azure Storage account name; readonly.
    */
@@ -39495,7 +40931,11 @@ function isPipelineLike(pipeline) {
   const castPipeline = pipeline;
   return Array.isArray(castPipeline.factories) && typeof castPipeline.options === "object" && typeof castPipeline.toServiceClientOptions === "function";
 }
+__name(isPipelineLike, "isPipelineLike");
 var Pipeline = class {
+  static {
+    __name(this, "Pipeline");
+  }
   /**
    * A list of chained request policy factories.
    */
@@ -39535,6 +40975,7 @@ function newPipeline(credential, pipelineOptions = {}) {
   pipeline._credential = credential;
   return pipeline;
 }
+__name(newPipeline, "newPipeline");
 function processDownlevelPipeline(pipeline) {
   const knownFactoryFunctions = [
     isAnonymousCredential,
@@ -39559,6 +41000,7 @@ function processDownlevelPipeline(pipeline) {
   }
   return void 0;
 }
+__name(processDownlevelPipeline, "processDownlevelPipeline");
 function getCoreClientOptions(pipeline) {
   const { httpClient: v1Client, ...restOptions } = pipeline.options;
   let httpClient = pipeline._coreHttpClient;
@@ -39633,6 +41075,7 @@ function getCoreClientOptions(pipeline) {
     pipeline: corePipeline
   };
 }
+__name(getCoreClientOptions, "getCoreClientOptions");
 function getCredentialFromPipeline(pipeline) {
   if (pipeline._credential) {
     return pipeline._credential;
@@ -39647,39 +41090,47 @@ function getCredentialFromPipeline(pipeline) {
   }
   return credential;
 }
+__name(getCredentialFromPipeline, "getCredentialFromPipeline");
 function isStorageSharedKeyCredential(factory) {
   if (factory instanceof StorageSharedKeyCredential) {
     return true;
   }
   return factory.constructor.name === "StorageSharedKeyCredential";
 }
+__name(isStorageSharedKeyCredential, "isStorageSharedKeyCredential");
 function isAnonymousCredential(factory) {
   if (factory instanceof AnonymousCredential) {
     return true;
   }
   return factory.constructor.name === "AnonymousCredential";
 }
+__name(isAnonymousCredential, "isAnonymousCredential");
 function isCoreHttpBearerTokenFactory(factory) {
   return isTokenCredential(factory.credential);
 }
+__name(isCoreHttpBearerTokenFactory, "isCoreHttpBearerTokenFactory");
 function isStorageBrowserPolicyFactory(factory) {
   if (factory instanceof StorageBrowserPolicyFactory) {
     return true;
   }
   return factory.constructor.name === "StorageBrowserPolicyFactory";
 }
+__name(isStorageBrowserPolicyFactory, "isStorageBrowserPolicyFactory");
 function isStorageRetryPolicyFactory(factory) {
   if (factory instanceof StorageRetryPolicyFactory) {
     return true;
   }
   return factory.constructor.name === "StorageRetryPolicyFactory";
 }
+__name(isStorageRetryPolicyFactory, "isStorageRetryPolicyFactory");
 function isStorageTelemetryPolicyFactory(factory) {
   return factory.constructor.name === "TelemetryPolicyFactory";
 }
+__name(isStorageTelemetryPolicyFactory, "isStorageTelemetryPolicyFactory");
 function isInjectorPolicyFactory(factory) {
   return factory.constructor.name === "InjectorPolicyFactory";
 }
+__name(isInjectorPolicyFactory, "isInjectorPolicyFactory");
 function isCoreHttpPolicyFactory(factory) {
   const knownPolicies = [
     "GenerateClientRequestIdPolicy",
@@ -39691,13 +41142,13 @@ function isCoreHttpPolicyFactory(factory) {
     "DeserializationPolicy"
   ];
   const mockHttpClient = {
-    sendRequest: async (request) => {
+    sendRequest: /* @__PURE__ */ __name(async (request) => {
       return {
         request,
         headers: request.headers.clone(),
         status: 500
       };
-    }
+    }, "sendRequest")
   };
   const mockRequestPolicyOptions2 = {
     log(_logLevel, _message) {
@@ -39712,6 +41163,7 @@ function isCoreHttpPolicyFactory(factory) {
     return policyName.startsWith(knownPolicyName);
   });
 }
+__name(isCoreHttpPolicyFactory, "isCoreHttpPolicyFactory");
 
 // node_modules/@azure/storage-blob/dist/esm/generated/src/models/index.js
 var KnownEncryptionAlgorithmType;
@@ -50022,6 +51474,9 @@ var listType = {
 
 // node_modules/@azure/storage-blob/dist/esm/generated/src/operations/service.js
 var ServiceImpl = class {
+  static {
+    __name(this, "ServiceImpl");
+  }
   client;
   /**
    * Initialize a new instance of the class Service class.
@@ -50339,6 +51794,9 @@ var filterBlobsOperationSpec = {
 
 // node_modules/@azure/storage-blob/dist/esm/generated/src/operations/container.js
 var ContainerImpl = class {
+  static {
+    __name(this, "ContainerImpl");
+  }
   client;
   /**
    * Initialize a new instance of the class Container class.
@@ -51048,6 +52506,9 @@ var getAccountInfoOperationSpec2 = {
 
 // node_modules/@azure/storage-blob/dist/esm/generated/src/operations/blob.js
 var BlobImpl = class {
+  static {
+    __name(this, "BlobImpl");
+  }
   client;
   /**
    * Initialize a new instance of the class Blob class.
@@ -52071,6 +53532,9 @@ var setTagsOperationSpec = {
 
 // node_modules/@azure/storage-blob/dist/esm/generated/src/operations/pageBlob.js
 var PageBlobImpl = class {
+  static {
+    __name(this, "PageBlobImpl");
+  }
   client;
   /**
    * Initialize a new instance of the class PageBlob class.
@@ -52522,6 +53986,9 @@ var copyIncrementalOperationSpec = {
 
 // node_modules/@azure/storage-blob/dist/esm/generated/src/operations/appendBlob.js
 var AppendBlobImpl = class {
+  static {
+    __name(this, "AppendBlobImpl");
+  }
   client;
   /**
    * Initialize a new instance of the class AppendBlob class.
@@ -52738,6 +54205,9 @@ var sealOperationSpec = {
 
 // node_modules/@azure/storage-blob/dist/esm/generated/src/operations/blockBlob.js
 var BlockBlobImpl = class {
+  static {
+    __name(this, "BlockBlobImpl");
+  }
   client;
   /**
    * Initialize a new instance of the class BlockBlob class.
@@ -53099,6 +54569,9 @@ var getBlockListOperationSpec = {
 
 // node_modules/@azure/storage-blob/dist/esm/generated/src/storageClient.js
 var StorageClient = class extends ExtendedServiceClient {
+  static {
+    __name(this, "StorageClient");
+  }
   url;
   version;
   /**
@@ -53147,6 +54620,9 @@ var StorageClient = class extends ExtendedServiceClient {
 
 // node_modules/@azure/storage-blob/dist/esm/StorageContextClient.js
 var StorageContextClient = class extends StorageClient {
+  static {
+    __name(this, "StorageContextClient");
+  }
   async sendOperationRequest(operationArguments, operationSpec) {
     const operationSpecToSend = { ...operationSpec };
     if (operationSpecToSend.path === "/{containerName}" || operationSpecToSend.path === "/{containerName}/{blob}") {
@@ -53165,6 +54641,7 @@ function escapeURLPath(url2) {
   urlParsed.pathname = path13;
   return urlParsed.toString();
 }
+__name(escapeURLPath, "escapeURLPath");
 function getProxyUriFromDevConnString(connectionString) {
   let proxyUri = "";
   if (connectionString.search("DevelopmentStorageProxyUri=") !== -1) {
@@ -53177,6 +54654,7 @@ function getProxyUriFromDevConnString(connectionString) {
   }
   return proxyUri;
 }
+__name(getProxyUriFromDevConnString, "getProxyUriFromDevConnString");
 function getValueInConnString(connectionString, argument) {
   const elements = connectionString.split(";");
   for (const element of elements) {
@@ -53186,6 +54664,7 @@ function getValueInConnString(connectionString, argument) {
   }
   return "";
 }
+__name(getValueInConnString, "getValueInConnString");
 function extractConnectionStringParts(connectionString) {
   let proxyUri = "";
   if (connectionString.startsWith("UseDevelopmentStorage=true")) {
@@ -53242,9 +54721,11 @@ function extractConnectionStringParts(connectionString) {
     return { kind: "SASConnString", url: blobEndpoint, accountName, accountSas };
   }
 }
+__name(extractConnectionStringParts, "extractConnectionStringParts");
 function escape(text) {
   return encodeURIComponent(text).replace(/%2F/g, "/").replace(/'/g, "%27").replace(/\+/g, "%20").replace(/%25/g, "%");
 }
+__name(escape, "escape");
 function appendToURLPath(url2, name) {
   const urlParsed = new URL(url2);
   let path13 = urlParsed.pathname;
@@ -53252,6 +54733,7 @@ function appendToURLPath(url2, name) {
   urlParsed.pathname = path13;
   return urlParsed.toString();
 }
+__name(appendToURLPath, "appendToURLPath");
 function setURLParameter2(url2, name, value) {
   const urlParsed = new URL(url2);
   const encodedName = encodeURIComponent(name);
@@ -53272,10 +54754,12 @@ function setURLParameter2(url2, name, value) {
   urlParsed.search = searchPieces.length ? `?${searchPieces.join("&")}` : "";
   return urlParsed.toString();
 }
+__name(setURLParameter2, "setURLParameter");
 function getURLParameter(url2, name) {
   const urlParsed = new URL(url2);
   return urlParsed.searchParams.get(name) ?? void 0;
 }
+__name(getURLParameter, "getURLParameter");
 function getURLScheme(url2) {
   try {
     const urlParsed = new URL(url2);
@@ -53284,6 +54768,7 @@ function getURLScheme(url2) {
     return void 0;
   }
 }
+__name(getURLScheme, "getURLScheme");
 function appendToURLQuery(url2, queryParts) {
   const urlParsed = new URL(url2);
   let query = urlParsed.search;
@@ -53295,13 +54780,16 @@ function appendToURLQuery(url2, queryParts) {
   urlParsed.search = query;
   return urlParsed.toString();
 }
+__name(appendToURLQuery, "appendToURLQuery");
 function truncatedISO8061Date(date, withMilliseconds = true) {
   const dateString = date.toISOString();
   return withMilliseconds ? dateString.substring(0, dateString.length - 1) + "0000Z" : dateString.substring(0, dateString.length - 5) + "Z";
 }
+__name(truncatedISO8061Date, "truncatedISO8061Date");
 function base64encode(content) {
   return !isNodeLike2 ? btoa(content) : Buffer.from(content).toString("base64");
 }
+__name(base64encode, "base64encode");
 function generateBlockID(blockIDPrefix, blockIndex) {
   const maxSourceStringLength = 48;
   const maxBlockIndexLength = 6;
@@ -53312,6 +54800,7 @@ function generateBlockID(blockIDPrefix, blockIndex) {
   const res = blockIDPrefix + padStart(blockIndex.toString(), maxSourceStringLength - blockIDPrefix.length, "0");
   return base64encode(res);
 }
+__name(generateBlockID, "generateBlockID");
 function padStart(currentString, targetLength, padString = " ") {
   if (String.prototype.padStart) {
     return currentString.padStart(targetLength, padString);
@@ -53327,9 +54816,11 @@ function padStart(currentString, targetLength, padString = " ") {
     return padString.slice(0, targetLength) + currentString;
   }
 }
+__name(padStart, "padStart");
 function iEqual(str1, str2) {
   return str1.toLocaleLowerCase() === str2.toLocaleLowerCase();
 }
+__name(iEqual, "iEqual");
 function getAccountNameFromUrl(url2) {
   const parsedUrl = new URL(url2);
   let accountName;
@@ -53346,10 +54837,12 @@ function getAccountNameFromUrl(url2) {
     throw new Error("Unable to extract accountName with provided information.");
   }
 }
+__name(getAccountNameFromUrl, "getAccountNameFromUrl");
 function isIpEndpointStyle(parsedUrl) {
   const host = parsedUrl.host;
   return /^.*:.*:.*$|^(localhost|host.docker.internal)(:[0-9]+)?$|^(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])(\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])){3}(:[0-9]+)?$/.test(host) || Boolean(parsedUrl.port) && PathStylePorts2.includes(parsedUrl.port);
 }
+__name(isIpEndpointStyle, "isIpEndpointStyle");
 function toBlobTagsString(tags2) {
   if (tags2 === void 0) {
     return void 0;
@@ -53363,6 +54856,7 @@ function toBlobTagsString(tags2) {
   }
   return tagPairs.join("&");
 }
+__name(toBlobTagsString, "toBlobTagsString");
 function toBlobTags(tags2) {
   if (tags2 === void 0) {
     return void 0;
@@ -53381,6 +54875,7 @@ function toBlobTags(tags2) {
   }
   return res;
 }
+__name(toBlobTags, "toBlobTags");
 function toTags(tags2) {
   if (tags2 === void 0) {
     return void 0;
@@ -53391,6 +54886,7 @@ function toTags(tags2) {
   }
   return res;
 }
+__name(toTags, "toTags");
 function toQuerySerialization(textConfiguration) {
   if (textConfiguration === void 0) {
     return void 0;
@@ -53437,6 +54933,7 @@ function toQuerySerialization(textConfiguration) {
       throw Error("Invalid BlobQueryTextConfiguration.");
   }
 }
+__name(toQuerySerialization, "toQuerySerialization");
 function parseObjectReplicationRecord(objectReplicationRecord) {
   if (!objectReplicationRecord) {
     return void 0;
@@ -53467,9 +54964,11 @@ function parseObjectReplicationRecord(objectReplicationRecord) {
   }
   return orProperties;
 }
+__name(parseObjectReplicationRecord, "parseObjectReplicationRecord");
 function httpAuthorizationToString(httpAuthorization) {
   return httpAuthorization ? httpAuthorization.scheme + " " + httpAuthorization.value : void 0;
 }
+__name(httpAuthorizationToString, "httpAuthorizationToString");
 function* ExtractPageRangeInfoItems(getPageRangesSegment) {
   let pageRange = [];
   let clearRange = [];
@@ -53511,15 +55010,20 @@ function* ExtractPageRangeInfoItems(getPageRangesSegment) {
     };
   }
 }
+__name(ExtractPageRangeInfoItems, "ExtractPageRangeInfoItems");
 function assertResponse(response) {
   if (`_response` in response) {
     return response;
   }
   throw new TypeError(`Unexpected response object ${response}`);
 }
+__name(assertResponse, "assertResponse");
 
 // node_modules/@azure/storage-blob/dist/esm/StorageClient.js
 var StorageClient2 = class {
+  static {
+    __name(this, "StorageClient");
+  }
   /**
    * Encoded URL string value.
    */
@@ -53569,6 +55073,9 @@ var tracingClient = createTracingClient({
 
 // node_modules/@azure/storage-blob/dist/esm/sas/BlobSASPermissions.js
 var BlobSASPermissions = class _BlobSASPermissions {
+  static {
+    __name(this, "BlobSASPermissions");
+  }
   /**
    * Creates a {@link BlobSASPermissions} from the specified permissions string. This method will throw an
    * Error if it encounters a character that does not correspond to a valid permission.
@@ -53752,6 +55259,9 @@ var BlobSASPermissions = class _BlobSASPermissions {
 
 // node_modules/@azure/storage-blob/dist/esm/sas/ContainerSASPermissions.js
 var ContainerSASPermissions = class _ContainerSASPermissions {
+  static {
+    __name(this, "ContainerSASPermissions");
+  }
   /**
    * Creates an {@link ContainerSASPermissions} from the specified permissions string. This method will throw an
    * Error if it encounters a character that does not correspond to a valid permission.
@@ -53965,6 +55475,7 @@ var ContainerSASPermissions = class _ContainerSASPermissions {
 function ipRangeToString(ipRange) {
   return ipRange.end ? `${ipRange.start}-${ipRange.end}` : ipRange.start;
 }
+__name(ipRangeToString, "ipRangeToString");
 
 // node_modules/@azure/storage-blob/dist/esm/sas/SASQueryParameters.js
 var SASProtocol;
@@ -53973,6 +55484,9 @@ var SASProtocol;
   SASProtocol2["HttpsAndHttp"] = "https,http";
 })(SASProtocol || (SASProtocol = {}));
 var SASQueryParameters = class {
+  static {
+    __name(this, "SASQueryParameters");
+  }
   /**
    * The storage API version.
    */
@@ -54317,6 +55831,7 @@ var SASQueryParameters = class {
 function generateBlobSASQueryParameters(blobSASSignatureValues, sharedKeyCredentialOrUserDelegationKey, accountName) {
   return generateBlobSASQueryParametersInternal(blobSASSignatureValues, sharedKeyCredentialOrUserDelegationKey, accountName).sasQueryParameters;
 }
+__name(generateBlobSASQueryParameters, "generateBlobSASQueryParameters");
 function generateBlobSASQueryParametersInternal(blobSASSignatureValues, sharedKeyCredentialOrUserDelegationKey, accountName) {
   const version3 = blobSASSignatureValues.version ? blobSASSignatureValues.version : SERVICE_VERSION;
   const sharedKeyCredential = sharedKeyCredentialOrUserDelegationKey instanceof StorageSharedKeyCredential ? sharedKeyCredentialOrUserDelegationKey : void 0;
@@ -54358,6 +55873,7 @@ function generateBlobSASQueryParametersInternal(blobSASSignatureValues, sharedKe
   }
   throw new RangeError("'version' must be >= '2015-04-05'.");
 }
+__name(generateBlobSASQueryParametersInternal, "generateBlobSASQueryParametersInternal");
 function generateBlobSASQueryParameters20150405(blobSASSignatureValues, sharedKeyCredential) {
   blobSASSignatureValues = SASSignatureValuesSanityCheckAndAutofill(blobSASSignatureValues);
   if (!blobSASSignatureValues.identifier && !(blobSASSignatureValues.permissions && blobSASSignatureValues.expiresOn)) {
@@ -54396,6 +55912,7 @@ function generateBlobSASQueryParameters20150405(blobSASSignatureValues, sharedKe
     stringToSign
   };
 }
+__name(generateBlobSASQueryParameters20150405, "generateBlobSASQueryParameters20150405");
 function generateBlobSASQueryParameters20181109(blobSASSignatureValues, sharedKeyCredential) {
   blobSASSignatureValues = SASSignatureValuesSanityCheckAndAutofill(blobSASSignatureValues);
   if (!blobSASSignatureValues.identifier && !(blobSASSignatureValues.permissions && blobSASSignatureValues.expiresOn)) {
@@ -54443,6 +55960,7 @@ function generateBlobSASQueryParameters20181109(blobSASSignatureValues, sharedKe
     stringToSign
   };
 }
+__name(generateBlobSASQueryParameters20181109, "generateBlobSASQueryParameters20181109");
 function generateBlobSASQueryParameters20201206(blobSASSignatureValues, sharedKeyCredential) {
   blobSASSignatureValues = SASSignatureValuesSanityCheckAndAutofill(blobSASSignatureValues);
   if (!blobSASSignatureValues.identifier && !(blobSASSignatureValues.permissions && blobSASSignatureValues.expiresOn)) {
@@ -54491,6 +56009,7 @@ function generateBlobSASQueryParameters20201206(blobSASSignatureValues, sharedKe
     stringToSign
   };
 }
+__name(generateBlobSASQueryParameters20201206, "generateBlobSASQueryParameters20201206");
 function generateBlobSASQueryParametersUDK20181109(blobSASSignatureValues, userDelegationKeyCredential) {
   blobSASSignatureValues = SASSignatureValuesSanityCheckAndAutofill(blobSASSignatureValues);
   if (!blobSASSignatureValues.permissions || !blobSASSignatureValues.expiresOn) {
@@ -54543,6 +56062,7 @@ function generateBlobSASQueryParametersUDK20181109(blobSASSignatureValues, userD
     stringToSign
   };
 }
+__name(generateBlobSASQueryParametersUDK20181109, "generateBlobSASQueryParametersUDK20181109");
 function generateBlobSASQueryParametersUDK20200210(blobSASSignatureValues, userDelegationKeyCredential) {
   blobSASSignatureValues = SASSignatureValuesSanityCheckAndAutofill(blobSASSignatureValues);
   if (!blobSASSignatureValues.permissions || !blobSASSignatureValues.expiresOn) {
@@ -54599,6 +56119,7 @@ function generateBlobSASQueryParametersUDK20200210(blobSASSignatureValues, userD
     stringToSign
   };
 }
+__name(generateBlobSASQueryParametersUDK20200210, "generateBlobSASQueryParametersUDK20200210");
 function generateBlobSASQueryParametersUDK20201206(blobSASSignatureValues, userDelegationKeyCredential) {
   blobSASSignatureValues = SASSignatureValuesSanityCheckAndAutofill(blobSASSignatureValues);
   if (!blobSASSignatureValues.permissions || !blobSASSignatureValues.expiresOn) {
@@ -54656,6 +56177,7 @@ function generateBlobSASQueryParametersUDK20201206(blobSASSignatureValues, userD
     stringToSign
   };
 }
+__name(generateBlobSASQueryParametersUDK20201206, "generateBlobSASQueryParametersUDK20201206");
 function generateBlobSASQueryParametersUDK20250705(blobSASSignatureValues, userDelegationKeyCredential) {
   blobSASSignatureValues = SASSignatureValuesSanityCheckAndAutofill(blobSASSignatureValues);
   if (!blobSASSignatureValues.permissions || !blobSASSignatureValues.expiresOn) {
@@ -54716,6 +56238,7 @@ function generateBlobSASQueryParametersUDK20250705(blobSASSignatureValues, userD
     stringToSign
   };
 }
+__name(generateBlobSASQueryParametersUDK20250705, "generateBlobSASQueryParametersUDK20250705");
 function getCanonicalName(accountName, containerName, blobName) {
   const elements = [`/blob/${accountName}/${containerName}`];
   if (blobName) {
@@ -54723,6 +56246,7 @@ function getCanonicalName(accountName, containerName, blobName) {
   }
   return elements.join("");
 }
+__name(getCanonicalName, "getCanonicalName");
 function SASSignatureValuesSanityCheckAndAutofill(blobSASSignatureValues) {
   const version3 = blobSASSignatureValues.version ? blobSASSignatureValues.version : SERVICE_VERSION;
   if (blobSASSignatureValues.snapshotTime && version3 < "2018-11-09") {
@@ -54764,9 +56288,13 @@ function SASSignatureValuesSanityCheckAndAutofill(blobSASSignatureValues) {
   blobSASSignatureValues.version = version3;
   return blobSASSignatureValues;
 }
+__name(SASSignatureValuesSanityCheckAndAutofill, "SASSignatureValuesSanityCheckAndAutofill");
 
 // node_modules/@azure/storage-blob/dist/esm/BlobLeaseClient.js
 var BlobLeaseClient = class {
+  static {
+    __name(this, "BlobLeaseClient");
+  }
   _leaseId;
   _url;
   _containerOrBlobOperation;
@@ -54945,6 +56473,9 @@ var BlobLeaseClient = class {
 // node_modules/@azure/storage-blob/dist/esm/utils/RetriableReadableStream.js
 var import_node_stream3 = require("node:stream");
 var RetriableReadableStream = class extends import_node_stream3.Readable {
+  static {
+    __name(this, "RetriableReadableStream");
+  }
   start;
   offset;
   end;
@@ -54991,7 +56522,7 @@ var RetriableReadableStream = class extends import_node_stream3.Readable {
     this.source.removeListener("error", this.sourceErrorOrEndHandler);
     this.source.removeListener("aborted", this.sourceAbortedHandler);
   }
-  sourceDataHandler = (data) => {
+  sourceDataHandler = /* @__PURE__ */ __name((data) => {
     if (this.options.doInjectErrorOnce) {
       this.options.doInjectErrorOnce = void 0;
       this.source.pause();
@@ -55006,12 +56537,12 @@ var RetriableReadableStream = class extends import_node_stream3.Readable {
     if (!this.push(data)) {
       this.source.pause();
     }
-  };
-  sourceAbortedHandler = () => {
+  }, "sourceDataHandler");
+  sourceAbortedHandler = /* @__PURE__ */ __name(() => {
     const abortError = new AbortError2("The operation was aborted.");
     this.destroy(abortError);
-  };
-  sourceErrorOrEndHandler = (err) => {
+  }, "sourceAbortedHandler");
+  sourceErrorOrEndHandler = /* @__PURE__ */ __name((err) => {
     if (err && err.name === "AbortError") {
       this.destroy(err);
       return;
@@ -55035,7 +56566,7 @@ var RetriableReadableStream = class extends import_node_stream3.Readable {
     } else {
       this.destroy(new Error(`Data corruption failure: Received more data than original request, data needed offset is ${this.end}, received offset: ${this.offset - 1}`));
     }
-  };
+  }, "sourceErrorOrEndHandler");
   _destroy(error2, callback) {
     this.removeSourceEventHandlers();
     this.source.destroy();
@@ -55045,6 +56576,9 @@ var RetriableReadableStream = class extends import_node_stream3.Readable {
 
 // node_modules/@azure/storage-blob/dist/esm/BlobDownloadResponse.js
 var BlobDownloadResponse = class {
+  static {
+    __name(this, "BlobDownloadResponse");
+  }
   /**
    * Indicates that the service supports
    * requests for partial file content.
@@ -55506,6 +57040,9 @@ var AVRO_SCHEMA_KEY = "avro.schema";
 
 // node_modules/@azure/storage-blob/dist/esm/internal-avro/AvroParser.js
 var AvroParser = class _AvroParser {
+  static {
+    __name(this, "AvroParser");
+  }
   /**
    * Reads a fixed number of bytes from the stream.
    *
@@ -55606,9 +57143,9 @@ var AvroParser = class _AvroParser {
     return { key, value };
   }
   static async readMap(stream, readItemMethod, options = {}) {
-    const readPairMethod = (s, opts = {}) => {
+    const readPairMethod = /* @__PURE__ */ __name((s, opts = {}) => {
       return _AvroParser.readMapPair(s, readItemMethod, opts);
-    };
+    }, "readPairMethod");
     const pairs = await _AvroParser.readArray(stream, readPairMethod, options);
     const dict = {};
     for (const pair of pairs) {
@@ -55652,6 +57189,9 @@ var AvroPrimitive;
   AvroPrimitive2["STRING"] = "string";
 })(AvroPrimitive || (AvroPrimitive = {}));
 var AvroType = class _AvroType {
+  static {
+    __name(this, "AvroType");
+  }
   /**
    * Determines the AvroType from the Avro Schema.
    */
@@ -55728,6 +57268,9 @@ var AvroType = class _AvroType {
   }
 };
 var AvroPrimitiveType = class extends AvroType {
+  static {
+    __name(this, "AvroPrimitiveType");
+  }
   _primitive;
   constructor(primitive) {
     super();
@@ -55758,6 +57301,9 @@ var AvroPrimitiveType = class extends AvroType {
   }
 };
 var AvroEnumType = class extends AvroType {
+  static {
+    __name(this, "AvroEnumType");
+  }
   _symbols;
   constructor(symbols) {
     super();
@@ -55770,6 +57316,9 @@ var AvroEnumType = class extends AvroType {
   }
 };
 var AvroUnionType = class extends AvroType {
+  static {
+    __name(this, "AvroUnionType");
+  }
   _types;
   constructor(types2) {
     super();
@@ -55781,6 +57330,9 @@ var AvroUnionType = class extends AvroType {
   }
 };
 var AvroMapType = class extends AvroType {
+  static {
+    __name(this, "AvroMapType");
+  }
   _itemType;
   constructor(itemType) {
     super();
@@ -55788,13 +57340,16 @@ var AvroMapType = class extends AvroType {
   }
   // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
   read(stream, options = {}) {
-    const readItemMethod = (s, opts) => {
+    const readItemMethod = /* @__PURE__ */ __name((s, opts) => {
       return this._itemType.read(s, opts);
-    };
+    }, "readItemMethod");
     return AvroParser.readMap(stream, readItemMethod, options);
   }
 };
 var AvroRecordType = class extends AvroType {
+  static {
+    __name(this, "AvroRecordType");
+  }
   _name;
   _fields;
   constructor(fields, name) {
@@ -55829,9 +57384,13 @@ function arraysEqual(a, b) {
   }
   return true;
 }
+__name(arraysEqual, "arraysEqual");
 
 // node_modules/@azure/storage-blob/dist/esm/internal-avro/AvroReader.js
 var AvroReader = class {
+  static {
+    __name(this, "AvroReader");
+  }
   _dataStream;
   _headerStream;
   _syncMarker;
@@ -55933,12 +57492,18 @@ var AvroReader = class {
 
 // node_modules/@azure/storage-blob/dist/esm/internal-avro/AvroReadable.js
 var AvroReadable = class {
+  static {
+    __name(this, "AvroReadable");
+  }
 };
 
 // node_modules/@azure/storage-blob/dist/esm/internal-avro/AvroReadableFromStream.js
 var import_buffer = require("buffer");
 var ABORT_ERROR = new AbortError2("Reading from the avro stream was aborted.");
 var AvroReadableFromStream = class extends AvroReadable {
+  static {
+    __name(this, "AvroReadableFromStream");
+  }
   _position;
   _readable;
   toUint8Array(data) {
@@ -55974,7 +57539,7 @@ var AvroReadableFromStream = class extends AvroReadable {
       return this.toUint8Array(chunk);
     } else {
       return new Promise((resolve2, reject) => {
-        const cleanUp = () => {
+        const cleanUp = /* @__PURE__ */ __name(() => {
           this._readable.removeListener("readable", readableCallback);
           this._readable.removeListener("error", rejectCallback);
           this._readable.removeListener("end", rejectCallback);
@@ -55982,23 +57547,23 @@ var AvroReadableFromStream = class extends AvroReadable {
           if (options.abortSignal) {
             options.abortSignal.removeEventListener("abort", abortHandler);
           }
-        };
-        const readableCallback = () => {
+        }, "cleanUp");
+        const readableCallback = /* @__PURE__ */ __name(() => {
           const callbackChunk = this._readable.read(size);
           if (callbackChunk) {
             this._position += callbackChunk.length;
             cleanUp();
             resolve2(this.toUint8Array(callbackChunk));
           }
-        };
-        const rejectCallback = () => {
+        }, "readableCallback");
+        const rejectCallback = /* @__PURE__ */ __name(() => {
           cleanUp();
           reject();
-        };
-        const abortHandler = () => {
+        }, "rejectCallback");
+        const abortHandler = /* @__PURE__ */ __name(() => {
           cleanUp();
           reject(ABORT_ERROR);
-        };
+        }, "abortHandler");
         this._readable.on("readable", readableCallback);
         this._readable.once("error", rejectCallback);
         this._readable.once("end", rejectCallback);
@@ -56013,6 +57578,9 @@ var AvroReadableFromStream = class extends AvroReadable {
 
 // node_modules/@azure/storage-blob/dist/esm/utils/BlobQuickQueryStream.js
 var BlobQuickQueryStream = class extends import_node_stream4.Readable {
+  static {
+    __name(this, "BlobQuickQueryStream");
+  }
   source;
   avroReader;
   avroIter;
@@ -56121,6 +57689,9 @@ var BlobQuickQueryStream = class extends import_node_stream4.Readable {
 
 // node_modules/@azure/storage-blob/dist/esm/BlobQueryResponse.js
 var BlobQueryResponse = class {
+  static {
+    __name(this, "BlobQueryResponse");
+  }
   /**
    * Indicates that the service supports
    * requests for partial file content.
@@ -56507,6 +58078,7 @@ function toAccessTier(tier2) {
   }
   return tier2;
 }
+__name(toAccessTier, "toAccessTier");
 function ensureCpkIfSpecified(cpk, isHttps) {
   if (cpk && !isHttps) {
     throw new RangeError("Customer-provided encryption key must be used over HTTPS.");
@@ -56515,6 +58087,7 @@ function ensureCpkIfSpecified(cpk, isHttps) {
     cpk.encryptionAlgorithm = EncryptionAlgorithmAES25;
   }
 }
+__name(ensureCpkIfSpecified, "ensureCpkIfSpecified");
 var StorageBlobAudience;
 (function(StorageBlobAudience2) {
   StorageBlobAudience2["StorageOAuthScopes"] = "https://storage.azure.com/.default";
@@ -56544,12 +58117,16 @@ function rangeResponseFromModel(response) {
     }
   };
 }
+__name(rangeResponseFromModel, "rangeResponseFromModel");
 
 // node_modules/@azure/core-lro/dist/esm/logger.js
 var logger6 = createClientLogger2("core-lro");
 
 // node_modules/@azure/core-lro/dist/esm/legacy/poller.js
 var PollerStoppedError = class _PollerStoppedError extends Error {
+  static {
+    __name(this, "PollerStoppedError");
+  }
   constructor(message) {
     super(message);
     this.name = "PollerStoppedError";
@@ -56557,6 +58134,9 @@ var PollerStoppedError = class _PollerStoppedError extends Error {
   }
 };
 var PollerCancelledError = class _PollerCancelledError extends Error {
+  static {
+    __name(this, "PollerCancelledError");
+  }
   constructor(message) {
     super(message);
     this.name = "PollerCancelledError";
@@ -56564,6 +58144,9 @@ var PollerCancelledError = class _PollerCancelledError extends Error {
   }
 };
 var Poller = class {
+  static {
+    __name(this, "Poller");
+  }
   /**
    * A poller needs to be initialized by passing in at least the basic properties of the `PollOperation<TState, TResult>`.
    *
@@ -56701,9 +58284,9 @@ var Poller = class {
   poll(options = {}) {
     if (!this.pollOncePromise) {
       this.pollOncePromise = this.pollOnce(options);
-      const clearPollOncePromise = () => {
+      const clearPollOncePromise = /* @__PURE__ */ __name(() => {
         this.pollOncePromise = void 0;
-      };
+      }, "clearPollOncePromise");
       this.pollOncePromise.then(clearPollOncePromise, clearPollOncePromise).catch(this.reject);
     }
     return this.pollOncePromise;
@@ -56863,6 +58446,9 @@ var Poller = class {
 
 // node_modules/@azure/storage-blob/dist/esm/pollers/BlobStartCopyFromUrlPoller.js
 var BlobBeginCopyFromUrlPoller = class extends Poller {
+  static {
+    __name(this, "BlobBeginCopyFromUrlPoller");
+  }
   intervalInMs;
   constructor(options) {
     const { blobClient, copySource: copySource2, intervalInMs = 15e3, onProgress, resumeFrom, startCopyFromURLOptions } = options;
@@ -56886,7 +58472,7 @@ var BlobBeginCopyFromUrlPoller = class extends Poller {
     return delay2(this.intervalInMs);
   }
 };
-var cancel = async function cancel2(options = {}) {
+var cancel = /* @__PURE__ */ __name(async function cancel2(options = {}) {
   const state3 = this.state;
   const { copyId: copyId2 } = state3;
   if (state3.isCompleted) {
@@ -56901,8 +58487,8 @@ var cancel = async function cancel2(options = {}) {
   });
   state3.isCancelled = true;
   return makeBlobBeginCopyFromURLPollOperation(state3);
-};
-var update = async function update2(options = {}) {
+}, "cancel");
+var update = /* @__PURE__ */ __name(async function update2(options = {}) {
   const state3 = this.state;
   const { blobClient, copySource: copySource2, startCopyFromURLOptions } = state3;
   if (!state3.isStarted) {
@@ -56936,15 +58522,15 @@ var update = async function update2(options = {}) {
     }
   }
   return makeBlobBeginCopyFromURLPollOperation(state3);
-};
-var toString = function toString2() {
+}, "update");
+var toString = /* @__PURE__ */ __name(function toString2() {
   return JSON.stringify({ state: this.state }, (key, value) => {
     if (key === "blobClient") {
       return void 0;
     }
     return value;
   });
-};
+}, "toString");
 function makeBlobBeginCopyFromURLPollOperation(state3) {
   return {
     state: { ...state3 },
@@ -56953,6 +58539,7 @@ function makeBlobBeginCopyFromURLPollOperation(state3) {
     update
   };
 }
+__name(makeBlobBeginCopyFromURLPollOperation, "makeBlobBeginCopyFromURLPollOperation");
 
 // node_modules/@azure/storage-blob/dist/esm/Range.js
 function rangeToString(iRange) {
@@ -56964,6 +58551,7 @@ function rangeToString(iRange) {
   }
   return iRange.count ? `bytes=${iRange.offset}-${iRange.offset + iRange.count - 1}` : `bytes=${iRange.offset}-`;
 }
+__name(rangeToString, "rangeToString");
 
 // node_modules/@azure/storage-blob/dist/esm/utils/Batch.js
 var import_events2 = require("events");
@@ -56973,6 +58561,9 @@ var BatchStates;
   BatchStates2[BatchStates2["Error"] = 1] = "Error";
 })(BatchStates || (BatchStates = {}));
 var Batch = class {
+  static {
+    __name(this, "Batch");
+  }
   /**
    * Concurrency. Must be lager than 0.
    */
@@ -57120,6 +58711,7 @@ async function streamToBuffer(stream, buffer2, offset, end, encoding) {
     });
   });
 }
+__name(streamToBuffer, "streamToBuffer");
 async function readStreamToLocalFile(rs, file) {
   return new Promise((resolve2, reject) => {
     const ws = import_node_fs.default.createWriteStream(file);
@@ -57133,11 +58725,15 @@ async function readStreamToLocalFile(rs, file) {
     rs.pipe(ws);
   });
 }
+__name(readStreamToLocalFile, "readStreamToLocalFile");
 var fsStat = import_node_util3.default.promisify(import_node_fs.default.stat);
 var fsCreateReadStream = import_node_fs.default.createReadStream;
 
 // node_modules/@azure/storage-blob/dist/esm/Clients.js
 var BlobClient = class _BlobClient extends StorageClient2 {
+  static {
+    __name(this, "BlobClient");
+  }
   /**
    * blobContext provided by protocol layer.
    */
@@ -57753,9 +59349,9 @@ var BlobClient = class _BlobClient extends StorageClient2 {
    */
   async beginCopyFromURL(copySource2, options = {}) {
     const client = {
-      abortCopyFromURL: (...args) => this.abortCopyFromURL(...args),
-      getProperties: (...args) => this.getProperties(...args),
-      startCopyFromURL: (...args) => this.startCopyFromURL(...args)
+      abortCopyFromURL: /* @__PURE__ */ __name((...args) => this.abortCopyFromURL(...args), "abortCopyFromURL"),
+      getProperties: /* @__PURE__ */ __name((...args) => this.getProperties(...args), "getProperties"),
+      startCopyFromURL: /* @__PURE__ */ __name((...args) => this.startCopyFromURL(...args), "startCopyFromURL")
     };
     const poller = new BlobBeginCopyFromUrlPoller({
       blobClient: client,
@@ -58181,6 +59777,9 @@ var BlobClient = class _BlobClient extends StorageClient2 {
   }
 };
 var AppendBlobClient = class _AppendBlobClient extends BlobClient {
+  static {
+    __name(this, "AppendBlobClient");
+  }
   /**
    * appendBlobsContext provided by protocol layer.
    */
@@ -58446,6 +60045,9 @@ var AppendBlobClient = class _AppendBlobClient extends BlobClient {
   }
 };
 var BlockBlobClient = class _BlockBlobClient extends BlobClient {
+  static {
+    __name(this, "BlockBlobClient");
+  }
   /**
    * blobContext provided by protocol layer.
    *
@@ -59064,6 +60666,9 @@ var BlockBlobClient = class _BlockBlobClient extends BlobClient {
   }
 };
 var PageBlobClient = class _PageBlobClient extends BlobClient {
+  static {
+    __name(this, "PageBlobClient");
+  }
   /**
    * pageBlobsContext provided by protocol layer.
    */
@@ -59472,12 +61077,12 @@ var PageBlobClient = class _PageBlobClient extends BlobClient {
       /**
        * Return an AsyncIterableIterator that works a page at a time
        */
-      byPage: (settings = {}) => {
+      byPage: /* @__PURE__ */ __name((settings = {}) => {
         return this.listPageRangeItemSegments(offset, count, settings.continuationToken, {
           maxPageSize: settings.maxPageSize,
           ...options
         });
-      }
+      }, "byPage")
     };
   }
   /**
@@ -59684,12 +61289,12 @@ var PageBlobClient = class _PageBlobClient extends BlobClient {
       /**
        * Return an AsyncIterableIterator that works a page at a time
        */
-      byPage: (settings = {}) => {
+      byPage: /* @__PURE__ */ __name((settings = {}) => {
         return this.listPageRangeDiffItemSegments(offset, count, prevSnapshot, settings.continuationToken, {
           maxPageSize: settings.maxPageSize,
           ...options
         });
-      }
+      }, "byPage")
     };
   }
   /**
@@ -59808,12 +61413,18 @@ var KnownEncryptionAlgorithmType2;
 
 // node_modules/@actions/cache/lib/internal/shared/errors.js
 var InvalidResponseError = class extends Error {
+  static {
+    __name(this, "InvalidResponseError");
+  }
   constructor(message) {
     super(message);
     this.name = "InvalidResponseError";
   }
 };
 var NetworkError = class extends Error {
+  static {
+    __name(this, "NetworkError");
+  }
   constructor(code) {
     const message = `Unable to make request: ${code}
 If you are using self-hosted runners, please make sure your runner has access to all GitHub endpoints: https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners#communication-between-self-hosted-runners-and-github`;
@@ -59834,6 +61445,9 @@ NetworkError.isNetworkErrorCode = (code) => {
   ].includes(code);
 };
 var UsageError = class extends Error {
+  static {
+    __name(this, "UsageError");
+  }
   constructor() {
     const message = `Cache storage quota has been hit. Unable to upload any new cache entries.
 More info on storage limits: https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions#calculating-minute-and-storage-spending`;
@@ -59847,6 +61461,9 @@ UsageError.isUsageErrorMessage = (msg) => {
   return msg.includes("insufficient usage");
 };
 var RateLimitError = class extends Error {
+  static {
+    __name(this, "RateLimitError");
+  }
   constructor(message) {
     super(message);
     this.name = "RateLimitError";
@@ -59860,6 +61477,7 @@ var __awaiter11 = function(thisArg, _arguments, P, generator) {
       resolve2(value);
     });
   }
+  __name(adopt, "adopt");
   return new (P || (P = Promise))(function(resolve2, reject) {
     function fulfilled(value) {
       try {
@@ -59868,6 +61486,7 @@ var __awaiter11 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(fulfilled, "fulfilled");
     function rejected(value) {
       try {
         step(generator["throw"](value));
@@ -59875,13 +61494,18 @@ var __awaiter11 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(rejected, "rejected");
     function step(result) {
       result.done ? resolve2(result.value) : adopt(result.value).then(fulfilled, rejected);
     }
+    __name(step, "step");
     step((generator = generator.apply(thisArg, _arguments || [])).next());
   });
 };
 var UploadProgress = class {
+  static {
+    __name(this, "UploadProgress");
+  }
   constructor(contentLength2) {
     this.contentLength = contentLength2;
     this.sentBytes = 0;
@@ -59939,12 +61563,12 @@ var UploadProgress = class {
    * @param delayInMs the delay between each write
    */
   startDisplayTimer(delayInMs = 1e3) {
-    const displayCallback = () => {
+    const displayCallback = /* @__PURE__ */ __name(() => {
       this.display();
       if (!this.isDone()) {
         this.timeoutHandle = setTimeout(displayCallback, delayInMs);
       }
-    };
+    }, "displayCallback");
     this.timeoutHandle = setTimeout(displayCallback, delayInMs);
   }
   /**
@@ -59990,6 +61614,7 @@ function uploadCacheArchiveSDK(signedUploadURL, archivePath, options) {
     }
   });
 }
+__name(uploadCacheArchiveSDK, "uploadCacheArchiveSDK");
 
 // node_modules/@actions/cache/lib/internal/requestUtils.js
 var __awaiter12 = function(thisArg, _arguments, P, generator) {
@@ -59998,6 +61623,7 @@ var __awaiter12 = function(thisArg, _arguments, P, generator) {
       resolve2(value);
     });
   }
+  __name(adopt, "adopt");
   return new (P || (P = Promise))(function(resolve2, reject) {
     function fulfilled(value) {
       try {
@@ -60006,6 +61632,7 @@ var __awaiter12 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(fulfilled, "fulfilled");
     function rejected(value) {
       try {
         step(generator["throw"](value));
@@ -60013,9 +61640,11 @@ var __awaiter12 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(rejected, "rejected");
     function step(result) {
       result.done ? resolve2(result.value) : adopt(result.value).then(fulfilled, rejected);
     }
+    __name(step, "step");
     step((generator = generator.apply(thisArg, _arguments || [])).next());
   });
 };
@@ -60025,12 +61654,14 @@ function isSuccessStatusCode(statusCode) {
   }
   return statusCode >= 200 && statusCode < 300;
 }
+__name(isSuccessStatusCode, "isSuccessStatusCode");
 function isServerErrorStatusCode(statusCode) {
   if (!statusCode) {
     return true;
   }
   return statusCode >= 500;
 }
+__name(isServerErrorStatusCode, "isServerErrorStatusCode");
 function isRetryableStatusCode(statusCode) {
   if (!statusCode) {
     return false;
@@ -60042,11 +61673,13 @@ function isRetryableStatusCode(statusCode) {
   ];
   return retryableStatusCodes.includes(statusCode);
 }
+__name(isRetryableStatusCode, "isRetryableStatusCode");
 function sleep(milliseconds) {
   return __awaiter12(this, void 0, void 0, function* () {
     return new Promise((resolve2) => setTimeout(resolve2, milliseconds));
   });
 }
+__name(sleep, "sleep");
 function retry(name_1, method_1, getStatusCode_1) {
   return __awaiter12(this, arguments, void 0, function* (name, method, getStatusCode, maxAttempts = DefaultRetryAttempts, delay4 = DefaultRetryDelay, onError = void 0) {
     let errorMessage = "";
@@ -60085,6 +61718,7 @@ function retry(name_1, method_1, getStatusCode_1) {
     throw Error(`${name} failed: ${errorMessage}`);
   });
 }
+__name(retry, "retry");
 function retryTypedResponse(name_1, method_1) {
   return __awaiter12(this, arguments, void 0, function* (name, method, maxAttempts = DefaultRetryAttempts, delay4 = DefaultRetryDelay) {
     return yield retry(
@@ -60110,11 +61744,13 @@ function retryTypedResponse(name_1, method_1) {
     );
   });
 }
+__name(retryTypedResponse, "retryTypedResponse");
 function retryHttpClientResponse(name_1, method_1) {
   return __awaiter12(this, arguments, void 0, function* (name, method, maxAttempts = DefaultRetryAttempts, delay4 = DefaultRetryDelay) {
     return yield retry(name, method, (response) => response.message.statusCode, maxAttempts, delay4);
   });
 }
+__name(retryHttpClientResponse, "retryHttpClientResponse");
 
 // node_modules/@actions/cache/lib/options.js
 function getUploadOptions(copy) {
@@ -60141,6 +61777,7 @@ function getUploadOptions(copy) {
   debug(`Upload chunk size: ${result.uploadChunkSize}`);
   return result;
 }
+__name(getUploadOptions, "getUploadOptions");
 
 // node_modules/@actions/cache/lib/internal/config.js
 function isGhes() {
@@ -60151,20 +61788,24 @@ function isGhes() {
   const isLocalHost = hostname.endsWith(".LOCALHOST");
   return !isGitHubHost && !isGheHost && !isLocalHost;
 }
+__name(isGhes, "isGhes");
 function getCacheServiceVersion() {
   if (isGhes())
     return "v1";
   return process.env["ACTIONS_CACHE_SERVICE_V2"] ? "v2" : "v1";
 }
+__name(getCacheServiceVersion, "getCacheServiceVersion");
 var KNOWN_CACHE_MODES = ["none", "read", "write", "write-only"];
 function getCacheMode() {
   return (process.env["ACTIONS_CACHE_MODE"] || "").trim().toLowerCase();
 }
+__name(getCacheMode, "getCacheMode");
 function isCacheWritable(mode) {
   if (!KNOWN_CACHE_MODES.includes(mode))
     return true;
   return mode === "write" || mode === "write-only";
 }
+__name(isCacheWritable, "isCacheWritable");
 function getCacheServiceURL() {
   const version3 = getCacheServiceVersion();
   switch (version3) {
@@ -60176,12 +61817,14 @@ function getCacheServiceURL() {
       throw new Error(`Unsupported cache service version: ${version3}`);
   }
 }
+__name(getCacheServiceURL, "getCacheServiceURL");
 
 // node_modules/@actions/cache/lib/internal/shared/user-agent.js
 var import_package_version = __toESM(require_package_version(), 1);
 function getUserAgentString2() {
   return `@actions/cache-${import_package_version.version}`;
 }
+__name(getUserAgentString2, "getUserAgentString");
 
 // node_modules/@actions/cache/lib/internal/cacheHttpClient.js
 var __awaiter13 = function(thisArg, _arguments, P, generator) {
@@ -60190,6 +61833,7 @@ var __awaiter13 = function(thisArg, _arguments, P, generator) {
       resolve2(value);
     });
   }
+  __name(adopt, "adopt");
   return new (P || (P = Promise))(function(resolve2, reject) {
     function fulfilled(value) {
       try {
@@ -60198,6 +61842,7 @@ var __awaiter13 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(fulfilled, "fulfilled");
     function rejected(value) {
       try {
         step(generator["throw"](value));
@@ -60205,9 +61850,11 @@ var __awaiter13 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(rejected, "rejected");
     function step(result) {
       result.done ? resolve2(result.value) : adopt(result.value).then(fulfilled, rejected);
     }
+    __name(step, "step");
     step((generator = generator.apply(thisArg, _arguments || [])).next());
   });
 };
@@ -60220,9 +61867,11 @@ function getCacheApiUrl(resource) {
   debug(`Resource Url: ${url2}`);
   return url2;
 }
+__name(getCacheApiUrl, "getCacheApiUrl");
 function createAcceptHeader(type, apiVersion) {
   return `${type};api-version=${apiVersion}`;
 }
+__name(createAcceptHeader, "createAcceptHeader");
 function getRequestOptions() {
   const requestOptions = {
     headers: {
@@ -60231,11 +61880,13 @@ function getRequestOptions() {
   };
   return requestOptions;
 }
+__name(getRequestOptions, "getRequestOptions");
 function createHttpClient() {
   const token = process.env["ACTIONS_RUNTIME_TOKEN"] || "";
   const bearerCredentialHandler = new BearerCredentialHandler(token);
   return new HttpClient(getUserAgentString2(), [bearerCredentialHandler], getRequestOptions());
 }
+__name(createHttpClient, "createHttpClient");
 function reserveCache(key, paths, options) {
   return __awaiter13(this, void 0, void 0, function* () {
     const httpClient = createHttpClient();
@@ -60251,9 +61902,11 @@ function reserveCache(key, paths, options) {
     return response;
   });
 }
+__name(reserveCache, "reserveCache");
 function getContentRange(start, end) {
   return `bytes ${start}-${end}/*`;
 }
+__name(getContentRange, "getContentRange");
 function uploadChunk(httpClient, resourceUrl, openStream, start, end) {
   return __awaiter13(this, void 0, void 0, function* () {
     debug(`Uploading chunk of size ${end - start + 1} bytes at offset ${start} with content range: ${getContentRange(start, end)}`);
@@ -60269,6 +61922,7 @@ function uploadChunk(httpClient, resourceUrl, openStream, start, end) {
     }
   });
 }
+__name(uploadChunk, "uploadChunk");
 function uploadFile(httpClient, cacheId, archivePath, options) {
   return __awaiter13(this, void 0, void 0, function* () {
     const fileSize = getArchiveFileSizeInBytes(archivePath);
@@ -60303,6 +61957,7 @@ function uploadFile(httpClient, cacheId, archivePath, options) {
     return;
   });
 }
+__name(uploadFile, "uploadFile");
 function commitCache(httpClient, cacheId, filesize) {
   return __awaiter13(this, void 0, void 0, function* () {
     const commitCacheRequest = { size: filesize };
@@ -60311,6 +61966,7 @@ function commitCache(httpClient, cacheId, filesize) {
     }));
   });
 }
+__name(commitCache, "commitCache");
 function saveCache(cacheId, archivePath, signedUploadURL, options) {
   return __awaiter13(this, void 0, void 0, function* () {
     const uploadOptions = getUploadOptions(options);
@@ -60334,29 +61990,33 @@ function saveCache(cacheId, archivePath, signedUploadURL, options) {
     }
   });
 }
+__name(saveCache, "saveCache");
 
 // node_modules/@actions/cache/lib/generated/results/api/v1/cache.js
 var import_runtime_rpc = __toESM(require_commonjs2(), 1);
-var import_runtime11 = __toESM(require_commonjs(), 1);
-var import_runtime12 = __toESM(require_commonjs(), 1);
-var import_runtime13 = __toESM(require_commonjs(), 1);
-var import_runtime14 = __toESM(require_commonjs(), 1);
-var import_runtime15 = __toESM(require_commonjs(), 1);
+var import_runtime256 = __toESM(require_commonjs(), 1);
+var import_runtime257 = __toESM(require_commonjs(), 1);
+var import_runtime258 = __toESM(require_commonjs(), 1);
+var import_runtime259 = __toESM(require_commonjs(), 1);
+var import_runtime260 = __toESM(require_commonjs(), 1);
 
 // node_modules/@actions/cache/lib/generated/results/entities/v1/cachemetadata.js
-var import_runtime6 = __toESM(require_commonjs(), 1);
-var import_runtime7 = __toESM(require_commonjs(), 1);
-var import_runtime8 = __toESM(require_commonjs(), 1);
-var import_runtime9 = __toESM(require_commonjs(), 1);
-var import_runtime10 = __toESM(require_commonjs(), 1);
+var import_runtime250 = __toESM(require_commonjs(), 1);
+var import_runtime251 = __toESM(require_commonjs(), 1);
+var import_runtime252 = __toESM(require_commonjs(), 1);
+var import_runtime253 = __toESM(require_commonjs(), 1);
+var import_runtime254 = __toESM(require_commonjs(), 1);
 
 // node_modules/@actions/cache/lib/generated/results/entities/v1/cachescope.js
-var import_runtime = __toESM(require_commonjs(), 1);
-var import_runtime2 = __toESM(require_commonjs(), 1);
-var import_runtime3 = __toESM(require_commonjs(), 1);
-var import_runtime4 = __toESM(require_commonjs(), 1);
-var import_runtime5 = __toESM(require_commonjs(), 1);
-var CacheScope$Type = class extends import_runtime5.MessageType {
+var import_runtime244 = __toESM(require_commonjs(), 1);
+var import_runtime245 = __toESM(require_commonjs(), 1);
+var import_runtime246 = __toESM(require_commonjs(), 1);
+var import_runtime247 = __toESM(require_commonjs(), 1);
+var import_runtime248 = __toESM(require_commonjs(), 1);
+var CacheScope$Type = class extends import_runtime248.MessageType {
+  static {
+    __name(this, "CacheScope$Type");
+  }
   constructor() {
     super("github.actions.results.entities.v1.CacheScope", [
       {
@@ -60377,9 +62037,9 @@ var CacheScope$Type = class extends import_runtime5.MessageType {
   }
   create(value) {
     const message = { scope: "", permission: "0" };
-    globalThis.Object.defineProperty(message, import_runtime4.MESSAGE_TYPE, { enumerable: false, value: this });
+    globalThis.Object.defineProperty(message, import_runtime247.MESSAGE_TYPE, { enumerable: false, value: this });
     if (value !== void 0)
-      (0, import_runtime3.reflectionMergePartial)(this, message, value);
+      (0, import_runtime246.reflectionMergePartial)(this, message, value);
     return message;
   }
   internalBinaryRead(reader, length, options, target) {
@@ -60401,26 +62061,29 @@ var CacheScope$Type = class extends import_runtime5.MessageType {
             throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
           let d = reader.skip(wireType);
           if (u !== false)
-            (u === true ? import_runtime2.UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            (u === true ? import_runtime245.UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
       }
     }
     return message;
   }
   internalBinaryWrite(message, writer, options) {
     if (message.scope !== "")
-      writer.tag(1, import_runtime.WireType.LengthDelimited).string(message.scope);
+      writer.tag(1, import_runtime244.WireType.LengthDelimited).string(message.scope);
     if (message.permission !== "0")
-      writer.tag(2, import_runtime.WireType.Varint).int64(message.permission);
+      writer.tag(2, import_runtime244.WireType.Varint).int64(message.permission);
     let u = options.writeUnknownFields;
     if (u !== false)
-      (u == true ? import_runtime2.UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+      (u == true ? import_runtime245.UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
     return writer;
   }
 };
 var CacheScope = new CacheScope$Type();
 
 // node_modules/@actions/cache/lib/generated/results/entities/v1/cachemetadata.js
-var CacheMetadata$Type = class extends import_runtime10.MessageType {
+var CacheMetadata$Type = class extends import_runtime254.MessageType {
+  static {
+    __name(this, "CacheMetadata$Type");
+  }
   constructor() {
     super("github.actions.results.entities.v1.CacheMetadata", [
       {
@@ -60430,14 +62093,14 @@ var CacheMetadata$Type = class extends import_runtime10.MessageType {
         T: 3
         /*ScalarType.INT64*/
       },
-      { no: 2, name: "scope", kind: "message", repeat: 1, T: () => CacheScope }
+      { no: 2, name: "scope", kind: "message", repeat: 1, T: /* @__PURE__ */ __name(() => CacheScope, "T") }
     ]);
   }
   create(value) {
     const message = { repositoryId: "0", scope: [] };
-    globalThis.Object.defineProperty(message, import_runtime9.MESSAGE_TYPE, { enumerable: false, value: this });
+    globalThis.Object.defineProperty(message, import_runtime253.MESSAGE_TYPE, { enumerable: false, value: this });
     if (value !== void 0)
-      (0, import_runtime8.reflectionMergePartial)(this, message, value);
+      (0, import_runtime252.reflectionMergePartial)(this, message, value);
     return message;
   }
   internalBinaryRead(reader, length, options, target) {
@@ -60459,29 +62122,32 @@ var CacheMetadata$Type = class extends import_runtime10.MessageType {
             throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
           let d = reader.skip(wireType);
           if (u !== false)
-            (u === true ? import_runtime7.UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            (u === true ? import_runtime251.UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
       }
     }
     return message;
   }
   internalBinaryWrite(message, writer, options) {
     if (message.repositoryId !== "0")
-      writer.tag(1, import_runtime6.WireType.Varint).int64(message.repositoryId);
+      writer.tag(1, import_runtime250.WireType.Varint).int64(message.repositoryId);
     for (let i = 0; i < message.scope.length; i++)
-      CacheScope.internalBinaryWrite(message.scope[i], writer.tag(2, import_runtime6.WireType.LengthDelimited).fork(), options).join();
+      CacheScope.internalBinaryWrite(message.scope[i], writer.tag(2, import_runtime250.WireType.LengthDelimited).fork(), options).join();
     let u = options.writeUnknownFields;
     if (u !== false)
-      (u == true ? import_runtime7.UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+      (u == true ? import_runtime251.UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
     return writer;
   }
 };
 var CacheMetadata = new CacheMetadata$Type();
 
 // node_modules/@actions/cache/lib/generated/results/api/v1/cache.js
-var CreateCacheEntryRequest$Type = class extends import_runtime15.MessageType {
+var CreateCacheEntryRequest$Type = class extends import_runtime260.MessageType {
+  static {
+    __name(this, "CreateCacheEntryRequest$Type");
+  }
   constructor() {
     super("github.actions.results.api.v1.CreateCacheEntryRequest", [
-      { no: 1, name: "metadata", kind: "message", T: () => CacheMetadata },
+      { no: 1, name: "metadata", kind: "message", T: /* @__PURE__ */ __name(() => CacheMetadata, "T") },
       {
         no: 2,
         name: "key",
@@ -60500,9 +62166,9 @@ var CreateCacheEntryRequest$Type = class extends import_runtime15.MessageType {
   }
   create(value) {
     const message = { key: "", version: "" };
-    globalThis.Object.defineProperty(message, import_runtime14.MESSAGE_TYPE, { enumerable: false, value: this });
+    globalThis.Object.defineProperty(message, import_runtime259.MESSAGE_TYPE, { enumerable: false, value: this });
     if (value !== void 0)
-      (0, import_runtime13.reflectionMergePartial)(this, message, value);
+      (0, import_runtime258.reflectionMergePartial)(this, message, value);
     return message;
   }
   internalBinaryRead(reader, length, options, target) {
@@ -60528,26 +62194,29 @@ var CreateCacheEntryRequest$Type = class extends import_runtime15.MessageType {
             throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
           let d = reader.skip(wireType);
           if (u !== false)
-            (u === true ? import_runtime12.UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            (u === true ? import_runtime257.UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
       }
     }
     return message;
   }
   internalBinaryWrite(message, writer, options) {
     if (message.metadata)
-      CacheMetadata.internalBinaryWrite(message.metadata, writer.tag(1, import_runtime11.WireType.LengthDelimited).fork(), options).join();
+      CacheMetadata.internalBinaryWrite(message.metadata, writer.tag(1, import_runtime256.WireType.LengthDelimited).fork(), options).join();
     if (message.key !== "")
-      writer.tag(2, import_runtime11.WireType.LengthDelimited).string(message.key);
+      writer.tag(2, import_runtime256.WireType.LengthDelimited).string(message.key);
     if (message.version !== "")
-      writer.tag(3, import_runtime11.WireType.LengthDelimited).string(message.version);
+      writer.tag(3, import_runtime256.WireType.LengthDelimited).string(message.version);
     let u = options.writeUnknownFields;
     if (u !== false)
-      (u == true ? import_runtime12.UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+      (u == true ? import_runtime257.UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
     return writer;
   }
 };
 var CreateCacheEntryRequest = new CreateCacheEntryRequest$Type();
-var CreateCacheEntryResponse$Type = class extends import_runtime15.MessageType {
+var CreateCacheEntryResponse$Type = class extends import_runtime260.MessageType {
+  static {
+    __name(this, "CreateCacheEntryResponse$Type");
+  }
   constructor() {
     super("github.actions.results.api.v1.CreateCacheEntryResponse", [
       {
@@ -60575,9 +62244,9 @@ var CreateCacheEntryResponse$Type = class extends import_runtime15.MessageType {
   }
   create(value) {
     const message = { ok: false, signedUploadUrl: "", message: "" };
-    globalThis.Object.defineProperty(message, import_runtime14.MESSAGE_TYPE, { enumerable: false, value: this });
+    globalThis.Object.defineProperty(message, import_runtime259.MESSAGE_TYPE, { enumerable: false, value: this });
     if (value !== void 0)
-      (0, import_runtime13.reflectionMergePartial)(this, message, value);
+      (0, import_runtime258.reflectionMergePartial)(this, message, value);
     return message;
   }
   internalBinaryRead(reader, length, options, target) {
@@ -60603,29 +62272,32 @@ var CreateCacheEntryResponse$Type = class extends import_runtime15.MessageType {
             throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
           let d = reader.skip(wireType);
           if (u !== false)
-            (u === true ? import_runtime12.UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            (u === true ? import_runtime257.UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
       }
     }
     return message;
   }
   internalBinaryWrite(message, writer, options) {
     if (message.ok !== false)
-      writer.tag(1, import_runtime11.WireType.Varint).bool(message.ok);
+      writer.tag(1, import_runtime256.WireType.Varint).bool(message.ok);
     if (message.signedUploadUrl !== "")
-      writer.tag(2, import_runtime11.WireType.LengthDelimited).string(message.signedUploadUrl);
+      writer.tag(2, import_runtime256.WireType.LengthDelimited).string(message.signedUploadUrl);
     if (message.message !== "")
-      writer.tag(3, import_runtime11.WireType.LengthDelimited).string(message.message);
+      writer.tag(3, import_runtime256.WireType.LengthDelimited).string(message.message);
     let u = options.writeUnknownFields;
     if (u !== false)
-      (u == true ? import_runtime12.UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+      (u == true ? import_runtime257.UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
     return writer;
   }
 };
 var CreateCacheEntryResponse = new CreateCacheEntryResponse$Type();
-var FinalizeCacheEntryUploadRequest$Type = class extends import_runtime15.MessageType {
+var FinalizeCacheEntryUploadRequest$Type = class extends import_runtime260.MessageType {
+  static {
+    __name(this, "FinalizeCacheEntryUploadRequest$Type");
+  }
   constructor() {
     super("github.actions.results.api.v1.FinalizeCacheEntryUploadRequest", [
-      { no: 1, name: "metadata", kind: "message", T: () => CacheMetadata },
+      { no: 1, name: "metadata", kind: "message", T: /* @__PURE__ */ __name(() => CacheMetadata, "T") },
       {
         no: 2,
         name: "key",
@@ -60651,9 +62323,9 @@ var FinalizeCacheEntryUploadRequest$Type = class extends import_runtime15.Messag
   }
   create(value) {
     const message = { key: "", sizeBytes: "0", version: "" };
-    globalThis.Object.defineProperty(message, import_runtime14.MESSAGE_TYPE, { enumerable: false, value: this });
+    globalThis.Object.defineProperty(message, import_runtime259.MESSAGE_TYPE, { enumerable: false, value: this });
     if (value !== void 0)
-      (0, import_runtime13.reflectionMergePartial)(this, message, value);
+      (0, import_runtime258.reflectionMergePartial)(this, message, value);
     return message;
   }
   internalBinaryRead(reader, length, options, target) {
@@ -60683,28 +62355,31 @@ var FinalizeCacheEntryUploadRequest$Type = class extends import_runtime15.Messag
             throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
           let d = reader.skip(wireType);
           if (u !== false)
-            (u === true ? import_runtime12.UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            (u === true ? import_runtime257.UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
       }
     }
     return message;
   }
   internalBinaryWrite(message, writer, options) {
     if (message.metadata)
-      CacheMetadata.internalBinaryWrite(message.metadata, writer.tag(1, import_runtime11.WireType.LengthDelimited).fork(), options).join();
+      CacheMetadata.internalBinaryWrite(message.metadata, writer.tag(1, import_runtime256.WireType.LengthDelimited).fork(), options).join();
     if (message.key !== "")
-      writer.tag(2, import_runtime11.WireType.LengthDelimited).string(message.key);
+      writer.tag(2, import_runtime256.WireType.LengthDelimited).string(message.key);
     if (message.sizeBytes !== "0")
-      writer.tag(3, import_runtime11.WireType.Varint).int64(message.sizeBytes);
+      writer.tag(3, import_runtime256.WireType.Varint).int64(message.sizeBytes);
     if (message.version !== "")
-      writer.tag(4, import_runtime11.WireType.LengthDelimited).string(message.version);
+      writer.tag(4, import_runtime256.WireType.LengthDelimited).string(message.version);
     let u = options.writeUnknownFields;
     if (u !== false)
-      (u == true ? import_runtime12.UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+      (u == true ? import_runtime257.UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
     return writer;
   }
 };
 var FinalizeCacheEntryUploadRequest = new FinalizeCacheEntryUploadRequest$Type();
-var FinalizeCacheEntryUploadResponse$Type = class extends import_runtime15.MessageType {
+var FinalizeCacheEntryUploadResponse$Type = class extends import_runtime260.MessageType {
+  static {
+    __name(this, "FinalizeCacheEntryUploadResponse$Type");
+  }
   constructor() {
     super("github.actions.results.api.v1.FinalizeCacheEntryUploadResponse", [
       {
@@ -60732,9 +62407,9 @@ var FinalizeCacheEntryUploadResponse$Type = class extends import_runtime15.Messa
   }
   create(value) {
     const message = { ok: false, entryId: "0", message: "" };
-    globalThis.Object.defineProperty(message, import_runtime14.MESSAGE_TYPE, { enumerable: false, value: this });
+    globalThis.Object.defineProperty(message, import_runtime259.MESSAGE_TYPE, { enumerable: false, value: this });
     if (value !== void 0)
-      (0, import_runtime13.reflectionMergePartial)(this, message, value);
+      (0, import_runtime258.reflectionMergePartial)(this, message, value);
     return message;
   }
   internalBinaryRead(reader, length, options, target) {
@@ -60760,29 +62435,32 @@ var FinalizeCacheEntryUploadResponse$Type = class extends import_runtime15.Messa
             throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
           let d = reader.skip(wireType);
           if (u !== false)
-            (u === true ? import_runtime12.UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            (u === true ? import_runtime257.UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
       }
     }
     return message;
   }
   internalBinaryWrite(message, writer, options) {
     if (message.ok !== false)
-      writer.tag(1, import_runtime11.WireType.Varint).bool(message.ok);
+      writer.tag(1, import_runtime256.WireType.Varint).bool(message.ok);
     if (message.entryId !== "0")
-      writer.tag(2, import_runtime11.WireType.Varint).int64(message.entryId);
+      writer.tag(2, import_runtime256.WireType.Varint).int64(message.entryId);
     if (message.message !== "")
-      writer.tag(3, import_runtime11.WireType.LengthDelimited).string(message.message);
+      writer.tag(3, import_runtime256.WireType.LengthDelimited).string(message.message);
     let u = options.writeUnknownFields;
     if (u !== false)
-      (u == true ? import_runtime12.UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+      (u == true ? import_runtime257.UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
     return writer;
   }
 };
 var FinalizeCacheEntryUploadResponse = new FinalizeCacheEntryUploadResponse$Type();
-var GetCacheEntryDownloadURLRequest$Type = class extends import_runtime15.MessageType {
+var GetCacheEntryDownloadURLRequest$Type = class extends import_runtime260.MessageType {
+  static {
+    __name(this, "GetCacheEntryDownloadURLRequest$Type");
+  }
   constructor() {
     super("github.actions.results.api.v1.GetCacheEntryDownloadURLRequest", [
-      { no: 1, name: "metadata", kind: "message", T: () => CacheMetadata },
+      { no: 1, name: "metadata", kind: "message", T: /* @__PURE__ */ __name(() => CacheMetadata, "T") },
       {
         no: 2,
         name: "key",
@@ -60809,9 +62487,9 @@ var GetCacheEntryDownloadURLRequest$Type = class extends import_runtime15.Messag
   }
   create(value) {
     const message = { key: "", restoreKeys: [], version: "" };
-    globalThis.Object.defineProperty(message, import_runtime14.MESSAGE_TYPE, { enumerable: false, value: this });
+    globalThis.Object.defineProperty(message, import_runtime259.MESSAGE_TYPE, { enumerable: false, value: this });
     if (value !== void 0)
-      (0, import_runtime13.reflectionMergePartial)(this, message, value);
+      (0, import_runtime258.reflectionMergePartial)(this, message, value);
     return message;
   }
   internalBinaryRead(reader, length, options, target) {
@@ -60841,28 +62519,31 @@ var GetCacheEntryDownloadURLRequest$Type = class extends import_runtime15.Messag
             throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
           let d = reader.skip(wireType);
           if (u !== false)
-            (u === true ? import_runtime12.UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            (u === true ? import_runtime257.UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
       }
     }
     return message;
   }
   internalBinaryWrite(message, writer, options) {
     if (message.metadata)
-      CacheMetadata.internalBinaryWrite(message.metadata, writer.tag(1, import_runtime11.WireType.LengthDelimited).fork(), options).join();
+      CacheMetadata.internalBinaryWrite(message.metadata, writer.tag(1, import_runtime256.WireType.LengthDelimited).fork(), options).join();
     if (message.key !== "")
-      writer.tag(2, import_runtime11.WireType.LengthDelimited).string(message.key);
+      writer.tag(2, import_runtime256.WireType.LengthDelimited).string(message.key);
     for (let i = 0; i < message.restoreKeys.length; i++)
-      writer.tag(3, import_runtime11.WireType.LengthDelimited).string(message.restoreKeys[i]);
+      writer.tag(3, import_runtime256.WireType.LengthDelimited).string(message.restoreKeys[i]);
     if (message.version !== "")
-      writer.tag(4, import_runtime11.WireType.LengthDelimited).string(message.version);
+      writer.tag(4, import_runtime256.WireType.LengthDelimited).string(message.version);
     let u = options.writeUnknownFields;
     if (u !== false)
-      (u == true ? import_runtime12.UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+      (u == true ? import_runtime257.UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
     return writer;
   }
 };
 var GetCacheEntryDownloadURLRequest = new GetCacheEntryDownloadURLRequest$Type();
-var GetCacheEntryDownloadURLResponse$Type = class extends import_runtime15.MessageType {
+var GetCacheEntryDownloadURLResponse$Type = class extends import_runtime260.MessageType {
+  static {
+    __name(this, "GetCacheEntryDownloadURLResponse$Type");
+  }
   constructor() {
     super("github.actions.results.api.v1.GetCacheEntryDownloadURLResponse", [
       {
@@ -60890,9 +62571,9 @@ var GetCacheEntryDownloadURLResponse$Type = class extends import_runtime15.Messa
   }
   create(value) {
     const message = { ok: false, signedDownloadUrl: "", matchedKey: "" };
-    globalThis.Object.defineProperty(message, import_runtime14.MESSAGE_TYPE, { enumerable: false, value: this });
+    globalThis.Object.defineProperty(message, import_runtime259.MESSAGE_TYPE, { enumerable: false, value: this });
     if (value !== void 0)
-      (0, import_runtime13.reflectionMergePartial)(this, message, value);
+      (0, import_runtime258.reflectionMergePartial)(this, message, value);
     return message;
   }
   internalBinaryRead(reader, length, options, target) {
@@ -60918,21 +62599,21 @@ var GetCacheEntryDownloadURLResponse$Type = class extends import_runtime15.Messa
             throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
           let d = reader.skip(wireType);
           if (u !== false)
-            (u === true ? import_runtime12.UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            (u === true ? import_runtime257.UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
       }
     }
     return message;
   }
   internalBinaryWrite(message, writer, options) {
     if (message.ok !== false)
-      writer.tag(1, import_runtime11.WireType.Varint).bool(message.ok);
+      writer.tag(1, import_runtime256.WireType.Varint).bool(message.ok);
     if (message.signedDownloadUrl !== "")
-      writer.tag(2, import_runtime11.WireType.LengthDelimited).string(message.signedDownloadUrl);
+      writer.tag(2, import_runtime256.WireType.LengthDelimited).string(message.signedDownloadUrl);
     if (message.matchedKey !== "")
-      writer.tag(3, import_runtime11.WireType.LengthDelimited).string(message.matchedKey);
+      writer.tag(3, import_runtime256.WireType.LengthDelimited).string(message.matchedKey);
     let u = options.writeUnknownFields;
     if (u !== false)
-      (u == true ? import_runtime12.UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+      (u == true ? import_runtime257.UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
     return writer;
   }
 };
@@ -60945,6 +62626,9 @@ var CacheService = new import_runtime_rpc.ServiceType("github.actions.results.ap
 
 // node_modules/@actions/cache/lib/generated/results/api/v1/cache.twirp-client.js
 var CacheServiceClientJSON = class {
+  static {
+    __name(this, "CacheServiceClientJSON");
+  }
   constructor(rpc) {
     this.rpc = rpc;
     this.CreateCacheEntry.bind(this);
@@ -60998,6 +62682,7 @@ function maskSigUrl(url2) {
     debug(`Failed to parse URL: ${url2} ${error2 instanceof Error ? error2.message : String(error2)}`);
   }
 }
+__name(maskSigUrl, "maskSigUrl");
 function maskSecretUrls(body2) {
   if (typeof body2 !== "object" || body2 === null) {
     debug("body is not an object or is null");
@@ -61010,6 +62695,7 @@ function maskSecretUrls(body2) {
     maskSigUrl(body2.signed_download_url);
   }
 }
+__name(maskSecretUrls, "maskSecretUrls");
 
 // node_modules/@actions/cache/lib/internal/shared/cacheTwirpClient.js
 var __awaiter14 = function(thisArg, _arguments, P, generator) {
@@ -61018,6 +62704,7 @@ var __awaiter14 = function(thisArg, _arguments, P, generator) {
       resolve2(value);
     });
   }
+  __name(adopt, "adopt");
   return new (P || (P = Promise))(function(resolve2, reject) {
     function fulfilled(value) {
       try {
@@ -61026,6 +62713,7 @@ var __awaiter14 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(fulfilled, "fulfilled");
     function rejected(value) {
       try {
         step(generator["throw"](value));
@@ -61033,13 +62721,18 @@ var __awaiter14 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(rejected, "rejected");
     function step(result) {
       result.done ? resolve2(result.value) : adopt(result.value).then(fulfilled, rejected);
     }
+    __name(step, "step");
     step((generator = generator.apply(thisArg, _arguments || [])).next());
   });
 };
 var CacheServiceClient = class {
+  static {
+    __name(this, "CacheServiceClient");
+  }
   constructor(userAgent, maxAttempts, baseRetryIntervalMilliseconds, retryMultiplier) {
     this.maxAttempts = 5;
     this.baseRetryIntervalMilliseconds = 3e3;
@@ -61182,6 +62875,7 @@ function internalCacheTwirpClient(options) {
   const client = new CacheServiceClient(getUserAgentString2(), options === null || options === void 0 ? void 0 : options.maxAttempts, options === null || options === void 0 ? void 0 : options.retryIntervalMs, options === null || options === void 0 ? void 0 : options.retryMultiplier);
   return new CacheServiceClientJSON(client);
 }
+__name(internalCacheTwirpClient, "internalCacheTwirpClient");
 
 // node_modules/@actions/cache/lib/internal/tar.js
 var import_fs2 = require("fs");
@@ -61192,6 +62886,7 @@ var __awaiter15 = function(thisArg, _arguments, P, generator) {
       resolve2(value);
     });
   }
+  __name(adopt, "adopt");
   return new (P || (P = Promise))(function(resolve2, reject) {
     function fulfilled(value) {
       try {
@@ -61200,6 +62895,7 @@ var __awaiter15 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(fulfilled, "fulfilled");
     function rejected(value) {
       try {
         step(generator["throw"](value));
@@ -61207,9 +62903,11 @@ var __awaiter15 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(rejected, "rejected");
     function step(result) {
       result.done ? resolve2(result.value) : adopt(result.value).then(fulfilled, rejected);
     }
+    __name(step, "step");
     step((generator = generator.apply(thisArg, _arguments || [])).next());
   });
 };
@@ -61247,6 +62945,7 @@ function getTarPath() {
     };
   });
 }
+__name(getTarPath, "getTarPath");
 function getTarArgs(tarPath_1, compressionMethod_1, type_1) {
   return __awaiter15(this, arguments, void 0, function* (tarPath, compressionMethod, type, archivePath = "") {
     const args = [`"${tarPath.path}"`];
@@ -61278,6 +62977,7 @@ function getTarArgs(tarPath_1, compressionMethod_1, type_1) {
     return args;
   });
 }
+__name(getTarArgs, "getTarArgs");
 function getCommands(compressionMethod_1, type_1) {
   return __awaiter15(this, arguments, void 0, function* (compressionMethod, type, archivePath = "") {
     let args;
@@ -61296,10 +62996,12 @@ function getCommands(compressionMethod_1, type_1) {
     return [args.join(" ")];
   });
 }
+__name(getCommands, "getCommands");
 function getWorkingDirectory() {
   var _a2;
   return (_a2 = process.env["GITHUB_WORKSPACE"]) !== null && _a2 !== void 0 ? _a2 : process.cwd();
 }
+__name(getWorkingDirectory, "getWorkingDirectory");
 function getDecompressionProgram(tarPath, compressionMethod, archivePath) {
   return __awaiter15(this, void 0, void 0, function* () {
     const BSD_TAR_ZSTD = tarPath.type === ArchiveToolType.BSD && compressionMethod !== CompressionMethod.Gzip && IS_WINDOWS8;
@@ -61324,6 +63026,7 @@ function getDecompressionProgram(tarPath, compressionMethod, archivePath) {
     }
   });
 }
+__name(getDecompressionProgram, "getDecompressionProgram");
 function getCompressionProgram(tarPath, compressionMethod) {
   return __awaiter15(this, void 0, void 0, function* () {
     const cacheFileName = getCacheFileName(compressionMethod);
@@ -61349,6 +63052,7 @@ function getCompressionProgram(tarPath, compressionMethod) {
     }
   });
 }
+__name(getCompressionProgram, "getCompressionProgram");
 function execCommands(commands, cwd) {
   return __awaiter15(this, void 0, void 0, function* () {
     for (const command of commands) {
@@ -61363,12 +63067,14 @@ function execCommands(commands, cwd) {
     }
   });
 }
+__name(execCommands, "execCommands");
 function listTar(archivePath, compressionMethod) {
   return __awaiter15(this, void 0, void 0, function* () {
     const commands = yield getCommands(compressionMethod, "list", archivePath);
     yield execCommands(commands);
   });
 }
+__name(listTar, "listTar");
 function createTar(archiveFolder, sourceDirectories, compressionMethod) {
   return __awaiter15(this, void 0, void 0, function* () {
     (0, import_fs2.writeFileSync)(path9.join(archiveFolder, ManifestFilename), sourceDirectories.join("\n"));
@@ -61376,6 +63082,7 @@ function createTar(archiveFolder, sourceDirectories, compressionMethod) {
     yield execCommands(commands, archiveFolder);
   });
 }
+__name(createTar, "createTar");
 
 // node_modules/@actions/cache/lib/cache.js
 var __awaiter16 = function(thisArg, _arguments, P, generator) {
@@ -61384,6 +63091,7 @@ var __awaiter16 = function(thisArg, _arguments, P, generator) {
       resolve2(value);
     });
   }
+  __name(adopt, "adopt");
   return new (P || (P = Promise))(function(resolve2, reject) {
     function fulfilled(value) {
       try {
@@ -61392,6 +63100,7 @@ var __awaiter16 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(fulfilled, "fulfilled");
     function rejected(value) {
       try {
         step(generator["throw"](value));
@@ -61399,13 +63108,18 @@ var __awaiter16 = function(thisArg, _arguments, P, generator) {
         reject(e);
       }
     }
+    __name(rejected, "rejected");
     function step(result) {
       result.done ? resolve2(result.value) : adopt(result.value).then(fulfilled, rejected);
     }
+    __name(step, "step");
     step((generator = generator.apply(thisArg, _arguments || [])).next());
   });
 };
 var ValidationError = class _ValidationError extends Error {
+  static {
+    __name(this, "ValidationError");
+  }
   constructor(message) {
     super(message);
     this.name = "ValidationError";
@@ -61413,6 +63127,9 @@ var ValidationError = class _ValidationError extends Error {
   }
 };
 var ReserveCacheError = class _ReserveCacheError extends Error {
+  static {
+    __name(this, "ReserveCacheError");
+  }
   constructor(message) {
     super(message);
     this.name = "ReserveCacheError";
@@ -61421,6 +63138,9 @@ var ReserveCacheError = class _ReserveCacheError extends Error {
 };
 var CACHE_WRITE_DENIED_PREFIX = "cache write denied:";
 var CacheWriteDeniedError = class _CacheWriteDeniedError extends ReserveCacheError {
+  static {
+    __name(this, "CacheWriteDeniedError");
+  }
   constructor(message) {
     super(message);
     this.name = "CacheWriteDeniedError";
@@ -61428,6 +63148,9 @@ var CacheWriteDeniedError = class _CacheWriteDeniedError extends ReserveCacheErr
   }
 };
 var FinalizeCacheError = class _FinalizeCacheError extends Error {
+  static {
+    __name(this, "FinalizeCacheError");
+  }
   constructor(message) {
     super(message);
     this.name = "FinalizeCacheError";
@@ -61439,6 +63162,7 @@ function checkPaths(paths) {
     throw new ValidationError(`Path Validation Error: At least one directory or file path is required`);
   }
 }
+__name(checkPaths, "checkPaths");
 function checkKey(key) {
   if (key.length > 512) {
     throw new ValidationError(`Key Validation Error: ${key} cannot be larger than 512 characters.`);
@@ -61448,6 +63172,7 @@ function checkKey(key) {
     throw new ValidationError(`Key Validation Error: ${key} cannot contain commas.`);
   }
 }
+__name(checkKey, "checkKey");
 function saveCache2(paths_1, key_1, options_1) {
   return __awaiter16(this, arguments, void 0, function* (paths, key, options, enableCrossOsArchive = false) {
     const cacheServiceVersion = getCacheServiceVersion();
@@ -61469,6 +63194,7 @@ function saveCache2(paths_1, key_1, options_1) {
     }
   });
 }
+__name(saveCache2, "saveCache");
 function saveCacheV1(paths_1, key_1, options_1) {
   return __awaiter16(this, arguments, void 0, function* (paths, key, options, enableCrossOsArchive = false) {
     var _a2, _b, _c, _d, _e, _f;
@@ -61536,6 +63262,7 @@ function saveCacheV1(paths_1, key_1, options_1) {
     return cacheId;
   });
 }
+__name(saveCacheV1, "saveCacheV1");
 function saveCacheV2(paths_1, key_1, options_1) {
   return __awaiter16(this, arguments, void 0, function* (paths, key, options, enableCrossOsArchive = false) {
     var _a2;
@@ -61625,6 +63352,7 @@ function saveCacheV2(paths_1, key_1, options_1) {
     return cacheId;
   });
 }
+__name(saveCacheV2, "saveCacheV2");
 
 // node_modules/@renovatebot/pep440/lib/version.js
 var VERSION_PATTERN = [
@@ -61707,6 +63435,7 @@ function parse2(version3, regex) {
   };
   return parsed;
 }
+__name(parse2, "parse");
 function normalize_letter_version(letterIn, numberIn) {
   let letter = letterIn;
   let number = numberIn;
@@ -61732,6 +63461,7 @@ function normalize_letter_version(letterIn, numberIn) {
   }
   return null;
 }
+__name(normalize_letter_version, "normalize_letter_version");
 function parse_local_version(local) {
   if (local) {
     return local.split(/[._-]/).map(
@@ -61740,11 +63470,13 @@ function parse_local_version(local) {
   }
   return null;
 }
+__name(parse_local_version, "parse_local_version");
 
 // node_modules/@renovatebot/pep440/lib/operator.js
 function ge(version3, other) {
   return compare(version3, other) >= 0;
 }
+__name(ge, "ge");
 function compare(version3, other) {
   const parsedVersion = parse2(version3);
   const parsedOther = parse2(other);
@@ -61752,6 +63484,7 @@ function compare(version3, other) {
   const keyOther = calculateKey(parsedOther);
   return pyCompare(keyVersion, keyOther);
 }
+__name(compare, "compare");
 function pyCompare(elemIn, otherIn) {
   let elem = elemIn;
   let other = otherIn;
@@ -61780,6 +63513,7 @@ function pyCompare(elemIn, otherIn) {
   }
   return elem < other ? -1 : 1;
 }
+__name(pyCompare, "pyCompare");
 function calculateKey(input) {
   const { epoch } = input;
   let { release, pre, post, local, dev } = input;
@@ -61802,6 +63536,7 @@ function calculateKey(input) {
   }
   return [epoch, release, pre, post, dev, local];
 }
+__name(calculateKey, "calculateKey");
 
 // node_modules/@renovatebot/pep440/lib/specifier.js
 var RANGE_PATTERN = [
@@ -61836,7 +63571,7 @@ var MatchKind2;
 var IS_WINDOWS10 = process.platform === "win32";
 
 // node_modules/@actions/glob/node_modules/balanced-match/dist/esm/index.js
-var balanced = (a, b, str) => {
+var balanced = /* @__PURE__ */ __name((a, b, str) => {
   const ma = a instanceof RegExp ? maybeMatch(a, str) : a;
   const mb = b instanceof RegExp ? maybeMatch(b, str) : b;
   const r = ma !== null && mb != null && range2(ma, mb, str);
@@ -61847,12 +63582,12 @@ var balanced = (a, b, str) => {
     body: str.slice(r[0] + ma.length, r[1]),
     post: str.slice(r[1] + mb.length)
   };
-};
-var maybeMatch = (reg, str) => {
+}, "balanced");
+var maybeMatch = /* @__PURE__ */ __name((reg, str) => {
   const m = str.match(reg);
   return m ? m[0] : null;
-};
-var range2 = (a, b, str) => {
+}, "maybeMatch");
+var range2 = /* @__PURE__ */ __name((a, b, str) => {
   let begs, beg, left, right = void 0, result;
   let ai = str.indexOf(a);
   let bi = str.indexOf(b, ai + 1);
@@ -61886,7 +63621,7 @@ var range2 = (a, b, str) => {
     }
   }
   return result;
-};
+}, "range");
 
 // node_modules/@actions/glob/node_modules/brace-expansion/dist/esm/index.js
 var escSlash = "\0SLASH" + Math.random() + "\0";
@@ -61909,12 +63644,15 @@ var EXPANSION_MAX_LENGTH = 4e6;
 function numeric(str) {
   return !isNaN(str) ? parseInt(str, 10) : str.charCodeAt(0);
 }
+__name(numeric, "numeric");
 function escapeBraces(str) {
   return str.replace(slashPattern, escSlash).replace(openPattern, escOpen).replace(closePattern, escClose).replace(commaPattern, escComma).replace(periodPattern, escPeriod);
 }
+__name(escapeBraces, "escapeBraces");
 function unescapeBraces(str) {
   return str.replace(escSlashPattern, "\\").replace(escOpenPattern, "{").replace(escClosePattern, "}").replace(escCommaPattern, ",").replace(escPeriodPattern, ".");
 }
+__name(unescapeBraces, "unescapeBraces");
 function parseCommaParts(str) {
   if (!str) {
     return [""];
@@ -61936,6 +63674,7 @@ function parseCommaParts(str) {
   parts.push.apply(parts, p);
   return parts;
 }
+__name(parseCommaParts, "parseCommaParts");
 function expand(str, options = {}) {
   if (!str) {
     return [];
@@ -61946,18 +63685,23 @@ function expand(str, options = {}) {
   }
   return expand_(escapeBraces(str), max, maxLength, true).map(unescapeBraces);
 }
+__name(expand, "expand");
 function embrace(str) {
   return "{" + str + "}";
 }
+__name(embrace, "embrace");
 function isPadded(el) {
   return /^-?0\d/.test(el);
 }
+__name(isPadded, "isPadded");
 function lte(i, y) {
   return i <= y;
 }
+__name(lte, "lte");
 function gte(i, y) {
   return i >= y;
 }
+__name(gte, "gte");
 function combine(acc, pre, values, max, maxLength, dropEmpties) {
   const out = [];
   let length = 0;
@@ -61976,6 +63720,7 @@ function combine(acc, pre, values, max, maxLength, dropEmpties) {
   }
   return out;
 }
+__name(combine, "combine");
 function expandSequence(body2, isAlphaSequence, max, maxLength) {
   const n = body2.split(/\.\./);
   const N = [];
@@ -62022,6 +63767,7 @@ function expandSequence(body2, isAlphaSequence, max, maxLength) {
   }
   return N;
 }
+__name(expandSequence, "expandSequence");
 function expand_(str, max, maxLength, isTop) {
   let acc = [""];
   let dropEmpties = false;
@@ -62100,17 +63846,18 @@ function expand_(str, max, maxLength, isTop) {
   }
   return acc;
 }
+__name(expand_, "expand_");
 
 // node_modules/@actions/glob/node_modules/minimatch/dist/esm/assert-valid-pattern.js
 var MAX_PATTERN_LENGTH = 1024 * 64;
-var assertValidPattern = (pattern) => {
+var assertValidPattern = /* @__PURE__ */ __name((pattern) => {
   if (typeof pattern !== "string") {
     throw new TypeError("invalid pattern");
   }
   if (pattern.length > MAX_PATTERN_LENGTH) {
     throw new TypeError("pattern is too long");
   }
-};
+}, "assertValidPattern");
 
 // node_modules/@actions/glob/node_modules/minimatch/dist/esm/brace-expressions.js
 var posixClasses = {
@@ -62129,10 +63876,10 @@ var posixClasses = {
   "[:word:]": ["\\p{L}\\p{Nl}\\p{Nd}\\p{Pc}", true],
   "[:xdigit:]": ["A-Fa-f0-9", false]
 };
-var braceEscape = (s) => s.replace(/[[\]\\-]/g, "\\$&");
-var regexpEscape = (s) => s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
-var rangesToString = (ranges) => ranges.join("");
-var parseClass = (glob, position) => {
+var braceEscape = /* @__PURE__ */ __name((s) => s.replace(/[[\]\\-]/g, "\\$&"), "braceEscape");
+var regexpEscape = /* @__PURE__ */ __name((s) => s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&"), "regexpEscape");
+var rangesToString = /* @__PURE__ */ __name((ranges) => ranges.join(""), "rangesToString");
+var parseClass = /* @__PURE__ */ __name((glob, position) => {
   const pos = position;
   if (glob.charAt(pos) !== "[") {
     throw new Error("not in a brace expression");
@@ -62219,21 +63966,21 @@ var parseClass = (glob, position) => {
   const snegs = "[" + (negate ? "" : "^") + rangesToString(negs) + "]";
   const comb = ranges.length && negs.length ? "(" + sranges + "|" + snegs + ")" : ranges.length ? sranges : snegs;
   return [comb, uflag, endPos - pos, true];
-};
+}, "parseClass");
 
 // node_modules/@actions/glob/node_modules/minimatch/dist/esm/unescape.js
-var unescape = (s, { windowsPathsNoEscape = false, magicalBraces = true } = {}) => {
+var unescape = /* @__PURE__ */ __name((s, { windowsPathsNoEscape = false, magicalBraces = true } = {}) => {
   if (magicalBraces) {
     return windowsPathsNoEscape ? s.replace(/\[([^/\\])\]/g, "$1") : s.replace(/((?!\\).|^)\[([^/\\])\]/g, "$1$2").replace(/\\([^/])/g, "$1");
   }
   return windowsPathsNoEscape ? s.replace(/\[([^/\\{}])\]/g, "$1") : s.replace(/((?!\\).|^)\[([^/\\{}])\]/g, "$1$2").replace(/\\([^/{}])/g, "$1");
-};
+}, "unescape");
 
 // node_modules/@actions/glob/node_modules/minimatch/dist/esm/ast.js
 var _a;
 var types = /* @__PURE__ */ new Set(["!", "?", "+", "*", "@"]);
-var isExtglobType = (c) => types.has(c);
-var isExtglobAST = (c) => isExtglobType(c.type);
+var isExtglobType = /* @__PURE__ */ __name((c) => types.has(c), "isExtglobType");
+var isExtglobAST = /* @__PURE__ */ __name((c) => isExtglobType(c.type), "isExtglobAST");
 var adoptionMap = /* @__PURE__ */ new Map([
   ["!", ["@"]],
   ["?", ["?", "@"]],
@@ -62285,12 +64032,15 @@ var startNoDot = "(?!\\.)";
 var addPatternStart = /* @__PURE__ */ new Set(["[", "."]);
 var justDots = /* @__PURE__ */ new Set(["..", "."]);
 var reSpecials = new Set("().*{}+?[]^$\\!");
-var regExpEscape = (s) => s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+var regExpEscape = /* @__PURE__ */ __name((s) => s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&"), "regExpEscape");
 var qmark = "[^/]";
 var star = qmark + "*?";
 var starNoEmpty = qmark + "+?";
 var ID = 0;
 var AST = class {
+  static {
+    __name(this, "AST");
+  }
   type;
   #root;
   #hasMagic;
@@ -62874,71 +64624,71 @@ var AST = class {
 _a = AST;
 
 // node_modules/@actions/glob/node_modules/minimatch/dist/esm/escape.js
-var escape2 = (s, { windowsPathsNoEscape = false, magicalBraces = false } = {}) => {
+var escape2 = /* @__PURE__ */ __name((s, { windowsPathsNoEscape = false, magicalBraces = false } = {}) => {
   if (magicalBraces) {
     return windowsPathsNoEscape ? s.replace(/[?*()[\]{}]/g, "[$&]") : s.replace(/[?*()[\]\\{}]/g, "\\$&");
   }
   return windowsPathsNoEscape ? s.replace(/[?*()[\]]/g, "[$&]") : s.replace(/[?*()[\]\\]/g, "\\$&");
-};
+}, "escape");
 
 // node_modules/@actions/glob/node_modules/minimatch/dist/esm/index.js
-var minimatch2 = (p, pattern, options = {}) => {
+var minimatch2 = /* @__PURE__ */ __name((p, pattern, options = {}) => {
   assertValidPattern(pattern);
   if (!options.nocomment && pattern.charAt(0) === "#") {
     return false;
   }
   return new Minimatch2(pattern, options).match(p);
-};
+}, "minimatch");
 var starDotExtRE = /^\*+([^+@!?*[(]*)$/;
-var starDotExtTest = (ext2) => (f) => !f.startsWith(".") && f.endsWith(ext2);
-var starDotExtTestDot = (ext2) => (f) => f.endsWith(ext2);
-var starDotExtTestNocase = (ext2) => {
+var starDotExtTest = /* @__PURE__ */ __name((ext2) => (f) => !f.startsWith(".") && f.endsWith(ext2), "starDotExtTest");
+var starDotExtTestDot = /* @__PURE__ */ __name((ext2) => (f) => f.endsWith(ext2), "starDotExtTestDot");
+var starDotExtTestNocase = /* @__PURE__ */ __name((ext2) => {
   ext2 = ext2.toLowerCase();
   return (f) => !f.startsWith(".") && f.toLowerCase().endsWith(ext2);
-};
-var starDotExtTestNocaseDot = (ext2) => {
+}, "starDotExtTestNocase");
+var starDotExtTestNocaseDot = /* @__PURE__ */ __name((ext2) => {
   ext2 = ext2.toLowerCase();
   return (f) => f.toLowerCase().endsWith(ext2);
-};
+}, "starDotExtTestNocaseDot");
 var starDotStarRE = /^\*+\.\*+$/;
-var starDotStarTest = (f) => !f.startsWith(".") && f.includes(".");
-var starDotStarTestDot = (f) => f !== "." && f !== ".." && f.includes(".");
+var starDotStarTest = /* @__PURE__ */ __name((f) => !f.startsWith(".") && f.includes("."), "starDotStarTest");
+var starDotStarTestDot = /* @__PURE__ */ __name((f) => f !== "." && f !== ".." && f.includes("."), "starDotStarTestDot");
 var dotStarRE = /^\.\*+$/;
-var dotStarTest = (f) => f !== "." && f !== ".." && f.startsWith(".");
+var dotStarTest = /* @__PURE__ */ __name((f) => f !== "." && f !== ".." && f.startsWith("."), "dotStarTest");
 var starRE = /^\*+$/;
-var starTest = (f) => f.length !== 0 && !f.startsWith(".");
-var starTestDot = (f) => f.length !== 0 && f !== "." && f !== "..";
+var starTest = /* @__PURE__ */ __name((f) => f.length !== 0 && !f.startsWith("."), "starTest");
+var starTestDot = /* @__PURE__ */ __name((f) => f.length !== 0 && f !== "." && f !== "..", "starTestDot");
 var qmarksRE = /^\?+([^+@!?*[(]*)?$/;
-var qmarksTestNocase = ([$0, ext2 = ""]) => {
+var qmarksTestNocase = /* @__PURE__ */ __name(([$0, ext2 = ""]) => {
   const noext = qmarksTestNoExt([$0]);
   if (!ext2)
     return noext;
   ext2 = ext2.toLowerCase();
   return (f) => noext(f) && f.toLowerCase().endsWith(ext2);
-};
-var qmarksTestNocaseDot = ([$0, ext2 = ""]) => {
+}, "qmarksTestNocase");
+var qmarksTestNocaseDot = /* @__PURE__ */ __name(([$0, ext2 = ""]) => {
   const noext = qmarksTestNoExtDot([$0]);
   if (!ext2)
     return noext;
   ext2 = ext2.toLowerCase();
   return (f) => noext(f) && f.toLowerCase().endsWith(ext2);
-};
-var qmarksTestDot = ([$0, ext2 = ""]) => {
+}, "qmarksTestNocaseDot");
+var qmarksTestDot = /* @__PURE__ */ __name(([$0, ext2 = ""]) => {
   const noext = qmarksTestNoExtDot([$0]);
   return !ext2 ? noext : (f) => noext(f) && f.endsWith(ext2);
-};
-var qmarksTest = ([$0, ext2 = ""]) => {
+}, "qmarksTestDot");
+var qmarksTest = /* @__PURE__ */ __name(([$0, ext2 = ""]) => {
   const noext = qmarksTestNoExt([$0]);
   return !ext2 ? noext : (f) => noext(f) && f.endsWith(ext2);
-};
-var qmarksTestNoExt = ([$0]) => {
+}, "qmarksTest");
+var qmarksTestNoExt = /* @__PURE__ */ __name(([$0]) => {
   const len = $0.length;
   return (f) => f.length === len && !f.startsWith(".");
-};
-var qmarksTestNoExtDot = ([$0]) => {
+}, "qmarksTestNoExt");
+var qmarksTestNoExtDot = /* @__PURE__ */ __name(([$0]) => {
   const len = $0.length;
   return (f) => f.length === len && f !== "." && f !== "..";
-};
+}, "qmarksTestNoExtDot");
 var defaultPlatform = typeof process === "object" && process ? typeof process.env === "object" && process.env && process.env.__MINIMATCH_TESTING_PLATFORM__ || process.platform : "posix";
 var path11 = {
   win32: { sep: "\\" },
@@ -62952,17 +64702,20 @@ var qmark2 = "[^/]";
 var star2 = qmark2 + "*?";
 var twoStarDot = "(?:(?!(?:\\/|^)(?:\\.{1,2})($|\\/)).)*?";
 var twoStarNoDot = "(?:(?!(?:\\/|^)\\.).)*?";
-var filter2 = (pattern, options = {}) => (p) => minimatch2(p, pattern, options);
+var filter2 = /* @__PURE__ */ __name((pattern, options = {}) => (p) => minimatch2(p, pattern, options), "filter");
 minimatch2.filter = filter2;
-var ext = (a, b = {}) => Object.assign({}, a, b);
-var defaults = (def) => {
+var ext = /* @__PURE__ */ __name((a, b = {}) => Object.assign({}, a, b), "ext");
+var defaults = /* @__PURE__ */ __name((def) => {
   if (!def || typeof def !== "object" || !Object.keys(def).length) {
     return minimatch2;
   }
   const orig = minimatch2;
-  const m = (p, pattern, options = {}) => orig(p, pattern, ext(def, options));
+  const m = /* @__PURE__ */ __name((p, pattern, options = {}) => orig(p, pattern, ext(def, options)), "m");
   return Object.assign(m, {
     Minimatch: class Minimatch extends orig.Minimatch {
+      static {
+        __name(this, "Minimatch");
+      }
       constructor(pattern, options = {}) {
         super(pattern, ext(def, options));
       }
@@ -62971,6 +64724,9 @@ var defaults = (def) => {
       }
     },
     AST: class AST extends orig.AST {
+      static {
+        __name(this, "AST");
+      }
       /* c8 ignore start */
       constructor(type, parent, options = {}) {
         super(type, parent, ext(def, options));
@@ -62980,40 +64736,43 @@ var defaults = (def) => {
         return orig.AST.fromGlob(pattern, ext(def, options));
       }
     },
-    unescape: (s, options = {}) => orig.unescape(s, ext(def, options)),
-    escape: (s, options = {}) => orig.escape(s, ext(def, options)),
-    filter: (pattern, options = {}) => orig.filter(pattern, ext(def, options)),
-    defaults: (options) => orig.defaults(ext(def, options)),
-    makeRe: (pattern, options = {}) => orig.makeRe(pattern, ext(def, options)),
-    braceExpand: (pattern, options = {}) => orig.braceExpand(pattern, ext(def, options)),
-    match: (list, pattern, options = {}) => orig.match(list, pattern, ext(def, options)),
+    unescape: /* @__PURE__ */ __name((s, options = {}) => orig.unescape(s, ext(def, options)), "unescape"),
+    escape: /* @__PURE__ */ __name((s, options = {}) => orig.escape(s, ext(def, options)), "escape"),
+    filter: /* @__PURE__ */ __name((pattern, options = {}) => orig.filter(pattern, ext(def, options)), "filter"),
+    defaults: /* @__PURE__ */ __name((options) => orig.defaults(ext(def, options)), "defaults"),
+    makeRe: /* @__PURE__ */ __name((pattern, options = {}) => orig.makeRe(pattern, ext(def, options)), "makeRe"),
+    braceExpand: /* @__PURE__ */ __name((pattern, options = {}) => orig.braceExpand(pattern, ext(def, options)), "braceExpand"),
+    match: /* @__PURE__ */ __name((list, pattern, options = {}) => orig.match(list, pattern, ext(def, options)), "match"),
     sep: orig.sep,
     GLOBSTAR
   });
-};
+}, "defaults");
 minimatch2.defaults = defaults;
-var braceExpand = (pattern, options = {}) => {
+var braceExpand = /* @__PURE__ */ __name((pattern, options = {}) => {
   assertValidPattern(pattern);
   if (options.nobrace || !/\{(?:(?!\{).)*\}/.test(pattern)) {
     return [pattern];
   }
   return expand(pattern, { max: options.braceExpandMax });
-};
+}, "braceExpand");
 minimatch2.braceExpand = braceExpand;
-var makeRe = (pattern, options = {}) => new Minimatch2(pattern, options).makeRe();
+var makeRe = /* @__PURE__ */ __name((pattern, options = {}) => new Minimatch2(pattern, options).makeRe(), "makeRe");
 minimatch2.makeRe = makeRe;
-var match2 = (list, pattern, options = {}) => {
+var match2 = /* @__PURE__ */ __name((list, pattern, options = {}) => {
   const mm = new Minimatch2(pattern, options);
   list = list.filter((f) => mm.match(f));
   if (mm.options.nonull && !list.length) {
     list.push(pattern);
   }
   return list;
-};
+}, "match");
 minimatch2.match = match2;
 var globMagic = /[?*]|[+@!]\(.*?\)|\[|\]/;
-var regExpEscape2 = (s) => s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+var regExpEscape2 = /* @__PURE__ */ __name((s) => s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&"), "regExpEscape");
 var Minimatch2 = class {
+  static {
+    __name(this, "Minimatch");
+  }
   options;
   set;
   pattern;
@@ -63707,11 +65466,13 @@ function isQuiet() {
   }
   return quiet;
 }
+__name(isQuiet, "isQuiet");
 function info2(msg) {
   if (!isQuiet()) {
     info(msg);
   }
 }
+__name(info2, "info");
 var warning2 = warning;
 
 // src/cache/restore-cache.ts
@@ -63749,6 +65510,7 @@ function getPythonVersionFromToolVersions(filePath) {
   }
   return version3;
 }
+__name(getPythonVersionFromToolVersions, "getPythonVersionFromToolVersions");
 function getToolVersions(filePath, toolName) {
   if (!filePath.endsWith(".tool-versions")) {
     return void 0;
@@ -63766,12 +65528,15 @@ function getToolVersions(filePath, toolName) {
   }
   return void 0;
 }
+__name(getToolVersions, "getToolVersions");
 function stripVersionPrefix(version3) {
   return version3.startsWith("v") ? version3.slice(1) : version3;
 }
+__name(stripVersionPrefix, "stripVersionPrefix");
 function isPath(version3) {
   return version3.includes("/") || version3.includes("\\");
 }
+__name(isPath, "isPath");
 
 // src/utils/config-file.ts
 var import_node_fs3 = __toESM(require("node:fs"), 1);
@@ -63779,6 +65544,9 @@ var import_node_fs3 = __toESM(require("node:fs"), 1);
 // node_modules/smol-toml/dist/date.js
 var DATE_TIME_RE = /^(\d{4}-\d{2}-\d{2})?[T ]?(?:(\d{2}):\d{2}(?::\d{2}(?:\.\d+)?)?)?(Z|[-+]\d{2}:\d{2})?$/i;
 var TomlDate = class _TomlDate extends Date {
+  static {
+    __name(this, "TomlDate");
+  }
   #hasDate = false;
   #hasTime = false;
   #offset = null;
@@ -63873,6 +65641,7 @@ function getLineColFromPtr(string, ptr) {
   let lines = string.slice(0, ptr).split(/\r\n|\n|\r/g);
   return [lines.length, lines.pop().length + 1];
 }
+__name(getLineColFromPtr, "getLineColFromPtr");
 function makeCodeBlock(string, line, column) {
   let lines = string.split(/\r\n|\n|\r/g);
   let codeblock = "";
@@ -63892,7 +65661,11 @@ function makeCodeBlock(string, line, column) {
   }
   return codeblock;
 }
+__name(makeCodeBlock, "makeCodeBlock");
 var TomlError = class extends Error {
+  static {
+    __name(this, "TomlError");
+  }
   line;
   column;
   codeblock;
@@ -63915,6 +65688,7 @@ function indexOfNewline(str, start = 0) {
     idx--;
   return idx;
 }
+__name(indexOfNewline, "indexOfNewline");
 function skipComment(ctx) {
   for (; ctx.p < ctx.s.length; ctx.p++) {
     let c = ctx.s.charCodeAt(ctx.p);
@@ -63932,6 +65706,7 @@ function skipComment(ctx) {
     }
   }
 }
+__name(skipComment, "skipComment");
 function skipVoid(ctx, banNewLines, banComments) {
   let c;
   while (1) {
@@ -63942,6 +65717,7 @@ function skipVoid(ctx, banNewLines, banComments) {
     skipComment(ctx);
   }
 }
+__name(skipVoid, "skipVoid");
 function skipUntil(ctx, sep8, end) {
   let ptr = ctx.p;
   if (!end) {
@@ -63962,6 +65738,7 @@ function skipUntil(ctx, sep8, end) {
     ptr
   });
 }
+__name(skipUntil, "skipUntil");
 
 // node_modules/smol-toml/dist/primitive.js
 var INT_REGEX = /^((0x[0-9a-fA-F](_?[0-9a-fA-F])*)|(([+-]|0[ob])?\d(_?\d)*))$/;
@@ -64070,6 +65847,7 @@ function parseString(ctx) {
   }
   throw new TomlError("unfinished string", { toml: ctx.s, ptr: start });
 }
+__name(parseString, "parseString");
 function sliceAndTrimEndOf(ctx, start, end) {
   let value = ctx.s.slice(start, end);
   let commentIdx = value.indexOf("#");
@@ -64079,6 +65857,7 @@ function sliceAndTrimEndOf(ctx, start, end) {
   }
   return value.trimEnd();
 }
+__name(sliceAndTrimEndOf, "sliceAndTrimEndOf");
 function parseValue2(ctx, integersAsBigInt, end) {
   let ptr = ctx.p;
   let err = { toml: ctx.s, ptr };
@@ -64118,6 +65897,7 @@ function parseValue2(ctx, integersAsBigInt, end) {
     throw new TomlError("invalid value", err);
   return date;
 }
+__name(parseValue2, "parseValue");
 
 // node_modules/smol-toml/dist/extract.js
 function extractValue(ctx, end, integersAsBigInt) {
@@ -64151,6 +65931,7 @@ function extractValue(ctx, end, integersAsBigInt) {
   }
   return parseValue2(ctx, integersAsBigInt, end);
 }
+__name(extractValue, "extractValue");
 
 // node_modules/smol-toml/dist/struct.js
 var KEY_PART_RE = /^[a-zA-Z0-9-_]+[ \t]*$/;
@@ -64218,6 +65999,7 @@ function parseKey(ctx, end = "=") {
   skipVoid(ctx, true, true);
   return parsed;
 }
+__name(parseKey, "parseKey");
 function parseInlineTable(ctx, integersAsBigInt) {
   let res = {};
   let seen = /* @__PURE__ */ new Set();
@@ -64269,6 +66051,7 @@ function parseInlineTable(ctx, integersAsBigInt) {
     ptr: ctx.p
   });
 }
+__name(parseInlineTable, "parseInlineTable");
 function parseArray(ctx, integersAsBigInt) {
   let res = [];
   let c;
@@ -64293,6 +66076,7 @@ function parseArray(ctx, integersAsBigInt) {
     ptr: ctx.p
   });
 }
+__name(parseArray, "parseArray");
 
 // node_modules/smol-toml/dist/parse.js
 function peekTable(key, table, meta, type) {
@@ -64354,6 +66138,7 @@ function peekTable(key, table, meta, type) {
   }
   return [k, t, state3.c];
 }
+__name(peekTable, "peekTable");
 function parse3(toml, { maxDepth = 1e3, integersAsBigInt } = {}) {
   let ctx = { s: toml, p: 0, d: maxDepth };
   let res = {};
@@ -64420,6 +66205,7 @@ function parse3(toml, { maxDepth = 1e3, integersAsBigInt } = {}) {
   }
   return res;
 }
+__name(parse3, "parse");
 
 // src/utils/config-file.ts
 function getConfigValueFromTomlFile(filePath, key) {
@@ -64429,6 +66215,7 @@ function getConfigValueFromTomlFile(filePath, key) {
   const fileContent = import_node_fs3.default.readFileSync(filePath, "utf-8");
   return getConfigValueFromTomlContent(filePath, fileContent, key);
 }
+__name(getConfigValueFromTomlFile, "getConfigValueFromTomlFile");
 function getConfigValueFromTomlContent(filePath, fileContent, key) {
   if (!filePath.endsWith(".toml")) {
     return void 0;
@@ -64440,6 +66227,7 @@ function getConfigValueFromTomlContent(filePath, fileContent, key) {
   const tomlContent = parse3(fileContent);
   return tomlContent[key];
 }
+__name(getConfigValueFromTomlContent, "getConfigValueFromTomlContent");
 
 // src/utils/inputs.ts
 function loadInputs() {
@@ -64509,6 +66297,7 @@ function loadInputs() {
     workingDirectory
   };
 }
+__name(loadInputs, "loadInputs");
 function getVersionFile(workingDirectory) {
   const versionFileInput = getInput("version-file");
   if (versionFileInput !== "") {
@@ -64517,6 +66306,7 @@ function getVersionFile(workingDirectory) {
   }
   return versionFileInput;
 }
+__name(getVersionFile, "getVersionFile");
 function getPythonVersion(versionFile) {
   const pythonVersionInput = getInput("python-version");
   if (pythonVersionInput !== "") {
@@ -64537,6 +66327,7 @@ function getPythonVersion(versionFile) {
     return "";
   }
 }
+__name(getPythonVersion, "getPythonVersion");
 function getVenvPath(workingDirectory, activateEnvironment) {
   const venvPathInput = getInput("venv-path");
   if (venvPathInput !== "") {
@@ -64548,6 +66339,7 @@ function getVenvPath(workingDirectory, activateEnvironment) {
   }
   return normalizePath(resolveRelativePath(workingDirectory, ".venv"));
 }
+__name(getVenvPath, "getVenvPath");
 function getEnableCache() {
   const enableCacheInput = getInput("enable-cache");
   if (enableCacheInput === "auto") {
@@ -64568,6 +66360,7 @@ function getEnableCache() {
   }
   return enableCacheInput === "true";
 }
+__name(getEnableCache, "getEnableCache");
 function getSaveCache() {
   const saveCacheInput = getInput("save-cache");
   if (saveCacheInput === "auto") {
@@ -64579,6 +66372,7 @@ function getSaveCache() {
   }
   return saveCacheInput === "true";
 }
+__name(getSaveCache, "getSaveCache");
 function getToolBinDir(workingDirectory) {
   const toolBinDirInput = getInput("tool-bin-dir");
   if (toolBinDirInput !== "") {
@@ -64595,6 +66389,7 @@ function getToolBinDir(workingDirectory) {
   }
   return void 0;
 }
+__name(getToolBinDir, "getToolBinDir");
 function getToolDir(workingDirectory) {
   const toolDirInput = getInput("tool-dir");
   if (toolDirInput !== "") {
@@ -64611,6 +66406,7 @@ function getToolDir(workingDirectory) {
   }
   return void 0;
 }
+__name(getToolDir, "getToolDir");
 function getCacheLocalPath(workingDirectory, versionFile, enableCache) {
   const cacheLocalPathInput = getInput("cache-local-path");
   if (cacheLocalPathInput !== "") {
@@ -64655,6 +66451,7 @@ function getCacheLocalPath(workingDirectory, versionFile, enableCache) {
     };
   }
 }
+__name(getCacheLocalPath, "getCacheLocalPath");
 function getCacheDirFromConfig(workingDirectory, versionFile) {
   for (const filePath of [versionFile, "uv.toml", "pyproject.toml"]) {
     const resolvedPath = resolveRelativePath(workingDirectory, filePath);
@@ -64672,6 +66469,7 @@ function getCacheDirFromConfig(workingDirectory, versionFile) {
   }
   return void 0;
 }
+__name(getCacheDirFromConfig, "getCacheDirFromConfig");
 function getUvPythonDir() {
   if (process.env.UV_PYTHON_INSTALL_DIR !== void 0) {
     info2(
@@ -64692,6 +66490,7 @@ function getUvPythonDir() {
     "Could not determine UV_PYTHON_INSTALL_DIR. Please make sure RUNNER_TEMP is set or provide the UV_PYTHON_INSTALL_DIR environment variable"
   );
 }
+__name(getUvPythonDir, "getUvPythonDir");
 function getCacheDependencyGlob(workingDirectory) {
   const cacheDependencyGlobInput = getInput("cache-dependency-glob");
   if (cacheDependencyGlobInput !== "") {
@@ -64699,12 +66498,14 @@ function getCacheDependencyGlob(workingDirectory) {
   }
   return cacheDependencyGlobInput;
 }
+__name(getCacheDependencyGlob, "getCacheDependencyGlob");
 function expandTilde(input) {
   if (input.startsWith("~")) {
     return `${process.env.HOME}${input.substring(1)}`;
   }
   return input;
 }
+__name(expandTilde, "expandTilde");
 function normalizePath(inputPath) {
   const normalized = import_node_path.default.normalize(inputPath);
   const root = import_node_path.default.parse(normalized).root;
@@ -64714,6 +66515,7 @@ function normalizePath(inputPath) {
   }
   return trimmed;
 }
+__name(normalizePath, "normalizePath");
 function resolveRelativePath(workingDirectory, inputPath) {
   const hasNegation = inputPath.startsWith("!");
   const pathWithoutNegation = hasNegation ? inputPath.substring(1) : inputPath;
@@ -64723,6 +66525,7 @@ function resolveRelativePath(workingDirectory, inputPath) {
   );
   return hasNegation ? `!${resolvedPath}` : resolvedPath;
 }
+__name(resolveRelativePath, "resolveRelativePath");
 function getManifestFile() {
   const manifestFileInput = getInput("manifest-file");
   if (manifestFileInput !== "") {
@@ -64730,6 +66533,7 @@ function getManifestFile() {
   }
   return void 0;
 }
+__name(getManifestFile, "getManifestFile");
 function getResolutionStrategy() {
   const resolutionStrategyInput = getInput("resolution-strategy");
   if (resolutionStrategyInput === "lowest") {
@@ -64742,6 +66546,7 @@ function getResolutionStrategy() {
     `Invalid resolution-strategy: ${resolutionStrategyInput}. Must be 'highest' or 'lowest'.`
   );
 }
+__name(getResolutionStrategy, "getResolutionStrategy");
 
 // src/save-cache.ts
 function formatUnexpectedFailure(error2) {
@@ -64750,10 +66555,12 @@ function formatUnexpectedFailure(error2) {
   }
   return String(error2);
 }
+__name(formatUnexpectedFailure, "formatUnexpectedFailure");
 function failUnexpectedly(event, error2) {
   setFailed(`${event}: ${formatUnexpectedFailure(error2)}`);
   process.exit(1);
 }
+__name(failUnexpectedly, "failUnexpectedly");
 process.on("uncaughtException", (error2) => {
   failUnexpectedly("Uncaught exception", error2);
 });
@@ -64777,6 +66584,7 @@ async function run() {
     setFailed(err.message);
   }
 }
+__name(run, "run");
 async function saveCache3(inputs) {
   const cacheKey = getState(STATE_CACHE_KEY);
   const matchedKey = getState(STATE_CACHE_MATCHED_KEY);
@@ -64826,6 +66634,7 @@ async function saveCache3(inputs) {
     );
   }
 }
+__name(saveCache3, "saveCache");
 async function pruneCache() {
   const forceSupported = ge(getState(STATE_UV_VERSION), "0.8.24");
   const options = {
@@ -64839,6 +66648,7 @@ async function pruneCache() {
   const uvPath = getState(STATE_UV_PATH);
   await exec(uvPath, execArgs, options);
 }
+__name(pruneCache, "pruneCache");
 function getUvCachePath(inputs) {
   if (inputs.cacheLocalPath === void 0) {
     throw new Error(
@@ -64853,6 +66663,7 @@ function getUvCachePath(inputs) {
   }
   return inputs.cacheLocalPath.path;
 }
+__name(getUvCachePath, "getUvCachePath");
 async function saveCacheToKey(cacheKey, cachePath, stateKey, cacheName) {
   const matchedKey = getState(stateKey);
   if (matchedKey === cacheKey) {
@@ -64863,6 +66674,7 @@ async function saveCacheToKey(cacheKey, cachePath, stateKey, cacheName) {
   await saveCache2([cachePath], cacheKey);
   info2(`${cacheName} saved with key: ${cacheKey}`);
 }
+__name(saveCacheToKey, "saveCacheToKey");
 run();
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
