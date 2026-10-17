@@ -79,6 +79,8 @@ outputs:
     type: string
   cache-hit:
     type: boolean
+  cache-matched-key:
+    type: string
   cache-key:
     type: string
   venv:

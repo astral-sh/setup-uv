@@ -93969,12 +93969,16 @@ function getWindowsNameVersion() {
 // src/cache/restore-cache.ts
 var STATE_CACHE_KEY = "cache-key";
 var STATE_CACHE_MATCHED_KEY = "cache-matched-key";
+var STATE_PYTHON_CACHE_KEY = "python-cache-key";
 var STATE_PYTHON_CACHE_MATCHED_KEY = "python-cache-matched-key";
 var CACHE_VERSION = "2";
 async function restoreCache2(inputs, pythonVersion) {
-  const cacheKey = await computeKeys(inputs, pythonVersion);
-  saveState(STATE_CACHE_KEY, cacheKey);
-  setOutput("cache-key", cacheKey);
+  const cacheKeys = await computeKeys(inputs, pythonVersion);
+  saveState(STATE_CACHE_KEY, cacheKeys.primary);
+  setOutput("cache-key", cacheKeys.primary);
+  if (inputs.cachePython && cacheKeys.python !== void 0) {
+    saveState(STATE_PYTHON_CACHE_KEY, cacheKeys.python.primary);
+  }
   if (!inputs.restoreCache) {
     info2("restore-cache is false. Skipping restore cache step.");
     setOutput("python-cache-hit", false);
@@ -93986,36 +93990,57 @@ async function restoreCache2(inputs, pythonVersion) {
     );
   }
   await restoreCacheFromKey(
-    cacheKey,
+    cacheKeys.primary,
+    cacheKeys.restore,
     inputs.cacheLocalPath.path,
     STATE_CACHE_MATCHED_KEY,
-    "cache-hit"
+    "cache-hit",
+    "cache-matched-key"
   );
   if (inputs.cachePython) {
+    const pythonCacheKeys = cacheKeys.python;
+    if (pythonCacheKeys === void 0) {
+      throw new Error("Python cache keys are missing");
+    }
     await restoreCacheFromKey(
-      `${cacheKey}-python`,
+      pythonCacheKeys.primary,
+      pythonCacheKeys.restore,
       inputs.pythonDir,
       STATE_PYTHON_CACHE_MATCHED_KEY,
-      "python-cache-hit"
+      "python-cache-hit",
+      void 0
     );
   } else {
     setOutput("python-cache-hit", false);
   }
 }
-async function restoreCacheFromKey(cacheKey, cachePath, stateKey, outputKey) {
+async function restoreCacheFromKey(cacheKey, restoreKey, cachePath, stateKey, outputKey, matchedKeyOutputKey) {
   info2(
     `Trying to restore cache from GitHub Actions cache with key: ${cacheKey}`
   );
   let matchedKey;
   try {
-    matchedKey = await restoreCache([cachePath], cacheKey);
+    matchedKey = await restoreCache(
+      [cachePath],
+      cacheKey,
+      restoreKey === void 0 ? void 0 : [restoreKey]
+    );
   } catch (err) {
     const message = err.message;
     warning2(message);
     setOutput(outputKey, false);
+    if (matchedKeyOutputKey !== void 0) {
+      setOutput(matchedKeyOutputKey, "");
+    }
     return;
   }
-  handleMatchResult(matchedKey, cacheKey, stateKey, outputKey);
+  handleMatchResult(
+    matchedKey,
+    cacheKey,
+    stateKey,
+    outputKey,
+    matchedKeyOutputKey
+  );
 }
 async function computeKeys(inputs, pythonVersion) {
   let cacheDependencyPathHash = "-";
@@ -94043,17 +94068,35 @@ async function computeKeys(inputs, pythonVersion) {
   const osNameVersion = getOSNameVersion();
   const pruned = inputs.pruneCache ? "-pruned" : "";
   const python = inputs.cachePython ? "-py" : "";
-  return `setup-uv-${CACHE_VERSION}-${getArch()}-${platform2}-${osNameVersion}-${version3}${pythonArchKey}${pruned}${python}${cacheDependencyPathHash}${suffix}`;
+  const restore = `setup-uv-${CACHE_VERSION}-${getArch()}-${platform2}-${osNameVersion}-${version3}${pythonArchKey}${pruned}${python}${suffix}-`;
+  const dependencyHash = cacheDependencyPathHash.slice(1);
+  const primary = `${restore}${dependencyHash}`;
+  return {
+    primary,
+    restore,
+    ...inputs.cachePython ? {
+      python: {
+        primary: `${restore}python-${dependencyHash}`,
+        restore: `${restore}python-`
+      }
+    } : {}
+  };
 }
-function handleMatchResult(matchedKey, primaryKey, stateKey, outputKey) {
+function handleMatchResult(matchedKey, primaryKey, stateKey, outputKey, matchedKeyOutputKey) {
   if (!matchedKey) {
     info2(`No GitHub Actions cache found for key: ${primaryKey}`);
     setOutput(outputKey, false);
+    if (matchedKeyOutputKey !== void 0) {
+      setOutput(matchedKeyOutputKey, "");
+    }
     return;
   }
   saveState(stateKey, matchedKey);
   info2(`cache restored from GitHub Actions cache with key: ${matchedKey}`);
-  setOutput(outputKey, true);
+  if (matchedKeyOutputKey !== void 0) {
+    setOutput(matchedKeyOutputKey, matchedKey);
+  }
+  setOutput(outputKey, matchedKey === primaryKey);
 }
 
 // src/download/download-version.ts
