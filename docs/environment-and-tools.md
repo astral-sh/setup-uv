@@ -9,7 +9,7 @@ This allows directly using it in later steps:
 
 ```yaml
 - name: Install the latest version of uv and activate the environment
-  uses: astral-sh/setup-uv@18d369b23da25a81e9458561248e1aafff6a70fa # v10.3.1
+  uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
   with:
     activate-environment: true
 - run: uv pip install pip
@@ -32,7 +32,7 @@ key: build-${{ runner.os }}-${{ runner.arch }}-${{ steps.setup-uv.outputs.python
 You can customize the venv location with `venv-path`, for example to place it in the runner temp directory:
 
 ```yaml
-- uses: astral-sh/setup-uv@18d369b23da25a81e9458561248e1aafff6a70fa # v10.3.1
+- uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
   with:
     activate-environment: true
     venv-path: ${{ runner.temp }}/custom-venv
@@ -63,7 +63,7 @@ are not sufficient, you can provide a custom GitHub token with the necessary per
 
 ```yaml
 - name: Install the latest version of uv with a custom GitHub token
-  uses: astral-sh/setup-uv@18d369b23da25a81e9458561248e1aafff6a70fa # v10.3.1
+  uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
   with:
     github-token: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
 ```
@@ -81,7 +81,7 @@ input:
 
 ```yaml
 - name: Install the latest version of uv with a custom tool dir
-  uses: astral-sh/setup-uv@18d369b23da25a81e9458561248e1aafff6a70fa # v10.3.1
+  uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
   with:
     tool-dir: "/path/to/tool/dir"
 ```
@@ -100,7 +100,7 @@ If you want to change this behaviour (especially on self-hosted runners) you can
 
 ```yaml
 - name: Install the latest version of uv with a custom tool bin dir
-  uses: astral-sh/setup-uv@18d369b23da25a81e9458561248e1aafff6a70fa # v10.3.1
+  uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
   with:
     tool-bin-dir: "/path/to/tool-bin/dir"
 ```
@@ -117,7 +117,7 @@ This action supports expanding the `~` character to the user's home directory fo
 
 ```yaml
 - name: Expand the tilde character
-  uses: astral-sh/setup-uv@18d369b23da25a81e9458561248e1aafff6a70fa # v10.3.1
+  uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
   with:
     cache-local-path: "~/path/to/cache"
     tool-dir: "~/path/to/tool/dir"
@@ -134,7 +134,7 @@ If you want to ignore this, set the `ignore-empty-workdir` input to `true`.
 
 ```yaml
 - name: Ignore empty workdir
-  uses: astral-sh/setup-uv@18d369b23da25a81e9458561248e1aafff6a70fa # v10.3.1
+  uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
   with:
     ignore-empty-workdir: true
 ```
@@ -160,7 +160,7 @@ This action sets several environment variables that influence uv's behavior and 
 
 ```yaml
 - name: Example using environment variables
-  uses: astral-sh/setup-uv@18d369b23da25a81e9458561248e1aafff6a70fa # v10.3.1
+  uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
   with:
     python-version: "3.12"
     tool-dir: "/custom/tool/dir"
