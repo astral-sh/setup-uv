@@ -58,6 +58,6 @@
     "jest": "^30.5.0",
     "js-yaml": "^5.4.1",
     "ts-jest": "^29.4.11",
-    "typescript": "^6.0.3"
+    "typescript": "^7.0.2"
   }
 }
