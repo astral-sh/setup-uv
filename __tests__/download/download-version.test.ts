@@ -146,6 +146,28 @@ describe("download-version", () => {
       expect(mockGetAllVersions).not.toHaveBeenCalled();
     });
 
+    it("resolves ~= with PEP 440 compatible release semantics", async () => {
+      mockGetFirstMatchingVersion.mockImplementation(
+        (predicate: (version: string) => boolean) =>
+          ["1.0.0", "0.10.2", "0.9.26"].find(predicate),
+      );
+
+      const version = await resolveVersion("~=0.9", undefined);
+
+      expect(version).toBe("0.10.2");
+    });
+
+    it("resolves ~= with PEP 440 compatible release semantics from manifest-file", async () => {
+      mockGetAllVersions.mockResolvedValue(["1.0.0", "0.10.2", "0.9.26"]);
+
+      const version = await resolveVersion(
+        "~=0.9",
+        "https://example.com/custom.ndjson",
+      );
+
+      expect(version).toBe("0.10.2");
+    });
+
     it("treats == exact pins as explicit versions", async () => {
       const version = await resolveVersion("==0.9.26", undefined);
 
