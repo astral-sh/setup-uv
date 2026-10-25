@@ -101937,7 +101937,7 @@ async function resolveVersion(versionInput, manifestUrl, resolutionStrategy = "h
   throw new Error(`No version found for ${versionInput}`);
 }
 async function findHighestSatisfyingVersion(versionSpecifier) {
-  const semverRange = semver5.validRange(versionSpecifier);
+  const semverRange = isCompatibleReleaseSpecifier(versionSpecifier) ? null : semver5.validRange(versionSpecifier);
   if (semverRange !== null) {
     const semverMatch = await getFirstMatchingVersion(
       (version3) => semver5.satisfies(version3, semverRange)
@@ -101959,8 +101959,11 @@ async function findHighestSatisfyingVersion(versionSpecifier) {
   }
   return pep440Match;
 }
+function isCompatibleReleaseSpecifier(versionSpecifier) {
+  return versionSpecifier.includes("~=");
+}
 function maxSatisfying2(versions, version3) {
-  const maxSemver = evaluateVersions(versions, version3);
+  const maxSemver = isCompatibleReleaseSpecifier(version3) ? "" : evaluateVersions(versions, version3);
   if (maxSemver !== "") {
     debug(`Found a version that satisfies the semver range: ${maxSemver}`);
     return maxSemver;
@@ -101975,7 +101978,7 @@ function maxSatisfying2(versions, version3) {
   return void 0;
 }
 function minSatisfying3(versions, version3) {
-  const minSemver = semver5.minSatisfying(versions, version3);
+  const minSemver = isCompatibleReleaseSpecifier(version3) ? null : semver5.minSatisfying(versions, version3);
   if (minSemver !== null) {
     debug(`Found a version that satisfies the semver range: ${minSemver}`);
     return minSemver;
