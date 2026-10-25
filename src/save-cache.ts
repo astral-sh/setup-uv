@@ -159,8 +159,10 @@ async function saveCacheToKey(
   }
 
   log.info(`Including ${cacheName} path: ${cachePath}`);
-  await cache.saveCache([cachePath], cacheKey);
-  log.info(`${cacheName} saved with key: ${cacheKey}`);
+  const cacheId = await cache.saveCache([cachePath], cacheKey);
+  if (cacheId !== -1) {
+    log.info(`${cacheName} saved with key: ${cacheKey}`);
+  }
 }
 
 run();
