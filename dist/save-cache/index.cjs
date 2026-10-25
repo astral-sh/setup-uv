@@ -66671,8 +66671,10 @@ async function saveCacheToKey(cacheKey, cachePath, stateKey, cacheName) {
     return;
   }
   info2(`Including ${cacheName} path: ${cachePath}`);
-  await saveCache2([cachePath], cacheKey);
-  info2(`${cacheName} saved with key: ${cacheKey}`);
+  const cacheId = await saveCache2([cachePath], cacheKey);
+  if (cacheId !== -1) {
+    info2(`${cacheName} saved with key: ${cacheKey}`);
+  }
 }
 __name(saveCacheToKey, "saveCacheToKey");
 run();
