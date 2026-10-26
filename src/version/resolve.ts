@@ -195,9 +195,11 @@ async function findHighestSatisfyingVersion(
   return pep440Match;
 }
 
-// `~=` is the PEP 440 compatible release operator. semver accepts it as a
-// tilde range with a narrower upper bound (`~=0.5` as `<0.6.0` instead of
-// `<1.0`), so it must only be evaluated as PEP 440.
+/**
+ * `~=` is the PEP 440 compatible release operator. semver accepts it as a
+ * tilde range with a narrower upper bound (`~=0.5` as `<0.6.0` instead of
+ * `<1.0`), so it must only be evaluated as PEP 440.
+ */
 function isCompatibleReleaseSpecifier(versionSpecifier: string): boolean {
   return versionSpecifier.includes("~=");
 }
