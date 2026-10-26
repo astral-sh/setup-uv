@@ -101579,7 +101579,7 @@ function getUvVersionFromAllDependencies(allDependencies) {
 }
 function getUvVersionFromDependency(dependency) {
   const dependencyWithoutMarker = dependency.split(";", 1)[0]?.trim();
-  return dependencyWithoutMarker?.match(/^uv([=<>~!]+\S*)/)?.[1].trim();
+  return dependencyWithoutMarker?.match(/^uv\s*((?:[=<>~!]+\s*[^\s,]+\s*,?\s*)+)/)?.[1].replace(/\s/g, "");
 }
 
 // src/version/tool-versions-file.ts
