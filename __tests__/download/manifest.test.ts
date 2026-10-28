@@ -96,6 +96,78 @@ describe("manifest", () => {
       expect(versions).toHaveLength(2);
       expect(versions[0]?.version).toBe("0.9.26");
       expect(versions[1]?.version).toBe("0.9.25");
+      expect(mockFetch.mock.calls.map(([url]) => url)).toEqual([
+        "https://releases.astral.sh/github/versions/main/v1/uv.ndjson",
+      ]);
+    });
+
+    it("falls back to GitHub after mirror network retries are exhausted", async () => {
+      jest.useFakeTimers();
+      mockFetch
+        .mockRejectedValueOnce(new Error("mirror unavailable"))
+        .mockRejectedValueOnce(new Error("mirror unavailable"))
+        .mockRejectedValueOnce(new Error("mirror unavailable"))
+        .mockResolvedValueOnce(
+          createMockResponse(true, 200, "OK", sampleManifestResponse),
+        );
+
+      const result = fetchManifest();
+      await jest.runAllTimersAsync();
+
+      await expect(result).resolves.toEqual([
+        expect.objectContaining({ version: "0.9.26" }),
+        expect.objectContaining({ version: "0.9.25" }),
+      ]);
+      expect(mockFetch.mock.calls.map(([url]) => url)).toEqual([
+        "https://releases.astral.sh/github/versions/main/v1/uv.ndjson",
+        "https://releases.astral.sh/github/versions/main/v1/uv.ndjson",
+        "https://releases.astral.sh/github/versions/main/v1/uv.ndjson",
+        "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson",
+      ]);
+
+      await expect(getLatestVersion()).resolves.toBe("0.9.26");
+      expect(mockFetch).toHaveBeenCalledTimes(4);
+    });
+
+    it.each([404, 429, 503])(
+      "falls back to a streaming GitHub manifest on mirror HTTP %s",
+      async (status) => {
+        mockFetch
+          .mockResolvedValueOnce(createMockResponse(false, status, "Error", ""))
+          .mockResolvedValueOnce(
+            createStreamingMockResponse([`${sampleManifestResponse}\n`]),
+          );
+
+        await expect(getLatestVersion()).resolves.toBe("0.9.26");
+        await expect(
+          getArtifact("0.9.26", "aarch64", "apple-darwin"),
+        ).resolves.toEqual({
+          archiveFormat: "tar.gz",
+          checksum:
+            "fcf0a9ea6599c6ae28a4c854ac6da76f2c889354d7c36ce136ef071f7ab9721f",
+          downloadUrl:
+            "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-aarch64-apple-darwin.tar.gz",
+        });
+        expect(mockFetch.mock.calls.map(([url]) => url)).toEqual([
+          "https://releases.astral.sh/github/versions/main/v1/uv.ndjson",
+          "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson",
+        ]);
+      },
+    );
+
+    it("does not fall back from a custom manifest", async () => {
+      mockFetch.mockResolvedValue(
+        createMockResponse(false, 503, "Service Unavailable", ""),
+      );
+
+      await expect(
+        fetchManifest("https://example.com/custom.ndjson"),
+      ).rejects.toThrow(
+        "Failed to fetch manifest data: 503 Service Unavailable",
+      );
+      expect(mockFetch.mock.calls.map(([url]) => url)).toEqual([
+        "https://example.com/custom.ndjson",
+      ]);
     });
 
     it("retries network failures", async () => {
@@ -123,7 +195,7 @@ describe("manifest", () => {
       await jest.runAllTimersAsync();
 
       await result;
-      expect(mockFetch).toHaveBeenCalledTimes(MANIFEST_FETCH_ATTEMPTS);
+      expect(mockFetch).toHaveBeenCalledTimes(MANIFEST_FETCH_ATTEMPTS * 2);
     });
 
     it("throws on a failed fetch", async () => {

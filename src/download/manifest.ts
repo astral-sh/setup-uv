@@ -1,7 +1,10 @@
 import { createInterface } from "node:readline";
 import { Readable } from "node:stream";
 import * as core from "@actions/core";
-import { VERSIONS_MANIFEST_URL } from "../utils/constants";
+import {
+  GITHUB_VERSIONS_MANIFEST_URL,
+  VERSIONS_MANIFEST_URL,
+} from "../utils/constants";
 import { fetch } from "../utils/fetch";
 import * as log from "../utils/logging";
 import { selectDefaultVariant } from "./variant-selection";
@@ -167,6 +170,20 @@ export function clearManifestCache(manifestUrl?: string): void {
 }
 
 async function fetchManifestResponse(manifestUrl: string) {
+  try {
+    return await fetchManifestResponseFromUrl(manifestUrl);
+  } catch (error) {
+    if (manifestUrl !== VERSIONS_MANIFEST_URL) {
+      throw error;
+    }
+    log.info(
+      `Failed to fetch manifest from Astral mirror, falling back to GitHub: ${(error as Error).message}`,
+    );
+    return await fetchManifestResponseFromUrl(GITHUB_VERSIONS_MANIFEST_URL);
+  }
+}
+
+async function fetchManifestResponseFromUrl(manifestUrl: string) {
   let response: Awaited<ReturnType<typeof fetch>> | undefined;
   for (let attempt = 1; attempt <= MANIFEST_FETCH_ATTEMPTS; attempt++) {
     log.info(`Fetching manifest data from ${manifestUrl} ...`);

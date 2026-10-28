@@ -94499,7 +94499,8 @@ function _getGlobal(key, defaultValue) {
 var TOOL_CACHE_NAME = "uv";
 var STATE_UV_PATH = "uv-path";
 var STATE_UV_VERSION = "uv-version";
-var VERSIONS_MANIFEST_URL = "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson";
+var VERSIONS_MANIFEST_URL = "https://releases.astral.sh/github/versions/main/v1/uv.ndjson";
+var GITHUB_VERSIONS_MANIFEST_URL = "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson";
 var GITHUB_RELEASES_PREFIX = "https://github.com/astral-sh/uv/releases/download/";
 var ASTRAL_MIRROR_PREFIX = "https://releases.astral.sh/github/uv/releases/download/";
 
@@ -100305,6 +100306,19 @@ async function getArtifact(version3, arch3, platform2, manifestUrl = VERSIONS_MA
   };
 }
 async function fetchManifestResponse(manifestUrl) {
+  try {
+    return await fetchManifestResponseFromUrl(manifestUrl);
+  } catch (error2) {
+    if (manifestUrl !== VERSIONS_MANIFEST_URL) {
+      throw error2;
+    }
+    info2(
+      `Failed to fetch manifest from Astral mirror, falling back to GitHub: ${error2.message}`
+    );
+    return await fetchManifestResponseFromUrl(GITHUB_VERSIONS_MANIFEST_URL);
+  }
+}
+async function fetchManifestResponseFromUrl(manifestUrl) {
   let response;
   for (let attempt = 1; attempt <= MANIFEST_FETCH_ATTEMPTS; attempt++) {
     info2(`Fetching manifest data from ${manifestUrl} ...`);
