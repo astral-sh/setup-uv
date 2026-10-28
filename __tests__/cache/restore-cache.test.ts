@@ -40,6 +40,13 @@ function cacheKeyOutput(): string {
   return call?.[1] as string;
 }
 
+function output(name: string): unknown {
+  const call = mockSetOutput.mock.calls.find(
+    ([outputName]) => outputName === name,
+  );
+  return call?.[1];
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
   mockGetArch.mockReturnValue("x86_64");
@@ -74,10 +81,61 @@ describe("restoreCache", () => {
     await restoreCache(inputs, "3.11");
 
     expect(cacheKeyOutput()).toBe(
-      "setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.11-dependencyhash-tests-3.11",
+      "setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.11-tests-3.11-dependencyhash",
     );
   });
 
+  it("uses the cache key prefix as a restore key", async () => {
+    await restoreCache(createSetupInputs({ restoreCache: true }), "3.11");
+
+    expect(mockRestoreCache).toHaveBeenCalledWith(
+      ["/tmp/setup-uv-cache"],
+      "setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.11-dependencyhash",
+      ["setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.11-"],
+    );
+  });
+
+  it("uses a suffix-aware restore key for Python caches", async () => {
+    await restoreCache(
+      createSetupInputs({
+        cachePython: true,
+        cacheSuffix: "project-a",
+        restoreCache: true,
+      }),
+      "3.11",
+    );
+
+    expect(mockRestoreCache).toHaveBeenNthCalledWith(
+      2,
+      ["/tmp/uv-python-dir"],
+      "setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.11-py-project-a-python-dependencyhash",
+      [
+        "setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.11-py-project-a-python-",
+      ],
+    );
+  });
+
+  it("reports the matched key and keeps cache-hit false for a restore-key match", async () => {
+    const matchedKey =
+      "setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.11-oldhash";
+    mockRestoreCache.mockResolvedValueOnce(matchedKey);
+
+    await restoreCache(createSetupInputs({ restoreCache: true }), "3.11");
+
+    expect(output("cache-matched-key")).toBe(matchedKey);
+    expect(output("cache-hit")).toBe(false);
+  });
+
+  it("reports cache-hit true for an exact cache-key match", async () => {
+    const primaryKey =
+      "setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.11-dependencyhash";
+    mockRestoreCache.mockResolvedValueOnce(primaryKey);
+
+    await restoreCache(createSetupInputs({ restoreCache: true }), "3.11");
+
+    expect(output("cache-matched-key")).toBe(primaryKey);
+    expect(output("cache-hit")).toBe(true);
+  });
   it("includes the resolved Python architecture in the cache key", async () => {
     const inputs = createSetupInputs({ pythonArch: "aarch64" });
 
@@ -101,14 +159,18 @@ describe("restoreCache", () => {
       await restoreCache(inputs, "3.14");
 
       const cacheKey = `setup-uv-2-aarch64-pc-windows-msvc-windows-11-3.14-python-${pythonArch}-py-dependencyhash`;
+      const restoreKey = `setup-uv-2-aarch64-pc-windows-msvc-windows-11-3.14-python-${pythonArch}-py-`;
+      const pythonCacheKey = `${restoreKey}python-dependencyhash`;
       expect(cacheKeyOutput()).toBe(cacheKey);
       expect(mockRestoreCache).toHaveBeenCalledWith(
         [inputs.cacheLocalPath?.path],
         cacheKey,
+        [restoreKey],
       );
       expect(mockRestoreCache).toHaveBeenCalledWith(
         [inputs.pythonDir],
-        `${cacheKey}-python`,
+        pythonCacheKey,
+        [`${restoreKey}python-`],
       );
     },
   );
