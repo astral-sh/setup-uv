@@ -50,12 +50,13 @@ You can customize the venv location with `venv-path`, for example to place it in
 
 ## GitHub authentication token
 
-By default, this action resolves available uv versions from
-[`astral-sh/versions`](https://github.com/astral-sh/versions), then downloads uv artifacts from
-GitHub Releases.
+By default, this action fetches version metadata and uv archives from the Astral mirror.
+If a manifest request fails, it falls back to `raw.githubusercontent.com`. If an archive download
+fails, it falls back to GitHub Releases.
 
-You can provide a token via `github-token` to authenticate those downloads. By default, the
-`GITHUB_TOKEN` secret is used, which is automatically provided by GitHub Actions.
+You can provide a token via `github-token` to authenticate GitHub Releases downloads. The token
+is not sent to the Astral mirror or used for manifest requests. By default, the `GITHUB_TOKEN`
+secret is used, which is automatically provided by GitHub Actions.
 
 If the default
 [permissions for the GitHub token](https://docs.github.com/en/actions/security-for-github-actions/security-guides/automatic-token-authentication#permissions-for-the-github_token)

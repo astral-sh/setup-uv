@@ -242,7 +242,7 @@ describe("download-version", () => {
           "token",
         ),
       ).rejects.toThrow(
-        "Could not find artifact for version 0.9.26, arch x86_64, platform unknown-linux-gnu in https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson .",
+        "Could not find artifact for version 0.9.26, arch x86_64, platform unknown-linux-gnu in https://releases.astral.sh/github/versions/main/v1/uv.ndjson .",
       );
 
       expect(mockDownloadTool).not.toHaveBeenCalled();

@@ -52854,7 +52854,8 @@ var import_node_readline = require("node:readline");
 var import_node_stream = require("node:stream");
 
 // src/utils/constants.ts
-var VERSIONS_MANIFEST_URL = "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson";
+var VERSIONS_MANIFEST_URL = "https://releases.astral.sh/github/versions/main/v1/uv.ndjson";
+var GITHUB_VERSIONS_MANIFEST_URL = "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson";
 
 // src/utils/fetch.ts
 var import_undici2 = __toESM(require_undici2(), 1);
@@ -52926,6 +52927,19 @@ async function getLatestVersion(manifestUrl = VERSIONS_MANIFEST_URL) {
   return latestVersion;
 }
 async function fetchManifestResponse(manifestUrl) {
+  try {
+    return await fetchManifestResponseFromUrl(manifestUrl);
+  } catch (error2) {
+    if (manifestUrl !== VERSIONS_MANIFEST_URL) {
+      throw error2;
+    }
+    info2(
+      `Failed to fetch manifest from Astral mirror, falling back to GitHub: ${error2.message}`
+    );
+    return await fetchManifestResponseFromUrl(GITHUB_VERSIONS_MANIFEST_URL);
+  }
+}
+async function fetchManifestResponseFromUrl(manifestUrl) {
   let response;
   for (let attempt = 1; attempt <= MANIFEST_FETCH_ATTEMPTS; attempt++) {
     info2(`Fetching manifest data from ${manifestUrl} ...`);

@@ -20,10 +20,12 @@ You can specify a checksum to override those values. The sha256 hashes can also 
 ## Manifest file
 
 By default, setup-uv reads version metadata from
-[`astral-sh/versions`](https://github.com/astral-sh/versions).
+the [Astral mirror](https://releases.astral.sh/github/versions/main/v1/uv.ndjson).
+If the mirror request fails, it falls back to [`astral-sh/versions`](https://github.com/astral-sh/versions).
 
 The `manifest-file` input lets you override that source with your own URL, for example to test
-custom uv builds or alternate download locations.
+custom uv builds or alternate download locations. Custom manifest URLs do not fall back to the
+default sources.
 
 ### Format
 
