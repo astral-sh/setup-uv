@@ -52887,6 +52887,18 @@ function info2(msg) {
 // src/download/manifest.ts
 var cachedManifestData = /* @__PURE__ */ new Map();
 var MANIFEST_FETCH_ATTEMPTS = 3;
+var ManifestReadError = class extends Error {
+};
+function manifestReadFailed(cause) {
+  throw new ManifestReadError("Failed to read manifest response", { cause });
+}
+async function* manifestLines(lines) {
+  try {
+    yield* lines;
+  } catch (error2) {
+    manifestReadFailed(error2);
+  }
+}
 async function fetchManifest(manifestUrl = VERSIONS_MANIFEST_URL) {
   const cachedManifest = cachedManifestData.get(manifestUrl);
   if (cachedManifest?.complete === true) {
@@ -52895,7 +52907,7 @@ async function fetchManifest(manifestUrl = VERSIONS_MANIFEST_URL) {
   }
   const versions = await fetchManifestResponse(
     manifestUrl,
-    async (response) => parseManifest(await response.text(), manifestUrl)
+    async (response) => parseManifest(await response.text().catch(manifestReadFailed), manifestUrl)
   );
   cachedManifestData.set(manifestUrl, { complete: true, versions });
   return versions;
@@ -52950,10 +52962,12 @@ async function fetchManifestResponse(manifestUrl, consume) {
       );
       return result;
     } catch (error2) {
-      const name = isRecord(error2) && typeof error2.name === "string" && ["Error", "TypeError", "AbortError", "TimeoutError"].includes(
-        error2.name
-      ) ? error2.name : "Error";
-      const cause = isRecord(error2) ? error2.cause : void 0;
+      const bodyFailure = error2 instanceof ManifestReadError;
+      const failure = bodyFailure ? error2.cause : error2;
+      const name = isRecord(failure) && typeof failure.name === "string" && ["Error", "TypeError", "AbortError", "TimeoutError"].includes(
+        failure.name
+      ) ? failure.name : "Error";
+      const cause = isRecord(failure) ? failure.cause : void 0;
       const code = isRecord(cause) && typeof cause.code === "string" && [
         "ECONNRESET",
         "ECONNREFUSED",
@@ -52963,7 +52977,11 @@ async function fetchManifestResponse(manifestUrl, consume) {
         "UND_ERR_SOCKET",
         "UND_ERR_CONNECT_TIMEOUT",
         "UND_ERR_HEADERS_TIMEOUT",
-        "UND_ERR_BODY_TIMEOUT"
+        "UND_ERR_BODY_TIMEOUT",
+        "CERT_HAS_EXPIRED",
+        "DEPTH_ZERO_SELF_SIGNED_CERT",
+        "UNABLE_TO_VERIFY_LEAF_SIGNATURE",
+        "ERR_TLS_CERT_ALTNAME_INVALID"
       ].includes(cause.code) ? cause.code : "unknown";
       info2(
         `Manifest attempt ${attempt}/${MANIFEST_FETCH_ATTEMPTS} failed: phase=${phase} elapsed=${Date.now() - started}ms error=${name} cause=${code}${response ? ` status=${response.status}` : ""}`
@@ -52973,18 +52991,18 @@ async function fetchManifestResponse(manifestUrl, consume) {
       const httpFailure = response !== void 0 && !response.ok;
       if (httpFailure) {
         if (source !== VERSIONS_MANIFEST_URL || attempt === MANIFEST_FETCH_ATTEMPTS) {
-          throw error2;
+          throw failure;
         }
         source = GITHUB_VERSIONS_MANIFEST_URL;
         info2("Falling back to GitHub manifest after HTTP failure ...");
         continue;
       }
-      if (phase === "body" && !["TypeError", "AbortError", "TimeoutError"].includes(name)) {
-        throw error2;
+      if (phase === "body" && !bodyFailure) {
+        throw failure;
       }
       if (attempt >= MANIFEST_FETCH_ATTEMPTS) {
         info2("Manifest network attempts exhausted.");
-        throw error2;
+        throw failure;
       }
       if (source === VERSIONS_MANIFEST_URL && attempt === MANIFEST_FETCH_ATTEMPTS - 1) {
         source = GITHUB_VERSIONS_MANIFEST_URL;
@@ -53011,7 +53029,7 @@ async function findManifestVersion(predicate) {
 async function readManifestVersion(response, predicate) {
   if (response.body === null) {
     const versions2 = parseManifest(
-      await response.text(),
+      await response.text().catch(manifestReadFailed),
       VERSIONS_MANIFEST_URL
     );
     cachedManifestData.set(VERSIONS_MANIFEST_URL, {
@@ -53027,7 +53045,7 @@ async function readManifestVersion(response, predicate) {
   let lineNumber = 0;
   let matchedVersion;
   try {
-    for await (const line of lines) {
+    for await (const line of manifestLines(lines)) {
       lineNumber += 1;
       const record = line.trim();
       if (record === "") {

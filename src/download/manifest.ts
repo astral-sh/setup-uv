@@ -1,4 +1,4 @@
-import { createInterface } from "node:readline";
+import { createInterface, type Interface } from "node:readline";
 import { Readable } from "node:stream";
 import * as core from "@actions/core";
 import {
@@ -36,6 +36,20 @@ interface CachedManifest {
 const cachedManifestData = new Map<string, CachedManifest>();
 export const MANIFEST_FETCH_ATTEMPTS = 3;
 
+class ManifestReadError extends Error {}
+
+function manifestReadFailed(cause: unknown): never {
+  throw new ManifestReadError("Failed to read manifest response", { cause });
+}
+
+async function* manifestLines(lines: Interface) {
+  try {
+    yield* lines;
+  } catch (error) {
+    manifestReadFailed(error);
+  }
+}
+
 export async function fetchManifest(
   manifestUrl: string = VERSIONS_MANIFEST_URL,
 ): Promise<ManifestVersion[]> {
@@ -46,7 +60,7 @@ export async function fetchManifest(
   }
 
   const versions = await fetchManifestResponse(manifestUrl, async (response) =>
-    parseManifest(await response.text(), manifestUrl),
+    parseManifest(await response.text().catch(manifestReadFailed), manifestUrl),
   );
   cachedManifestData.set(manifestUrl, { complete: true, versions });
   return versions;
@@ -195,15 +209,17 @@ async function fetchManifestResponse<T>(
       );
       return result;
     } catch (error) {
+      const bodyFailure = error instanceof ManifestReadError;
+      const failure = bodyFailure ? error.cause : error;
       const name =
-        isRecord(error) &&
-        typeof error.name === "string" &&
+        isRecord(failure) &&
+        typeof failure.name === "string" &&
         ["Error", "TypeError", "AbortError", "TimeoutError"].includes(
-          error.name,
+          failure.name,
         )
-          ? error.name
+          ? failure.name
           : "Error";
-      const cause = isRecord(error) ? error.cause : undefined;
+      const cause = isRecord(failure) ? failure.cause : undefined;
       const code =
         isRecord(cause) &&
         typeof cause.code === "string" &&
@@ -217,6 +233,10 @@ async function fetchManifestResponse<T>(
           "UND_ERR_CONNECT_TIMEOUT",
           "UND_ERR_HEADERS_TIMEOUT",
           "UND_ERR_BODY_TIMEOUT",
+          "CERT_HAS_EXPIRED",
+          "DEPTH_ZERO_SELF_SIGNED_CERT",
+          "UNABLE_TO_VERIFY_LEAF_SIGNATURE",
+          "ERR_TLS_CERT_ALTNAME_INVALID",
         ].includes(cause.code)
           ? cause.code
           : "unknown";
@@ -230,21 +250,18 @@ async function fetchManifestResponse<T>(
           source !== VERSIONS_MANIFEST_URL ||
           attempt === MANIFEST_FETCH_ATTEMPTS
         ) {
-          throw error;
+          throw failure;
         }
         source = GITHUB_VERSIONS_MANIFEST_URL;
         log.info("Falling back to GitHub manifest after HTTP failure ...");
         continue;
       }
-      if (
-        phase === "body" &&
-        !["TypeError", "AbortError", "TimeoutError"].includes(name)
-      ) {
-        throw error;
+      if (phase === "body" && !bodyFailure) {
+        throw failure;
       }
       if (attempt >= MANIFEST_FETCH_ATTEMPTS) {
         log.info("Manifest network attempts exhausted.");
-        throw error;
+        throw failure;
       }
       if (
         source === VERSIONS_MANIFEST_URL &&
@@ -282,7 +299,7 @@ async function readManifestVersion(
 ): Promise<ManifestVersion | undefined> {
   if (response.body === null) {
     const versions = parseManifest(
-      await response.text(),
+      await response.text().catch(manifestReadFailed),
       VERSIONS_MANIFEST_URL,
     );
     cachedManifestData.set(VERSIONS_MANIFEST_URL, {
@@ -300,7 +317,7 @@ async function readManifestVersion(
   let matchedVersion: ManifestVersion | undefined;
 
   try {
-    for await (const line of lines) {
+    for await (const line of manifestLines(lines)) {
       lineNumber += 1;
       const record = line.trim();
       if (record === "") {

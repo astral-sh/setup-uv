@@ -33,6 +33,10 @@ The default source reserves the final attempt for GitHub after two mirror networ
 failures. HTTP errors fall back immediately from the mirror, but fail for custom
 manifests or GitHub. Invalid manifest data is not retried.
 
+Download diagnostics include the attempt, request/body phase, and elapsed time.
+Only recognized error names and network/TLS cause codes are logged; other values
+are reported as `Error` or `unknown` rather than copying arbitrary error details.
+
 ### Format
 
 The manifest file must use the same format as `astral-sh/versions`: one JSON object per line, where each object represents a version and its artifacts. The versions must be sorted in descending order. For example:

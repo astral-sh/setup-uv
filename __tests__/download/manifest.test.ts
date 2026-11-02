@@ -399,6 +399,7 @@ describe("manifest", () => {
     });
 
     it("does not cache records when the response stream fails", async () => {
+      jest.useFakeTimers();
       const [latestVersion] = sampleManifestResponse.split("\n");
       const encoder = new TextEncoder();
       let sentVersion = false;
@@ -423,9 +424,9 @@ describe("manifest", () => {
           createMockResponse(true, 200, "OK", sampleManifestResponse),
         );
 
-      await expect(
-        getArtifact("0.0.1", "aarch64", "apple-darwin"),
-      ).rejects.toThrow("response stream failed");
+      const result = getArtifact("0.0.1", "aarch64", "apple-darwin");
+      await jest.runAllTimersAsync();
+      await expect(result).resolves.toBeUndefined();
       await expect(getLatestVersion()).resolves.toBe("0.9.26");
 
       expect(mockFetch).toHaveBeenCalledTimes(2);
@@ -433,6 +434,107 @@ describe("manifest", () => {
   });
 
   describe("manifest download resilience", () => {
+    it("does not log unrecognized error names or cause codes", async () => {
+      jest.useFakeTimers();
+      const failure = {
+        cause: { code: "CODE_SENTINEL" },
+        message: "BODY_SENTINEL",
+        name: "NAME_SENTINEL",
+      };
+      mockFetch.mockRejectedValue(failure);
+      const result = expect(fetchManifest()).rejects.toEqual(failure);
+      await jest.runAllTimersAsync();
+      await result;
+      const logs = mockInfo.mock.calls.flat().join("\n");
+      expect(logs).toContain("error=Error cause=unknown");
+      expect(logs).not.toContain("SENTINEL");
+    });
+
+    it("does not retry a TypeError from the streaming consumer", async () => {
+      mockFetch.mockResolvedValue(
+        createStreamingMockResponse([`${sampleManifestResponse}\n`]),
+      );
+      await expect(
+        getFirstMatchingVersion(() => {
+          throw new TypeError("invalid schema or predicate");
+        }),
+      ).rejects.toThrow("invalid schema or predicate");
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([
+      new Error("read failed"),
+      new TypeError("terminated", { cause: { code: "UND_ERR_SOCKET" } }),
+      new DOMException("aborted", "AbortError"),
+    ])(
+      "retries response read errors without classifying by name: %s",
+      async (failure) => {
+        jest.useFakeTimers();
+        mockFetch
+          .mockResolvedValueOnce({
+            body: null,
+            ok: true,
+            status: 200,
+            text: async () => {
+              throw failure;
+            },
+          })
+          .mockResolvedValueOnce(
+            createMockResponse(true, 200, "OK", sampleManifestResponse),
+          );
+        const result = fetchManifest();
+        await jest.runAllTimersAsync();
+        await expect(result).resolves.toHaveLength(2);
+        expect(mockFetch).toHaveBeenCalledTimes(2);
+      },
+    );
+
+    it("keeps the HTTP fallback within the shared budget", async () => {
+      jest.useFakeTimers();
+      const started = Date.now();
+      const cancel = jest.fn(async () => {});
+      mockFetch
+        .mockResolvedValueOnce({
+          body: { cancel },
+          ok: false,
+          status: 503,
+          statusText: "Unavailable",
+        })
+        .mockRejectedValue(new Error("GitHub unavailable"));
+      const result = expect(fetchManifest()).rejects.toThrow(
+        "GitHub unavailable",
+      );
+      await jest.runAllTimersAsync();
+      await result;
+      expect(Date.now() - started).toBe(2_000);
+      expect(mockFetch.mock.calls.map(([url]) => url)).toEqual([
+        "https://releases.astral.sh/github/versions/main/v1/uv.ndjson",
+        "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson",
+        "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson",
+      ]);
+      expect(cancel).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([
+      "CERT_HAS_EXPIRED",
+      "DEPTH_ZERO_SELF_SIGNED_CERT",
+      "credential-shaped-unrecognized-code",
+    ])("sanitizes structured cause code %s", async (code) => {
+      jest.useFakeTimers();
+      mockFetch.mockRejectedValue(
+        new TypeError("private details", { cause: { code } }),
+      );
+      const result = expect(fetchManifest()).rejects.toThrow();
+      await jest.runAllTimersAsync();
+      await result;
+      const logs = mockInfo.mock.calls.flat().join("\n");
+      expect(logs).toContain(
+        `cause=${code.startsWith("credential-") ? "unknown" : code}`,
+      );
+      expect(logs).not.toContain("private details");
+      expect(logs).not.toContain("credential-shaped");
+    });
+
     it.each([false, true])(
       "retries a stalled body (streaming=%s)",
       async (streaming) => {
