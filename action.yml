@@ -113,7 +113,7 @@ outputs:
   python-runtime-id:
     description: "An opaque identifier reported by uv for the activated venv's Python runtime. Empty when activate-environment is false."
   python-cache-hit:
-    description: "Whether the Python cache was restored successfully, including any required junction repair."
+    description: "A boolean indicating whether the Python cache was restored successfully."
 runs:
   using: "node24"
   main: "dist/setup/index.cjs"

@@ -94044,6 +94044,8 @@ async function restoreCache2(inputs, pythonVersion) {
       inputs.pythonDir,
       STATE_PYTHON_CACHE_MATCHED_KEY,
       "python-cache-hit",
+      // TODO: Remove this repair once @actions/cache preserves Windows junctions.
+      // https://github.com/actions/toolkit/issues/2562
       process.platform === "win32" ? repairPythonJunctions : void 0
     );
   } else {

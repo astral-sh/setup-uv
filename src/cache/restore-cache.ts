@@ -45,6 +45,8 @@ export async function restoreCache(
       inputs.pythonDir,
       STATE_PYTHON_CACHE_MATCHED_KEY,
       "python-cache-hit",
+      // TODO: Remove this repair once @actions/cache preserves Windows junctions.
+      // https://github.com/actions/toolkit/issues/2562
       process.platform === "win32" ? repairPythonJunctions : undefined,
     );
   } else {
@@ -70,7 +72,9 @@ async function restoreCacheFromKey(
       return;
     }
 
-    // The matched cache is immutable, even if local repair fails.
+    // Record the match before the post-restore hook so the post step can skip
+    // archiving the directory again even if the hook fails. A PR that restored
+    // from its base branch could otherwise save the broken copy in its own cache.
     core.saveState(stateKey, matchedKey);
     await afterRestore?.(cachePath);
     log.info(

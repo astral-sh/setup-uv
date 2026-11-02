@@ -995,18 +995,26 @@ jobs:
           persist-credentials: false
       - name: Verify Python install dir is not populated
         shell: bash
-        run: test ! -e "$RUNNER_TEMP/uv-python-dir"
+        run: |
+          if [ -e "$RUNNER_TEMP/uv-python-dir" ]; then
+            echo "Python install dir should not exist"
+            exit 1
+          fi
       - name: Setup uv with cache
         uses: $/
         with:
           enable-cache: true
           cache-python: true
           cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-cache-python-installs
-      - run: uv sync --managed-python --python 3.12
+      - run: uv sync --managed-python
         working-directory: __tests__/fixtures/uv-project
       - name: Verify Python install dir exists
         shell: bash
-        run: test -d "$UV_PYTHON_INSTALL_DIR"
+        run: |
+          if [ ! -d "$UV_PYTHON_INSTALL_DIR" ]; then
+            echo "Python install dir should exist"
+            exit 1
+          fi
   test-restore-python-installs:
     runs-on: ${{ matrix.os }}
     needs: test-cache-python-installs
@@ -1019,7 +1027,11 @@ jobs:
           persist-credentials: false
       - name: Verify Python install dir does not exist
         shell: bash
-        run: test ! -e "$RUNNER_TEMP/uv-python-dir"
+        run: |
+          if [ -e "$RUNNER_TEMP/uv-python-dir" ]; then
+            echo "Python install dir should not exist"
+            exit 1
+          fi
       - name: Restore with cache
         id: restore
         uses: $/
@@ -1036,10 +1048,13 @@ jobs:
           from pathlib import Path
 
           assert os.environ["CACHE_HIT"] == "true", "expected a Python cache hit"
-          installs = Path(os.environ["UV_PYTHON_INSTALL_DIR"]).resolve(strict=True)
-          alias = next(installs.glob("cpython-3.12-*"))
-          assert alias.resolve(strict=True) in installs.glob("cpython-3.12.*-*"), alias
-      - run: uv sync --managed-python --python 3.12
+          installs = Path(os.environ["UV_PYTHON_INSTALL_DIR"]).resolve()
+          assert installs.is_dir(), "Python install dir should exist"
+          patch_dir, = installs.glob("cpython-*.*.*-*")
+          minor_prefix = patch_dir.name.rsplit(".", 1)[0]
+          alias, = installs.glob(f"{minor_prefix}-*")
+          assert alias.resolve(strict=True) == patch_dir, alias
+      - run: uv sync --managed-python
         working-directory: __tests__/fixtures/uv-project
 
   test-python-install-dir:
