@@ -62,20 +62,26 @@ async function restoreCacheFromKey(
   log.info(
     `Trying to restore cache from GitHub Actions cache with key: ${cacheKey}`,
   );
-  let matchedKey: string | undefined;
   try {
-    matchedKey = await cache.restoreCache([cachePath], cacheKey);
-    if (matchedKey) {
-      await afterRestore?.(cachePath);
+    const matchedKey = await cache.restoreCache([cachePath], cacheKey);
+    if (!matchedKey) {
+      log.info(`No GitHub Actions cache found for key: ${cacheKey}`);
+      core.setOutput(outputKey, false);
+      return;
     }
+
+    // The matched cache is immutable, even if local repair fails.
+    core.saveState(stateKey, matchedKey);
+    await afterRestore?.(cachePath);
+    log.info(
+      `cache restored from GitHub Actions cache with key: ${matchedKey}`,
+    );
+    core.setOutput(outputKey, true);
   } catch (err) {
     const message = (err as Error).message;
     log.warning(message);
     core.setOutput(outputKey, false);
-    return;
   }
-
-  handleMatchResult(matchedKey, cacheKey, stateKey, outputKey);
 }
 
 async function computeKeys(
@@ -112,21 +118,4 @@ async function computeKeys(
   const pruned = inputs.pruneCache ? "-pruned" : "";
   const python = inputs.cachePython ? "-py" : "";
   return `setup-uv-${CACHE_VERSION}-${getArch()}-${platform}-${osNameVersion}-${version}${pythonArchKey}${pruned}${python}${cacheDependencyPathHash}${suffix}`;
-}
-
-function handleMatchResult(
-  matchedKey: string | undefined,
-  primaryKey: string,
-  stateKey: string,
-  outputKey: string,
-): void {
-  if (!matchedKey) {
-    log.info(`No GitHub Actions cache found for key: ${primaryKey}`);
-    core.setOutput(outputKey, false);
-    return;
-  }
-
-  core.saveState(stateKey, matchedKey);
-  log.info(`cache restored from GitHub Actions cache with key: ${matchedKey}`);
-  core.setOutput(outputKey, true);
 }

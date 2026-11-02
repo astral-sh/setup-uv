@@ -1,5 +1,5 @@
 import { readdir, readlink, realpath, symlink, unlink } from "node:fs/promises";
-import * as path from "node:path";
+import nodePath from "node:path";
 
 export async function repairPythonJunctions(pythonDir: string): Promise<void> {
   const entries = await readdir(pythonDir, { withFileTypes: true });
@@ -10,37 +10,51 @@ export async function repairPythonJunctions(pythonDir: string): Promise<void> {
   );
 
   for (const entry of entries) {
-    if (!entry.isSymbolicLink()) {
+    const name = entry.name.toLowerCase();
+    if (!entry.isSymbolicLink() || !/^cpython-\d+\.\d+[+-].+$/.test(name)) {
       continue;
     }
-    const link = path.join(pythonDir, entry.name);
+    const link = nodePath.join(pythonDir, entry.name);
+    let target: string;
     try {
-      await realpath(link);
-      continue;
+      target = nodePath.resolve(pythonDir, await readlink(link));
     } catch (err) {
-      // Git for Windows tar can restore a junction as a file symlink when it
-      // extracts the link before its target. Opening it as a directory fails.
-      if ((err as NodeJS.ErrnoException).code !== "EPERM") {
-        continue;
+      // Fail only if the link still has the access error that requires repair.
+      if (await resolvesWithAccessDenied(link)) {
+        throw err;
       }
+      continue;
     }
 
-    const target = path.resolve(pythonDir, await readlink(link));
     // uv omits only the patch and prerelease from its minor-version links.
-    const sibling = path.relative(pythonDir, target).toLowerCase();
+    const sibling = nodePath.relative(pythonDir, target).toLowerCase();
     const version = /^(cpython-\d+\.\d+)\.\d+(?:(?:a|b|rc)\d+)?([+-].+)$/.exec(
       sibling,
     );
     if (
       !version ||
-      version[1] + version[2] !== entry.name.toLowerCase() ||
+      version[1] + version[2] !== name ||
       !directories.has(sibling)
     ) {
+      continue;
+    }
+    // Git for Windows tar can restore a junction as a file symlink when it
+    // extracts the link before its target. Opening it as a directory fails.
+    if (!(await resolvesWithAccessDenied(link))) {
       continue;
     }
     // An inaccessible installation can also cause EPERM through a valid link.
     await realpath(target);
     await unlink(link);
     await symlink(target, link, "junction");
+  }
+}
+
+async function resolvesWithAccessDenied(link: string): Promise<boolean> {
+  try {
+    await realpath(link);
+    return false;
+  } catch (err) {
+    return (err as NodeJS.ErrnoException).code === "EPERM";
   }
 }

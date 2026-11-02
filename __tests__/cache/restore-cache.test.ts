@@ -49,25 +49,41 @@ beforeEach(() => {
 });
 
 describe("restoreCache", () => {
-  it("reports a Python cache miss on Windows when the restored install directory cannot be read", async () => {
-    const inputs = createSetupInputs({
-      cachePython: true,
-      // A file at the install directory path makes readdir fail.
-      pythonDir: fileURLToPath(import.meta.url),
-      restoreCache: true,
-    });
-    mockRestoreCache
-      .mockReturnValueOnce("uv-key")
-      .mockReturnValueOnce("python-key");
+  it.each([
+    ["win32", false],
+    ["linux", true],
+  ] as const)(
+    "keeps the matched Python cache key on %s when the install directory cannot be read",
+    async (platform, pythonCacheHit) => {
+      const inputs = createSetupInputs({
+        cachePython: true,
+        // A file at the install directory path makes readdir fail.
+        pythonDir: fileURLToPath(import.meta.url),
+        restoreCache: true,
+      });
+      mockRestoreCache
+        .mockReturnValueOnce("uv-key")
+        .mockReturnValueOnce("python-key");
 
-    await restoreCache(inputs);
+      const originalPlatform = process.platform;
+      Object.defineProperty(process, "platform", { value: platform });
+      try {
+        await restoreCache(inputs);
+      } finally {
+        Object.defineProperty(process, "platform", { value: originalPlatform });
+      }
 
-    expect(mockSetOutput).toHaveBeenCalledWith("cache-hit", true);
-    expect(mockSetOutput).toHaveBeenCalledWith(
-      "python-cache-hit",
-      process.platform !== "win32",
-    );
-  });
+      expect(mockSetOutput).toHaveBeenCalledWith("cache-hit", true);
+      expect(mockSetOutput).toHaveBeenCalledWith(
+        "python-cache-hit",
+        pythonCacheHit,
+      );
+      expect(mockSaveState).toHaveBeenCalledWith(
+        "python-cache-matched-key",
+        "python-key",
+      );
+    },
+  );
 
   it("encodes Python version ranges before adding them to the cache key", async () => {
     await restoreCache(createSetupInputs(), ">3.10.11,<3.11");
