@@ -4,9 +4,13 @@ import {
   fetch as undiciFetch,
 } from "undici";
 
-export const fetch = async (url: string, opts: RequestInit) => {
+export const fetch = async (
+  url: string,
+  opts: RequestInit,
+  timeoutMs = 5_000,
+) => {
   // Merge timeout signal with any existing signal from opts
-  const timeoutSignal = AbortSignal.timeout(5_000);
+  const timeoutSignal = AbortSignal.timeout(timeoutMs);
   const existingSignal = opts.signal;
   const mergedSignal = existingSignal
     ? AbortSignal.any([timeoutSignal, existingSignal])

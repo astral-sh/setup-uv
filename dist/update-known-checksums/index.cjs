@@ -52859,8 +52859,8 @@ var GITHUB_VERSIONS_MANIFEST_URL = "https://raw.githubusercontent.com/astral-sh/
 
 // src/utils/fetch.ts
 var import_undici2 = __toESM(require_undici2(), 1);
-var fetch = async (url, opts) => {
-  const timeoutSignal = AbortSignal.timeout(5e3);
+var fetch = async (url, opts, timeoutMs = 5e3) => {
+  const timeoutSignal = AbortSignal.timeout(timeoutMs);
   const existingSignal = opts.signal;
   const mergedSignal = existingSignal ? AbortSignal.any([timeoutSignal, existingSignal]) : timeoutSignal;
   return await (0, import_undici2.fetch)(url, {
@@ -52893,9 +52893,10 @@ async function fetchManifest(manifestUrl = VERSIONS_MANIFEST_URL) {
     debug(`Using cached manifest data from ${manifestUrl}`);
     return cachedManifest.versions;
   }
-  const response = await fetchManifestResponse(manifestUrl);
-  const body = await response.text();
-  const versions = parseManifest(body, manifestUrl);
+  const versions = await fetchManifestResponse(
+    manifestUrl,
+    async (response) => parseManifest(await response.text(), manifestUrl)
+  );
   cachedManifestData.set(manifestUrl, { complete: true, versions });
   return versions;
 }
@@ -52926,44 +52927,75 @@ async function getLatestVersion(manifestUrl = VERSIONS_MANIFEST_URL) {
   debug(`Latest version from manifest: ${latestVersion}`);
   return latestVersion;
 }
-async function fetchManifestResponse(manifestUrl) {
-  try {
-    return await fetchManifestResponseFromUrl(manifestUrl);
-  } catch (error2) {
-    if (manifestUrl !== VERSIONS_MANIFEST_URL) {
-      throw error2;
-    }
-    info2(
-      `Failed to fetch manifest from Astral mirror, falling back to GitHub: ${error2.message}`
-    );
-    return await fetchManifestResponseFromUrl(GITHUB_VERSIONS_MANIFEST_URL);
-  }
-}
-async function fetchManifestResponseFromUrl(manifestUrl) {
-  let response;
+async function fetchManifestResponse(manifestUrl, consume) {
+  let source = manifestUrl;
   for (let attempt = 1; attempt <= MANIFEST_FETCH_ATTEMPTS; attempt++) {
-    info2(`Fetching manifest data from ${manifestUrl} ...`);
+    const started = Date.now();
+    let phase = "headers";
+    let response;
+    info2(
+      `Fetching manifest data (attempt ${attempt}/${MANIFEST_FETCH_ATTEMPTS}) ...`
+    );
     try {
-      response = await fetch(manifestUrl, {});
-      break;
+      response = await fetch(source, {}, 15e3);
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch manifest data: ${response.status} ${response.statusText}`
+        );
+      }
+      phase = "body";
+      const result = await consume(response);
+      info2(
+        `Manifest attempt ${attempt}/${MANIFEST_FETCH_ATTEMPTS} complete in ${Date.now() - started}ms`
+      );
+      return result;
     } catch (error2) {
-      if (attempt >= MANIFEST_FETCH_ATTEMPTS) {
+      const name = isRecord(error2) && typeof error2.name === "string" && ["Error", "TypeError", "AbortError", "TimeoutError"].includes(
+        error2.name
+      ) ? error2.name : "Error";
+      const cause = isRecord(error2) ? error2.cause : void 0;
+      const code = isRecord(cause) && typeof cause.code === "string" && [
+        "ECONNRESET",
+        "ECONNREFUSED",
+        "ETIMEDOUT",
+        "EAI_AGAIN",
+        "ENOTFOUND",
+        "UND_ERR_SOCKET",
+        "UND_ERR_CONNECT_TIMEOUT",
+        "UND_ERR_HEADERS_TIMEOUT",
+        "UND_ERR_BODY_TIMEOUT"
+      ].includes(cause.code) ? cause.code : "unknown";
+      info2(
+        `Manifest attempt ${attempt}/${MANIFEST_FETCH_ATTEMPTS} failed: phase=${phase} elapsed=${Date.now() - started}ms error=${name} cause=${code}${response ? ` status=${response.status}` : ""}`
+      );
+      void response?.body?.cancel().catch(() => {
+      });
+      const httpFailure = response !== void 0 && !response.ok;
+      if (httpFailure) {
+        if (source !== VERSIONS_MANIFEST_URL || attempt === MANIFEST_FETCH_ATTEMPTS) {
+          throw error2;
+        }
+        source = GITHUB_VERSIONS_MANIFEST_URL;
+        info2("Falling back to GitHub manifest after HTTP failure ...");
+        continue;
+      }
+      if (phase === "body" && !["TypeError", "AbortError", "TimeoutError"].includes(name)) {
         throw error2;
+      }
+      if (attempt >= MANIFEST_FETCH_ATTEMPTS) {
+        info2("Manifest network attempts exhausted.");
+        throw error2;
+      }
+      if (source === VERSIONS_MANIFEST_URL && attempt === MANIFEST_FETCH_ATTEMPTS - 1) {
+        source = GITHUB_VERSIONS_MANIFEST_URL;
+        info2("Falling back to GitHub manifest for final attempt ...");
       }
       const delayMs = 1e3 * 2 ** (attempt - 1);
       info2(`Manifest fetch failed; retrying in ${delayMs}ms ...`);
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }
-  if (response === void 0) {
-    throw new Error("Manifest fetch attempts exhausted.");
-  }
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch manifest data: ${response.status} ${response.statusText}`
-    );
-  }
-  return response;
+  throw new Error("Manifest fetch attempts exhausted.");
 }
 async function findManifestVersion(predicate) {
   const cachedManifest = cachedManifestData.get(VERSIONS_MANIFEST_URL);
@@ -52971,7 +53003,12 @@ async function findManifestVersion(predicate) {
   if (cachedVersion !== void 0 || cachedManifest?.complete === true) {
     return cachedVersion;
   }
-  const response = await fetchManifestResponse(VERSIONS_MANIFEST_URL);
+  return await fetchManifestResponse(
+    VERSIONS_MANIFEST_URL,
+    (response) => readManifestVersion(response, predicate)
+  );
+}
+async function readManifestVersion(response, predicate) {
   if (response.body === null) {
     const versions2 = parseManifest(
       await response.text(),

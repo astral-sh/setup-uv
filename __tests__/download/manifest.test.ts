@@ -9,10 +9,11 @@ import {
 
 // biome-ignore lint/suspicious/noExplicitAny: Mock requires flexible typing in tests.
 const mockFetch = jest.fn<any>();
+const mockInfo = jest.fn();
 
 jest.unstable_mockModule("@actions/core", () => ({
   debug: jest.fn(),
-  info: jest.fn(),
+  info: mockInfo,
 }));
 
 jest.unstable_mockModule("../../src/utils/fetch", () => ({
@@ -79,6 +80,7 @@ describe("manifest", () => {
   beforeEach(() => {
     clearManifestCache();
     mockFetch.mockReset();
+    mockInfo.mockClear();
   });
 
   afterEach(() => {
@@ -106,7 +108,6 @@ describe("manifest", () => {
       mockFetch
         .mockRejectedValueOnce(new Error("mirror unavailable"))
         .mockRejectedValueOnce(new Error("mirror unavailable"))
-        .mockRejectedValueOnce(new Error("mirror unavailable"))
         .mockResolvedValueOnce(
           createMockResponse(true, 200, "OK", sampleManifestResponse),
         );
@@ -121,12 +122,11 @@ describe("manifest", () => {
       expect(mockFetch.mock.calls.map(([url]) => url)).toEqual([
         "https://releases.astral.sh/github/versions/main/v1/uv.ndjson",
         "https://releases.astral.sh/github/versions/main/v1/uv.ndjson",
-        "https://releases.astral.sh/github/versions/main/v1/uv.ndjson",
         "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson",
       ]);
 
       await expect(getLatestVersion()).resolves.toBe("0.9.26");
-      expect(mockFetch).toHaveBeenCalledTimes(4);
+      expect(mockFetch).toHaveBeenCalledTimes(3);
     });
 
     it.each([404, 429, 503])(
@@ -195,7 +195,7 @@ describe("manifest", () => {
       await jest.runAllTimersAsync();
 
       await result;
-      expect(mockFetch).toHaveBeenCalledTimes(MANIFEST_FETCH_ATTEMPTS * 2);
+      expect(mockFetch).toHaveBeenCalledTimes(MANIFEST_FETCH_ATTEMPTS);
     });
 
     it("throws on a failed fetch", async () => {
@@ -429,6 +429,148 @@ describe("manifest", () => {
       await expect(getLatestVersion()).resolves.toBe("0.9.26");
 
       expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe("manifest download resilience", () => {
+    it.each([false, true])(
+      "retries a stalled body (streaming=%s)",
+      async (streaming) => {
+        jest.useFakeTimers();
+        const failure = new DOMException(
+          "private response contents",
+          "TimeoutError",
+        );
+        const cancel = jest.fn(async () => {});
+        const failedResponse = streaming
+          ? {
+              body: new ReadableStream({
+                cancel,
+                start(controller) {
+                  controller.error(failure);
+                },
+              }),
+              ok: true,
+              status: 200,
+            }
+          : {
+              body: null,
+              ok: true,
+              status: 200,
+              text: async () => {
+                throw failure;
+              },
+            };
+        mockFetch
+          .mockResolvedValueOnce(failedResponse)
+          .mockResolvedValueOnce(
+            createMockResponse(true, 200, "OK", sampleManifestResponse),
+          );
+        const result = streaming ? getLatestVersion() : fetchManifest();
+        await jest.runAllTimersAsync();
+        await expect(result).resolves.toBeDefined();
+        expect(mockFetch).toHaveBeenCalledTimes(2);
+        expect(mockFetch).toHaveBeenNthCalledWith(
+          1,
+          expect.any(String),
+          {},
+          15_000,
+        );
+        const logs = mockInfo.mock.calls.flat().join("\n");
+        expect(logs).toContain("attempt 1/3");
+        expect(logs).toMatch(
+          /phase=body elapsed=\d+ms error=TimeoutError cause=unknown/,
+        );
+        expect(logs).not.toContain("private response contents");
+        expect(logs).not.toContain("https://");
+        await getLatestVersion();
+        expect(mockFetch).toHaveBeenCalledTimes(2);
+      },
+    );
+
+    it.each([
+      [false, undefined],
+      [true, undefined],
+      [false, "https://example.com/custom.ndjson"],
+      [true, "https://example.com/custom.ndjson"],
+    ] as const)(
+      "bounds stalled bodies (streaming=%s, source=%s)",
+      async (streaming, url) => {
+        jest.useFakeTimers();
+        mockFetch.mockImplementation(async () => ({
+          body: streaming
+            ? new ReadableStream({
+                start(controller) {
+                  controller.error(new DOMException("stalled", "TimeoutError"));
+                },
+              })
+            : null,
+          ok: true,
+          status: 200,
+          text: async () => {
+            throw new DOMException("stalled", "TimeoutError");
+          },
+        }));
+        const result = expect(
+          streaming && url === undefined
+            ? getLatestVersion()
+            : fetchManifest(url),
+        ).rejects.toThrow("stalled");
+        await jest.runAllTimersAsync();
+        await result;
+        expect(mockFetch).toHaveBeenCalledTimes(3);
+        const sources = mockFetch.mock.calls.map(([source]) => source);
+        expect(sources).toEqual(
+          url
+            ? [url, url, url]
+            : [
+                "https://releases.astral.sh/github/versions/main/v1/uv.ndjson",
+                "https://releases.astral.sh/github/versions/main/v1/uv.ndjson",
+                "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson",
+              ],
+        );
+        expect(mockInfo.mock.calls.flat().join("\n")).toContain(
+          "network attempts exhausted",
+        );
+        mockFetch.mockResolvedValueOnce(
+          createMockResponse(true, 200, "OK", sampleManifestResponse),
+        );
+        await expect(fetchManifest(url)).resolves.toHaveLength(2);
+        expect(mockFetch).toHaveBeenCalledTimes(4);
+      },
+    );
+
+    it("keeps parse failures terminal without fallback", async () => {
+      mockFetch.mockResolvedValue(
+        createMockResponse(true, 200, "OK", "not json"),
+      );
+      await expect(fetchManifest()).rejects.toThrow(
+        "Failed to parse manifest data",
+      );
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("logs safe header failure details and exact backoff", async () => {
+      jest.useFakeTimers();
+      const started = Date.now();
+      mockFetch.mockRejectedValue(
+        new TypeError("private URL", {
+          cause: { code: "ECONNRESET", secret: "private" },
+        }),
+      );
+      const result = expect(
+        fetchManifest("https://example.com/custom"),
+      ).rejects.toThrow("private URL");
+      await jest.runAllTimersAsync();
+      await result;
+      expect(Date.now() - started).toBe(3_000);
+      const logs = mockInfo.mock.calls.flat().join("\n");
+      expect(logs).toContain(
+        "phase=headers elapsed=0ms error=TypeError cause=ECONNRESET",
+      );
+      expect(logs).toContain("retrying in 1000ms");
+      expect(logs).toContain("retrying in 2000ms");
+      expect(logs).not.toContain("private");
     });
   });
 

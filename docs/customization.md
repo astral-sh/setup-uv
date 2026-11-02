@@ -27,6 +27,12 @@ The `manifest-file` input lets you override that source with your own URL, for e
 custom uv builds or alternate download locations. Custom manifest URLs do not fall back to the
 default sources.
 
+Manifest downloads allow 15 seconds per attempt, including response body reads,
+with at most three attempts and 1-second then 2-second waits for network failures.
+The default source reserves the final attempt for GitHub after two mirror network
+failures. HTTP errors fall back immediately from the mirror, but fail for custom
+manifests or GitHub. Invalid manifest data is not retried.
+
 ### Format
 
 The manifest file must use the same format as `astral-sh/versions`: one JSON object per line, where each object represents a version and its artifacts. The versions must be sorted in descending order. For example:

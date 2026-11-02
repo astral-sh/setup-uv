@@ -45,9 +45,9 @@ export async function fetchManifest(
     return cachedManifest.versions;
   }
 
-  const response = await fetchManifestResponse(manifestUrl);
-  const body = await response.text();
-  const versions = parseManifest(body, manifestUrl);
+  const versions = await fetchManifestResponse(manifestUrl, async (response) =>
+    parseManifest(await response.text(), manifestUrl),
+  );
   cachedManifestData.set(manifestUrl, { complete: true, versions });
   return versions;
 }
@@ -169,30 +169,89 @@ export function clearManifestCache(manifestUrl?: string): void {
   cachedManifestData.delete(manifestUrl);
 }
 
-async function fetchManifestResponse(manifestUrl: string) {
-  try {
-    return await fetchManifestResponseFromUrl(manifestUrl);
-  } catch (error) {
-    if (manifestUrl !== VERSIONS_MANIFEST_URL) {
-      throw error;
-    }
-    log.info(
-      `Failed to fetch manifest from Astral mirror, falling back to GitHub: ${(error as Error).message}`,
-    );
-    return await fetchManifestResponseFromUrl(GITHUB_VERSIONS_MANIFEST_URL);
-  }
-}
-
-async function fetchManifestResponseFromUrl(manifestUrl: string) {
-  let response: Awaited<ReturnType<typeof fetch>> | undefined;
+async function fetchManifestResponse<T>(
+  manifestUrl: string,
+  consume: (response: Awaited<ReturnType<typeof fetch>>) => Promise<T>,
+): Promise<T> {
+  let source = manifestUrl;
   for (let attempt = 1; attempt <= MANIFEST_FETCH_ATTEMPTS; attempt++) {
-    log.info(`Fetching manifest data from ${manifestUrl} ...`);
+    const started = Date.now();
+    let phase = "headers";
+    let response: Awaited<ReturnType<typeof fetch>> | undefined;
+    log.info(
+      `Fetching manifest data (attempt ${attempt}/${MANIFEST_FETCH_ATTEMPTS}) ...`,
+    );
     try {
-      response = await fetch(manifestUrl, {});
-      break;
+      response = await fetch(source, {}, 15_000);
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch manifest data: ${response.status} ${response.statusText}`,
+        );
+      }
+      phase = "body";
+      const result = await consume(response);
+      log.info(
+        `Manifest attempt ${attempt}/${MANIFEST_FETCH_ATTEMPTS} complete in ${Date.now() - started}ms`,
+      );
+      return result;
     } catch (error) {
-      if (attempt >= MANIFEST_FETCH_ATTEMPTS) {
+      const name =
+        isRecord(error) &&
+        typeof error.name === "string" &&
+        ["Error", "TypeError", "AbortError", "TimeoutError"].includes(
+          error.name,
+        )
+          ? error.name
+          : "Error";
+      const cause = isRecord(error) ? error.cause : undefined;
+      const code =
+        isRecord(cause) &&
+        typeof cause.code === "string" &&
+        [
+          "ECONNRESET",
+          "ECONNREFUSED",
+          "ETIMEDOUT",
+          "EAI_AGAIN",
+          "ENOTFOUND",
+          "UND_ERR_SOCKET",
+          "UND_ERR_CONNECT_TIMEOUT",
+          "UND_ERR_HEADERS_TIMEOUT",
+          "UND_ERR_BODY_TIMEOUT",
+        ].includes(cause.code)
+          ? cause.code
+          : "unknown";
+      log.info(
+        `Manifest attempt ${attempt}/${MANIFEST_FETCH_ATTEMPTS} failed: phase=${phase} elapsed=${Date.now() - started}ms error=${name} cause=${code}${response ? ` status=${response.status}` : ""}`,
+      );
+      void response?.body?.cancel().catch(() => {});
+      const httpFailure = response !== undefined && !response.ok;
+      if (httpFailure) {
+        if (
+          source !== VERSIONS_MANIFEST_URL ||
+          attempt === MANIFEST_FETCH_ATTEMPTS
+        ) {
+          throw error;
+        }
+        source = GITHUB_VERSIONS_MANIFEST_URL;
+        log.info("Falling back to GitHub manifest after HTTP failure ...");
+        continue;
+      }
+      if (
+        phase === "body" &&
+        !["TypeError", "AbortError", "TimeoutError"].includes(name)
+      ) {
         throw error;
+      }
+      if (attempt >= MANIFEST_FETCH_ATTEMPTS) {
+        log.info("Manifest network attempts exhausted.");
+        throw error;
+      }
+      if (
+        source === VERSIONS_MANIFEST_URL &&
+        attempt === MANIFEST_FETCH_ATTEMPTS - 1
+      ) {
+        source = GITHUB_VERSIONS_MANIFEST_URL;
+        log.info("Falling back to GitHub manifest for final attempt ...");
       }
       const delayMs = 1_000 * 2 ** (attempt - 1);
       log.info(`Manifest fetch failed; retrying in ${delayMs}ms ...`);
@@ -200,17 +259,7 @@ async function fetchManifestResponseFromUrl(manifestUrl: string) {
     }
   }
 
-  if (response === undefined) {
-    throw new Error("Manifest fetch attempts exhausted.");
-  }
-
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch manifest data: ${response.status} ${response.statusText}`,
-    );
-  }
-
-  return response;
+  throw new Error("Manifest fetch attempts exhausted.");
 }
 
 async function findManifestVersion(
@@ -222,7 +271,15 @@ async function findManifestVersion(
     return cachedVersion;
   }
 
-  const response = await fetchManifestResponse(VERSIONS_MANIFEST_URL);
+  return await fetchManifestResponse(VERSIONS_MANIFEST_URL, (response) =>
+    readManifestVersion(response, predicate),
+  );
+}
+
+async function readManifestVersion(
+  response: Awaited<ReturnType<typeof fetch>>,
+  predicate: (versionData: ManifestVersion) => boolean,
+): Promise<ManifestVersion | undefined> {
   if (response.body === null) {
     const versions = parseManifest(
       await response.text(),
