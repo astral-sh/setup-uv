@@ -4,6 +4,7 @@ import { hashFiles } from "../hash/hash-files";
 import type { SetupInputs } from "../utils/inputs";
 import * as log from "../utils/logging";
 import { getArch, getOSNameVersion, getPlatform } from "../utils/platforms";
+import { repairPythonJunctions } from "./repair-python-junctions";
 
 export const STATE_CACHE_KEY = "cache-key";
 export const STATE_CACHE_MATCHED_KEY = "cache-matched-key";
@@ -44,6 +45,7 @@ export async function restoreCache(
       inputs.pythonDir,
       STATE_PYTHON_CACHE_MATCHED_KEY,
       "python-cache-hit",
+      process.platform === "win32" ? repairPythonJunctions : undefined,
     );
   } else {
     core.setOutput("python-cache-hit", false);
@@ -55,6 +57,7 @@ async function restoreCacheFromKey(
   cachePath: string,
   stateKey: string,
   outputKey: string,
+  afterRestore?: (cachePath: string) => Promise<void>,
 ): Promise<void> {
   log.info(
     `Trying to restore cache from GitHub Actions cache with key: ${cacheKey}`,
@@ -62,6 +65,9 @@ async function restoreCacheFromKey(
   let matchedKey: string | undefined;
   try {
     matchedKey = await cache.restoreCache([cachePath], cacheKey);
+    if (matchedKey) {
+      await afterRestore?.(cachePath);
+    }
   } catch (err) {
     const message = (err as Error).message;
     log.warning(message);
