@@ -93966,6 +93966,53 @@ function getWindowsNameVersion() {
   return `windows-${match4[1]}`;
 }
 
+// src/cache/repair-python-junctions.ts
+var import_promises = require("node:fs/promises");
+var import_node_path = __toESM(require("node:path"), 1);
+async function repairPythonJunctions(pythonDir) {
+  const entries = await (0, import_promises.readdir)(pythonDir, { withFileTypes: true });
+  const directories = new Set(
+    entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name.toLowerCase())
+  );
+  for (const entry of entries) {
+    const name = entry.name.toLowerCase();
+    if (!entry.isSymbolicLink() || !/^cpython-\d+\.\d+[+-].+$/.test(name)) {
+      continue;
+    }
+    const link = import_node_path.default.join(pythonDir, entry.name);
+    let target;
+    try {
+      target = import_node_path.default.resolve(pythonDir, await (0, import_promises.readlink)(link));
+    } catch (err) {
+      if (await resolvesWithAccessDenied(link)) {
+        throw err;
+      }
+      continue;
+    }
+    const sibling = import_node_path.default.relative(pythonDir, target).toLowerCase();
+    const version3 = /^(cpython-\d+\.\d+)\.\d+(?:(?:a|b|rc)\d+)?([+-].+)$/.exec(
+      sibling
+    );
+    if (!version3 || version3[1] + version3[2] !== name || !directories.has(sibling)) {
+      continue;
+    }
+    if (!await resolvesWithAccessDenied(link)) {
+      continue;
+    }
+    await (0, import_promises.realpath)(target);
+    await (0, import_promises.unlink)(link);
+    await (0, import_promises.symlink)(target, link, "junction");
+  }
+}
+async function resolvesWithAccessDenied(link) {
+  try {
+    await (0, import_promises.realpath)(link);
+    return false;
+  } catch (err) {
+    return err.code === "EPERM";
+  }
+}
+
 // src/cache/restore-cache.ts
 var STATE_CACHE_KEY = "cache-key";
 var STATE_CACHE_MATCHED_KEY = "cache-matched-key";
@@ -93996,26 +94043,37 @@ async function restoreCache2(inputs, pythonVersion) {
       `${cacheKey}-python`,
       inputs.pythonDir,
       STATE_PYTHON_CACHE_MATCHED_KEY,
-      "python-cache-hit"
+      "python-cache-hit",
+      // TODO: Remove this repair once @actions/cache preserves Windows junctions.
+      // https://github.com/actions/toolkit/issues/2562
+      process.platform === "win32" ? repairPythonJunctions : void 0
     );
   } else {
     setOutput("python-cache-hit", false);
   }
 }
-async function restoreCacheFromKey(cacheKey, cachePath, stateKey, outputKey) {
+async function restoreCacheFromKey(cacheKey, cachePath, stateKey, outputKey, afterRestore) {
   info2(
     `Trying to restore cache from GitHub Actions cache with key: ${cacheKey}`
   );
-  let matchedKey;
   try {
-    matchedKey = await restoreCache([cachePath], cacheKey);
+    const matchedKey = await restoreCache([cachePath], cacheKey);
+    if (!matchedKey) {
+      info2(`No GitHub Actions cache found for key: ${cacheKey}`);
+      setOutput(outputKey, false);
+      return;
+    }
+    saveState(stateKey, matchedKey);
+    await afterRestore?.(cachePath);
+    info2(
+      `cache restored from GitHub Actions cache with key: ${matchedKey}`
+    );
+    setOutput(outputKey, true);
   } catch (err) {
     const message = err.message;
     warning2(message);
     setOutput(outputKey, false);
-    return;
   }
-  handleMatchResult(matchedKey, cacheKey, stateKey, outputKey);
 }
 async function computeKeys(inputs, pythonVersion) {
   let cacheDependencyPathHash = "-";
@@ -94044,16 +94102,6 @@ async function computeKeys(inputs, pythonVersion) {
   const pruned = inputs.pruneCache ? "-pruned" : "";
   const python = inputs.cachePython ? "-py" : "";
   return `setup-uv-${CACHE_VERSION}-${getArch()}-${platform2}-${osNameVersion}-${version3}${pythonArchKey}${pruned}${python}${cacheDependencyPathHash}${suffix}`;
-}
-function handleMatchResult(matchedKey, primaryKey, stateKey, outputKey) {
-  if (!matchedKey) {
-    info2(`No GitHub Actions cache found for key: ${primaryKey}`);
-    setOutput(outputKey, false);
-    return;
-  }
-  saveState(stateKey, matchedKey);
-  info2(`cache restored from GitHub Actions cache with key: ${matchedKey}`);
-  setOutput(outputKey, true);
 }
 
 // src/download/download-version.ts
@@ -102164,7 +102212,7 @@ function getExtension(platform2) {
 
 // src/utils/inputs.ts
 var import_node_fs8 = __toESM(require("node:fs"), 1);
-var import_node_path = __toESM(require("node:path"), 1);
+var import_node_path2 = __toESM(require("node:path"), 1);
 function loadInputs() {
   const workingDirectory = getInput("working-directory");
   const version3 = getInput("version");
@@ -102310,7 +102358,7 @@ function getToolBinDir(workingDirectory) {
   }
   if (process.platform === "win32") {
     if (process.env.RUNNER_TEMP !== void 0) {
-      return `${process.env.RUNNER_TEMP}${import_node_path.default.sep}uv-tool-bin-dir`;
+      return `${process.env.RUNNER_TEMP}${import_node_path2.default.sep}uv-tool-bin-dir`;
     }
     throw Error(
       "Could not determine UV_TOOL_BIN_DIR. Please make sure RUNNER_TEMP is set or provide the tool-bin-dir input"
@@ -102326,7 +102374,7 @@ function getToolDir(workingDirectory) {
   }
   if (process.platform === "win32") {
     if (process.env.RUNNER_TEMP !== void 0) {
-      return `${process.env.RUNNER_TEMP}${import_node_path.default.sep}uv-tool-dir`;
+      return `${process.env.RUNNER_TEMP}${import_node_path2.default.sep}uv-tool-dir`;
     }
     throw Error(
       "Could not determine UV_TOOL_DIR. Please make sure RUNNER_TEMP is set or provide the tool-dir input"
@@ -102358,7 +102406,7 @@ function getCacheLocalPath(workingDirectory, versionFile, enableCache) {
     if (process.env.RUNNER_ENVIRONMENT === "github-hosted") {
       if (process.env.RUNNER_TEMP !== void 0) {
         return {
-          path: `${process.env.RUNNER_TEMP}${import_node_path.default.sep}setup-uv-cache`,
+          path: `${process.env.RUNNER_TEMP}${import_node_path2.default.sep}setup-uv-cache`,
           source: 3 /* Default */
         };
       }
@@ -102368,12 +102416,12 @@ function getCacheLocalPath(workingDirectory, versionFile, enableCache) {
     }
     if (process.platform === "win32") {
       return {
-        path: `${process.env.APPDATA}${import_node_path.default.sep}uv${import_node_path.default.sep}cache`,
+        path: `${process.env.APPDATA}${import_node_path2.default.sep}uv${import_node_path2.default.sep}cache`,
         source: 3 /* Default */
       };
     }
     return {
-      path: `${process.env.HOME}${import_node_path.default.sep}.cache${import_node_path.default.sep}uv`,
+      path: `${process.env.HOME}${import_node_path2.default.sep}.cache${import_node_path2.default.sep}uv`,
       source: 3 /* Default */
     };
   }
@@ -102404,12 +102452,12 @@ function getUvPythonDir() {
   }
   if (process.env.RUNNER_ENVIRONMENT !== "github-hosted") {
     if (process.platform === "win32") {
-      return `${process.env.APPDATA}${import_node_path.default.sep}uv${import_node_path.default.sep}python`;
+      return `${process.env.APPDATA}${import_node_path2.default.sep}uv${import_node_path2.default.sep}python`;
     }
-    return `${process.env.HOME}${import_node_path.default.sep}.local${import_node_path.default.sep}share${import_node_path.default.sep}uv${import_node_path.default.sep}python`;
+    return `${process.env.HOME}${import_node_path2.default.sep}.local${import_node_path2.default.sep}share${import_node_path2.default.sep}uv${import_node_path2.default.sep}python`;
   }
   if (process.env.RUNNER_TEMP !== void 0) {
-    return `${process.env.RUNNER_TEMP}${import_node_path.default.sep}uv-python-dir`;
+    return `${process.env.RUNNER_TEMP}${import_node_path2.default.sep}uv-python-dir`;
   }
   throw Error(
     "Could not determine UV_PYTHON_INSTALL_DIR. Please make sure RUNNER_TEMP is set or provide the UV_PYTHON_INSTALL_DIR environment variable"
@@ -102429,10 +102477,10 @@ function expandTilde(input) {
   return input;
 }
 function normalizePath(inputPath) {
-  const normalized = import_node_path.default.normalize(inputPath);
-  const root = import_node_path.default.parse(normalized).root;
+  const normalized = import_node_path2.default.normalize(inputPath);
+  const root = import_node_path2.default.parse(normalized).root;
   let trimmed = normalized;
-  while (trimmed.length > root.length && trimmed.endsWith(import_node_path.default.sep)) {
+  while (trimmed.length > root.length && trimmed.endsWith(import_node_path2.default.sep)) {
     trimmed = trimmed.slice(0, -1);
   }
   return trimmed;
@@ -102440,7 +102488,7 @@ function normalizePath(inputPath) {
 function resolveRelativePath(workingDirectory, inputPath) {
   const hasNegation = inputPath.startsWith("!");
   const pathWithoutNegation = hasNegation ? inputPath.substring(1) : inputPath;
-  const resolvedPath = import_node_path.default.resolve(workingDirectory, pathWithoutNegation);
+  const resolvedPath = import_node_path2.default.resolve(workingDirectory, pathWithoutNegation);
   debug(
     `Resolving relative path ${inputPath} to ${hasNegation ? "!" : ""}${resolvedPath}`
   );

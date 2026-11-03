@@ -4,6 +4,7 @@ import { hashFiles } from "../hash/hash-files";
 import type { SetupInputs } from "../utils/inputs";
 import * as log from "../utils/logging";
 import { getArch, getOSNameVersion, getPlatform } from "../utils/platforms";
+import { repairPythonJunctions } from "./repair-python-junctions";
 
 export const STATE_CACHE_KEY = "cache-key";
 export const STATE_CACHE_MATCHED_KEY = "cache-matched-key";
@@ -44,6 +45,9 @@ export async function restoreCache(
       inputs.pythonDir,
       STATE_PYTHON_CACHE_MATCHED_KEY,
       "python-cache-hit",
+      // TODO: Remove this repair once @actions/cache preserves Windows junctions.
+      // https://github.com/actions/toolkit/issues/2562
+      process.platform === "win32" ? repairPythonJunctions : undefined,
     );
   } else {
     core.setOutput("python-cache-hit", false);
@@ -55,21 +59,33 @@ async function restoreCacheFromKey(
   cachePath: string,
   stateKey: string,
   outputKey: string,
+  afterRestore?: (cachePath: string) => Promise<void>,
 ): Promise<void> {
   log.info(
     `Trying to restore cache from GitHub Actions cache with key: ${cacheKey}`,
   );
-  let matchedKey: string | undefined;
   try {
-    matchedKey = await cache.restoreCache([cachePath], cacheKey);
+    const matchedKey = await cache.restoreCache([cachePath], cacheKey);
+    if (!matchedKey) {
+      log.info(`No GitHub Actions cache found for key: ${cacheKey}`);
+      core.setOutput(outputKey, false);
+      return;
+    }
+
+    // Record the match before the post-restore hook so the post step can skip
+    // archiving the directory again even if the hook fails. A PR that restored
+    // from its base branch could otherwise save the broken copy in its own cache.
+    core.saveState(stateKey, matchedKey);
+    await afterRestore?.(cachePath);
+    log.info(
+      `cache restored from GitHub Actions cache with key: ${matchedKey}`,
+    );
+    core.setOutput(outputKey, true);
   } catch (err) {
     const message = (err as Error).message;
     log.warning(message);
     core.setOutput(outputKey, false);
-    return;
   }
-
-  handleMatchResult(matchedKey, cacheKey, stateKey, outputKey);
 }
 
 async function computeKeys(
@@ -106,21 +122,4 @@ async function computeKeys(
   const pruned = inputs.pruneCache ? "-pruned" : "";
   const python = inputs.cachePython ? "-py" : "";
   return `setup-uv-${CACHE_VERSION}-${getArch()}-${platform}-${osNameVersion}-${version}${pythonArchKey}${pruned}${python}${cacheDependencyPathHash}${suffix}`;
-}
-
-function handleMatchResult(
-  matchedKey: string | undefined,
-  primaryKey: string,
-  stateKey: string,
-  outputKey: string,
-): void {
-  if (!matchedKey) {
-    log.info(`No GitHub Actions cache found for key: ${primaryKey}`);
-    core.setOutput(outputKey, false);
-    return;
-  }
-
-  core.saveState(stateKey, matchedKey);
-  log.info(`cache restored from GitHub Actions cache with key: ${matchedKey}`);
-  core.setOutput(outputKey, true);
 }

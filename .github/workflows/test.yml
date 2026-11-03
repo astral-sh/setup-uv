@@ -985,14 +985,18 @@ jobs:
         run: rm -rf "$UV_PYTHON_INSTALL_DIR"
 
   test-cache-python-installs:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-2022]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Verify Python install dir is not populated
+        shell: bash
         run: |
-          if [ -d /home/runner/work/_temp/uv-python-dir ]; then
+          if [ -e "$RUNNER_TEMP/uv-python-dir" ]; then
             echo "Python install dir should not exist"
             exit 1
           fi
@@ -1005,21 +1009,26 @@ jobs:
       - run: uv sync --managed-python
         working-directory: __tests__/fixtures/uv-project
       - name: Verify Python install dir exists
+        shell: bash
         run: |
-          if [ ! -d /home/runner/work/_temp/uv-python-dir ]; then
+          if [ ! -d "$UV_PYTHON_INSTALL_DIR" ]; then
             echo "Python install dir should exist"
             exit 1
           fi
   test-restore-python-installs:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     needs: test-cache-python-installs
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-2022]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Verify Python install dir does not exist
+        shell: bash
         run: |
-          if [ -d /home/runner/work/_temp/uv-python-dir ]; then
+          if [ -e "$RUNNER_TEMP/uv-python-dir" ]; then
             echo "Python install dir should not exist"
             exit 1
           fi
@@ -1030,19 +1039,21 @@ jobs:
           enable-cache: true
           cache-python: true
           cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-cache-python-installs
-      - name: Verify Python install dir exists
-        run: |
-          if [ ! -d /home/runner/work/_temp/uv-python-dir ]; then
-            echo "Python install dir should exist"
-            exit 1
-          fi
-      - name: Cache was hit
-        run: |
-          if [ "$CACHE_HIT" != "true" ]; then
-            exit 1
-          fi
+      - name: Verify the restored Python minor-version link resolves to the patch directory
+        shell: python
         env:
           CACHE_HIT: ${{ steps.restore.outputs.python-cache-hit }}
+        run: |
+          import os
+          from pathlib import Path
+
+          assert os.environ["CACHE_HIT"] == "true", "expected a Python cache hit"
+          installs = Path(os.environ["UV_PYTHON_INSTALL_DIR"]).resolve()
+          assert installs.is_dir(), "Python install dir should exist"
+          patch_dir, = installs.glob("cpython-*.*.*-*")
+          minor_prefix = patch_dir.name.rsplit(".", 1)[0]
+          alias, = installs.glob(f"{minor_prefix}-*")
+          assert alias.resolve(strict=True) == patch_dir, alias
       - run: uv sync --managed-python
         working-directory: __tests__/fixtures/uv-project
 

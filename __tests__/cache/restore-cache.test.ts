@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { createSetupInputs } from "../helpers/setup-inputs";
 
@@ -48,6 +49,42 @@ beforeEach(() => {
 });
 
 describe("restoreCache", () => {
+  it.each([
+    ["win32", false],
+    ["linux", true],
+  ] as const)(
+    "keeps the matched Python cache key on %s when the install directory cannot be read",
+    async (platform, pythonCacheHit) => {
+      const inputs = createSetupInputs({
+        cachePython: true,
+        // A file at the install directory path makes readdir fail.
+        pythonDir: fileURLToPath(import.meta.url),
+        restoreCache: true,
+      });
+      mockRestoreCache
+        .mockReturnValueOnce("uv-key")
+        .mockReturnValueOnce("python-key");
+
+      const originalPlatform = process.platform;
+      Object.defineProperty(process, "platform", { value: platform });
+      try {
+        await restoreCache(inputs);
+      } finally {
+        Object.defineProperty(process, "platform", { value: originalPlatform });
+      }
+
+      expect(mockSetOutput).toHaveBeenCalledWith("cache-hit", true);
+      expect(mockSetOutput).toHaveBeenCalledWith(
+        "python-cache-hit",
+        pythonCacheHit,
+      );
+      expect(mockSaveState).toHaveBeenCalledWith(
+        "python-cache-matched-key",
+        "python-key",
+      );
+    },
+  );
+
   it("encodes Python version ranges before adding them to the cache key", async () => {
     await restoreCache(createSetupInputs(), ">3.10.11,<3.11");
 
