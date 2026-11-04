@@ -59094,6 +59094,9 @@ function saveState(name, value) {
   issueCommand("save-state", { name }, toCommandValue(value));
 }
 
+// src/cache/restore-cache.ts
+var import_node_crypto4 = require("node:crypto");
+
 // node_modules/@actions/cache/lib/cache.js
 var path7 = __toESM(require("path"), 1);
 
@@ -93966,22 +93969,72 @@ function getWindowsNameVersion() {
   return `windows-${match4[1]}`;
 }
 
+// src/cache/repair-python-junctions.ts
+var import_promises = require("node:fs/promises");
+var import_node_path = __toESM(require("node:path"), 1);
+async function repairPythonJunctions(pythonDir) {
+  const entries = await (0, import_promises.readdir)(pythonDir, { withFileTypes: true });
+  const directories = new Set(
+    entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name.toLowerCase())
+  );
+  for (const entry of entries) {
+    const name = entry.name.toLowerCase();
+    if (!entry.isSymbolicLink() || !/^cpython-\d+\.\d+[+-].+$/.test(name)) {
+      continue;
+    }
+    const link = import_node_path.default.join(pythonDir, entry.name);
+    let target;
+    try {
+      target = import_node_path.default.resolve(pythonDir, await (0, import_promises.readlink)(link));
+    } catch (err) {
+      if (await resolvesWithAccessDenied(link)) {
+        throw err;
+      }
+      continue;
+    }
+    const sibling = import_node_path.default.relative(pythonDir, target).toLowerCase();
+    const version3 = /^(cpython-\d+\.\d+)\.\d+(?:(?:a|b|rc)\d+)?([+-].+)$/.exec(
+      sibling
+    );
+    if (!version3 || version3[1] + version3[2] !== name || !directories.has(sibling)) {
+      continue;
+    }
+    if (!await resolvesWithAccessDenied(link)) {
+      continue;
+    }
+    await (0, import_promises.realpath)(target);
+    await (0, import_promises.unlink)(link);
+    await (0, import_promises.symlink)(target, link, "junction");
+  }
+}
+async function resolvesWithAccessDenied(link) {
+  try {
+    await (0, import_promises.realpath)(link);
+    return false;
+  } catch (err) {
+    return err.code === "EPERM";
+  }
+}
+
 // src/cache/restore-cache.ts
 var STATE_CACHE_KEY = "cache-key";
 var STATE_CACHE_MATCHED_KEY = "cache-matched-key";
 var STATE_PYTHON_CACHE_KEY = "python-cache-key";
 var STATE_PYTHON_CACHE_MATCHED_KEY = "python-cache-matched-key";
-var CACHE_VERSION = "2";
+var STATE_PYTHON_CACHE_RESTORE_FAILED = "python-cache-restore-failed";
+var CACHE_VERSION = "3";
 async function restoreCache2(inputs, pythonVersion) {
   const cacheKeys = await computeKeys(inputs, pythonVersion);
-  saveState(STATE_CACHE_KEY, cacheKeys.primary);
-  setOutput("cache-key", cacheKeys.primary);
-  if (inputs.cachePython && cacheKeys.python !== void 0) {
+  saveState(STATE_CACHE_KEY, cacheKeys.uv.primary);
+  setOutput("cache-key", cacheKeys.uv.primary);
+  setOutput("cache-hit", false);
+  setOutput("cache-matched-key", "");
+  setOutput("python-cache-hit", false);
+  if (inputs.cachePython) {
     saveState(STATE_PYTHON_CACHE_KEY, cacheKeys.python.primary);
   }
   if (!inputs.restoreCache) {
     info2("restore-cache is false. Skipping restore cache step.");
-    setOutput("python-cache-hit", false);
     return;
   }
   if (inputs.cacheLocalPath === void 0) {
@@ -93989,58 +94042,52 @@ async function restoreCache2(inputs, pythonVersion) {
       "cache-local-path is not set. Cannot restore cache without a valid cache path."
     );
   }
-  await restoreCacheFromKey(
-    cacheKeys.primary,
-    cacheKeys.restore,
+  const matchedKey = await restoreCacheFromKey(
+    cacheKeys.uv,
     inputs.cacheLocalPath.path,
     STATE_CACHE_MATCHED_KEY,
-    "cache-hit",
-    "cache-matched-key"
+    "cache-hit"
   );
+  setOutput("cache-matched-key", matchedKey ?? "");
   if (inputs.cachePython) {
-    const pythonCacheKeys = cacheKeys.python;
-    if (pythonCacheKeys === void 0) {
-      throw new Error("Python cache keys are missing");
-    }
     await restoreCacheFromKey(
-      pythonCacheKeys.primary,
-      pythonCacheKeys.restore,
+      cacheKeys.python,
       inputs.pythonDir,
       STATE_PYTHON_CACHE_MATCHED_KEY,
       "python-cache-hit",
-      void 0
+      // TODO: Remove this repair once @actions/cache preserves Windows junctions.
+      // https://github.com/actions/toolkit/issues/2562
+      process.platform === "win32" ? repairPythonJunctions : void 0
     );
-  } else {
-    setOutput("python-cache-hit", false);
   }
 }
-async function restoreCacheFromKey(cacheKey, restoreKey, cachePath, stateKey, outputKey, matchedKeyOutputKey) {
+async function restoreCacheFromKey(keys, cachePath, stateKey, outputKey, afterRestore) {
   info2(
-    `Trying to restore cache from GitHub Actions cache with key: ${cacheKey}`
+    `Trying to restore cache from GitHub Actions cache with key: ${keys.primary}`
   );
   let matchedKey;
   try {
-    matchedKey = await restoreCache(
-      [cachePath],
-      cacheKey,
-      restoreKey === void 0 ? void 0 : [restoreKey]
+    matchedKey = await restoreCache([cachePath], keys.primary, [
+      keys.restore
+    ]);
+    if (!matchedKey) {
+      info2(`No GitHub Actions cache found for key: ${keys.primary}`);
+      return;
+    }
+    saveState(stateKey, matchedKey);
+    await afterRestore?.(cachePath);
+    info2(
+      `cache restored from GitHub Actions cache with key: ${matchedKey}`
     );
+    setOutput(outputKey, matchedKey === keys.primary);
+    return matchedKey;
   } catch (err) {
     const message = err.message;
     warning2(message);
-    setOutput(outputKey, false);
-    if (matchedKeyOutputKey !== void 0) {
-      setOutput(matchedKeyOutputKey, "");
+    if (matchedKey && afterRestore) {
+      saveState(STATE_PYTHON_CACHE_RESTORE_FAILED, true);
     }
-    return;
   }
-  handleMatchResult(
-    matchedKey,
-    cacheKey,
-    stateKey,
-    outputKey,
-    matchedKeyOutputKey
-  );
 }
 async function computeKeys(inputs, pythonVersion) {
   let cacheDependencyPathHash = "-";
@@ -94061,42 +94108,24 @@ async function computeKeys(inputs, pythonVersion) {
   if (cacheDependencyPathHash === "-") {
     cacheDependencyPathHash = "-no-dependency-glob";
   }
-  const suffix = inputs.cacheSuffix ? `-${encodeURIComponent(inputs.cacheSuffix)}` : "";
+  const suffix = (0, import_node_crypto4.createHash)("sha256").update(inputs.cacheSuffix).digest("hex");
   const version3 = encodeURIComponent(pythonVersion ?? "unknown");
   const pythonArchKey = inputs.pythonArch ? `-python-${encodeURIComponent(inputs.pythonArch)}` : "";
   const platform2 = await getPlatform();
   const osNameVersion = getOSNameVersion();
   const pruned = inputs.pruneCache ? "-pruned" : "";
-  const python = inputs.cachePython ? "-py" : "";
-  const restore = `setup-uv-${CACHE_VERSION}-${getArch()}-${platform2}-${osNameVersion}-${version3}${pythonArchKey}${pruned}${python}${suffix}-`;
+  const prefix2 = `setup-uv-${CACHE_VERSION}-${getArch()}-${platform2}-${osNameVersion}-${version3}${pythonArchKey}${pruned}-${suffix}-`;
   const dependencyHash = cacheDependencyPathHash.slice(1);
-  const primary = `${restore}${dependencyHash}`;
   return {
-    primary,
-    restore,
-    ...inputs.cachePython ? {
-      python: {
-        primary: `${restore}python-${dependencyHash}`,
-        restore: `${restore}python-`
-      }
-    } : {}
-  };
-}
-function handleMatchResult(matchedKey, primaryKey, stateKey, outputKey, matchedKeyOutputKey) {
-  if (!matchedKey) {
-    info2(`No GitHub Actions cache found for key: ${primaryKey}`);
-    setOutput(outputKey, false);
-    if (matchedKeyOutputKey !== void 0) {
-      setOutput(matchedKeyOutputKey, "");
+    python: {
+      primary: `${prefix2}python-${dependencyHash}`,
+      restore: `${prefix2}python-`
+    },
+    uv: {
+      primary: `${prefix2}uv-${dependencyHash}`,
+      restore: `${prefix2}uv-`
     }
-    return;
-  }
-  saveState(stateKey, matchedKey);
-  info2(`cache restored from GitHub Actions cache with key: ${matchedKey}`);
-  if (matchedKeyOutputKey !== void 0) {
-    setOutput(matchedKeyOutputKey, matchedKey);
-  }
-  setOutput(outputKey, matchedKey === primaryKey);
+  };
 }
 
 // src/download/download-version.ts
@@ -94542,7 +94571,8 @@ function _getGlobal(key, defaultValue) {
 var TOOL_CACHE_NAME = "uv";
 var STATE_UV_PATH = "uv-path";
 var STATE_UV_VERSION = "uv-version";
-var VERSIONS_MANIFEST_URL = "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson";
+var VERSIONS_MANIFEST_URL = "https://releases.astral.sh/github/versions/main/v1/uv.ndjson";
+var GITHUB_VERSIONS_MANIFEST_URL = "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson";
 var GITHUB_RELEASES_PREFIX = "https://github.com/astral-sh/uv/releases/download/";
 var ASTRAL_MIRROR_PREFIX = "https://releases.astral.sh/github/uv/releases/download/";
 
@@ -94552,6 +94582,132 @@ var fs10 = __toESM(require("node:fs"), 1);
 
 // src/download/checksum/known-checksums.json
 var known_checksums_default = {
+  "aarch64-apple-darwin-0.13.7": "81b811b57e4624df7ed3aac148e0359100d9962f3d9dce00aec533dc2e086731",
+  "aarch64-pc-windows-msvc-0.13.7": "505d9e65e7692bac3ddf98c66754aa26c5050c409c184af30a881a0a72cc85e3",
+  "aarch64-unknown-linux-gnu-0.13.7": "71279f8d3c67241e807b9d8db872d1bf541579fb9f08b7d1eb1682196d1e57dc",
+  "aarch64-unknown-linux-musl-0.13.7": "2d3ec076a0c4c0e8250bb6418c44080828b544f1a3be0b6e46adf9fb6923de45",
+  "arm-unknown-linux-musleabihf-0.13.7": "2c029d1eda470c667e46a36fc5e2479c9a3e4af91e0cabcde07711bf40d587a9",
+  "armv7-unknown-linux-gnueabihf-0.13.7": "5e2a1315a1b8b4a25250d536f62fa5c1ab5ed17233e7bf486c3c7849cb663284",
+  "armv7-unknown-linux-musleabihf-0.13.7": "4a1a7dc0b1713bbeac665a2f95e680eea3bb7ecebea226ae3b2de552bc72e88b",
+  "i686-pc-windows-msvc-0.13.7": "fa2abbf16f7d12cb01c9b7f313d843218fbd91a9d3fab487cc06a1d6765b27bf",
+  "i686-unknown-linux-gnu-0.13.7": "cc4f86390f9c99e8f53530e5e7f2cdc6ae7c011c9e805764332a3e3c01a378e4",
+  "i686-unknown-linux-musl-0.13.7": "c2d50f5c64eb81fd1fd1ec5870403c0533fe4b6bf76f940cc5e97824e49ab782",
+  "powerpc64le-unknown-linux-gnu-0.13.7": "e8b65412482f848743e73566808f5bb480e826c9ce25361997891fcf71299080",
+  "riscv64gc-unknown-linux-gnu-0.13.7": "48aff38af87c7c8255beb9b51b3676598045786ac5197de15fea54ebfe6c72e1",
+  "riscv64gc-unknown-linux-musl-0.13.7": "6c2e67417dda9661e67c2591a6226805ef2ed8ebc203baeed411f67d459207b2",
+  "s390x-unknown-linux-gnu-0.13.7": "2b64a479b905b9cdab99c71105e523a0d7aa79581cbd716d40bce26d7b595428",
+  "x86_64-apple-darwin-0.13.7": "20c47e4c1f630b8abaff8c291fa9b9aa300fef92c4fbff95adf198b55287cda7",
+  "x86_64-pc-windows-msvc-0.13.7": "0cdc5b38fe5a8168ed6a25814f5ba43c21d313dd3187314fccb37b7cec46e021",
+  "x86_64-unknown-linux-gnu-0.13.7": "c5221ff41b7892bfc223543883600125f6a47fe845093e0f5bdff4f359196d83",
+  "x86_64-unknown-linux-musl-0.13.7": "287491da03f2a785c70fa75b13e1f849918c2f2b5415fe84876b8214eeb792f9",
+  "aarch64-apple-darwin-0.13.6": "60fbd5c8a1ed681845eea28d9d622fcde03c51e91a43465b64a1e17db1ed3472",
+  "aarch64-pc-windows-msvc-0.13.6": "c2426c0c8e28b53d8c440e47a18d96ad4db51e159866c0e81435b196d7f0081c",
+  "aarch64-unknown-linux-gnu-0.13.6": "229e194255c7958d86d56e8790d969a6f74736592133f0dfd0076f754c642c1d",
+  "aarch64-unknown-linux-musl-0.13.6": "819692e404d23e5aae6bc44c0e260f1f5492fd1910ab4693b2c650f926dbe800",
+  "arm-unknown-linux-musleabihf-0.13.6": "57ac0f7c04deb42c5d686b4eeeef555c442db6ffea16fe4cbd7adb0384403794",
+  "armv7-unknown-linux-gnueabihf-0.13.6": "d00cd4949c4524c934afcfee1aedfa9d337cf4e43be4d6b692ad8d74d0a65562",
+  "armv7-unknown-linux-musleabihf-0.13.6": "b215398c886e8cc2cfa282fe346c02025957f8633b75a3d4fd848e0adda4eddd",
+  "i686-pc-windows-msvc-0.13.6": "32ceb64db231cbedfd499f7654c72e4c0b564f2846f9e76c0a4a7b2d03d7e67c",
+  "i686-unknown-linux-gnu-0.13.6": "665ea831c38d342900950e606beb2ccc37b7ba0fcefc37b814eb4b076305f2b6",
+  "i686-unknown-linux-musl-0.13.6": "de3a015c4b0fce63c178ae4fa95c94c873adfd92fa1e258c6a2a94e529812629",
+  "powerpc64le-unknown-linux-gnu-0.13.6": "3b2847185ec2946fcc928500efef7e3e74c255d3be6f2cb435081a84885d8c6c",
+  "riscv64gc-unknown-linux-gnu-0.13.6": "517052603ed46483b59d8875c9c61a577946b8f493c73e4339e45e7b119171d0",
+  "riscv64gc-unknown-linux-musl-0.13.6": "659a95dc6aee3ecf86742a08d8ca6c6261422121cbd41decc0042f5a71af6305",
+  "s390x-unknown-linux-gnu-0.13.6": "fb56d731308aa5c7718059d71afcb14d9a933a974997cee3d4eb5d06fc462a4b",
+  "x86_64-apple-darwin-0.13.6": "63ba17fdda55ad1a230d4b37fc6017ffa10c23688c83818bd3bfdf914c652a02",
+  "x86_64-pc-windows-msvc-0.13.6": "a2a8820d5eea32f08ef467ef3b7f66883a9b076d5737a2fc2fbb5f458d1bb50f",
+  "x86_64-unknown-linux-gnu-0.13.6": "f29c3e94ffabd7e6f3ba521dba169a9b7ec12100bf3257087f0f24f6123f3645",
+  "x86_64-unknown-linux-musl-0.13.6": "5d61f26b6c7213779eda90edc6971ea6b0b796bfb8d49a574c8ad69b59838548",
+  "aarch64-apple-darwin-0.13.5": "743f85035a1996ecb350659e01cd9faea9709829be09b1b4b03c73eaf3c9cd73",
+  "aarch64-pc-windows-msvc-0.13.5": "09f47edf90726084a70f9426f6e3ca4f46e9bf7cbf23b1716ec64d60b055fae3",
+  "aarch64-unknown-linux-gnu-0.13.5": "4bb69cf95ed13f23713bb7bc09f241896ea0c75b7c557e615a20604b82f9c403",
+  "aarch64-unknown-linux-musl-0.13.5": "7906c79adb21c81abd559841ba76bb1d9af9d791acac7a041b2972e03ae16538",
+  "arm-unknown-linux-musleabihf-0.13.5": "0ffc73aead06a19ed9b63fb7f81f6376d12146829d509dda1585a8bfa3256f5e",
+  "armv7-unknown-linux-gnueabihf-0.13.5": "fe6b5b1d30b28b9dec45cfd8f60fec38941e18a8f9b1e64530dd197aba68dd07",
+  "armv7-unknown-linux-musleabihf-0.13.5": "980649d802ee0c41127184f0d8c0461d1f0004e967246df9602bbb9ab983ca7f",
+  "i686-pc-windows-msvc-0.13.5": "96228420d0a89a64757afba59932c1e58c4977e4122f2cc9f8615a51ba2d3084",
+  "i686-unknown-linux-gnu-0.13.5": "f5713d6c05d77d01de9655270d713ba87ed45391752f489c80bbf1690bccc17c",
+  "i686-unknown-linux-musl-0.13.5": "ef427365b5e84790d3f807bd0dfda0d8ee89e78f47e0cfdf86378a5bd9b13894",
+  "powerpc64le-unknown-linux-gnu-0.13.5": "f891bc62de89832775d5104ad3b3332848122536a8dc8bac5775a18cce42b845",
+  "riscv64gc-unknown-linux-gnu-0.13.5": "5c2692ecbf3a9d2c5955c403b30e61740b3ea2fdcc9b6eb533eeda268bf2b56d",
+  "riscv64gc-unknown-linux-musl-0.13.5": "485ffd2d7623fd98f791cb6ab45aa967f1605e3f691666fc49713e3feb2362b9",
+  "s390x-unknown-linux-gnu-0.13.5": "b383e82d562f269fffbb69f44258ae278b6f4b45fbe7e572574669021b547e94",
+  "x86_64-apple-darwin-0.13.5": "b0f52b0e3945b4107d89024ea38e625683011fbfc05a0d98f9fa2d6dcee28c66",
+  "x86_64-pc-windows-msvc-0.13.5": "a38b8d1902b7cfbc76b423ba1bb456f623f42064cdc72628b6075b89afd1019a",
+  "x86_64-unknown-linux-gnu-0.13.5": "f68d291c75783122dad58ab77def0e13f3233f358731db5d6d7e8715603b928f",
+  "x86_64-unknown-linux-musl-0.13.5": "57ef9d9ccb01fb1bd998df995b0dd221b52f7d7841fbea93f2d4463bf61fb7a9",
+  "aarch64-apple-darwin-0.13.4": "e0b1d4743ce64c55d9f0f4a444afa6b81125680070ee04e853fcd0f6c1ebf8f1",
+  "aarch64-pc-windows-msvc-0.13.4": "c4bc5a9534b2bb6a12fe29ea748445e1a6f9cb7bb275211c4fb74c52ecf317a5",
+  "aarch64-unknown-linux-gnu-0.13.4": "1ae72b4718729e2ccc4f1ae2c6d1e531ca8467800e0546e9130b3886023a60ab",
+  "aarch64-unknown-linux-musl-0.13.4": "253a17cadcb659ae77a0fe3b9a2f1c14297528d480c421899e61e64d64f24e8f",
+  "arm-unknown-linux-musleabihf-0.13.4": "86df14c4dc6d98822b84c9fdf1ad626e2d4a81be60c49bd56a8840b9b70d9fdc",
+  "armv7-unknown-linux-gnueabihf-0.13.4": "9e52201e4502e349f27020879283736ca184185363ec8328554fd26596e61eb8",
+  "armv7-unknown-linux-musleabihf-0.13.4": "d69261a33fbfabf3ff811ccd1f964920919a4f45bbcbd867913369cbfb32d0e3",
+  "i686-pc-windows-msvc-0.13.4": "b450f623b34bf85322bbc656d5879915acd818dc5b05fc2d33e343da26799e37",
+  "i686-unknown-linux-gnu-0.13.4": "8c72700f224979886ab41003a46cbac5a8ba070ff5857717026a3b4b144c5686",
+  "i686-unknown-linux-musl-0.13.4": "985ef009e3bb182ce701c7911cd8d6296ccf2690b6dfd434972fbf64ff3f9057",
+  "powerpc64le-unknown-linux-gnu-0.13.4": "ae7320fcf963ed6ca19bacf436cf5d71cd5c9fbaf66450d614e7673c1f876be4",
+  "riscv64gc-unknown-linux-gnu-0.13.4": "0173f624fd99811a12c1e1d1b0c476d9e850b3408ab01b8d513028376fb1c9c0",
+  "riscv64gc-unknown-linux-musl-0.13.4": "250aa02f66cf080651f13c9696dece1023f1e38a825f9c9a8f21627ccb3a3ef2",
+  "s390x-unknown-linux-gnu-0.13.4": "e2ccfa8c19d340cd282c91f715dd37b7f0c5efa9b256c0a6c373fec3e01ec20d",
+  "x86_64-apple-darwin-0.13.4": "7be2dcd316122f4b3e5a0a7889f6248266c14425374e105ff7dc9779184603a6",
+  "x86_64-pc-windows-msvc-0.13.4": "ccec7508a07d9933d7cb1261880633efcf1f30d6e6eddab21823f1dae6f23225",
+  "x86_64-unknown-linux-gnu-0.13.4": "2b428396f12572d4429cf210ca234dd599a33b3af0958a4d5ed569d63e3f344f",
+  "x86_64-unknown-linux-musl-0.13.4": "28d4385f9f9d1d1c7654d85b3855e0e2615b2f6cc13136a2edff858bbdc16ff1",
+  "aarch64-apple-darwin-0.13.3": "bf1e4fb6f5f5079a2902ad3f3a9e2d337575b226a1378f2449d8404353650608",
+  "aarch64-pc-windows-msvc-0.13.3": "aeaca1a1b721c1686c09b4aa23d57f938df049bed1b8e534b5bf79a032b8b87b",
+  "aarch64-unknown-linux-gnu-0.13.3": "611ff684f193a84d2fdad29c5f12505d02ece94984c7c982cdde950eba5c95b9",
+  "aarch64-unknown-linux-musl-0.13.3": "4a58785768ab0577497ca7940be2f9fd5a34e48c3fd37923692fc0a81d71ac9f",
+  "arm-unknown-linux-musleabihf-0.13.3": "ad9f4041e97b723da4238295b531850e31fd007f807b60040dc82d982268220c",
+  "armv7-unknown-linux-gnueabihf-0.13.3": "51a2ba864b76824fc208a91c1e2da02caf475036e083268a2974af69024aa867",
+  "armv7-unknown-linux-musleabihf-0.13.3": "3cd65b49fe3e163d538b306b1eebdbbf80bd95bb498f863db917a2554f4fe5ec",
+  "i686-pc-windows-msvc-0.13.3": "887d05656858bb9402a9d094c371012e7a1227cde4ddb84898b3a940673d17dd",
+  "i686-unknown-linux-gnu-0.13.3": "91565a548a4b8b9ad78b5b6db534ca217cd9851b214419ca6d0af3e5d85a6e09",
+  "i686-unknown-linux-musl-0.13.3": "3df2a0dc3f309156740c0088022f26ea0aa121ce6bc27d6afeedce25026e35e8",
+  "powerpc64le-unknown-linux-gnu-0.13.3": "fed4c6e245cce9eaaa050daec4f19a469bb8e329e45d0832a03581df5aa41e38",
+  "riscv64gc-unknown-linux-gnu-0.13.3": "ef5cdc493ede8705aa350d15d9b96e73d3f8c2e583e344a94d25910414e7a8c4",
+  "riscv64gc-unknown-linux-musl-0.13.3": "77961b8ba0fbb10fa5f95c09fb36c31c76468a427a17fa175dc7ec6d7b7312b1",
+  "s390x-unknown-linux-gnu-0.13.3": "ef70e576e895cd5c997125bbdcdbb2913df07f135cda5becf5e22fbd2fcd7661",
+  "x86_64-apple-darwin-0.13.3": "5c35634957db7ebd9c2e4cc6c66b8979fb2c26a6b0dbd1d214d6acbac4033a89",
+  "x86_64-pc-windows-msvc-0.13.3": "bb701bd35b586c45966654ea2703c9bd116a6a4fc0a8ca755bd644c2c41c5ebe",
+  "x86_64-unknown-linux-gnu-0.13.3": "e4f169ec380f1793b898a6f1fcbacd22db25cf7ca0349a6e96ffb85b69998d04",
+  "x86_64-unknown-linux-musl-0.13.3": "a36fca4c151d1ac13707984a88a4e2742edec0f2bc1b3e1c18c1c751e4679fd3",
+  "aarch64-apple-darwin-0.13.2": "4a5d878cd0db3a57d79eec638c275e71c394e10533ae54c77b33d940866f53b7",
+  "aarch64-pc-windows-msvc-0.13.2": "305d3a87a3c83ced9a9347e0b2e9d1719013db1ed8d7b34ba42ee1558f968686",
+  "aarch64-unknown-linux-gnu-0.13.2": "3143e25fccac6f81b3b400792caa2ec431a5e8824d855cde9550a25f0fac8ea0",
+  "aarch64-unknown-linux-musl-0.13.2": "b7444ae484d951d856b1ea0bae8224bf0ea856e9cefe8bd67c6d3f5d98375c78",
+  "arm-unknown-linux-musleabihf-0.13.2": "e3c5eadb268ca0422229ff2fba05af5d6440a86dbd5e3ac83db508c8599ada11",
+  "armv7-unknown-linux-gnueabihf-0.13.2": "239ad77579931c9599ac7468bd02ac8de710ff349a99e76d52e32fb4206cd2f5",
+  "armv7-unknown-linux-musleabihf-0.13.2": "c453906c4c80754e30e5305c05d92aff1b5023a5b96c57e9ddbb17fcf82f34e9",
+  "i686-pc-windows-msvc-0.13.2": "3790797c9597310c412fadb10f5cfbc529dcc6e7ec7d1240e108cf56e3ab88c5",
+  "i686-unknown-linux-gnu-0.13.2": "f8fcad706f05c435e6de5a0e38eb96604041629ef279c6309501636d0b88a237",
+  "i686-unknown-linux-musl-0.13.2": "050646f5f9b75eb5db2fe215ffa49ea6bf166c678b5541659f3d7b4a6ca9537a",
+  "powerpc64le-unknown-linux-gnu-0.13.2": "2c1ea5b57b7a6a0251c050aafb5c3c51866f18b380336553a5ec525d9aaed446",
+  "riscv64gc-unknown-linux-gnu-0.13.2": "a28c0bd7156a06ed5b5fabe8e44ef5e402c592dfb60c5053da22e52bd6fb4cf9",
+  "riscv64gc-unknown-linux-musl-0.13.2": "da6129b8acee2e9636a78367c761ef685e6ae2818a77cfffe2427ea52cae1ba4",
+  "s390x-unknown-linux-gnu-0.13.2": "307987b9bbcfac0eefe5d71eb1fec08bce0cdad5b70306cf3fa7a57430e5cad2",
+  "x86_64-apple-darwin-0.13.2": "08f0cb0d63a012ffa07659d1872030c1110fccdd665d49bc3683b0ca262b4a62",
+  "x86_64-pc-windows-msvc-0.13.2": "9cfb447a4027550f134753253fdffbcd35b79a66dd888260bf6776891916069e",
+  "x86_64-unknown-linux-gnu-0.13.2": "e14d48c117ec33601d6f860dda47aa5ea490d77a5a9ef770529c448fa6747d9f",
+  "x86_64-unknown-linux-musl-0.13.2": "aba5d9e0af3662ee85772c5da147c3824cd6728a50bce6c507ae20672df7e83e",
+  "aarch64-apple-darwin-0.13.1": "cfe454573412ff7380d15fc7dae5997ab53ffce72fce0a78e91ddbc84001acd2",
+  "aarch64-pc-windows-msvc-0.13.1": "ec7846a5939b4654afee24f2d82bf6fde71bd7a6952d7748f1135ab301dd0a49",
+  "aarch64-unknown-linux-gnu-0.13.1": "9041c73c99fdc5892cf128140beb354eca9231d502068cc36e6cb53a8e59ad14",
+  "aarch64-unknown-linux-musl-0.13.1": "345a8308e4d1835cdfaadf692836fd3137a6d45864773f05ad7bf59442b1ba16",
+  "arm-unknown-linux-musleabihf-0.13.1": "68d35d155ed7555da1fa811e16b1f8711227e5bcf0c5d45bbc7282333ec82970",
+  "armv7-unknown-linux-gnueabihf-0.13.1": "833bb2b4a47ba2aa4356e577eb52be2deb15d145d79e559dfe8fcc3bf546017b",
+  "armv7-unknown-linux-musleabihf-0.13.1": "443b8bc3e4ef03b20b38aa1b03bc0604f55dfa74e091b7acc4851bcd5e5d6c58",
+  "i686-pc-windows-msvc-0.13.1": "fcebe7cd3be7e2b1b4b5802bac36c85eeb724837c48be48d41a226367ef7d4a3",
+  "i686-unknown-linux-gnu-0.13.1": "99645fd8923859e74a8f481d4f949318dae47beb65adc4b13a73f2582da9f853",
+  "i686-unknown-linux-musl-0.13.1": "8fd67e5a8d3ef4ec75acda39d16df00821e2b0728f1f0e7f8aef24101ba88ddf",
+  "powerpc64le-unknown-linux-gnu-0.13.1": "66b890c75291de97617705dcc275a3e4ed99446e73b93c7748c6ca28d6793203",
+  "riscv64gc-unknown-linux-gnu-0.13.1": "52d9f0677840c20a14ed037a6cba515cc2f20a03001aaa605f928e80f4b55ec2",
+  "riscv64gc-unknown-linux-musl-0.13.1": "b60c852c5a072640a624438935ffc1eddc4c38842c8422db890d6912e5d586d3",
+  "s390x-unknown-linux-gnu-0.13.1": "d04236f6631a514824e06ce45f1b4832edfb43648d2e9fed2188c9fc66d8c95f",
+  "x86_64-apple-darwin-0.13.1": "bb7b805bdcf3d0bc8c74ceb94569e6b3e8aa35bd492acdbb9d46bf46d9d4ff6b",
+  "x86_64-pc-windows-msvc-0.13.1": "3b2661a463a5baea7f5076ea2b25ab71d77f36a6c0d809e5350651792f80a672",
+  "x86_64-unknown-linux-gnu-0.13.1": "eadd9d27c134ab5ac1ffd4473b97a741407f3ea238288f03121fc4deddf90220",
+  "x86_64-unknown-linux-musl-0.13.1": "6c86040a8f045ab9adc9e3ec4cdafa03fd00e9a988ed2bf28971c7fc2d0debd0",
   "aarch64-apple-darwin-0.13.0": "a9c1b29002cf3c83f07fa9cd8a887a3be0107d90e23189721221e7257db8e3d6",
   "aarch64-pc-windows-msvc-0.13.0": "cb54028b59aa87f11cf6dec293ce000420043a49a8aea522e822a671321f8932",
   "aarch64-unknown-linux-gnu-0.13.0": "3ccfb6af6e242433eb552f7d9676abd5412c6595c497e990d9c8cb7b5bd4d2c3",
@@ -100240,6 +100396,19 @@ async function getArtifact(version3, arch3, platform2, manifestUrl = VERSIONS_MA
   };
 }
 async function fetchManifestResponse(manifestUrl) {
+  try {
+    return await fetchManifestResponseFromUrl(manifestUrl);
+  } catch (error2) {
+    if (manifestUrl !== VERSIONS_MANIFEST_URL) {
+      throw error2;
+    }
+    info2(
+      `Failed to fetch manifest from Astral mirror, falling back to GitHub: ${error2.message}`
+    );
+    return await fetchManifestResponseFromUrl(GITHUB_VERSIONS_MANIFEST_URL);
+  }
+}
+async function fetchManifestResponseFromUrl(manifestUrl) {
   let response;
   for (let attempt = 1; attempt <= MANIFEST_FETCH_ATTEMPTS; attempt++) {
     info2(`Fetching manifest data from ${manifestUrl} ...`);
@@ -101532,7 +101701,7 @@ function getUvVersionFromAllDependencies(allDependencies) {
 }
 function getUvVersionFromDependency(dependency) {
   const dependencyWithoutMarker = dependency.split(";", 1)[0]?.trim();
-  return dependencyWithoutMarker?.match(/^uv([=<>~!]+\S*)/)?.[1].trim();
+  return dependencyWithoutMarker?.match(/^uv\s*((?:[=<>~!]+\s*[^\s,]+\s*,?\s*)+)/)?.[1].replace(/\s/g, "");
 }
 
 // src/version/tool-versions-file.ts
@@ -101890,7 +102059,7 @@ async function resolveVersion(versionInput, manifestUrl, resolutionStrategy = "h
   throw new Error(`No version found for ${versionInput}`);
 }
 async function findHighestSatisfyingVersion(versionSpecifier) {
-  const semverRange = semver5.validRange(versionSpecifier);
+  const semverRange = isCompatibleReleaseSpecifier(versionSpecifier) ? null : semver5.validRange(versionSpecifier);
   if (semverRange !== null) {
     const semverMatch = await getFirstMatchingVersion(
       (version3) => semver5.satisfies(version3, semverRange)
@@ -101912,8 +102081,11 @@ async function findHighestSatisfyingVersion(versionSpecifier) {
   }
   return pep440Match;
 }
+function isCompatibleReleaseSpecifier(versionSpecifier) {
+  return versionSpecifier.includes("~=");
+}
 function maxSatisfying2(versions, version3) {
-  const maxSemver = evaluateVersions(versions, version3);
+  const maxSemver = isCompatibleReleaseSpecifier(version3) ? "" : evaluateVersions(versions, version3);
   if (maxSemver !== "") {
     debug(`Found a version that satisfies the semver range: ${maxSemver}`);
     return maxSemver;
@@ -101928,7 +102100,7 @@ function maxSatisfying2(versions, version3) {
   return void 0;
 }
 function minSatisfying3(versions, version3) {
-  const minSemver = semver5.minSatisfying(versions, version3);
+  const minSemver = isCompatibleReleaseSpecifier(version3) ? null : semver5.minSatisfying(versions, version3);
   if (minSemver !== null) {
     debug(`Found a version that satisfies the semver range: ${minSemver}`);
     return minSemver;
@@ -102064,7 +102236,7 @@ function getExtension(platform2) {
 
 // src/utils/inputs.ts
 var import_node_fs8 = __toESM(require("node:fs"), 1);
-var import_node_path = __toESM(require("node:path"), 1);
+var import_node_path2 = __toESM(require("node:path"), 1);
 function loadInputs() {
   const workingDirectory = getInput("working-directory");
   const version3 = getInput("version");
@@ -102210,7 +102382,7 @@ function getToolBinDir(workingDirectory) {
   }
   if (process.platform === "win32") {
     if (process.env.RUNNER_TEMP !== void 0) {
-      return `${process.env.RUNNER_TEMP}${import_node_path.default.sep}uv-tool-bin-dir`;
+      return `${process.env.RUNNER_TEMP}${import_node_path2.default.sep}uv-tool-bin-dir`;
     }
     throw Error(
       "Could not determine UV_TOOL_BIN_DIR. Please make sure RUNNER_TEMP is set or provide the tool-bin-dir input"
@@ -102226,7 +102398,7 @@ function getToolDir(workingDirectory) {
   }
   if (process.platform === "win32") {
     if (process.env.RUNNER_TEMP !== void 0) {
-      return `${process.env.RUNNER_TEMP}${import_node_path.default.sep}uv-tool-dir`;
+      return `${process.env.RUNNER_TEMP}${import_node_path2.default.sep}uv-tool-dir`;
     }
     throw Error(
       "Could not determine UV_TOOL_DIR. Please make sure RUNNER_TEMP is set or provide the tool-dir input"
@@ -102258,7 +102430,7 @@ function getCacheLocalPath(workingDirectory, versionFile, enableCache) {
     if (process.env.RUNNER_ENVIRONMENT === "github-hosted") {
       if (process.env.RUNNER_TEMP !== void 0) {
         return {
-          path: `${process.env.RUNNER_TEMP}${import_node_path.default.sep}setup-uv-cache`,
+          path: `${process.env.RUNNER_TEMP}${import_node_path2.default.sep}setup-uv-cache`,
           source: 3 /* Default */
         };
       }
@@ -102268,12 +102440,12 @@ function getCacheLocalPath(workingDirectory, versionFile, enableCache) {
     }
     if (process.platform === "win32") {
       return {
-        path: `${process.env.APPDATA}${import_node_path.default.sep}uv${import_node_path.default.sep}cache`,
+        path: `${process.env.APPDATA}${import_node_path2.default.sep}uv${import_node_path2.default.sep}cache`,
         source: 3 /* Default */
       };
     }
     return {
-      path: `${process.env.HOME}${import_node_path.default.sep}.cache${import_node_path.default.sep}uv`,
+      path: `${process.env.HOME}${import_node_path2.default.sep}.cache${import_node_path2.default.sep}uv`,
       source: 3 /* Default */
     };
   }
@@ -102304,12 +102476,12 @@ function getUvPythonDir() {
   }
   if (process.env.RUNNER_ENVIRONMENT !== "github-hosted") {
     if (process.platform === "win32") {
-      return `${process.env.APPDATA}${import_node_path.default.sep}uv${import_node_path.default.sep}python`;
+      return `${process.env.APPDATA}${import_node_path2.default.sep}uv${import_node_path2.default.sep}python`;
     }
-    return `${process.env.HOME}${import_node_path.default.sep}.local${import_node_path.default.sep}share${import_node_path.default.sep}uv${import_node_path.default.sep}python`;
+    return `${process.env.HOME}${import_node_path2.default.sep}.local${import_node_path2.default.sep}share${import_node_path2.default.sep}uv${import_node_path2.default.sep}python`;
   }
   if (process.env.RUNNER_TEMP !== void 0) {
-    return `${process.env.RUNNER_TEMP}${import_node_path.default.sep}uv-python-dir`;
+    return `${process.env.RUNNER_TEMP}${import_node_path2.default.sep}uv-python-dir`;
   }
   throw Error(
     "Could not determine UV_PYTHON_INSTALL_DIR. Please make sure RUNNER_TEMP is set or provide the UV_PYTHON_INSTALL_DIR environment variable"
@@ -102329,10 +102501,10 @@ function expandTilde(input) {
   return input;
 }
 function normalizePath(inputPath) {
-  const normalized = import_node_path.default.normalize(inputPath);
-  const root = import_node_path.default.parse(normalized).root;
+  const normalized = import_node_path2.default.normalize(inputPath);
+  const root = import_node_path2.default.parse(normalized).root;
   let trimmed = normalized;
-  while (trimmed.length > root.length && trimmed.endsWith(import_node_path.default.sep)) {
+  while (trimmed.length > root.length && trimmed.endsWith(import_node_path2.default.sep)) {
     trimmed = trimmed.slice(0, -1);
   }
   return trimmed;
@@ -102340,7 +102512,7 @@ function normalizePath(inputPath) {
 function resolveRelativePath(workingDirectory, inputPath) {
   const hasNegation = inputPath.startsWith("!");
   const pathWithoutNegation = hasNegation ? inputPath.substring(1) : inputPath;
-  const resolvedPath = import_node_path.default.resolve(workingDirectory, pathWithoutNegation);
+  const resolvedPath = import_node_path2.default.resolve(workingDirectory, pathWithoutNegation);
   debug(
     `Resolving relative path ${inputPath} to ${hasNegation ? "!" : ""}${resolvedPath}`
   );

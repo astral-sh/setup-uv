@@ -9,6 +9,8 @@ const builds = [
   },
   {
     entryPoints: ["src/save-cache.ts"],
+    // @actions/cache compares error.name to the error constructor's name.
+    keepNames: true,
     outfile: "dist/save-cache/index.cjs",
     staleOutfiles: ["dist/save-cache/index.mjs"],
   },

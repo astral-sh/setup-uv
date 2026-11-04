@@ -27,13 +27,15 @@ jobs:
       - name: Actionlint
         uses: eifinger/actionlint-action@1fc89649be682d16ec5cf65ea16e269eb88d3982 # v1.10.2
       - name: Run zizmor
-        uses: zizmorcore/zizmor-action@70fb788f84895a7701f5643d103d587e460b5c99 # v0.6.3
+        uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
           cache: npm
       - run: |
           npm ci --ignore-scripts
+      - name: Verify npm package signatures
+        run: npm audit signatures
       - run: |
           npm run all
       - name: Check all jobs are in all-tests-passed.needs
@@ -51,6 +53,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, macos-15, windows-latest]
     steps:
+      - if: runner.os == 'macOS'
+        uses: astral-sh/github-actions/demudhra@7aa50a3def9f5428c532b0ae972d1e5b357de5a5 # 2026.11.03.0
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -279,6 +283,8 @@ jobs:
           - os: macos-latest
             checksum: "a70cbfbf3bb5c08b2f84963b4f12c94e08fbb2468ba418a3bfe1066fbe9e7218"
     steps:
+      - if: runner.os == 'macOS'
+        uses: astral-sh/github-actions/demudhra@7aa50a3def9f5428c532b0ae972d1e5b357de5a5 # 2026.11.03.0
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -316,6 +322,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, macos-15, windows-latest]
     steps:
+      - if: runner.os == 'macOS'
+        uses: astral-sh/github-actions/demudhra@7aa50a3def9f5428c532b0ae972d1e5b357de5a5 # 2026.11.03.0
       - name: Install default version
         uses: $/
       - run: uv tool install ruff==0.14.10
@@ -327,6 +335,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
+      - if: runner.os == 'macOS'
+        uses: astral-sh/github-actions/demudhra@7aa50a3def9f5428c532b0ae972d1e5b357de5a5 # 2026.11.03.0
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -364,6 +374,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
+      - if: runner.os == 'macOS'
+        uses: astral-sh/github-actions/demudhra@7aa50a3def9f5428c532b0ae972d1e5b357de5a5 # 2026.11.03.0
       - name: Install latest version
         id: setup-uv
         uses: $/
@@ -400,6 +412,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
+      - if: runner.os == 'macOS'
+        uses: astral-sh/github-actions/demudhra@7aa50a3def9f5428c532b0ae972d1e5b357de5a5 # 2026.11.03.0
       - name: Install latest version
         id: setup-uv
         uses: $/
@@ -549,6 +563,8 @@ jobs:
           - os: windows-2025
             expected-os: "windows-2025"
     steps:
+      - if: runner.os == 'macOS'
+        uses: astral-sh/github-actions/demudhra@7aa50a3def9f5428c532b0ae972d1e5b357de5a5 # 2026.11.03.0
       - name: Setup uv
         id: setup-uv
         uses: $/
@@ -664,11 +680,14 @@ jobs:
 
   test-setup-cache-dependency-glob:
     runs-on: ubuntu-latest
+    outputs:
+      cache-key: ${{ steps.setup.outputs.cache-key }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Setup with cache
+        id: setup
         uses: $/
         with:
           enable-cache: true
@@ -694,18 +713,24 @@ jobs:
         uses: $/
         with:
           enable-cache: true
+          cache-python: true
           cache-dependency-glob: |
             __tests__/fixtures/uv-project/uv.lock
             **/pyproject.toml
           cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-dependency-glob
           ignore-nothing-to-cache: true
-      - name: Cache was not hit
+      - name: Dependency cache was restored through fallback without cached Python
         run: |
-          if [ "$CACHE_HIT" == "true" ]; then
-            exit 1
-          fi
+          test -n "$EXPECTED_KEY"
+          test -n "$MATCHED_KEY"
+          test "$CACHE_HIT" = "false"
+          test "$MATCHED_KEY" = "$EXPECTED_KEY"
+          test "$MATCHED_KEY" != "$CACHE_KEY"
         env:
           CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
+          CACHE_KEY: ${{ steps.restore.outputs.cache-key }}
+          EXPECTED_KEY: ${{ needs.test-setup-cache-dependency-glob.outputs.cache-key }}
+          MATCHED_KEY: ${{ steps.restore.outputs.cache-matched-key }}
 
   test-setup-cache-save-cache-false:
     runs-on: ubuntu-latest
@@ -734,14 +759,16 @@ jobs:
         uses: $/
         with:
           enable-cache: true
+          save-cache: false
           cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-save-cache-false
-      - name: Cache was not hit
+      - name: No cache was restored
         run: |
-          if [ "$CACHE_HIT" == "true" ]; then
+          if [ "$CACHE_HIT" == "true" ] || [ -n "$MATCHED_KEY" ]; then
             exit 1
           fi
         env:
           CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
+          MATCHED_KEY: ${{ steps.restore.outputs.cache-matched-key }}
 
   test-setup-cache-restore-cache-false:
     runs-on: ubuntu-latest
@@ -771,13 +798,14 @@ jobs:
           enable-cache: true
           restore-cache: false
           cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-restore-cache-false
-      - name: Cache was not hit
+      - name: No cache was restored
         run: |
-          if [ "$CACHE_HIT" == "true" ]; then
+          if [ "$CACHE_HIT" == "true" ] || [ -n "$MATCHED_KEY" ]; then
             exit 1
           fi
         env:
           CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
+          MATCHED_KEY: ${{ steps.restore.outputs.cache-matched-key }}
 
   test-cache-local:
     strategy:
@@ -983,14 +1011,18 @@ jobs:
         run: rm -rf "$UV_PYTHON_INSTALL_DIR"
 
   test-cache-python-installs:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-2022]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Verify Python install dir is not populated
+        shell: bash
         run: |
-          if [ -d /home/runner/work/_temp/uv-python-dir ]; then
+          if [ -e "$RUNNER_TEMP/uv-python-dir" ]; then
             echo "Python install dir should not exist"
             exit 1
           fi
@@ -1003,21 +1035,26 @@ jobs:
       - run: uv sync --managed-python
         working-directory: __tests__/fixtures/uv-project
       - name: Verify Python install dir exists
+        shell: bash
         run: |
-          if [ ! -d /home/runner/work/_temp/uv-python-dir ]; then
+          if [ ! -d "$UV_PYTHON_INSTALL_DIR" ]; then
             echo "Python install dir should exist"
             exit 1
           fi
   test-restore-python-installs:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     needs: test-cache-python-installs
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-2022]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Verify Python install dir does not exist
+        shell: bash
         run: |
-          if [ -d /home/runner/work/_temp/uv-python-dir ]; then
+          if [ -e "$RUNNER_TEMP/uv-python-dir" ]; then
             echo "Python install dir should not exist"
             exit 1
           fi
@@ -1028,19 +1065,21 @@ jobs:
           enable-cache: true
           cache-python: true
           cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-cache-python-installs
-      - name: Verify Python install dir exists
-        run: |
-          if [ ! -d /home/runner/work/_temp/uv-python-dir ]; then
-            echo "Python install dir should exist"
-            exit 1
-          fi
-      - name: Cache was hit
-        run: |
-          if [ "$CACHE_HIT" != "true" ]; then
-            exit 1
-          fi
+      - name: Verify the restored Python minor-version link resolves to the patch directory
+        shell: python
         env:
           CACHE_HIT: ${{ steps.restore.outputs.python-cache-hit }}
+        run: |
+          import os
+          from pathlib import Path
+
+          assert os.environ["CACHE_HIT"] == "true", "expected a Python cache hit"
+          installs = Path(os.environ["UV_PYTHON_INSTALL_DIR"]).resolve()
+          assert installs.is_dir(), "Python install dir should exist"
+          patch_dir, = installs.glob("cpython-*.*.*-*")
+          minor_prefix = patch_dir.name.rsplit(".", 1)[0]
+          alias, = installs.glob(f"{minor_prefix}-*")
+          assert alias.resolve(strict=True) == patch_dir, alias
       - run: uv sync --managed-python
         working-directory: __tests__/fixtures/uv-project
 

@@ -1,24 +1,23 @@
+import { createHash } from "node:crypto";
 import * as cache from "@actions/cache";
 import * as core from "@actions/core";
 import { hashFiles } from "../hash/hash-files";
 import type { SetupInputs } from "../utils/inputs";
 import * as log from "../utils/logging";
 import { getArch, getOSNameVersion, getPlatform } from "../utils/platforms";
+import { repairPythonJunctions } from "./repair-python-junctions";
 
 export const STATE_CACHE_KEY = "cache-key";
 export const STATE_CACHE_MATCHED_KEY = "cache-matched-key";
 export const STATE_PYTHON_CACHE_KEY = "python-cache-key";
 export const STATE_PYTHON_CACHE_MATCHED_KEY = "python-cache-matched-key";
+export const STATE_PYTHON_CACHE_RESTORE_FAILED = "python-cache-restore-failed";
 
-const CACHE_VERSION = "2";
+const CACHE_VERSION = "3";
 
 interface CacheKeys {
   primary: string;
   restore: string;
-  python?: {
-    primary: string;
-    restore: string;
-  };
 }
 
 export async function restoreCache(
@@ -26,15 +25,17 @@ export async function restoreCache(
   pythonVersion?: string,
 ): Promise<void> {
   const cacheKeys = await computeKeys(inputs, pythonVersion);
-  core.saveState(STATE_CACHE_KEY, cacheKeys.primary);
-  core.setOutput("cache-key", cacheKeys.primary);
-  if (inputs.cachePython && cacheKeys.python !== undefined) {
+  core.saveState(STATE_CACHE_KEY, cacheKeys.uv.primary);
+  core.setOutput("cache-key", cacheKeys.uv.primary);
+  core.setOutput("cache-hit", false);
+  core.setOutput("cache-matched-key", "");
+  core.setOutput("python-cache-hit", false);
+  if (inputs.cachePython) {
     core.saveState(STATE_PYTHON_CACHE_KEY, cacheKeys.python.primary);
   }
 
   if (!inputs.restoreCache) {
     log.info("restore-cache is false. Skipping restore cache step.");
-    core.setOutput("python-cache-hit", false);
     return;
   }
 
@@ -44,74 +45,70 @@ export async function restoreCache(
     );
   }
 
-  await restoreCacheFromKey(
-    cacheKeys.primary,
-    cacheKeys.restore,
+  const matchedKey = await restoreCacheFromKey(
+    cacheKeys.uv,
     inputs.cacheLocalPath.path,
     STATE_CACHE_MATCHED_KEY,
     "cache-hit",
-    "cache-matched-key",
   );
+  core.setOutput("cache-matched-key", matchedKey ?? "");
 
   if (inputs.cachePython) {
-    const pythonCacheKeys = cacheKeys.python;
-    if (pythonCacheKeys === undefined) {
-      throw new Error("Python cache keys are missing");
-    }
     await restoreCacheFromKey(
-      pythonCacheKeys.primary,
-      pythonCacheKeys.restore,
+      cacheKeys.python,
       inputs.pythonDir,
       STATE_PYTHON_CACHE_MATCHED_KEY,
       "python-cache-hit",
-      undefined,
+      // TODO: Remove this repair once @actions/cache preserves Windows junctions.
+      // https://github.com/actions/toolkit/issues/2562
+      process.platform === "win32" ? repairPythonJunctions : undefined,
     );
-  } else {
-    core.setOutput("python-cache-hit", false);
   }
 }
 
 async function restoreCacheFromKey(
-  cacheKey: string,
-  restoreKey: string | undefined,
+  keys: CacheKeys,
   cachePath: string,
   stateKey: string,
   outputKey: string,
-  matchedKeyOutputKey: string | undefined,
-): Promise<void> {
+  afterRestore?: (cachePath: string) => Promise<void>,
+): Promise<string | undefined> {
   log.info(
-    `Trying to restore cache from GitHub Actions cache with key: ${cacheKey}`,
+    `Trying to restore cache from GitHub Actions cache with key: ${keys.primary}`,
   );
   let matchedKey: string | undefined;
   try {
-    matchedKey = await cache.restoreCache(
-      [cachePath],
-      cacheKey,
-      restoreKey === undefined ? undefined : [restoreKey],
+    matchedKey = await cache.restoreCache([cachePath], keys.primary, [
+      keys.restore,
+    ]);
+    if (!matchedKey) {
+      log.info(`No GitHub Actions cache found for key: ${keys.primary}`);
+      return;
+    }
+
+    // Keep the match even if Windows junction repair fails.
+    core.saveState(stateKey, matchedKey);
+    await afterRestore?.(cachePath);
+    log.info(
+      `cache restored from GitHub Actions cache with key: ${matchedKey}`,
     );
+    core.setOutput(outputKey, matchedKey === keys.primary);
+    return matchedKey;
   } catch (err) {
     const message = (err as Error).message;
     log.warning(message);
-    core.setOutput(outputKey, false);
-    if (matchedKeyOutputKey !== undefined) {
-      core.setOutput(matchedKeyOutputKey, "");
+    if (matchedKey && afterRestore) {
+      // A fallback key differs from the primary key, so the matched key alone
+      // cannot stop the post step from uploading an unrepaired installation.
+      core.saveState(STATE_PYTHON_CACHE_RESTORE_FAILED, true);
     }
-    return;
   }
-
-  handleMatchResult(
-    matchedKey,
-    cacheKey,
-    stateKey,
-    outputKey,
-    matchedKeyOutputKey,
-  );
 }
 
 async function computeKeys(
   inputs: SetupInputs,
   pythonVersion?: string,
-): Promise<CacheKeys> {
+): Promise<{ uv: CacheKeys; python: CacheKeys }> {
   let cacheDependencyPathHash = "-";
   if (inputs.cacheDependencyGlob !== "") {
     log.info(
@@ -130,9 +127,8 @@ async function computeKeys(
   if (cacheDependencyPathHash === "-") {
     cacheDependencyPathHash = "-no-dependency-glob";
   }
-  const suffix = inputs.cacheSuffix
-    ? `-${encodeURIComponent(inputs.cacheSuffix)}`
-    : "";
+  // A fixed-length field prevents one suffix from matching a longer suffix.
+  const suffix = createHash("sha256").update(inputs.cacheSuffix).digest("hex");
   const version = encodeURIComponent(pythonVersion ?? "unknown");
   const pythonArchKey = inputs.pythonArch
     ? `-python-${encodeURIComponent(inputs.pythonArch)}`
@@ -140,46 +136,16 @@ async function computeKeys(
   const platform = await getPlatform();
   const osNameVersion = getOSNameVersion();
   const pruned = inputs.pruneCache ? "-pruned" : "";
-  const python = inputs.cachePython ? "-py" : "";
-  const restore = `setup-uv-${CACHE_VERSION}-${getArch()}-${platform}-${osNameVersion}-${version}${pythonArchKey}${pruned}${python}${suffix}-`;
+  const prefix = `setup-uv-${CACHE_VERSION}-${getArch()}-${platform}-${osNameVersion}-${version}${pythonArchKey}${pruned}-${suffix}-`;
   const dependencyHash = cacheDependencyPathHash.slice(1);
-  const primary = `${restore}${dependencyHash}`;
   return {
-    primary,
-    restore,
-    ...(inputs.cachePython
-      ? {
-          python: {
-            primary: `${restore}python-${dependencyHash}`,
-            restore: `${restore}python-`,
-          },
-        }
-      : {}),
+    python: {
+      primary: `${prefix}python-${dependencyHash}`,
+      restore: `${prefix}python-`,
+    },
+    uv: {
+      primary: `${prefix}uv-${dependencyHash}`,
+      restore: `${prefix}uv-`,
+    },
   };
-}
-
-function handleMatchResult(
-  matchedKey: string | undefined,
-  primaryKey: string,
-  stateKey: string,
-  outputKey: string,
-  matchedKeyOutputKey: string | undefined,
-): void {
-  if (!matchedKey) {
-    log.info(`No GitHub Actions cache found for key: ${primaryKey}`);
-    core.setOutput(outputKey, false);
-    if (matchedKeyOutputKey !== undefined) {
-      core.setOutput(matchedKeyOutputKey, "");
-    }
-    return;
-  }
-
-  core.saveState(stateKey, matchedKey);
-  log.info(`cache restored from GitHub Actions cache with key: ${matchedKey}`);
-  if (matchedKeyOutputKey !== undefined) {
-    core.setOutput(matchedKeyOutputKey, matchedKey);
-  }
-  // cache-hit is true only for an exact match. A restore-key match is useful,
-  // but callers may still need to perform work before saving a new cache.
-  core.setOutput(outputKey, matchedKey === primaryKey);
 }

@@ -169,7 +169,9 @@ async function findHighestSatisfyingVersion(
 ): Promise<string | undefined> {
   // This fast path assumes uv releases are semver-monotonic: newer manifest
   // entries always have higher versions, with no lower-version backports.
-  const semverRange = semver.validRange(versionSpecifier);
+  const semverRange = isCompatibleReleaseSpecifier(versionSpecifier)
+    ? null
+    : semver.validRange(versionSpecifier);
   if (semverRange !== null) {
     const semverMatch = await getFirstMatchingVersion((version) =>
       semver.satisfies(version, semverRange),
@@ -193,11 +195,22 @@ async function findHighestSatisfyingVersion(
   return pep440Match;
 }
 
+/**
+ * `~=` is the PEP 440 compatible release operator. semver accepts it as a
+ * tilde range with a narrower upper bound (`~=0.5` as `<0.6.0` instead of
+ * `<1.0`), so it must only be evaluated as PEP 440.
+ */
+function isCompatibleReleaseSpecifier(versionSpecifier: string): boolean {
+  return versionSpecifier.includes("~=");
+}
+
 function maxSatisfying(
   versions: string[],
   version: string,
 ): string | undefined {
-  const maxSemver = tc.evaluateVersions(versions, version);
+  const maxSemver = isCompatibleReleaseSpecifier(version)
+    ? ""
+    : tc.evaluateVersions(versions, version);
   if (maxSemver !== "") {
     core.debug(`Found a version that satisfies the semver range: ${maxSemver}`);
     return maxSemver;
@@ -218,7 +231,9 @@ function minSatisfying(
   versions: string[],
   version: string,
 ): string | undefined {
-  const minSemver = semver.minSatisfying(versions, version);
+  const minSemver = isCompatibleReleaseSpecifier(version)
+    ? null
+    : semver.minSatisfying(versions, version);
   if (minSemver !== null) {
     core.debug(`Found a version that satisfies the semver range: ${minSemver}`);
     return minSemver;

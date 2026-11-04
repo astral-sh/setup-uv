@@ -11,7 +11,7 @@ You can specify a checksum to override those values. The sha256 hashes can also 
 
 ```yaml
 - name: Install a specific version and validate the checksum
-  uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+  uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
   with:
     version: "0.3.1"
     checksum: "e11b01402ab645392c7ad6044db63d37e4fd1e745e015306993b07695ea5f9f8"
@@ -20,10 +20,12 @@ You can specify a checksum to override those values. The sha256 hashes can also 
 ## Manifest file
 
 By default, setup-uv reads version metadata from
-[`astral-sh/versions`](https://github.com/astral-sh/versions).
+the [Astral mirror](https://releases.astral.sh/github/versions/main/v1/uv.ndjson).
+If the mirror request fails, it falls back to [`astral-sh/versions`](https://github.com/astral-sh/versions).
 
 The `manifest-file` input lets you override that source with your own URL, for example to test
-custom uv builds or alternate download locations.
+custom uv builds or alternate download locations. Custom manifest URLs do not fall back to the
+default sources.
 
 ### Format
 
@@ -40,7 +42,7 @@ The `archive_format` field is currently ignored.
 
 ```yaml
 - name: Use a custom manifest file
-  uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+  uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
   with:
     manifest-file: "https://example.com/my-custom-manifest.ndjson"
 ```
@@ -59,7 +61,7 @@ You can disable this by setting the `add-problem-matchers` input to `false`.
 
 ```yaml
 - name: Install the latest version of uv without problem matchers
-  uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+  uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
   with:
     add-problem-matchers: false
 ```

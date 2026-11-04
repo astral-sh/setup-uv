@@ -146,6 +146,28 @@ describe("download-version", () => {
       expect(mockGetAllVersions).not.toHaveBeenCalled();
     });
 
+    it("resolves ~= with PEP 440 compatible release semantics", async () => {
+      mockGetFirstMatchingVersion.mockImplementation(
+        (predicate: (version: string) => boolean) =>
+          ["1.0.0", "0.10.2", "0.9.26"].find(predicate),
+      );
+
+      const version = await resolveVersion("~=0.9", undefined);
+
+      expect(version).toBe("0.10.2");
+    });
+
+    it("resolves ~= with PEP 440 compatible release semantics from manifest-file", async () => {
+      mockGetAllVersions.mockResolvedValue(["1.0.0", "0.10.2", "0.9.26"]);
+
+      const version = await resolveVersion(
+        "~=0.9",
+        "https://example.com/custom.ndjson",
+      );
+
+      expect(version).toBe("0.10.2");
+    });
+
     it("treats == exact pins as explicit versions", async () => {
       const version = await resolveVersion("==0.9.26", undefined);
 
@@ -220,7 +242,7 @@ describe("download-version", () => {
           "token",
         ),
       ).rejects.toThrow(
-        "Could not find artifact for version 0.9.26, arch x86_64, platform unknown-linux-gnu in https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson .",
+        "Could not find artifact for version 0.9.26, arch x86_64, platform unknown-linux-gnu in https://releases.astral.sh/github/versions/main/v1/uv.ndjson .",
       );
 
       expect(mockDownloadTool).not.toHaveBeenCalled();

@@ -27,7 +27,7 @@ Set up your GitHub Actions workflow with a specific version of [uv](https://docs
 
 ```yaml
 - name: Install the latest version of uv
-  uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+  uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
 ```
 
 If you do not specify a version, this action will look for a [required-version](https://docs.astral.sh/uv/reference/settings/#required-version)
@@ -43,7 +43,7 @@ Have a look under [Advanced Configuration](#advanced-configuration) for detailed
 
 ```yaml
 - name: Install uv with all available options
-  uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+  uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
   with:
     # The version of uv to install, e.g., "0.5.0", "latest", or "latest-known" (default: searches for version in config files, then latest)
     version: ""
@@ -81,7 +81,7 @@ Have a look under [Advanced Configuration](#advanced-configuration) for detailed
     # Enable the GitHub Actions cache for uv: true, false, or auto (enabled on GitHub-hosted runners except for release, tag push, pull_request_target, and workflow_run events; disabled on self-hosted runners)
     enable-cache: "auto"
 
-    # Glob pattern to match files relative to the repository root to control the cache
+    # Glob pattern to match files relative to the working directory to control the cache
     cache-dependency-glob: |
       **/*requirements*.txt
       **/*requirements*.in
@@ -139,11 +139,13 @@ Have a look under [Advanced Configuration](#advanced-configuration) for detailed
 - `uv-version`: The installed uv version. Useful when using latest.
 - `uv-path`: The path to the installed uv binary.
 - `uvx-path`: The path to the installed uvx binary.
-- `cache-hit`: A boolean value to indicate a cache entry was found.
+- `cache-hit`: A boolean indicating whether the uv cache primary key matched exactly. False for fallback restores.
+- `cache-key`: The primary uv cache key used for saving.
+- `cache-matched-key`: The uv cache key that was restored, including fallback matches. Empty if no cache was restored.
 - `venv`: Path to the activated venv if activate-environment is true.
 - `python-version`: The Python version that was set.
 - `python-runtime-id`: An opaque identifier reported by uv for the activated venv's Python runtime. Empty when `activate-environment` is false.
-- `python-cache-hit`: A boolean value to indicate the Python cache entry was found.
+- `python-cache-hit`: A boolean indicating whether the Python primary key matched exactly and the cache was restored successfully. False for fallback restores.
 
 ### Python version
 
@@ -161,7 +163,7 @@ python 3.13
 ```
 
 ```yaml
-- uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+- uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
   with:
     version-file: ".tool-versions"
 ```
@@ -172,7 +174,7 @@ a warning.
 
 ```yaml
 - name: Install the latest version of uv and set the python version to 3.13t
-  uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+  uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
   with:
     python-version: 3.13t
 - run: uv pip install --python=3.13t pip
@@ -190,7 +192,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install the latest version of uv and set the python version
-        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           python-version: ${{ matrix.python-version }}
       - name: Test with python ${{ matrix.python-version }}
@@ -226,7 +228,7 @@ It also controls where [the venv gets created](#activate-environment), unless `v
 
 ```yaml
 - name: Install uv based on the config files in the working-directory
-  uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+  uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
   with:
     working-directory: my/subproject/dir
 ```
@@ -268,7 +270,7 @@ For example:
 - name: Checkout the repository
   uses: actions/checkout@main
 - name: Install the latest version of uv
-  uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+  uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
   with:
     enable-cache: true
 - name: Test
@@ -280,7 +282,7 @@ To install a specific version of Python, use
 
 ```yaml
 - name: Install the latest version of uv
-  uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+  uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
   with:
     enable-cache: true
 - name: Install Python 3.12
@@ -299,7 +301,7 @@ output:
   uses: actions/checkout@main
 - name: Install the default version of uv
   id: setup-uv
-  uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+  uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
 - name: Print the installed version
   run: echo "Installed uv version is ${{ steps.setup-uv.outputs.uv-version }}"
 ```

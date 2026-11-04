@@ -35,3 +35,14 @@ test("strips PEP 508 markers from requirements dependencies", () => {
 
   expect(parsedVersion).toBe("==0.11.20");
 });
+
+test.each([
+  ["uv >= 0.5.0", ">=0.5.0"],
+  ["uv == 0.11.20", "==0.11.20"],
+  ["uv>=0.5.0, <0.6.0", ">=0.5.0,<0.6.0"],
+  ["uv >= 0.5.0 , < 0.6.0", ">=0.5.0,<0.6.0"],
+  ["uv==0.11.20 --hash=sha256:abc", "==0.11.20"],
+  ["uv==0.11.20  # pinned for CI", "==0.11.20"],
+])("allows whitespace in the uv specifier %s", (dependency, expected) => {
+  expect(getUvVersionFromRequirementsText(dependency)).toBe(expected);
+});

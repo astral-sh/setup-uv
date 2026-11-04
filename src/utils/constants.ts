@@ -2,6 +2,8 @@ export const TOOL_CACHE_NAME = "uv";
 export const STATE_UV_PATH = "uv-path";
 export const STATE_UV_VERSION = "uv-version";
 export const VERSIONS_MANIFEST_URL =
+  "https://releases.astral.sh/github/versions/main/v1/uv.ndjson";
+export const GITHUB_VERSIONS_MANIFEST_URL =
   "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson";
 
 /** GitHub Releases URL prefix for uv artifacts. */

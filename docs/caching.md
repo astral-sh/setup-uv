@@ -12,19 +12,25 @@ The cache key is automatically generated based on:
 - **OS version**: OS name and version (e.g., `ubuntu-22.04`, `macos-14`, `windows-2022`)
 - **Python version**: The Python version in use
 - **Python architecture**: The architecture selected by `python-arch` or `UV_PYTHON_ARCH`, when set
-- **Cache options**: Whether pruning and Python caching are enabled
+- **Cache pruning**: Whether pruning is enabled
 - **Dependency hash**: Hash of files matching `cache-dependency-glob`
-- **Suffix**: Optional `cache-suffix` if provided
+- **Suffix hash**: SHA-256 of `cache-suffix`, including an empty suffix
+- **Cache kind**: uv dependencies or managed Python installations
 
 Including the OS version ensures that caches are not shared between different OS versions,
 preventing binary incompatibility issues when runner images change.
+
+The uv dependency key does not depend on `cache-python`. Runs with and without Python caching
+can share dependencies, while managed Python installations use a separate cache entry.
+The key format is versioned; the current format uses `setup-uv-3` and does not restore entries
+from earlier key formats.
 
 The computed cache key is available as the `cache-key` output:
 
 ```yaml
 - name: Setup uv
   id: setup-uv
-  uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+  uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
   with:
     enable-cache: true
 - name: Print cache key
@@ -54,26 +60,34 @@ You can optionally define a custom cache key suffix.
 ```yaml
 - name: Enable caching and define a custom cache key suffix
   id: setup-uv
-  uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+  uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
   with:
     enable-cache: true
     cache-suffix: "optional-suffix"
 ```
 
-When the cache was successfully restored, the output `cache-hit` will be set to `true` and you can
-use it in subsequent steps. For example, to use the cache in the above case:
+The outputs distinguish an exact primary-key match from a fallback restore:
+
+| Restore result | `cache-hit` | `cache-matched-key` |
+| --- | --- | --- |
+| Exact primary-key match | `true` | Same as `cache-key` |
+| Fallback match | `false` | The older key that was restored |
+| No cache restored | `false` | Empty string |
+
+Use `cache-matched-key` to check whether any uv cache was restored:
 
 ```yaml
 - name: Do something if the cache was restored
-  if: steps.setup-uv.outputs.cache-hit == 'true'
+  if: steps.setup-uv.outputs.cache-matched-key != ''
   run: echo "Cache was restored"
 ```
 
 ## Cache dependency glob
 
-If you want to control when the GitHub Actions cache is invalidated, specify a glob pattern with the
-`cache-dependency-glob` input. The GitHub Actions cache will be invalidated if any file matching the glob pattern
-changes. If you use relative paths, they are relative to the working directory.
+Use `cache-dependency-glob` to select the files included in the dependency hash. Changing a matched
+file changes the primary cache key. An older cache can still be restored through a fallback key;
+uv resolves and installs the dependencies required by the current project.
+If you use relative paths, they are relative to the working directory.
 
 > [!NOTE]
 >
@@ -93,7 +107,7 @@ changes. If you use relative paths, they are relative to the working directory.
 
 ```yaml
 - name: Define a cache dependency glob
-  uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+  uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
   with:
     enable-cache: true
     cache-dependency-glob: "**/pyproject.toml"
@@ -101,7 +115,7 @@ changes. If you use relative paths, they are relative to the working directory.
 
 ```yaml
 - name: Define a list of cache dependency globs
-  uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+  uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
   with:
     enable-cache: true
     cache-dependency-glob: |
@@ -111,7 +125,7 @@ changes. If you use relative paths, they are relative to the working directory.
 
 ```yaml
 - name: Define an absolute cache dependency glob
-  uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+  uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
   with:
     enable-cache: true
     cache-dependency-glob: "/tmp/my-folder/requirements*.txt"
@@ -119,7 +133,7 @@ changes. If you use relative paths, they are relative to the working directory.
 
 ```yaml
 - name: Never invalidate the cache
-  uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+  uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
   with:
     enable-cache: true
     cache-dependency-glob: ""
@@ -130,9 +144,17 @@ changes. If you use relative paths, they are relative to the working directory.
 Restoring an existing cache can be enabled or disabled with the `restore-cache` input.
 By default, the cache will be restored.
 
+If the primary key has no match, setup-uv tries a stable restore prefix that excludes the dependency
+hash. This allows reuse after dependency-file changes while retaining the platform, Python version
+and architecture, pruning option, cache kind, and exact suffix value. GitHub's cache scope rules
+still apply. On a successful job, a fallback restore can be saved under the new primary key.
+
+Changing `cache-suffix` selects a different cache namespace, including when the old suffix is a
+prefix of the new value. Suffixes are hashed to prevent partial suffix matches.
+
 ```yaml
 - name: Don't restore an existing cache
-  uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+  uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
   with:
     enable-cache: true
     restore-cache: false
@@ -148,7 +170,7 @@ these events. Set `save-cache: true` to save the cache for all events.
 
 ```yaml
 - name: Don't save the cache after the run
-  uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+  uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
   with:
     enable-cache: true
     save-cache: false
@@ -174,7 +196,7 @@ It defaults to `setup-uv-cache` in the `TMP` dir, `D:\a\_temp\setup-uv-cache` on
 
 ```yaml
 - name: Define a custom uv cache path
-  uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+  uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
   with:
     cache-local-path: "/path/to/cache"
 ```
@@ -191,7 +213,7 @@ If you want to prune the cache before saving it, enable cache pruning with the `
 
 ```yaml
 - name: Prune the cache before saving it
-  uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+  uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
   with:
     enable-cache: true
     prune-cache: true
@@ -204,13 +226,18 @@ for the same reason that pruning the dependency cache can improve performance on
 runners.
 If you want to cache Python installs along with your dependencies, set the `cache-python` input to `true`.
 
+Python installations are saved and restored separately from uv dependencies. They also support
+fallback restores after dependency-file changes. `python-cache-hit` is `true` only when the Python
+primary key matches exactly and restoration, including any required Windows junction repair,
+succeeds. A fallback restore reports `false` even when it restores usable Python installations.
+
 Note that this only caches Python versions that uv actually installs into `UV_PYTHON_INSTALL_DIR`
 (i.e. managed Python installs). If uv uses a system Python, there may be nothing to cache.
 To force managed Python installs, set `UV_PYTHON_PREFERENCE=only-managed`.
 
 ```yaml
 - name: Cache Python installs
-  uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+  uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
   with:
     enable-cache: true
     cache-python: true
@@ -228,7 +255,7 @@ If you want to ignore this, set the `ignore-nothing-to-cache` input to `true`.
 
 ```yaml
 - name: Ignore nothing to cache
-  uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+  uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
   with:
     enable-cache: true
     ignore-nothing-to-cache: true
