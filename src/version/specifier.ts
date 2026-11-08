@@ -21,8 +21,13 @@ export type ParsedVersionSpecifier =
 export function normalizeVersionSpecifier(specifier: string): string {
   const trimmedSpecifier = specifier.trim();
 
+  // Only strip `==` from full versions. A partial pin like `==0.5` means
+  // `==0.5.0` in PEP 440, but `0.5` alone is read as the semver range `0.5.x`.
   if (trimmedSpecifier.startsWith("==")) {
-    return trimmedSpecifier.slice(2);
+    const pinnedVersion = trimmedSpecifier.slice(2).trim();
+    if (tc.isExplicitVersion(pinnedVersion)) {
+      return pinnedVersion;
+    }
   }
 
   return trimmedSpecifier;

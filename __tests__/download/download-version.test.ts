@@ -168,6 +168,33 @@ describe("download-version", () => {
       expect(version).toBe("0.10.2");
     });
 
+    it.each([
+      ["<=0.9", "0.9.0"],
+      ["==0.9", "0.9.0"],
+    ])("resolves %s with PEP 440 semantics", async (specifier, expected) => {
+      mockGetFirstMatchingVersion.mockImplementation(
+        (predicate: (version: string) => boolean) =>
+          ["0.10.2", "0.9.26", "0.9.0", "0.8.24"].find(predicate),
+      );
+
+      const version = await resolveVersion(specifier, undefined);
+
+      expect(version).toBe(expected);
+    });
+
+    it("resolves >0.9 with PEP 440 semantics for the lowest strategy", async () => {
+      mockGetAllVersions.mockResolvedValue([
+        "0.10.0",
+        "0.9.26",
+        "0.9.1",
+        "0.9.0",
+      ]);
+
+      const version = await resolveVersion(">0.9", undefined, "lowest");
+
+      expect(version).toBe("0.9.1");
+    });
+
     it("treats == exact pins as explicit versions", async () => {
       const version = await resolveVersion("==0.9.26", undefined);
 
