@@ -40,7 +40,7 @@ jobs:
           npm run all
       - name: Check all jobs are in all-tests-passed.needs
         run: |
-          tsc -p tsconfig.json
+          npx --no-install tsc -p tsconfig.json
           node check-all-tests-passed-needs.js
         working-directory: .github/scripts
       - name: Make sure no changes from linters are detected
