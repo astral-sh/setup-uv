@@ -40,7 +40,7 @@ jobs:
           npm run all
       - name: Check all jobs are in all-tests-passed.needs
         run: |
-          tsc -p tsconfig.json
+          npx --no-install tsc -p tsconfig.json
           node check-all-tests-passed-needs.js
         working-directory: .github/scripts
       - name: Make sure no changes from linters are detected
@@ -136,6 +136,7 @@ jobs:
         id: setup-uv
         uses: $/
         with:
+          enable-cache: false
           version: ${{ matrix.input.version-input }}
           resolution-strategy: ${{ matrix.input.resolution-strategy || 'highest' }}
       - name: Correct version gets installed
@@ -227,6 +228,7 @@ jobs:
       - name: Install version from ${{ matrix.input.version-file }}
         uses: $/
         with:
+          enable-cache: false
           version-file: ${{ matrix.input.version-file }}
       - name: Correct version gets installed
         run: |
@@ -245,6 +247,7 @@ jobs:
         id: setup-uv
         uses: $/
         with:
+          enable-cache: false
           version-file: "__tests__/fixtures/.tool-versions"
       - name: Verify Python version from .tool-versions
         run: |
