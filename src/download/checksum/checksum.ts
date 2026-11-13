@@ -23,11 +23,7 @@ export async function validateChecksum(
     : (knownChecksum ?? (hasManifestChecksum ? manifestChecksum : undefined));
 
   if (checksumToUse === undefined) {
-    if (manifestChecksum !== undefined) {
-      throw new Error(`No checksum found for ${key} in manifest.`);
-    }
-    core.debug(`No checksum found for ${key}.`);
-    return;
+    throw new Error(`No checksum found for ${key} in manifest.`);
   }
 
   const checksumSource = hasProvidedChecksum

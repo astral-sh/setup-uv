@@ -15,7 +15,9 @@ This document covers advanced options for configuring which version of uv to ins
 
 Use `latest-known` to install the newest uv version whose checksums were bundled with the version of setup-uv used by your workflow. Version resolution is performed locally without fetching the latest release, so updating setup-uv also updates the version selected by `latest-known`.
 
-When `manifest-file` is set, `latest-known` still selects a version from setup-uv's bundled checksum table, but the artifact and checksum come from the custom manifest.
+When `manifest-file` is set, `latest-known` still selects a version from setup-uv's bundled checksum table.
+By default the custom manifest supplies the artifact and checksum. To require a bundled or explicitly
+supplied checksum, enable `require-intrinsic-checksums`. [Checksum validation](customization.md#validate-checksum)
 
 ```yaml
 - name: Install the latest version of uv known to setup-uv

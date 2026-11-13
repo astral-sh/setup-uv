@@ -11,22 +11,40 @@ import {
 import * as log from "../utils/logging";
 import type { Architecture, Platform } from "../utils/platforms";
 import { validateChecksum } from "./checksum/checksum";
+import { KNOWN_CHECKSUMS } from "./checksum/known-checksums";
 import { getArtifact } from "./manifest";
 
 export { resolveVersion } from "../version/resolve";
 
+export function getIntrinsicChecksum(
+  key: string,
+  providedChecksum: string,
+): string {
+  const checksum = providedChecksum || KNOWN_CHECKSUMS[key];
+  if (!checksum) {
+    throw new Error(
+      `No bundled checksum for ${key}. With require-intrinsic-checksums enabled, update setup-uv or provide the checksum input for this archive.`,
+    );
+  }
+  if (!/^[a-f0-9]{64}$/.test(checksum)) {
+    throw new Error(`Expected a SHA-256 checksum for ${key}.`);
+  }
+  return checksum;
+}
+
 export function tryGetFromToolCache(
   arch: Architecture,
   version: string,
+  toolCacheName = TOOL_CACHE_NAME,
 ): { version: string; installedPath: string | undefined } {
   core.debug(`Trying to get uv from tool cache for ${version}...`);
-  const cachedVersions = tc.findAllVersions(TOOL_CACHE_NAME, arch);
+  const cachedVersions = tc.findAllVersions(toolCacheName, arch);
   core.debug(`Cached versions: ${cachedVersions}`);
   let resolvedVersion = tc.evaluateVersions(cachedVersions, version);
   if (resolvedVersion === "") {
     resolvedVersion = version;
   }
-  const installedPath = tc.find(TOOL_CACHE_NAME, resolvedVersion, arch);
+  const installedPath = tc.find(toolCacheName, resolvedVersion, arch);
   return { installedPath, version: resolvedVersion };
 }
 
@@ -38,6 +56,7 @@ export async function downloadVersion(
   githubToken: string,
   manifestUrl?: string,
   downloadFromAstralMirror = true,
+  toolCacheName = TOOL_CACHE_NAME,
 ): Promise<{ version: string; cachedToolDir: string }> {
   const artifact = await getArtifact(version, arch, platform, manifestUrl);
 
@@ -71,6 +90,7 @@ export async function downloadVersion(
       resolvedChecksum,
       manifestChecksum,
       githubTokenForUrl(downloadUrl, githubToken),
+      toolCacheName,
     );
   } catch (err) {
     if (mirrorUrl === undefined) {
@@ -90,6 +110,7 @@ export async function downloadVersion(
       resolvedChecksum,
       manifestChecksum,
       githubTokenForUrl(artifact.downloadUrl, githubToken),
+      toolCacheName,
     );
   }
 }
@@ -128,6 +149,7 @@ async function downloadArtifact(
   checksum: string | undefined,
   manifestChecksum: string | undefined,
   githubToken: string | undefined,
+  toolCacheName: string,
 ): Promise<{ version: string; cachedToolDir: string }> {
   log.info(`Downloading uv from "${downloadUrl}" ...`);
   const downloadPath = await tc.downloadTool(
@@ -165,12 +187,7 @@ async function downloadArtifact(
     uvDir = path.join(extractedDir, artifactName);
   }
 
-  const cachedToolDir = await tc.cacheDir(
-    uvDir,
-    TOOL_CACHE_NAME,
-    version,
-    arch,
-  );
+  const cachedToolDir = await tc.cacheDir(uvDir, toolCacheName, version, arch);
   return { cachedToolDir, version };
 }
 

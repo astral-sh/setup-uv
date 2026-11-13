@@ -56,7 +56,7 @@ test("manifest checksums are used when no known checksum exists", async () => {
   ).rejects.toThrow("did not match");
 });
 
-test("empty manifest checksums are rejected", async () => {
+test.each(["", undefined])("rejects missing checksums (%s)", async (hash) => {
   await expect(
     validateChecksum(
       undefined,
@@ -64,7 +64,7 @@ test("empty manifest checksums are rejected", async () => {
       "aarch64",
       "pc-windows-msvc",
       "1.2.3",
-      "",
+      hash,
     ),
   ).rejects.toThrow("No checksum found");
 });

@@ -26,6 +26,7 @@ export function createSetupInputs(
     pythonDir: "/tmp/uv-python-dir",
     pythonVersion: "",
     quiet: false,
+    requireIntrinsicChecksums: false,
     resolutionStrategy: "highest",
     restoreCache: false,
     saveCache: true,
