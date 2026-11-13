@@ -2,56 +2,43 @@ import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 
 import * as core from "@actions/core";
-import type { SetupInputs } from "../../utils/inputs";
+import type { Architecture, Platform } from "../../utils/platforms";
 import { KNOWN_CHECKSUMS } from "./known-checksums";
 
-export function resolveChecksum(
-  key: string,
-  inputs: Pick<
-    SetupInputs,
-    "checksum" | "manifestFile" | "requireIntrinsicChecksums"
-  >,
-  manifestChecksum?: string,
-): string {
-  if (inputs.checksum) {
-    core.debug("Validating checksum using provided checksum.");
-    return inputs.checksum;
-  }
-
-  // A custom manifest may describe a different build of a known release.
-  if (
-    !inputs.requireIntrinsicChecksums &&
-    inputs.manifestFile &&
-    manifestChecksum
-  ) {
-    core.debug("Validating checksum using custom manifest checksum.");
-    return manifestChecksum;
-  }
-  const knownChecksum = KNOWN_CHECKSUMS[key];
-  if (knownChecksum) {
-    core.debug(`Validating checksum using KNOWN_CHECKSUMS entry for ${key}.`);
-    return knownChecksum;
-  }
-  if (inputs.requireIntrinsicChecksums) {
-    throw new Error(
-      `No bundled checksum for ${key}. With require-intrinsic-checksums enabled, update setup-uv or provide the checksum input for this archive.`,
-    );
-  }
-  if (manifestChecksum) {
-    core.debug("Validating checksum using manifest checksum.");
-    return manifestChecksum;
-  }
-  throw new Error(`No checksum found for ${key} in manifest.`);
-}
-
 export async function validateChecksum(
+  checksum: string | undefined,
   downloadPath: string,
-  expected: string,
+  arch: Architecture,
+  platform: Platform,
+  version: string,
+  manifestChecksum?: string,
 ): Promise<void> {
-  const isValid = await validateFileCheckSum(downloadPath, expected);
+  const key = `${arch}-${platform}-${version}`;
+  const hasProvidedChecksum = checksum !== undefined && checksum !== "";
+  const knownChecksum = KNOWN_CHECKSUMS[key];
+  const hasManifestChecksum =
+    manifestChecksum !== undefined && manifestChecksum !== "";
+  const checksumToUse = hasProvidedChecksum
+    ? checksum
+    : (knownChecksum ?? (hasManifestChecksum ? manifestChecksum : undefined));
+
+  if (checksumToUse === undefined) {
+    throw new Error(`No checksum found for ${key} in manifest.`);
+  }
+
+  const checksumSource = hasProvidedChecksum
+    ? "provided checksum"
+    : knownChecksum !== undefined
+      ? `KNOWN_CHECKSUMS entry for ${key}`
+      : "manifest checksum";
+
+  core.debug(`Validating checksum using ${checksumSource}.`);
+  const isValid = await validateFileCheckSum(downloadPath, checksumToUse);
 
   if (!isValid) {
-    throw new Error(`Checksum for ${downloadPath} did not match ${expected}.`);
+    throw new Error(
+      `Checksum for ${downloadPath} did not match ${checksumToUse}.`,
+    );
   }
 
   core.debug(`Checksum for ${downloadPath} is valid.`);

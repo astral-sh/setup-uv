@@ -3,8 +3,16 @@ import * as path from "node:path";
 import * as core from "@actions/core";
 import * as exec from "@actions/exec";
 import { restoreCache } from "./cache/restore-cache";
-import { installVersion } from "./download/download-version";
-import { STATE_UV_PATH, STATE_UV_VERSION } from "./utils/constants";
+import {
+  downloadVersion,
+  getIntrinsicChecksum,
+  tryGetFromToolCache,
+} from "./download/download-version";
+import {
+  STATE_UV_PATH,
+  STATE_UV_VERSION,
+  TOOL_CACHE_NAME,
+} from "./utils/constants";
 import { CacheLocalSource, loadInputs, type SetupInputs } from "./utils/inputs";
 import * as log from "./utils/logging";
 import {
@@ -144,7 +152,44 @@ async function setupUv(
     versionFile: inputs.versionFile,
     workingDirectory: inputs.workingDirectory,
   });
-  return installVersion(platform, arch, resolvedVersion, inputs);
+  let checksum = inputs.checksum;
+  let toolCacheName = TOOL_CACHE_NAME;
+  if (inputs.requireIntrinsicChecksums) {
+    checksum = getIntrinsicChecksum(
+      `${arch}-${platform}-${resolvedVersion}`,
+      inputs.checksum,
+    );
+    // A regular tool-cache entry may have been verified using a manifest checksum.
+    toolCacheName = `${TOOL_CACHE_NAME}-${checksum}`;
+  }
+  const toolCacheResult = tryGetFromToolCache(
+    arch,
+    resolvedVersion,
+    toolCacheName,
+  );
+  if (toolCacheResult.installedPath) {
+    log.info(`Found uv in tool-cache for ${toolCacheResult.version}`);
+    return {
+      uvDir: toolCacheResult.installedPath,
+      version: toolCacheResult.version,
+    };
+  }
+
+  const downloadResult = await downloadVersion(
+    platform,
+    arch,
+    resolvedVersion,
+    checksum,
+    inputs.githubToken,
+    inputs.manifestFile,
+    inputs.downloadFromAstralMirror,
+    toolCacheName,
+  );
+
+  return {
+    uvDir: downloadResult.cachedToolDir,
+    version: downloadResult.version,
+  };
 }
 
 function addUvToPathAndOutput(cachedPath: string): void {

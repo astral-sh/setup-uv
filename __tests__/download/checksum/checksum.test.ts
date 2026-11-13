@@ -1,67 +1,73 @@
 import { expect, it, test } from "@jest/globals";
 import {
   isknownVersion,
-  resolveChecksum,
   validateChecksum,
 } from "../../../src/download/checksum/checksum";
-import { KNOWN_CHECKSUMS } from "../../../src/download/checksum/known-checksums";
 
 const validChecksum =
   "f3da96ec7e995debee7f5d52ecd034dfb7074309a1da42f76429ecb814d813a3";
 const filePath = "__tests__/fixtures/checksumfile";
 
-const inputs = { checksum: "", requireIntrinsicChecksums: false };
-const knownKey = "x86_64-unknown-linux-gnu-0.3.0";
-const unknownKey = "aarch64-pc-windows-msvc-99.0.0";
-
-test("validates the archive against the expected SHA-256 digest", async () => {
-  await validateChecksum(filePath, validChecksum);
-  await expect(validateChecksum(filePath, "0".repeat(64))).rejects.toThrow(
-    "did not match",
+test("checksum should match", async () => {
+  // string params don't matter only test the checksum mechanism, not known checksums
+  await validateChecksum(
+    validChecksum,
+    filePath,
+    "aarch64",
+    "pc-windows-msvc",
+    "1.2.3",
   );
 });
 
-test("the explicit input overrides bundled and manifest checksums", () => {
-  expect(
-    resolveChecksum(
-      knownKey,
-      { ...inputs, checksum: validChecksum },
-      "manifest-checksum",
+test("provided checksum beats known checksums", async () => {
+  await validateChecksum(
+    validChecksum,
+    filePath,
+    "x86_64",
+    "unknown-linux-gnu",
+    "0.3.0",
+    "incorrect-manifest-checksum",
+  );
+});
+
+test("known checksums beat manifest checksums", async () => {
+  await expect(
+    validateChecksum(
+      undefined,
+      filePath,
+      "x86_64",
+      "unknown-linux-gnu",
+      "0.3.0",
+      validChecksum,
     ),
-  ).toBe(validChecksum);
+  ).rejects.toThrow("did not match");
 });
 
-test("bundled checksums take precedence over the default manifest", () => {
-  expect(resolveChecksum(knownKey, inputs, "manifest-checksum")).toBe(
-    KNOWN_CHECKSUMS[knownKey],
-  );
-});
-
-test("custom manifest checksums take precedence over bundled checksums by default", () => {
-  const custom = {
-    ...inputs,
-    manifestFile: "https://example.com/custom.ndjson",
-  };
-  expect(resolveChecksum(knownKey, custom, "manifest-checksum")).toBe(
-    "manifest-checksum",
-  );
-  expect(
-    resolveChecksum(
-      knownKey,
-      { ...custom, checksum: validChecksum },
-      "manifest-checksum",
+test("manifest checksums are used when no known checksum exists", async () => {
+  await expect(
+    validateChecksum(
+      undefined,
+      filePath,
+      "aarch64",
+      "pc-windows-msvc",
+      "1.2.3",
+      "incorrect-manifest-checksum",
     ),
-  ).toBe(validChecksum);
+  ).rejects.toThrow("did not match");
 });
 
-test.each(["", undefined])(
-  "rejects a missing manifest checksum (%s) for an unknown build",
-  (manifestChecksum) => {
-    expect(() => resolveChecksum(unknownKey, inputs, manifestChecksum)).toThrow(
-      "No checksum found",
-    );
-  },
-);
+test.each(["", undefined])("rejects missing checksums (%s)", async (hash) => {
+  await expect(
+    validateChecksum(
+      undefined,
+      filePath,
+      "aarch64",
+      "pc-windows-msvc",
+      "1.2.3",
+      hash,
+    ),
+  ).rejects.toThrow("No checksum found");
+});
 
 type KnownVersionFixture = { version: string; known: boolean };
 

@@ -8,18 +8,34 @@ import {
   TOOL_CACHE_NAME,
   VERSIONS_MANIFEST_URL,
 } from "../utils/constants";
-import type { SetupInputs } from "../utils/inputs";
 import * as log from "../utils/logging";
 import type { Architecture, Platform } from "../utils/platforms";
-import { resolveChecksum, validateChecksum } from "./checksum/checksum";
+import { validateChecksum } from "./checksum/checksum";
+import { KNOWN_CHECKSUMS } from "./checksum/known-checksums";
 import { getArtifact } from "./manifest";
 
 export { resolveVersion } from "../version/resolve";
 
-function tryGetFromToolCache(
+export function getIntrinsicChecksum(
+  key: string,
+  providedChecksum: string,
+): string {
+  const checksum = providedChecksum || KNOWN_CHECKSUMS[key];
+  if (!checksum) {
+    throw new Error(
+      `No bundled checksum for ${key}. With require-intrinsic-checksums enabled, update setup-uv or provide the checksum input for this archive.`,
+    );
+  }
+  if (!/^[a-f0-9]{64}$/.test(checksum)) {
+    throw new Error(`Expected a SHA-256 checksum for ${key}.`);
+  }
+  return checksum;
+}
+
+export function tryGetFromToolCache(
   arch: Architecture,
   version: string,
-  toolCacheName: string,
+  toolCacheName = TOOL_CACHE_NAME,
 ): { version: string; installedPath: string | undefined } {
   core.debug(`Trying to get uv from tool cache for ${version}...`);
   const cachedVersions = tc.findAllVersions(toolCacheName, arch);
@@ -32,55 +48,34 @@ function tryGetFromToolCache(
   return { installedPath, version: resolvedVersion };
 }
 
-export async function installVersion(
+export async function downloadVersion(
   platform: Platform,
   arch: Architecture,
   version: string,
-  inputs: Pick<
-    SetupInputs,
-    | "checksum"
-    | "githubToken"
-    | "manifestFile"
-    | "downloadFromAstralMirror"
-    | "requireIntrinsicChecksums"
-  >,
-): Promise<{ version: string; uvDir: string }> {
-  const key = `${arch}-${platform}-${version}`;
-  const intrinsicChecksum = inputs.requireIntrinsicChecksums
-    ? resolveChecksum(key, inputs)
-    : undefined;
-  let toolCacheName = TOOL_CACHE_NAME;
-  if (intrinsicChecksum !== undefined) {
-    // The regular tool cache can contain builds verified with a manifest checksum.
-    // Use only entries that were verified against this exact archive digest.
-    if (!/^[a-f0-9]{64}$/.test(intrinsicChecksum)) {
-      throw new Error(`Expected a SHA-256 checksum for ${key}.`);
-    }
-    toolCacheName = `${TOOL_CACHE_NAME}-${intrinsicChecksum}`;
-  }
-  const cached = tryGetFromToolCache(arch, version, toolCacheName);
-  if (cached.installedPath) {
-    log.info(`Found uv in tool-cache for ${cached.version}`);
-    return { uvDir: cached.installedPath, version: cached.version };
-  }
-
-  const artifact = await getArtifact(
-    version,
-    arch,
-    platform,
-    inputs.manifestFile,
-  );
+  checksum: string | undefined,
+  githubToken: string,
+  manifestUrl?: string,
+  downloadFromAstralMirror = true,
+  toolCacheName = TOOL_CACHE_NAME,
+): Promise<{ version: string; cachedToolDir: string }> {
+  const artifact = await getArtifact(version, arch, platform, manifestUrl);
 
   if (!artifact) {
     throw new Error(
-      getMissingArtifactMessage(version, arch, platform, inputs.manifestFile),
+      getMissingArtifactMessage(version, arch, platform, manifestUrl),
     );
   }
 
-  const checksum =
-    intrinsicChecksum ?? resolveChecksum(key, inputs, artifact.checksum);
+  // Custom manifests are explicitly selected by the user, so their checksum
+  // takes precedence over the built-in table. For the default manifest, pass
+  // its checksum as a fallback after user input and KNOWN_CHECKSUMS.
+  const resolvedChecksum =
+    manifestUrl === undefined
+      ? checksum
+      : resolveChecksum(checksum, artifact.checksum);
+  const manifestChecksum = artifact.checksum;
 
-  const mirrorUrl = inputs.downloadFromAstralMirror
+  const mirrorUrl = downloadFromAstralMirror
     ? rewriteToMirror(artifact.downloadUrl)
     : undefined;
   const downloadUrl = mirrorUrl ?? artifact.downloadUrl;
@@ -88,12 +83,14 @@ export async function installVersion(
   try {
     return await downloadArtifact(
       downloadUrl,
+      `uv-${arch}-${platform}`,
       platform,
       arch,
       version,
-      checksum,
+      resolvedChecksum,
+      manifestChecksum,
+      githubTokenForUrl(downloadUrl, githubToken),
       toolCacheName,
-      githubTokenForUrl(downloadUrl, inputs.githubToken),
     );
   } catch (err) {
     if (mirrorUrl === undefined) {
@@ -106,12 +103,14 @@ export async function installVersion(
 
     return await downloadArtifact(
       artifact.downloadUrl,
+      `uv-${arch}-${platform}`,
       platform,
       arch,
       version,
-      checksum,
+      resolvedChecksum,
+      manifestChecksum,
+      githubTokenForUrl(artifact.downloadUrl, githubToken),
       toolCacheName,
-      githubTokenForUrl(artifact.downloadUrl, inputs.githubToken),
     );
   }
 }
@@ -143,20 +142,29 @@ function githubTokenForUrl(
 
 async function downloadArtifact(
   downloadUrl: string,
+  artifactName: string,
   platform: Platform,
   arch: Architecture,
   version: string,
-  checksum: string,
-  toolCacheName: string,
+  checksum: string | undefined,
+  manifestChecksum: string | undefined,
   githubToken: string | undefined,
-): Promise<{ version: string; uvDir: string }> {
+  toolCacheName: string,
+): Promise<{ version: string; cachedToolDir: string }> {
   log.info(`Downloading uv from "${downloadUrl}" ...`);
   const downloadPath = await tc.downloadTool(
     downloadUrl,
     undefined,
     githubToken,
   );
-  await validateChecksum(downloadPath, checksum);
+  await validateChecksum(
+    checksum,
+    downloadPath,
+    arch,
+    platform,
+    version,
+    manifestChecksum,
+  );
 
   let uvDir: string;
   if (platform === "pc-windows-msvc") {
@@ -176,11 +184,11 @@ async function downloadArtifact(
     }
   } else {
     const extractedDir = await tc.extractTar(downloadPath);
-    uvDir = path.join(extractedDir, `uv-${arch}-${platform}`);
+    uvDir = path.join(extractedDir, artifactName);
   }
 
   const cachedToolDir = await tc.cacheDir(uvDir, toolCacheName, version, arch);
-  return { uvDir: cachedToolDir, version };
+  return { cachedToolDir, version };
 }
 
 function getMissingArtifactMessage(
@@ -194,6 +202,15 @@ function getMissingArtifactMessage(
   }
 
   return `manifest-file does not contain version ${version}, arch ${arch}, platform ${platform}.`;
+}
+
+function resolveChecksum(
+  checksum: string | undefined,
+  manifestChecksum: string,
+): string {
+  return checksum !== undefined && checksum !== ""
+    ? checksum
+    : manifestChecksum;
 }
 
 function getExtension(platform: Platform): string {
