@@ -6,7 +6,7 @@ Set up your GitHub Actions workflow with a specific version of [uv](https://docs
 - Cache the installed version of uv to speed up consecutive runs on self-hosted runners
 - Register problem matchers for error output
 - (Optional) Persist the uv's cache in the GitHub Actions Cache
-- (Optional) Verify the checksum of the downloaded uv executable
+- Verify the SHA-256 checksum of the downloaded uv archive
 
 ## Contents
 
@@ -74,6 +74,9 @@ Have a look under [Advanced Configuration](#advanced-configuration) for detailed
 
     # The checksum of the uv version to install
     checksum: ""
+
+    # Require a checksum bundled with setup-uv or supplied through the checksum input
+    require-intrinsic-checksums: "false"
 
     # Used when downloading uv from GitHub releases
     github-token: ${{ github.token }}

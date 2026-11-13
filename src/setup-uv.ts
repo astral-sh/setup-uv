@@ -3,10 +3,7 @@ import * as path from "node:path";
 import * as core from "@actions/core";
 import * as exec from "@actions/exec";
 import { restoreCache } from "./cache/restore-cache";
-import {
-  downloadVersion,
-  tryGetFromToolCache,
-} from "./download/download-version";
+import { installVersion } from "./download/download-version";
 import { STATE_UV_PATH, STATE_UV_VERSION } from "./utils/constants";
 import { CacheLocalSource, loadInputs, type SetupInputs } from "./utils/inputs";
 import * as log from "./utils/logging";
@@ -147,29 +144,7 @@ async function setupUv(
     versionFile: inputs.versionFile,
     workingDirectory: inputs.workingDirectory,
   });
-  const toolCacheResult = tryGetFromToolCache(arch, resolvedVersion);
-  if (toolCacheResult.installedPath) {
-    log.info(`Found uv in tool-cache for ${toolCacheResult.version}`);
-    return {
-      uvDir: toolCacheResult.installedPath,
-      version: toolCacheResult.version,
-    };
-  }
-
-  const downloadResult = await downloadVersion(
-    platform,
-    arch,
-    resolvedVersion,
-    inputs.checksum,
-    inputs.githubToken,
-    inputs.manifestFile,
-    inputs.downloadFromAstralMirror,
-  );
-
-  return {
-    uvDir: downloadResult.cachedToolDir,
-    version: downloadResult.version,
-  };
+  return installVersion(platform, arch, resolvedVersion, inputs);
 }
 
 function addUvToPathAndOutput(cachedPath: string): void {

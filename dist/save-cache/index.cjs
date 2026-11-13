@@ -66242,6 +66242,9 @@ function loadInputs() {
   const noProject = getBooleanInput("no-project");
   const venvPath = getVenvPath(workingDirectory, activateEnvironment);
   const checksum = getInput("checksum");
+  const requireIntrinsicChecksums = getBooleanInput(
+    "require-intrinsic-checksums"
+  );
   const enableCache = getEnableCache();
   const restoreCache2 = getInput("restore-cache") === "true";
   const saveCache4 = getSaveCache();
@@ -66286,6 +66289,7 @@ function loadInputs() {
     pythonDir,
     pythonVersion,
     quiet: quiet2,
+    requireIntrinsicChecksums,
     resolutionStrategy,
     restoreCache: restoreCache2,
     saveCache: saveCache4,

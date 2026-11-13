@@ -4,7 +4,7 @@ This document covers advanced customization options including checksum validatio
 
 ## Validate checksum
 
-Downloaded executables are automatically verified using checksums bundled with this action or,
+Downloaded archives are automatically verified using checksums bundled with this action or,
 for newer, not yet bundled versions, the checksum from [`astral-sh/versions`](https://github.com/astral-sh/versions).
 You can specify a checksum to override those values. The sha256 hashes can also be found on the
 [releases page](https://github.com/astral-sh/uv/releases) of the uv repo.
@@ -16,6 +16,15 @@ You can specify a checksum to override those values. The sha256 hashes can also 
     version: "0.3.1"
     checksum: "e11b01402ab645392c7ad6044db63d37e4fd1e745e015306993b07695ea5f9f8"
 ```
+
+Set `require-intrinsic-checksums: true` to accept only the SHA-256 digest supplied through
+`checksum` or bundled with setup-uv for the resolved uv version, architecture, and platform.
+This applies to custom manifests too. The manifest still supplies the download URL.
+If the resolved release has no bundled digest for your runner, update setup-uv or supply the
+archive's digest. Use `version: latest-known` to select the newest release in the bundled table.
+
+On runners with a persistent tool cache, this mode reuses only installations previously verified
+against the same digest. The first run may download uv again.
 
 ## Manifest file
 

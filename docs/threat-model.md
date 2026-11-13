@@ -38,7 +38,7 @@ Material failures are unauthorized executable selection, credential disclosure, 
 ### Security invariants
 
 1. **Published runtime:** review `action.yml`, committed `dist/*.cjs`, and runner-interpreted shipped files; source-only fixes do not protect consumers.
-2. **Executable identity:** precedence is workflow version, version file, project configuration, then `latest`. Manifest authority, platform, variant, URL, checksum, mirror fallback, extraction, and cache placement must bind the intended artifact. A tool-cache hit bypasses download validation and depends on cache provenance.
+2. **Executable identity:** precedence is workflow version, version file, project configuration, then `latest`. Manifest authority, platform, variant, URL, checksum, mirror fallback, extraction, and cache placement must bind the intended artifact. A tool-cache hit bypasses download validation and depends on cache provenance. With `require-intrinsic-checksums`, only entries keyed by the explicit or bundled archive digest are eligible.
 3. **Credential recipients:** tokens and URL credentials may reach only workflow-authorized origins, redirects, paths, and logs. Metadata authority does not imply token-recipient authority.
 4. **Executable boundaries:** checkout-selected interpreters are authorized by default. Explicit workflow selections must win, and independent cache, runner, or remote state must not substitute executables or gain additional authority.
 5. **Paths and action channels:** path/environment changes, virtual-environment clearing, outputs, state, and problem matchers must affect only authorized targets and keep untrusted values as data.
