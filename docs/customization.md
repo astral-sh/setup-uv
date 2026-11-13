@@ -17,11 +17,25 @@ You can specify a checksum to override those values. The sha256 hashes can also 
     checksum: "e11b01402ab645392c7ad6044db63d37e4fd1e745e015306993b07695ea5f9f8"
 ```
 
-Set `require-intrinsic-checksums: true` to accept only the SHA-256 digest supplied through
-`checksum` or bundled with setup-uv for the resolved uv version, architecture, and platform.
-This applies to custom manifests too. The manifest still supplies the download URL.
-If the resolved release has no bundled digest for your runner, update setup-uv or supply the
-archive's digest. Use `version: latest-known` to select the newest release in the bundled table.
+For an additional layer of protection, you can set `require-intrinsic-checksums: true`.
+This prevents setup-uv from trusting an unknown version's checksum from
+[`astral-sh/versions`](https://github.com/astral-sh/versions) *unless* it is also
+present in the action's own bundled data *or* explicitly provided with `checksum`.
+
+This can be combined with `version: latest-known` to select the newest bundled release,
+meaning that this newer requires an external checksum source:
+
+```yaml
+- name: Install the latest known version of uv
+  uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+  with:
+    version: latest-known
+    require-intrinsic-checksums: true
+```
+
+With this mode, you'll need to update setup-uv itself to get newer uv versions
+*unless* you explicitly pass in a `checksum` with a version that post-dates the setup-uv
+release.
 
 On runners with a persistent tool cache, this mode reuses only installations previously verified
 against the same digest. The first run may download uv again.
