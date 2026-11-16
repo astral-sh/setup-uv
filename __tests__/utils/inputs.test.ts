@@ -109,7 +109,13 @@ describe("loadInputs", () => {
     expect(inputs.exportPythonArch).toBe(false);
     expect(inputs.venvPath).toBe("/workspace/.venv");
     expect(inputs.manifestFile).toBeUndefined();
+    expect(inputs.requireChecksums).toBe(false);
     expect(inputs.resolutionStrategy).toBe("highest");
+  });
+
+  it("loads require-checksums", () => {
+    mockInputs["require-checksums"] = "true";
+    expect(loadInputs().requireChecksums).toBe(true);
   });
 
   it("uses the Python version from an explicitly selected .tool-versions file", () => {

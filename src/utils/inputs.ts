@@ -30,6 +30,7 @@ export interface SetupInputs {
   noProject: boolean;
   venvPath: string;
   checksum: string;
+  requireChecksums: boolean;
   enableCache: boolean;
   restoreCache: boolean;
   saveCache: boolean;
@@ -63,6 +64,7 @@ export function loadInputs(): SetupInputs {
   const noProject = core.getBooleanInput("no-project");
   const venvPath = getVenvPath(workingDirectory, activateEnvironment);
   const checksum = core.getInput("checksum");
+  const requireChecksums = core.getBooleanInput("require-checksums");
   const enableCache = getEnableCache();
   const restoreCache = core.getInput("restore-cache") === "true";
   const saveCache = getSaveCache();
@@ -110,6 +112,7 @@ export function loadInputs(): SetupInputs {
     pythonDir,
     pythonVersion,
     quiet,
+    requireChecksums,
     resolutionStrategy,
     restoreCache,
     saveCache,
