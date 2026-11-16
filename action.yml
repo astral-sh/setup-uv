@@ -30,7 +30,7 @@ inputs:
   checksum:
     description: "The checksum of the uv version to install"
     required: false
-  require-intrinsic-checksums:
+  require-checksums:
     description: "Require a SHA-256 checksum bundled with setup-uv or supplied through the checksum input."
     default: "false"
   github-token:

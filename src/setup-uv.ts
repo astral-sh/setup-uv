@@ -154,7 +154,7 @@ async function setupUv(
   });
   let checksum = inputs.checksum;
   let toolCacheName = TOOL_CACHE_NAME;
-  if (inputs.requireIntrinsicChecksums) {
+  if (inputs.requireChecksums) {
     checksum = getIntrinsicChecksum(
       `${arch}-${platform}-${resolvedVersion}`,
       inputs.checksum,

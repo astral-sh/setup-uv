@@ -19,7 +19,7 @@ inputs:
     type: string
   checksum:
     type: string
-  require-intrinsic-checksums:
+  require-checksums:
     type: boolean
   github-token:
     type: string

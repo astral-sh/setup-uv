@@ -17,7 +17,7 @@ Use `latest-known` to install the newest uv version whose checksums were bundled
 
 When `manifest-file` is set, `latest-known` still selects a version from setup-uv's bundled checksum table.
 By default the custom manifest supplies the artifact and checksum. To require a bundled or explicitly
-supplied checksum, enable `require-intrinsic-checksums`. [Checksum validation](customization.md#validate-checksum)
+supplied checksum, enable `require-checksums`. [Checksum validation](customization.md#validate-checksum)
 
 ```yaml
 - name: Install the latest version of uv known to setup-uv

@@ -23,7 +23,7 @@ export function getIntrinsicChecksum(
   const checksum = providedChecksum || KNOWN_CHECKSUMS[key];
   if (!checksum) {
     throw new Error(
-      `No bundled checksum for ${key}. With require-intrinsic-checksums enabled, update setup-uv or provide the checksum input for this archive.`,
+      `No bundled checksum for ${key}. With require-checksums enabled, update setup-uv or provide the checksum input for this archive.`,
     );
   }
   if (!/^[a-f0-9]{64}$/.test(checksum)) {

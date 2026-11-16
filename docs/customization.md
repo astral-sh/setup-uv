@@ -17,7 +17,7 @@ You can specify a checksum to override those values. The sha256 hashes can also 
     checksum: "e11b01402ab645392c7ad6044db63d37e4fd1e745e015306993b07695ea5f9f8"
 ```
 
-For an additional layer of protection, you can set `require-intrinsic-checksums: true`.
+For an additional layer of protection, you can set `require-checksums: true`.
 This prevents setup-uv from trusting an unknown version's checksum from
 [`astral-sh/versions`](https://github.com/astral-sh/versions) *unless* it is also
 present in the action's own bundled data *or* explicitly provided with `checksum`.
@@ -30,7 +30,7 @@ meaning that this newer requires an external checksum source:
   uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
   with:
     version: latest-known
-    require-intrinsic-checksums: true
+    require-checksums: true
 ```
 
 With this mode, you'll need to update setup-uv itself to get newer uv versions

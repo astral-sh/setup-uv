@@ -52,7 +52,7 @@ test("enforces intrinsic checksums on downloads and tool-cache hits", async () =
           "INPUT_MANIFEST-FILE": `data:application/json,${encodeURIComponent(manifest)}`,
           "INPUT_NO-PROJECT": "false",
           "INPUT_PYTHON-VERSION": "3.13",
-          "INPUT_REQUIRE-INTRINSIC-CHECKSUMS": String(strict),
+          "INPUT_REQUIRE-CHECKSUMS": String(strict),
           INPUT_VERSION: version,
           "INPUT_WORKING-DIRECTORY": dir,
           PATH: process.env.PATH,

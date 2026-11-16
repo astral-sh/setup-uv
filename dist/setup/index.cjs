@@ -102888,7 +102888,7 @@ function getIntrinsicChecksum(key, providedChecksum) {
   const checksum = providedChecksum || KNOWN_CHECKSUMS[key];
   if (!checksum) {
     throw new Error(
-      `No bundled checksum for ${key}. With require-intrinsic-checksums enabled, update setup-uv or provide the checksum input for this archive.`
+      `No bundled checksum for ${key}. With require-checksums enabled, update setup-uv or provide the checksum input for this archive.`
     );
   }
   if (!/^[a-f0-9]{64}$/.test(checksum)) {
@@ -103026,9 +103026,7 @@ function loadInputs() {
   const noProject = getBooleanInput("no-project");
   const venvPath = getVenvPath(workingDirectory, activateEnvironment2);
   const checksum = getInput("checksum");
-  const requireIntrinsicChecksums = getBooleanInput(
-    "require-intrinsic-checksums"
-  );
+  const requireChecksums = getBooleanInput("require-checksums");
   const enableCache = getEnableCache();
   const restoreCache3 = getInput("restore-cache") === "true";
   const saveCache2 = getSaveCache();
@@ -103073,7 +103071,7 @@ function loadInputs() {
     pythonDir,
     pythonVersion,
     quiet: quiet2,
-    requireIntrinsicChecksums,
+    requireChecksums,
     resolutionStrategy,
     restoreCache: restoreCache3,
     saveCache: saveCache2,
@@ -103513,7 +103511,7 @@ async function setupUv(inputs, platform2, arch3) {
   });
   let checksum = inputs.checksum;
   let toolCacheName = TOOL_CACHE_NAME;
-  if (inputs.requireIntrinsicChecksums) {
+  if (inputs.requireChecksums) {
     checksum = getIntrinsicChecksum(
       `${arch3}-${platform2}-${resolvedVersion}`,
       inputs.checksum

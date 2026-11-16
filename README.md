@@ -76,7 +76,7 @@ Have a look under [Advanced Configuration](#advanced-configuration) for detailed
     checksum: ""
 
     # Require a checksum bundled with setup-uv or supplied through the checksum input
-    require-intrinsic-checksums: "false"
+    require-checksums: "false"
 
     # Used when downloading uv from GitHub releases
     github-token: ${{ github.token }}
