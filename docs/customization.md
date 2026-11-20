@@ -11,7 +11,7 @@ You can specify a checksum to override those values. The sha256 hashes can also 
 
 ```yaml
 - name: Install a specific version and validate the checksum
-  uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+  uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
   with:
     version: "0.3.1"
     checksum: "e11b01402ab645392c7ad6044db63d37e4fd1e745e015306993b07695ea5f9f8"
@@ -27,7 +27,7 @@ meaning that this newer requires an external checksum source:
 
 ```yaml
 - name: Install the latest known version of uv
-  uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+  uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
   with:
     version: latest-known
     require-checksums: true
@@ -65,7 +65,7 @@ The `archive_format` field is currently ignored.
 
 ```yaml
 - name: Use a custom manifest file
-  uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+  uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
   with:
     manifest-file: "https://example.com/my-custom-manifest.ndjson"
 ```
@@ -84,7 +84,7 @@ You can disable this by setting the `add-problem-matchers` input to `false`.
 
 ```yaml
 - name: Install the latest version of uv without problem matchers
-  uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+  uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
   with:
     add-problem-matchers: false
 ```
