@@ -142,11 +142,13 @@ Have a look under [Advanced Configuration](#advanced-configuration) for detailed
 - `uv-version`: The installed uv version. Useful when using latest.
 - `uv-path`: The path to the installed uv binary.
 - `uvx-path`: The path to the installed uvx binary.
-- `cache-hit`: A boolean value to indicate a cache entry was found.
+- `cache-hit`: A boolean indicating whether the uv cache primary key matched exactly. False for fallback restores.
+- `cache-key`: The primary uv cache key used for saving.
+- `cache-matched-key`: The uv cache key that was restored, including fallback matches. Empty if no cache was restored.
 - `venv`: Path to the activated venv if activate-environment is true.
 - `python-version`: The Python version that was set.
 - `python-runtime-id`: An opaque identifier reported by uv for the activated venv's Python runtime. Empty when `activate-environment` is false.
-- `python-cache-hit`: A boolean indicating whether the Python cache was restored successfully.
+- `python-cache-hit`: A boolean indicating whether the Python primary key matched exactly and the cache was restored successfully. False for fallback restores.
 
 ### Python version
 

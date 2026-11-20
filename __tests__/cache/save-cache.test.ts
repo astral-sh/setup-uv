@@ -50,8 +50,12 @@ function infoMessages(): string[] {
 
 beforeEach(() => {
   delete process.env.UV_CACHE_DIR;
+  for (const key of Object.keys(state)) {
+    delete state[key];
+  }
   state["cache-key"] = cacheKey;
   state["cache-matched-key"] = "";
+  mockSaveCache.mockResolvedValue(42);
   mockLoadInputs.mockReturnValue(
     createSetupInputs({
       cacheLocalPath: { path: cacheDir, source: CacheLocalSource.Input },
@@ -64,14 +68,17 @@ afterAll(() => {
 });
 
 describe("saveCache", () => {
-  it("reports the saved key when the cache is saved", async () => {
-    mockSaveCache.mockResolvedValue(42);
+  it.each(["", "older-uv-cache-key"])(
+    "saves the primary key after a miss or fallback (%s)",
+    async (matchedKey) => {
+      state["cache-matched-key"] = matchedKey;
 
-    await run();
+      await run();
 
-    expect(mockSaveCache).toHaveBeenCalledWith([cacheDir], cacheKey);
-    expect(infoMessages()).toContain(`uv cache saved with key: ${cacheKey}`);
-  });
+      expect(mockSaveCache).toHaveBeenCalledWith([cacheDir], cacheKey);
+      expect(infoMessages()).toContain(`uv cache saved with key: ${cacheKey}`);
+    },
+  );
 
   it("does not report the cache as saved when saving fails", async () => {
     // @actions/cache logs the failure itself and returns -1
@@ -84,4 +91,39 @@ describe("saveCache", () => {
       `uv cache saved with key: ${cacheKey}`,
     );
   });
+
+  it("does not save an exact cache hit again", async () => {
+    state["cache-matched-key"] = cacheKey;
+
+    await run();
+
+    expect(mockSaveCache).not.toHaveBeenCalled();
+  });
+
+  it.each([false, true])(
+    "only saves a fallback Python cache if repair succeeded (failed=%s)",
+    async (failed) => {
+      state["python-cache-key"] = "new-python-cache-key";
+      state["python-cache-matched-key"] = "older-python-cache-key";
+      state["python-cache-restore-failed"] = String(failed);
+      mockLoadInputs.mockReturnValue(
+        createSetupInputs({
+          cacheLocalPath: { path: cacheDir, source: CacheLocalSource.Input },
+          cachePython: true,
+          pythonDir: cacheDir,
+        }),
+      );
+
+      await run();
+
+      expect(mockSaveCache.mock.calls).toEqual(
+        failed
+          ? [[[cacheDir], cacheKey]]
+          : [
+              [[cacheDir], cacheKey],
+              [[cacheDir], "new-python-cache-key"],
+            ],
+      );
+    },
+  );
 });

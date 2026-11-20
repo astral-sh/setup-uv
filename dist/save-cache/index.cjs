@@ -65478,7 +65478,9 @@ var warning2 = warning;
 // src/cache/restore-cache.ts
 var STATE_CACHE_KEY = "cache-key";
 var STATE_CACHE_MATCHED_KEY = "cache-matched-key";
+var STATE_PYTHON_CACHE_KEY = "python-cache-key";
 var STATE_PYTHON_CACHE_MATCHED_KEY = "python-cache-matched-key";
+var STATE_PYTHON_CACHE_RESTORE_FAILED = "python-cache-restore-failed";
 
 // src/utils/constants.ts
 var STATE_UV_PATH = "uv-path";
@@ -66621,13 +66623,23 @@ async function saveCache3(inputs) {
     }
   }
   if (inputs.cachePython) {
+    if (getState(STATE_PYTHON_CACHE_RESTORE_FAILED) === "true") {
+      warning2(
+        "Skipping Python cache save because post-restore repair failed."
+      );
+      return;
+    }
     if (!fs9.existsSync(inputs.pythonDir)) {
       warning2(
         `Python cache path ${inputs.pythonDir} does not exist on disk. Skipping Python cache save because no managed Python installation was found. If you want uv to install managed Python instead of using a system interpreter, set UV_PYTHON_PREFERENCE=only-managed.`
       );
       return;
     }
-    const pythonCacheKey = `${cacheKey}-python`;
+    const pythonCacheKey = getState(STATE_PYTHON_CACHE_KEY);
+    if (!pythonCacheKey) {
+      warning2("Error retrieving Python cache key from state.");
+      return;
+    }
     await saveCacheToKey(
       pythonCacheKey,
       inputs.pythonDir,

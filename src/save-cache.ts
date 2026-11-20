@@ -6,7 +6,9 @@ import * as pep440 from "@renovatebot/pep440";
 import {
   STATE_CACHE_KEY,
   STATE_CACHE_MATCHED_KEY,
+  STATE_PYTHON_CACHE_KEY,
   STATE_PYTHON_CACHE_MATCHED_KEY,
+  STATE_PYTHON_CACHE_RESTORE_FAILED,
 } from "./cache/restore-cache";
 import { STATE_UV_PATH, STATE_UV_VERSION } from "./utils/constants";
 import { loadInputs, type SetupInputs } from "./utils/inputs";
@@ -94,6 +96,12 @@ async function saveCache(inputs: SetupInputs): Promise<void> {
   }
 
   if (inputs.cachePython) {
+    if (core.getState(STATE_PYTHON_CACHE_RESTORE_FAILED) === "true") {
+      log.warning(
+        "Skipping Python cache save because post-restore repair failed.",
+      );
+      return;
+    }
     if (!fs.existsSync(inputs.pythonDir)) {
       log.warning(
         `Python cache path ${inputs.pythonDir} does not exist on disk. Skipping Python cache save because no managed Python installation was found. If you want uv to install managed Python instead of using a system interpreter, set UV_PYTHON_PREFERENCE=only-managed.`,
@@ -101,7 +109,11 @@ async function saveCache(inputs: SetupInputs): Promise<void> {
       return;
     }
 
-    const pythonCacheKey = `${cacheKey}-python`;
+    const pythonCacheKey = core.getState(STATE_PYTHON_CACHE_KEY);
+    if (!pythonCacheKey) {
+      log.warning("Error retrieving Python cache key from state.");
+      return;
+    }
     await saveCacheToKey(
       pythonCacheKey,
       inputs.pythonDir,
