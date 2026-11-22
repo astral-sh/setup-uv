@@ -146,6 +146,7 @@ async function setupUv(
   arch: Architecture,
 ): Promise<{ uvDir: string; version: string }> {
   const resolvedVersion = await resolveUvVersion({
+    downloadFromAstralMirror: inputs.downloadFromAstralMirror,
     manifestFile: inputs.manifestFile,
     resolutionStrategy: inputs.resolutionStrategy,
     version: inputs.version,

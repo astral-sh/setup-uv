@@ -87,7 +87,7 @@ inputs:
     description: "URL to a custom manifest file in the astral-sh/versions format."
     required: false
   download-from-astral-mirror:
-    description: "Download uv from the Astral mirror instead of directly from GitHub Releases."
+    description: "Download the default version manifest and uv from the Astral mirror instead of directly from GitHub."
     default: "true"
   add-problem-matchers:
     description: "Add problem matchers."

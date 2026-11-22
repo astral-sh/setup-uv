@@ -20,6 +20,7 @@ export interface ParsedVersionFile {
 }
 
 export interface ResolveUvVersionOptions {
+  downloadFromAstralMirror?: boolean;
   manifestFile?: string;
   resolutionStrategy?: ResolutionStrategy;
   version?: string;

@@ -12,7 +12,7 @@ import * as log from "../utils/logging";
 import type { Architecture, Platform } from "../utils/platforms";
 import { validateChecksum } from "./checksum/checksum";
 import { KNOWN_CHECKSUMS } from "./checksum/known-checksums";
-import { getArtifact } from "./manifest";
+import { getArtifact, getManifestUrl } from "./manifest";
 
 export { resolveVersion } from "../version/resolve";
 
@@ -58,7 +58,16 @@ export async function downloadVersion(
   downloadFromAstralMirror = true,
   toolCacheName = TOOL_CACHE_NAME,
 ): Promise<{ version: string; cachedToolDir: string }> {
-  const artifact = await getArtifact(version, arch, platform, manifestUrl);
+  const resolvedManifestUrl = getManifestUrl(
+    manifestUrl,
+    downloadFromAstralMirror,
+  );
+  const artifact = await getArtifact(
+    version,
+    arch,
+    platform,
+    resolvedManifestUrl,
+  );
 
   if (!artifact) {
     throw new Error(

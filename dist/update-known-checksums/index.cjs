@@ -53713,6 +53713,9 @@ function info2(msg) {
 // src/download/manifest.ts
 var cachedManifestData = /* @__PURE__ */ new Map();
 var MANIFEST_FETCH_ATTEMPTS = 3;
+function isDefaultManifestUrl(manifestUrl) {
+  return manifestUrl === void 0 || manifestUrl === VERSIONS_MANIFEST_URL || manifestUrl === GITHUB_VERSIONS_MANIFEST_URL;
+}
 async function fetchManifest(manifestUrl = VERSIONS_MANIFEST_URL) {
   const cachedManifest = cachedManifestData.get(manifestUrl);
   if (cachedManifest?.complete === true) {
@@ -53745,7 +53748,7 @@ function parseManifest(data, sourceDescription) {
   return versions;
 }
 async function getLatestVersion(manifestUrl = VERSIONS_MANIFEST_URL) {
-  const latestVersion = manifestUrl === VERSIONS_MANIFEST_URL ? (await findManifestVersion(() => true))?.version : (await fetchManifest(manifestUrl))[0]?.version;
+  const latestVersion = isDefaultManifestUrl(manifestUrl) ? (await findManifestVersion(manifestUrl, () => true))?.version : (await fetchManifest(manifestUrl))[0]?.version;
   if (latestVersion === void 0) {
     throw new Error("No versions found in manifest data");
   }
@@ -53791,19 +53794,16 @@ async function fetchManifestResponseFromUrl(manifestUrl) {
   }
   return response;
 }
-async function findManifestVersion(predicate) {
-  const cachedManifest = cachedManifestData.get(VERSIONS_MANIFEST_URL);
+async function findManifestVersion(manifestUrl, predicate) {
+  const cachedManifest = cachedManifestData.get(manifestUrl);
   const cachedVersion = cachedManifest?.versions.find(predicate);
   if (cachedVersion !== void 0 || cachedManifest?.complete === true) {
     return cachedVersion;
   }
-  const response = await fetchManifestResponse(VERSIONS_MANIFEST_URL);
+  const response = await fetchManifestResponse(manifestUrl);
   if (response.body === null) {
-    const versions2 = parseManifest(
-      await response.text(),
-      VERSIONS_MANIFEST_URL
-    );
-    cachedManifestData.set(VERSIONS_MANIFEST_URL, {
+    const versions2 = parseManifest(await response.text(), manifestUrl);
+    cachedManifestData.set(manifestUrl, {
       complete: true,
       versions: versions2
     });
@@ -53823,13 +53823,9 @@ async function findManifestVersion(predicate) {
         continue;
       }
       if (versions.length === 0) {
-        rejectLegacyManifest(record, VERSIONS_MANIFEST_URL);
+        rejectLegacyManifest(record, manifestUrl);
       }
-      const versionData = parseManifestRecord(
-        record,
-        VERSIONS_MANIFEST_URL,
-        lineNumber
-      );
+      const versionData = parseManifestRecord(record, manifestUrl, lineNumber);
       versions.push(versionData);
       if (predicate(versionData)) {
         matchedVersion = versionData;
@@ -53844,9 +53840,9 @@ async function findManifestVersion(predicate) {
     }
   }
   if (versions.length === 0) {
-    throw new Error(`Manifest at ${VERSIONS_MANIFEST_URL} is empty.`);
+    throw new Error(`Manifest at ${manifestUrl} is empty.`);
   }
-  cachedManifestData.set(VERSIONS_MANIFEST_URL, { complete, versions });
+  cachedManifestData.set(manifestUrl, { complete, versions });
   return matchedVersion;
 }
 function parseManifestRecord(record, sourceDescription, lineNumber) {

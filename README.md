@@ -127,7 +127,7 @@ Have a look under [Advanced Configuration](#advanced-configuration) for detailed
     # URL to a custom manifest file in the astral-sh/versions format
     manifest-file: ""
 
-    # Download uv from the Astral mirror instead of directly from GitHub Releases
+    # Download the default version manifest and uv from the Astral mirror instead of directly from GitHub
     download-from-astral-mirror: "true"
 
     # Add problem matchers

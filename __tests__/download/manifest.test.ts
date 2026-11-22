@@ -6,6 +6,10 @@ import {
   it,
   jest,
 } from "@jest/globals";
+import {
+  GITHUB_VERSIONS_MANIFEST_URL,
+  VERSIONS_MANIFEST_URL,
+} from "../../src/utils/constants";
 
 // biome-ignore lint/suspicious/noExplicitAny: Mock requires flexible typing in tests.
 const mockFetch = jest.fn<any>();
@@ -129,6 +133,23 @@ describe("manifest", () => {
       expect(mockFetch).toHaveBeenCalledTimes(4);
     });
 
+    it("does not request the Astral mirror when GitHub is selected", async () => {
+      jest.useFakeTimers();
+      mockFetch.mockRejectedValue(new Error("GitHub unavailable"));
+
+      const result = expect(
+        fetchManifest(GITHUB_VERSIONS_MANIFEST_URL),
+      ).rejects.toThrow("GitHub unavailable");
+      await jest.runAllTimersAsync();
+
+      await result;
+      expect(mockFetch.mock.calls.map(([url]) => url)).toEqual([
+        GITHUB_VERSIONS_MANIFEST_URL,
+        GITHUB_VERSIONS_MANIFEST_URL,
+        GITHUB_VERSIONS_MANIFEST_URL,
+      ]);
+    });
+
     it.each([404, 429, 503])(
       "falls back to a streaming GitHub manifest on mirror HTTP %s",
       async (status) => {
@@ -218,6 +239,22 @@ describe("manifest", () => {
 
       expect(mockFetch).toHaveBeenCalledTimes(1);
     });
+
+    it("keeps Astral and GitHub manifest caches separate", async () => {
+      mockFetch.mockResolvedValue(
+        createMockResponse(true, 200, "OK", sampleManifestResponse),
+      );
+
+      await fetchManifest(VERSIONS_MANIFEST_URL);
+      await fetchManifest(GITHUB_VERSIONS_MANIFEST_URL);
+      await fetchManifest(VERSIONS_MANIFEST_URL);
+      await fetchManifest(GITHUB_VERSIONS_MANIFEST_URL);
+
+      expect(mockFetch.mock.calls.map(([url]) => url)).toEqual([
+        VERSIONS_MANIFEST_URL,
+        GITHUB_VERSIONS_MANIFEST_URL,
+      ]);
+    });
   });
 
   describe("getAllVersions", () => {
@@ -243,6 +280,20 @@ describe("manifest", () => {
       await expect(
         getLatestVersion("https://example.com/custom.ndjson"),
       ).resolves.toBe("0.9.26");
+    });
+
+    it("uses the selected GitHub manifest without requesting Astral", async () => {
+      mockFetch.mockResolvedValue(
+        createStreamingMockResponse([`${sampleManifestResponse}\n`]),
+      );
+
+      await expect(
+        getLatestVersion(GITHUB_VERSIONS_MANIFEST_URL),
+      ).resolves.toBe("0.9.26");
+
+      expect(mockFetch.mock.calls.map(([url]) => url)).toEqual([
+        GITHUB_VERSIONS_MANIFEST_URL,
+      ]);
     });
 
     it("stops reading the default manifest after the first record", async () => {
@@ -297,6 +348,23 @@ describe("manifest", () => {
       expect(cancel).toHaveBeenCalledTimes(1);
     });
 
+    it("streams matching versions from the selected GitHub manifest", async () => {
+      mockFetch.mockResolvedValue(
+        createStreamingMockResponse([`${sampleManifestResponse}\n`]),
+      );
+
+      await expect(
+        getFirstMatchingVersion(
+          (version) => version === "0.9.25",
+          GITHUB_VERSIONS_MANIFEST_URL,
+        ),
+      ).resolves.toBe("0.9.25");
+
+      expect(mockFetch.mock.calls.map(([url]) => url)).toEqual([
+        GITHUB_VERSIONS_MANIFEST_URL,
+      ]);
+    });
+
     it("caches a fully consumed response stream", async () => {
       mockFetch.mockResolvedValue(
         createStreamingMockResponse(
@@ -332,6 +400,20 @@ describe("manifest", () => {
         downloadUrl:
           "https://github.com/astral-sh/uv/releases/download/0.9.26/uv-aarch64-apple-darwin.tar.gz",
       });
+    });
+
+    it("finds artifacts from the selected GitHub manifest", async () => {
+      const artifact = await getArtifact(
+        "0.9.26",
+        "aarch64",
+        "apple-darwin",
+        GITHUB_VERSIONS_MANIFEST_URL,
+      );
+
+      expect(artifact).toBeDefined();
+      expect(mockFetch.mock.calls.map(([url]) => url)).toEqual([
+        GITHUB_VERSIONS_MANIFEST_URL,
+      ]);
     });
 
     it("finds a windows artifact", async () => {

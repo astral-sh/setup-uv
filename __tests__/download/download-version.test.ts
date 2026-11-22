@@ -46,6 +46,16 @@ jest.unstable_mockModule("../../src/download/manifest", () => ({
   getArtifact: mockGetArtifact,
   getFirstMatchingVersion: mockGetFirstMatchingVersion,
   getLatestVersion: mockGetLatestVersion,
+  getManifestUrl: (manifestFile: string | undefined, useMirror = true) =>
+    manifestFile ??
+    (useMirror
+      ? undefined
+      : "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson"),
+  isDefaultManifestUrl: (manifestUrl: string | undefined) =>
+    manifestUrl === undefined ||
+    manifestUrl === VERSIONS_MANIFEST_URL ||
+    manifestUrl ===
+      "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson",
 }));
 
 // biome-ignore lint/suspicious/noExplicitAny: Mock requires flexible typing in tests.
@@ -95,6 +105,48 @@ describe("download-version", () => {
       expect(version).toBe("0.9.26");
       expect(mockGetLatestVersion).toHaveBeenCalledTimes(1);
       expect(mockGetLatestVersion).toHaveBeenCalledWith(undefined);
+    });
+
+    it("uses the GitHub manifest when the Astral mirror is disabled", async () => {
+      mockGetLatestVersion.mockResolvedValue("0.9.26");
+
+      const version = await resolveVersion(
+        "latest",
+        undefined,
+        "highest",
+        false,
+      );
+
+      expect(version).toBe("0.9.26");
+      expect(mockGetLatestVersion).toHaveBeenCalledWith(
+        "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson",
+      );
+    });
+
+    it("uses the GitHub manifest for highest range resolution when the Astral mirror is disabled", async () => {
+      mockGetFirstMatchingVersion.mockImplementation(
+        (predicate: (version: string) => boolean) =>
+          ["0.9.26", "0.9.25"].find(predicate),
+      );
+
+      await expect(
+        resolveVersion("^0.9.0", undefined, "highest", false),
+      ).resolves.toBe("0.9.26");
+      expect(mockGetFirstMatchingVersion).toHaveBeenCalledWith(
+        expect.any(Function),
+        "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson",
+      );
+    });
+
+    it("uses the GitHub manifest for lowest range resolution when the Astral mirror is disabled", async () => {
+      mockGetAllVersions.mockResolvedValue(["0.9.26", "0.9.25"]);
+
+      await expect(
+        resolveVersion("^0.9.0", undefined, "lowest", false),
+      ).resolves.toBe("0.9.25");
+      expect(mockGetAllVersions).toHaveBeenCalledWith(
+        "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson",
+      );
     });
 
     it("resolves latest-known without reading the manifest", async () => {
@@ -240,6 +292,64 @@ describe("download-version", () => {
   });
 
   describe("downloadVersion", () => {
+    it("uses the GitHub manifest for artifact lookup when the Astral mirror is disabled", async () => {
+      mockGetArtifact.mockResolvedValue({
+        archiveFormat: "tar.gz",
+        checksum: "manifest-checksum",
+        downloadUrl: "https://example.com/uv.tar.gz",
+      });
+
+      await downloadVersion(
+        "unknown-linux-gnu",
+        "x86_64",
+        "0.9.26",
+        undefined,
+        "token",
+        undefined,
+        false,
+      );
+
+      expect(mockGetArtifact).toHaveBeenCalledWith(
+        "0.9.26",
+        "x86_64",
+        "unknown-linux-gnu",
+        "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson",
+      );
+      expect(mockValidateChecksum).toHaveBeenCalledWith(
+        undefined,
+        "/tmp/downloaded",
+        "x86_64",
+        "unknown-linux-gnu",
+        "0.9.26",
+        "manifest-checksum",
+      );
+    });
+
+    it("uses a custom manifest regardless of the mirror setting", async () => {
+      mockGetArtifact.mockResolvedValue({
+        archiveFormat: "tar.gz",
+        checksum: "manifest-checksum",
+        downloadUrl: "https://example.com/uv.tar.gz",
+      });
+
+      await downloadVersion(
+        "unknown-linux-gnu",
+        "x86_64",
+        "0.9.26",
+        undefined,
+        "token",
+        "https://example.com/custom.ndjson",
+        false,
+      );
+
+      expect(mockGetArtifact).toHaveBeenCalledWith(
+        "0.9.26",
+        "x86_64",
+        "unknown-linux-gnu",
+        "https://example.com/custom.ndjson",
+      );
+    });
+
     it("fails when manifest lookup fails", async () => {
       mockGetArtifact.mockRejectedValue(new Error("manifest unavailable"));
 
