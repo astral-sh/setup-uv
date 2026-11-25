@@ -683,11 +683,14 @@ jobs:
 
   test-setup-cache-dependency-glob:
     runs-on: ubuntu-latest
+    outputs:
+      cache-key: ${{ steps.setup.outputs.cache-key }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Setup with cache
+        id: setup
         uses: $/
         with:
           enable-cache: true
@@ -713,18 +716,24 @@ jobs:
         uses: $/
         with:
           enable-cache: true
+          cache-python: true
           cache-dependency-glob: |
             __tests__/fixtures/uv-project/uv.lock
             **/pyproject.toml
           cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-dependency-glob
           ignore-nothing-to-cache: true
-      - name: Cache was not hit
+      - name: Dependency cache was restored through fallback without cached Python
         run: |
-          if [ "$CACHE_HIT" == "true" ]; then
-            exit 1
-          fi
+          test -n "$EXPECTED_KEY"
+          test -n "$MATCHED_KEY"
+          test "$CACHE_HIT" = "false"
+          test "$MATCHED_KEY" = "$EXPECTED_KEY"
+          test "$MATCHED_KEY" != "$CACHE_KEY"
         env:
           CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
+          CACHE_KEY: ${{ steps.restore.outputs.cache-key }}
+          EXPECTED_KEY: ${{ needs.test-setup-cache-dependency-glob.outputs.cache-key }}
+          MATCHED_KEY: ${{ steps.restore.outputs.cache-matched-key }}
 
   test-setup-cache-save-cache-false:
     runs-on: ubuntu-latest
@@ -753,14 +762,16 @@ jobs:
         uses: $/
         with:
           enable-cache: true
+          save-cache: false
           cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-save-cache-false
-      - name: Cache was not hit
+      - name: No cache was restored
         run: |
-          if [ "$CACHE_HIT" == "true" ]; then
+          if [ "$CACHE_HIT" == "true" ] || [ -n "$MATCHED_KEY" ]; then
             exit 1
           fi
         env:
           CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
+          MATCHED_KEY: ${{ steps.restore.outputs.cache-matched-key }}
 
   test-setup-cache-restore-cache-false:
     runs-on: ubuntu-latest
@@ -790,13 +801,14 @@ jobs:
           enable-cache: true
           restore-cache: false
           cache-suffix: ${{ github.run_id }}-${{ github.run_attempt }}-test-setup-cache-restore-cache-false
-      - name: Cache was not hit
+      - name: No cache was restored
         run: |
-          if [ "$CACHE_HIT" == "true" ]; then
+          if [ "$CACHE_HIT" == "true" ] || [ -n "$MATCHED_KEY" ]; then
             exit 1
           fi
         env:
           CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
+          MATCHED_KEY: ${{ steps.restore.outputs.cache-matched-key }}
 
   test-cache-local:
     strategy:

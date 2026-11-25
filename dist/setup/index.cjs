@@ -59866,6 +59866,9 @@ function saveState(name, value) {
   issueCommand("save-state", { name }, toCommandValue(value));
 }
 
+// src/cache/restore-cache.ts
+var import_node_crypto4 = require("node:crypto");
+
 // node_modules/@actions/cache/lib/cache.js
 var path7 = __toESM(require("path"), 1);
 
@@ -94788,15 +94791,22 @@ async function resolvesWithAccessDenied(link) {
 // src/cache/restore-cache.ts
 var STATE_CACHE_KEY = "cache-key";
 var STATE_CACHE_MATCHED_KEY = "cache-matched-key";
+var STATE_PYTHON_CACHE_KEY = "python-cache-key";
 var STATE_PYTHON_CACHE_MATCHED_KEY = "python-cache-matched-key";
-var CACHE_VERSION = "2";
+var STATE_PYTHON_CACHE_RESTORE_FAILED = "python-cache-restore-failed";
+var CACHE_VERSION = "3";
 async function restoreCache2(inputs, pythonVersion) {
-  const cacheKey = await computeKeys(inputs, pythonVersion);
-  saveState(STATE_CACHE_KEY, cacheKey);
-  setOutput("cache-key", cacheKey);
+  const cacheKeys = await computeKeys(inputs, pythonVersion);
+  saveState(STATE_CACHE_KEY, cacheKeys.uv.primary);
+  setOutput("cache-key", cacheKeys.uv.primary);
+  setOutput("cache-hit", false);
+  setOutput("cache-matched-key", "");
+  setOutput("python-cache-hit", false);
+  if (inputs.cachePython) {
+    saveState(STATE_PYTHON_CACHE_KEY, cacheKeys.python.primary);
+  }
   if (!inputs.restoreCache) {
     info2("restore-cache is false. Skipping restore cache step.");
-    setOutput("python-cache-hit", false);
     return;
   }
   if (inputs.cacheLocalPath === void 0) {
@@ -94804,15 +94814,16 @@ async function restoreCache2(inputs, pythonVersion) {
       "cache-local-path is not set. Cannot restore cache without a valid cache path."
     );
   }
-  await restoreCacheFromKey(
-    cacheKey,
+  const matchedKey = await restoreCacheFromKey(
+    cacheKeys.uv,
     inputs.cacheLocalPath.path,
     STATE_CACHE_MATCHED_KEY,
     "cache-hit"
   );
+  setOutput("cache-matched-key", matchedKey ?? "");
   if (inputs.cachePython) {
     await restoreCacheFromKey(
-      `${cacheKey}-python`,
+      cacheKeys.python,
       inputs.pythonDir,
       STATE_PYTHON_CACHE_MATCHED_KEY,
       "python-cache-hit",
@@ -94820,19 +94831,19 @@ async function restoreCache2(inputs, pythonVersion) {
       // https://github.com/actions/toolkit/issues/2562
       process.platform === "win32" ? repairPythonJunctions : void 0
     );
-  } else {
-    setOutput("python-cache-hit", false);
   }
 }
-async function restoreCacheFromKey(cacheKey, cachePath, stateKey, outputKey, afterRestore) {
+async function restoreCacheFromKey(keys, cachePath, stateKey, outputKey, afterRestore) {
   info2(
-    `Trying to restore cache from GitHub Actions cache with key: ${cacheKey}`
+    `Trying to restore cache from GitHub Actions cache with key: ${keys.primary}`
   );
+  let matchedKey;
   try {
-    const matchedKey = await restoreCache([cachePath], cacheKey);
+    matchedKey = await restoreCache([cachePath], keys.primary, [
+      keys.restore
+    ]);
     if (!matchedKey) {
-      info2(`No GitHub Actions cache found for key: ${cacheKey}`);
-      setOutput(outputKey, false);
+      info2(`No GitHub Actions cache found for key: ${keys.primary}`);
       return;
     }
     saveState(stateKey, matchedKey);
@@ -94840,11 +94851,14 @@ async function restoreCacheFromKey(cacheKey, cachePath, stateKey, outputKey, aft
     info2(
       `cache restored from GitHub Actions cache with key: ${matchedKey}`
     );
-    setOutput(outputKey, true);
+    setOutput(outputKey, matchedKey === keys.primary);
+    return matchedKey;
   } catch (err) {
     const message = err.message;
     warning2(message);
-    setOutput(outputKey, false);
+    if (matchedKey && afterRestore) {
+      saveState(STATE_PYTHON_CACHE_RESTORE_FAILED, true);
+    }
   }
 }
 async function computeKeys(inputs, pythonVersion) {
@@ -94866,14 +94880,24 @@ async function computeKeys(inputs, pythonVersion) {
   if (cacheDependencyPathHash === "-") {
     cacheDependencyPathHash = "-no-dependency-glob";
   }
-  const suffix = inputs.cacheSuffix ? `-${encodeURIComponent(inputs.cacheSuffix)}` : "";
+  const suffix = (0, import_node_crypto4.createHash)("sha256").update(inputs.cacheSuffix).digest("hex");
   const version3 = encodeURIComponent(pythonVersion ?? "unknown");
   const pythonArchKey = inputs.pythonArch ? `-python-${encodeURIComponent(inputs.pythonArch)}` : "";
   const platform2 = await getPlatform();
   const osNameVersion = getOSNameVersion();
   const pruned = inputs.pruneCache ? "-pruned" : "";
-  const python = inputs.cachePython ? "-py" : "";
-  return `setup-uv-${CACHE_VERSION}-${getArch()}-${platform2}-${osNameVersion}-${version3}${pythonArchKey}${pruned}${python}${cacheDependencyPathHash}${suffix}`;
+  const prefix2 = `setup-uv-${CACHE_VERSION}-${getArch()}-${platform2}-${osNameVersion}-${version3}${pythonArchKey}${pruned}-${suffix}-`;
+  const dependencyHash = cacheDependencyPathHash.slice(1);
+  return {
+    python: {
+      primary: `${prefix2}python-${dependencyHash}`,
+      restore: `${prefix2}python-`
+    },
+    uv: {
+      primary: `${prefix2}uv-${dependencyHash}`,
+      restore: `${prefix2}uv-`
+    }
+  };
 }
 
 // src/download/download-version.ts
