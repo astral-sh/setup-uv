@@ -28,13 +28,48 @@ export interface ArtifactResult {
   downloadUrl: string;
 }
 
+export interface ArtifactLookupResult {
+  artifact: ArtifactResult | undefined;
+  manifestUrl: string;
+}
+
 interface CachedManifest {
   complete: boolean;
+  sourceUrl: string;
   versions: ManifestVersion[];
+}
+
+interface ManifestResponse {
+  response: Awaited<ReturnType<typeof fetch>>;
+  sourceUrl: string;
+}
+
+interface ManifestVersionLookupResult {
+  manifestUrl: string;
+  version: ManifestVersion | undefined;
 }
 
 const cachedManifestData = new Map<string, CachedManifest>();
 export const MANIFEST_FETCH_ATTEMPTS = 3;
+
+export function getManifestUrl(
+  manifestFile: string | undefined,
+  downloadFromAstralMirror = true,
+): string | undefined {
+  if (manifestFile !== undefined) {
+    return manifestFile;
+  }
+
+  return downloadFromAstralMirror ? undefined : GITHUB_VERSIONS_MANIFEST_URL;
+}
+
+export function isDefaultManifestUrl(manifestUrl: string | undefined): boolean {
+  return (
+    manifestUrl === undefined ||
+    manifestUrl === VERSIONS_MANIFEST_URL ||
+    manifestUrl === GITHUB_VERSIONS_MANIFEST_URL
+  );
+}
 
 export async function fetchManifest(
   manifestUrl: string = VERSIONS_MANIFEST_URL,
@@ -45,10 +80,14 @@ export async function fetchManifest(
     return cachedManifest.versions;
   }
 
-  const response = await fetchManifestResponse(manifestUrl);
+  const { response, sourceUrl } = await fetchManifestResponse(manifestUrl);
   const body = await response.text();
-  const versions = parseManifest(body, manifestUrl);
-  cachedManifestData.set(manifestUrl, { complete: true, versions });
+  const versions = parseManifest(body, sourceUrl);
+  cachedManifestData.set(manifestUrl, {
+    complete: true,
+    sourceUrl,
+    versions,
+  });
   return versions;
 }
 
@@ -84,10 +123,9 @@ export function parseManifest(
 export async function getLatestVersion(
   manifestUrl: string = VERSIONS_MANIFEST_URL,
 ): Promise<string> {
-  const latestVersion =
-    manifestUrl === VERSIONS_MANIFEST_URL
-      ? (await findManifestVersion(() => true))?.version
-      : (await fetchManifest(manifestUrl))[0]?.version;
+  const latestVersion = isDefaultManifestUrl(manifestUrl)
+    ? (await findManifestVersion(manifestUrl, () => true)).version?.version
+    : (await fetchManifest(manifestUrl))[0]?.version;
 
   if (latestVersion === undefined) {
     throw new Error("No versions found in manifest data");
@@ -101,10 +139,18 @@ export async function getLatestVersion(
 // https://github.com/astral-sh/versions#format
 export async function getFirstMatchingVersion(
   predicate: (version: string) => boolean,
+  manifestUrl: string = VERSIONS_MANIFEST_URL,
 ): Promise<string | undefined> {
-  return (
-    await findManifestVersion((versionData) => predicate(versionData.version))
-  )?.version;
+  const versionData = isDefaultManifestUrl(manifestUrl)
+    ? (
+        await findManifestVersion(manifestUrl, (candidate) =>
+          predicate(candidate.version),
+        )
+      ).version
+    : (await fetchManifest(manifestUrl)).find((candidate) =>
+        predicate(candidate.version),
+      );
+  return versionData?.version;
 }
 
 export async function getAllVersions(
@@ -123,29 +169,47 @@ export async function getArtifact(
   platform: string,
   manifestUrl: string = VERSIONS_MANIFEST_URL,
 ): Promise<ArtifactResult | undefined> {
-  const versionData =
-    manifestUrl === VERSIONS_MANIFEST_URL
-      ? await findManifestVersion((candidate) => candidate.version === version)
-      : (await fetchManifest(manifestUrl)).find(
+  return (
+    await getArtifactWithManifestUrl(version, arch, platform, manifestUrl)
+  ).artifact;
+}
+
+export async function getArtifactWithManifestUrl(
+  version: string,
+  arch: string,
+  platform: string,
+  manifestUrl: string = VERSIONS_MANIFEST_URL,
+): Promise<ArtifactLookupResult> {
+  const manifestResult = isDefaultManifestUrl(manifestUrl)
+    ? await findManifestVersion(
+        manifestUrl,
+        (candidate) => candidate.version === version,
+      )
+    : {
+        manifestUrl,
+        version: (await fetchManifest(manifestUrl)).find(
           (candidate) => candidate.version === version,
-        );
-  if (!versionData) {
-    core.debug(`Version ${version} not found in manifest ${manifestUrl}`);
-    return undefined;
+        ),
+      };
+  if (!manifestResult.version) {
+    core.debug(
+      `Version ${version} not found in manifest ${manifestResult.manifestUrl}`,
+    );
+    return { artifact: undefined, manifestUrl: manifestResult.manifestUrl };
   }
 
   const targetPlatform = `${arch}-${platform}`;
-  const matchingArtifacts = versionData.artifacts.filter(
+  const matchingArtifacts = manifestResult.version.artifacts.filter(
     (candidate) => candidate.platform === targetPlatform,
   );
 
   if (matchingArtifacts.length === 0) {
     core.debug(
-      `Artifact for ${targetPlatform} not found in version ${version}. Available platforms: ${versionData.artifacts
+      `Artifact for ${targetPlatform} not found in version ${version}. Available platforms: ${manifestResult.version.artifacts
         .map((candidate) => candidate.platform)
         .join(", ")}`,
     );
-    return undefined;
+    return { artifact: undefined, manifestUrl: manifestResult.manifestUrl };
   }
 
   const artifact = selectDefaultVariant(
@@ -154,9 +218,12 @@ export async function getArtifact(
   );
 
   return {
-    archiveFormat: artifact.archive_format,
-    checksum: artifact.sha256,
-    downloadUrl: artifact.url,
+    artifact: {
+      archiveFormat: artifact.archive_format,
+      checksum: artifact.sha256,
+      downloadUrl: artifact.url,
+    },
+    manifestUrl: manifestResult.manifestUrl,
   };
 }
 
@@ -169,9 +236,14 @@ export function clearManifestCache(manifestUrl?: string): void {
   cachedManifestData.delete(manifestUrl);
 }
 
-async function fetchManifestResponse(manifestUrl: string) {
+async function fetchManifestResponse(
+  manifestUrl: string,
+): Promise<ManifestResponse> {
   try {
-    return await fetchManifestResponseFromUrl(manifestUrl);
+    return {
+      response: await fetchManifestResponseFromUrl(manifestUrl),
+      sourceUrl: manifestUrl,
+    };
   } catch (error) {
     if (manifestUrl !== VERSIONS_MANIFEST_URL) {
       throw error;
@@ -179,7 +251,12 @@ async function fetchManifestResponse(manifestUrl: string) {
     log.info(
       `Failed to fetch manifest from Astral mirror, falling back to GitHub: ${(error as Error).message}`,
     );
-    return await fetchManifestResponseFromUrl(GITHUB_VERSIONS_MANIFEST_URL);
+    return {
+      response: await fetchManifestResponseFromUrl(
+        GITHUB_VERSIONS_MANIFEST_URL,
+      ),
+      sourceUrl: GITHUB_VERSIONS_MANIFEST_URL,
+    };
   }
 }
 
@@ -214,25 +291,27 @@ async function fetchManifestResponseFromUrl(manifestUrl: string) {
 }
 
 async function findManifestVersion(
+  manifestUrl: string,
   predicate: (versionData: ManifestVersion) => boolean,
-): Promise<ManifestVersion | undefined> {
-  const cachedManifest = cachedManifestData.get(VERSIONS_MANIFEST_URL);
+): Promise<ManifestVersionLookupResult> {
+  const cachedManifest = cachedManifestData.get(manifestUrl);
   const cachedVersion = cachedManifest?.versions.find(predicate);
   if (cachedVersion !== undefined || cachedManifest?.complete === true) {
-    return cachedVersion;
+    return {
+      manifestUrl: cachedManifest?.sourceUrl ?? manifestUrl,
+      version: cachedVersion,
+    };
   }
 
-  const response = await fetchManifestResponse(VERSIONS_MANIFEST_URL);
+  const { response, sourceUrl } = await fetchManifestResponse(manifestUrl);
   if (response.body === null) {
-    const versions = parseManifest(
-      await response.text(),
-      VERSIONS_MANIFEST_URL,
-    );
-    cachedManifestData.set(VERSIONS_MANIFEST_URL, {
+    const versions = parseManifest(await response.text(), sourceUrl);
+    cachedManifestData.set(manifestUrl, {
       complete: true,
+      sourceUrl,
       versions,
     });
-    return versions.find(predicate);
+    return { manifestUrl: sourceUrl, version: versions.find(predicate) };
   }
 
   const input = Readable.fromWeb(response.body);
@@ -251,14 +330,10 @@ async function findManifestVersion(
       }
 
       if (versions.length === 0) {
-        rejectLegacyManifest(record, VERSIONS_MANIFEST_URL);
+        rejectLegacyManifest(record, sourceUrl);
       }
 
-      const versionData = parseManifestRecord(
-        record,
-        VERSIONS_MANIFEST_URL,
-        lineNumber,
-      );
+      const versionData = parseManifestRecord(record, sourceUrl, lineNumber);
       versions.push(versionData);
       if (predicate(versionData)) {
         matchedVersion = versionData;
@@ -275,11 +350,11 @@ async function findManifestVersion(
   }
 
   if (versions.length === 0) {
-    throw new Error(`Manifest at ${VERSIONS_MANIFEST_URL} is empty.`);
+    throw new Error(`Manifest at ${sourceUrl} is empty.`);
   }
 
-  cachedManifestData.set(VERSIONS_MANIFEST_URL, { complete, versions });
-  return matchedVersion;
+  cachedManifestData.set(manifestUrl, { complete, sourceUrl, versions });
+  return { manifestUrl: sourceUrl, version: matchedVersion };
 }
 
 function manifestSource(manifestUrl: string): string {

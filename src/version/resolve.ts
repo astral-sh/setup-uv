@@ -7,8 +7,9 @@ import {
   getAllVersions,
   getFirstMatchingVersion,
   getLatestVersion,
+  getManifestUrl,
+  isDefaultManifestUrl,
 } from "../download/manifest";
-import { VERSIONS_MANIFEST_URL } from "../utils/constants";
 import type { ResolutionStrategy } from "../utils/inputs";
 import * as log from "../utils/logging";
 import {
@@ -91,11 +92,11 @@ class RangeVersionResolver implements ConcreteVersionResolver {
     let resolvedVersion: string | undefined;
     if (
       context.resolutionStrategy === "highest" &&
-      (context.manifestUrl === undefined ||
-        context.manifestUrl === VERSIONS_MANIFEST_URL)
+      isDefaultManifestUrl(context.manifestUrl)
     ) {
       resolvedVersion = await findHighestSatisfyingVersion(
         context.parsedSpecifier.normalized,
+        context.manifestUrl,
       );
     } else {
       const availableVersions = await getAllVersions(context.manifestUrl);
@@ -132,6 +133,7 @@ export async function resolveUvVersion(
     request.specifier,
     options.manifestFile,
     resolutionStrategy,
+    options.downloadFromAstralMirror,
   );
 
   return version;
@@ -141,6 +143,7 @@ export async function resolveVersion(
   versionInput: string,
   manifestUrl: string | undefined,
   resolutionStrategy: ResolutionStrategy = "highest",
+  downloadFromAstralMirror = true,
 ): Promise<string> {
   core.debug(`Resolving version: ${versionInput}`);
 
@@ -149,7 +152,7 @@ export async function resolveVersion(
   }
 
   const context: ConcreteVersionResolutionContext = {
-    manifestUrl,
+    manifestUrl: getManifestUrl(manifestUrl, downloadFromAstralMirror),
     parsedSpecifier: parseVersionSpecifier(versionInput),
     resolutionStrategy,
   };
@@ -166,6 +169,7 @@ export async function resolveVersion(
 
 async function findHighestSatisfyingVersion(
   versionSpecifier: string,
+  manifestUrl: string | undefined,
 ): Promise<string | undefined> {
   // This fast path assumes uv releases are semver-monotonic: newer manifest
   // entries always have higher versions, with no lower-version backports.
@@ -173,8 +177,9 @@ async function findHighestSatisfyingVersion(
     ? null
     : semver.validRange(versionSpecifier);
   if (semverRange !== null) {
-    const semverMatch = await getFirstMatchingVersion((version) =>
-      semver.satisfies(version, semverRange),
+    const semverMatch = await getFirstMatchingVersion(
+      (version) => semver.satisfies(version, semverRange),
+      manifestUrl,
     );
     if (semverMatch !== undefined) {
       core.debug(
@@ -184,8 +189,9 @@ async function findHighestSatisfyingVersion(
     }
   }
 
-  const pep440Match = await getFirstMatchingVersion((version) =>
-    pep440.satisfies(version, versionSpecifier),
+  const pep440Match = await getFirstMatchingVersion(
+    (version) => pep440.satisfies(version, versionSpecifier),
+    manifestUrl,
   );
   if (pep440Match !== undefined) {
     core.debug(

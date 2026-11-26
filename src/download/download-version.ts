@@ -6,13 +6,12 @@ import {
   ASTRAL_MIRROR_PREFIX,
   GITHUB_RELEASES_PREFIX,
   TOOL_CACHE_NAME,
-  VERSIONS_MANIFEST_URL,
 } from "../utils/constants";
 import * as log from "../utils/logging";
 import type { Architecture, Platform } from "../utils/platforms";
 import { validateChecksum } from "./checksum/checksum";
 import { KNOWN_CHECKSUMS } from "./checksum/known-checksums";
-import { getArtifact } from "./manifest";
+import { getArtifactWithManifestUrl, getManifestUrl } from "./manifest";
 
 export { resolveVersion } from "../version/resolve";
 
@@ -58,13 +57,28 @@ export async function downloadVersion(
   downloadFromAstralMirror = true,
   toolCacheName = TOOL_CACHE_NAME,
 ): Promise<{ version: string; cachedToolDir: string }> {
-  const artifact = await getArtifact(version, arch, platform, manifestUrl);
+  const resolvedManifestUrl = getManifestUrl(
+    manifestUrl,
+    downloadFromAstralMirror,
+  );
+  const artifactLookup = await getArtifactWithManifestUrl(
+    version,
+    arch,
+    platform,
+    resolvedManifestUrl,
+  );
 
-  if (!artifact) {
+  if (!artifactLookup.artifact) {
     throw new Error(
-      getMissingArtifactMessage(version, arch, platform, manifestUrl),
+      getMissingArtifactMessage(
+        version,
+        arch,
+        platform,
+        artifactLookup.manifestUrl,
+      ),
     );
   }
+  const artifact = artifactLookup.artifact;
 
   // Custom manifests are explicitly selected by the user, so their checksum
   // takes precedence over the built-in table. For the default manifest, pass
@@ -195,13 +209,9 @@ function getMissingArtifactMessage(
   version: string,
   arch: Architecture,
   platform: Platform,
-  manifestUrl?: string,
+  manifestUrl: string,
 ): string {
-  if (manifestUrl === undefined) {
-    return `Could not find artifact for version ${version}, arch ${arch}, platform ${platform} in ${VERSIONS_MANIFEST_URL} .`;
-  }
-
-  return `manifest-file does not contain version ${version}, arch ${arch}, platform ${platform}.`;
+  return `Could not find artifact for version ${version}, arch ${arch}, platform ${platform} in ${manifestUrl}.`;
 }
 
 function resolveChecksum(
