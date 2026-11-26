@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import * as semver from "semver";
-import { VERSIONS_MANIFEST_URL } from "../../src/utils/constants";
+import {
+  GITHUB_VERSIONS_MANIFEST_URL,
+  VERSIONS_MANIFEST_URL,
+} from "../../src/utils/constants";
 
 const mockInfo = jest.fn();
 const mockWarning = jest.fn();
@@ -44,6 +47,15 @@ const mockGetArtifact = jest.fn<any>();
 jest.unstable_mockModule("../../src/download/manifest", () => ({
   getAllVersions: mockGetAllVersions,
   getArtifact: mockGetArtifact,
+  getArtifactWithManifestUrl: async (
+    version: string,
+    arch: string,
+    platform: string,
+    manifestUrl: string | undefined,
+  ) => ({
+    artifact: await mockGetArtifact(version, arch, platform, manifestUrl),
+    manifestUrl: manifestUrl ?? VERSIONS_MANIFEST_URL,
+  }),
   getFirstMatchingVersion: mockGetFirstMatchingVersion,
   getLatestVersion: mockGetLatestVersion,
   getManifestUrl: (manifestFile: string | undefined, useMirror = true) =>
@@ -313,7 +325,7 @@ describe("download-version", () => {
         "0.9.26",
         "x86_64",
         "unknown-linux-gnu",
-        "https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson",
+        GITHUB_VERSIONS_MANIFEST_URL,
       );
       expect(mockValidateChecksum).toHaveBeenCalledWith(
         undefined,
@@ -379,11 +391,47 @@ describe("download-version", () => {
           "token",
         ),
       ).rejects.toThrow(
-        "Could not find artifact for version 0.9.26, arch x86_64, platform unknown-linux-gnu in https://releases.astral.sh/github/versions/main/v1/uv.ndjson .",
+        `Could not find artifact for version 0.9.26, arch x86_64, platform unknown-linux-gnu in ${VERSIONS_MANIFEST_URL}.`,
       );
 
       expect(mockDownloadTool).not.toHaveBeenCalled();
       expect(mockValidateChecksum).not.toHaveBeenCalled();
+    });
+
+    it("reports the direct GitHub manifest when no matching artifact exists", async () => {
+      mockGetArtifact.mockResolvedValue(undefined);
+
+      await expect(
+        downloadVersion(
+          "unknown-linux-gnu",
+          "x86_64",
+          "0.9.26",
+          undefined,
+          "token",
+          undefined,
+          false,
+        ),
+      ).rejects.toThrow(
+        `Could not find artifact for version 0.9.26, arch x86_64, platform unknown-linux-gnu in ${GITHUB_VERSIONS_MANIFEST_URL}.`,
+      );
+    });
+
+    it("reports the custom manifest when no matching artifact exists", async () => {
+      mockGetArtifact.mockResolvedValue(undefined);
+
+      await expect(
+        downloadVersion(
+          "unknown-linux-gnu",
+          "x86_64",
+          "0.9.26",
+          undefined,
+          "token",
+          "https://example.com/custom.ndjson",
+          false,
+        ),
+      ).rejects.toThrow(
+        "Could not find artifact for version 0.9.26, arch x86_64, platform unknown-linux-gnu in https://example.com/custom.ndjson.",
+      );
     });
 
     it("uses the default manifest checksum as a fallback", async () => {
